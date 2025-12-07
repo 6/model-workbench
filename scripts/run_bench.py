@@ -18,8 +18,18 @@ Tag inference:
   * Always inferred from get_gpu_info().
 
 Result filenames:
-  * For llama-server GGUF runs, filename includes quant folder when possible,
-    otherwise uses GGUF file stem (captures root-level quant names).
+  * For llama-server GGUF runs:
+      - If GGUF is in a quant folder under ~/models/<org>/<repo>/<quant>/...,
+        use "<org>/<repo>/<quant>" as label.
+      - If repo stores multiple quant files in the repo root,
+        use "<org>/<gguf-stem>" as label to avoid collisions and keep org visible.
+      - Otherwise fallback to gguf stem.
+
+Output folders:
+  * Simplified to:
+      benchmarks/<tag>/
+    instead of:
+      benchmarks/results/<tag>/
 
 Assumptions:
   * Local mirror layout: ~/models/<org>/<repo>/...
@@ -27,7 +37,7 @@ Assumptions:
       model-workbench/
         config/models.yaml
         scripts/run_bench.py
-        benchmarks/results/...
+        benchmarks/<tag>/...
 
 Examples:
 
@@ -82,7 +92,9 @@ except Exception:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "models.yaml"
 MODELS_ROOT = Path.home() / "models"
-RESULTS_ROOT = ROOT / "benchmarks" / "results"
+
+# ✅ change: remove "results" nesting
+RESULTS_ROOT = ROOT / "benchmarks"
 
 PROMPTS = {
     "short": "Explain speculative decoding in 2 sentences.",
@@ -252,7 +264,6 @@ def raise_if_multiple_variants(dir_path: Path, model_arg: str):
             f"  or an exact .gguf file path."
         )
 
-    # Multiple non-sharded GGUFs (very common for root-level quant repos)
     non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
     if len(non_shards) > 1:
         raise SystemExit(
@@ -277,7 +288,7 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
       - If multiple variants exist and model_arg is too broad,
         raise a helpful error telling you to pass a quant folder or exact file.
     """
-    # 1) User passed a filesystem-ish path (absolute or relative to cwd)
+    # 1) filesystem-ish path
     p = Path(model_arg).expanduser()
     if is_gguf_file(p):
         return p
@@ -288,10 +299,7 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
         raise_if_multiple_variants(p, model_arg)
         return None
 
-    # 2) Treat model_arg as a path under ~/models if it looks like org/repo[/...]
-    #    This enables:
-    #      --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
-    #      --model unsloth/Ministral...-GGUF/Ministral...-UD-Q4_K_XL.gguf
+    # 2) treat as path under ~/models
     candidate = MODELS_ROOT / model_arg
     if candidate.exists():
         if is_gguf_file(candidate):
@@ -303,7 +311,7 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
             raise_if_multiple_variants(candidate, model_arg)
             return None
 
-    # 3) If it's a plain HF-style repo id, look at the local mirror root
+    # 3) plain HF-style repo id
     if "/" in model_arg:
         local_repo = MODELS_ROOT / model_arg
         if local_repo.exists() and local_repo.is_dir():
@@ -362,7 +370,7 @@ def start_llama_server(args, gguf_path: Path):
 
     cmd = [args.llama_server_bin, "-m", str(gguf_path), "--port", str(port)]
 
-    # GPU offload as much as possible
+    # GPU offload
     if args.llama_n_gpu_layers is not None:
         cmd += ["-ngl", str(args.llama_n_gpu_layers)]
 
@@ -528,10 +536,16 @@ def med(results, key):
 
 def derive_label_for_payload(payload, model_id: str) -> str:
     """
-    For vLLM: use model_id
-    For llama-server: attempt to include quant folder relative to ~/models.
-      - If GGUF sits in repo root among multiple quants, prefer file stem.
-      - If GGUF is in a quant folder, use that folder path.
+    For vLLM: use model_id.
+
+    For llama-server:
+      - If GGUF is under ~/models, derive label from its relative path.
+      - If GGUF is in a quant folder, label = "<org>/<repo>/<quant>".
+      - If GGUF is a root-level quant file, label = "<org>/<gguf-stem>".
+      - Else fallback to gguf stem.
+
+    This ensures filenames include the org for root-level quant repos
+    like unsloth/Ministral-...-GGUF.
     """
     engine = payload.get("engine")
     if engine != "llama-server":
@@ -543,20 +557,35 @@ def derive_label_for_payload(payload, model_id: str) -> str:
 
     p = Path(gguf)
 
+    # Prefer path-derived label if under MODELS_ROOT
     try:
         rel = p.relative_to(MODELS_ROOT)
-        parent = str(rel.parent)
+        parts = rel.parts  # e.g. ("unsloth", "Repo-GGUF", "file.gguf") or ("unsloth","Repo","UD-Q4_K_XL","file")
+        org = parts[0] if len(parts) >= 1 else None
 
-        # parent like "org/repo" -> not specific enough; use file stem
-        if parent.count("/") <= 1:
+        parent_rel = Path(*parts[:-1])  # relative parent dir
+        parent_str = str(parent_rel)
+
+        # parent like "unsloth/Repo-GGUF"
+        if parent_str.count("/") <= 1:
+            if org:
+                return f"{org}/{p.stem}"
             return p.stem
 
-        # parent like "org/repo/UD-Q4_K_XL" -> good label
-        return parent
+        # parent like "unsloth/Repo-GGUF/UD-Q4_K_XL"
+        return parent_str
+
     except Exception:
+        # If not under MODELS_ROOT, attempt best-effort org extraction from model_id
+        # e.g. model_id could be "unsloth/Repo/file.gguf"
+        if model_id.endswith(".gguf") and "/" in model_id:
+            org = model_id.split("/", 1)[0]
+            return f"{org}/{p.stem}"
+
         return p.stem
 
 def write_payload(payload, tag: str, model_id: str):
+    # ✅ change: new folder layout
     out_base = RESULTS_ROOT / tag
     out_base.mkdir(parents=True, exist_ok=True)
 
@@ -578,8 +607,7 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
 
     proc = start_llama_server(args, gguf_path)
     try:
-        # Warmup
-        _ = bench_once_llama_http(prompt, args)
+        _ = bench_once_llama_http(prompt, args)  # warmup
 
         results = []
         for _ in range(args.iterations):
@@ -600,7 +628,6 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
             "gpu_info": get_gpu_info(),
             "tag": args.tag,
             "env": {
-                # kept for debugging
                 "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
                 "engine": args.engine,
                 "llama_server_bin": args.llama_server_bin,
@@ -647,14 +674,13 @@ def run_model_vllm(model_id: str, args):
     llm = LLM(**llm_kwargs)
     prompt = PROMPTS[args.prompt_set]
 
-    # Warmup
     _ = bench_once_vllm(
         llm,
         prompt,
         max_tokens=min(64, args.max_tokens),
         temperature=args.temperature,
         seed=args.seed,
-    )
+    )  # warmup
 
     results = []
     for i in range(args.iterations):

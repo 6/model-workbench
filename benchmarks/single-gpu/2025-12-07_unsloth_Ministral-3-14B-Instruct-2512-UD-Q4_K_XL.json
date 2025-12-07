@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-07_051043",
+  "timestamp": "2025-12-07_051704",
   "model_id": "unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf",
   "model_ref": "/home/peter/models/unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf",
   "engine": "llama-server",
@@ -31,31 +31,31 @@
     "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
     "iterations": [
       {
-        "wall_s": 3.656407964999744,
+        "wall_s": 3.6351130220000414,
         "max_tokens": 512,
         "prompt_tokens": 17,
         "generated_tokens": 512,
-        "tok_per_s": 140.02813824415128,
+        "tok_per_s": 140.84844044774633,
         "temperature": 0.0,
         "seed": 0,
         "output_text": " KV cache is a key-value cache used in transformer-based models to store the attention key and value pairs for each token in a sequence, allowing the model to reuse these pairs when processing subsequent tokens. This reduces the computational overhead of recalculating attention scores for every token in the sequence, which is particularly beneficial for long contexts.\n\n### **KV Cache: A Technical Overview**\n**KV Cache** (Key-Value Cache) is a memory optimization technique used in **transformer-based models** (e.g., LLMs) to efficiently handle **long sequences** while reducing computational cost.\n\n#### **How It Works**\n1. **Attention Mechanism in Transformers**:\n   - For each token in a sequence, the model computes **attention scores** by comparing its **query (Q)** with **keys (K)** and **values (V)** from all previous tokens.\n   - The attention output is a weighted sum of the values, where weights are derived from the query-key dot products.\n\n2. **KV Cache Storage**:\n   - Instead of recalculating **K** and **V** for every token in the sequence, the model **stores them in a cache** after the first forward pass.\n   - Subsequent tokens reuse the cached **K** and **V** to compute attention, only requiring new **Q** computations.\n\n3. **Computational Efficiency**:\n   - Without KV caching, attention for a sequence of length **N** requires **O(N\u00b2)** operations per token.\n   - With KV caching, attention for new tokens only requires **O(N)** operations (since **K** and **V** are reused), significantly improving speed for long contexts.\n\n#### **Why It Matters for Long Context**\n- **Reduced Latency**: KV caching avoids redundant computations, making inference faster for long sequences.\n- **Memory Savings**: The model can process longer sequences without increasing memory usage per token (though total memory grows with context length).\n- **Scalability**: Enables handling of **extremely long contexts** (e.g., 100K+ tokens) by minimizing per-token overhead.\n- **Foundation for Advanced Techniques**: Supports optimizations like **sliding window attention**, **memory compression**, and **attention sinks** for even longer sequences.\n\n#### **Limitations**\n- **Memory Growth**: The cache size increases linearly with sequence length, requiring careful management.\n- **No Retroactive Updates**: If a cached token is modified (e.g., in fine-tuning),"
       },
       {
-        "wall_s": 3.6610581009999805,
+        "wall_s": 3.6405422299994825,
         "max_tokens": 512,
         "prompt_tokens": 17,
         "generated_tokens": 512,
-        "tok_per_s": 139.85027985765984,
+        "tok_per_s": 140.6383905619666,
         "temperature": 0.0,
         "seed": 0,
         "output_text": " KV cache is a key-value cache used in transformer-based models to store the attention key and value pairs for each token in a sequence, allowing the model to reuse these pairs when processing subsequent tokens. This reduces the computational overhead of recalculating attention scores for every token in the sequence, which is particularly beneficial for long contexts.\n\n### **KV Cache: A Technical Overview**\n**KV Cache** (Key-Value Cache) is a memory optimization technique used in **transformer-based models** (e.g., LLMs) to efficiently handle **long sequences** while reducing computational cost.\n\n#### **How It Works**\n1. **Attention Mechanism in Transformers**:\n   - For each token in a sequence, the model computes **attention scores** by comparing its **query (Q)** with **keys (K)** and **values (V)** from all previous tokens.\n   - The attention output is a weighted sum of the values, where weights are derived from the query-key dot products.\n\n2. **KV Cache Storage**:\n   - Instead of recalculating **K** and **V** for every token in the sequence, the model **stores them in a cache** after the first forward pass.\n   - Subsequent tokens reuse the cached **K** and **V** to compute attention, only requiring new **Q** computations.\n\n3. **Computational Efficiency**:\n   - Without KV caching, attention for a sequence of length **N** requires **O(N\u00b2)** operations per token.\n   - With KV caching, attention for new tokens only requires **O(N)** operations (since **K** and **V** are reused), significantly improving speed for long contexts.\n\n#### **Why It Matters for Long Context**\n- **Reduced Latency**: KV caching avoids redundant computations, making inference faster for long sequences.\n- **Memory Savings**: The model can process longer sequences without increasing memory usage per token (though total memory grows with context length).\n- **Scalability**: Enables handling of **extremely long contexts** (e.g., 100K+ tokens) by minimizing per-token overhead.\n- **Foundation for Advanced Techniques**: Supports optimizations like **sliding window attention**, **memory compression**, and **attention sinks** for even longer sequences.\n\n#### **Limitations**\n- **Memory Growth**: The cache size increases linearly with sequence length, requiring careful management.\n- **No Retroactive Updates**: If a cached token is modified (e.g., in fine-tuning),"
       },
       {
-        "wall_s": 3.6505172560000574,
+        "wall_s": 3.6474931350003317,
         "max_tokens": 512,
         "prompt_tokens": 17,
         "generated_tokens": 512,
-        "tok_per_s": 140.25409663752922,
+        "tok_per_s": 140.3703807107929,
         "temperature": 0.0,
         "seed": 0,
         "output_text": " KV cache is a key-value cache used in transformer-based models to store the attention key and value pairs for each token in a sequence, allowing the model to reuse these pairs when processing subsequent tokens. This reduces the computational overhead of recalculating attention scores for every token in the sequence, which is particularly beneficial for long contexts.\n\n### **KV Cache: A Technical Overview**\n**KV Cache** (Key-Value Cache) is a memory optimization technique used in **transformer-based models** (e.g., LLMs) to efficiently handle **long sequences** while reducing computational cost.\n\n#### **How It Works**\n1. **Attention Mechanism in Transformers**:\n   - For each token in a sequence, the model computes **attention scores** by comparing its **query (Q)** with **keys (K)** and **values (V)** from all previous tokens.\n   - The attention output is a weighted sum of the values, where weights are derived from the query-key dot products.\n\n2. **KV Cache Storage**:\n   - Instead of recalculating **K** and **V** for every token in the sequence, the model **stores them in a cache** after the first forward pass.\n   - Subsequent tokens reuse the cached **K** and **V** to compute attention, only requiring new **Q** computations.\n\n3. **Computational Efficiency**:\n   - Without KV caching, attention for a sequence of length **N** requires **O(N\u00b2)** operations per token.\n   - With KV caching, attention for new tokens only requires **O(N)** operations (since **K** and **V** are reused), significantly improving speed for long contexts.\n\n#### **Why It Matters for Long Context**\n- **Reduced Latency**: KV caching avoids redundant computations, making inference faster for long sequences.\n- **Memory Savings**: The model can process longer sequences without increasing memory usage per token (though total memory grows with context length).\n- **Scalability**: Enables handling of **extremely long contexts** (e.g., 100K+ tokens) by minimizing per-token overhead.\n- **Foundation for Advanced Techniques**: Supports optimizations like **sliding window attention**, **memory compression**, and **attention sinks** for even longer sequences.\n\n#### **Limitations**\n- **Memory Growth**: The cache size increases linearly with sequence length, requiring careful management.\n- **No Retroactive Updates**: If a cached token is modified (e.g., in fine-tuning),"
@@ -63,9 +63,9 @@
     ],
     "summary": {
       "iterations": 3,
-      "median_wall_s": 3.656407964999744,
+      "median_wall_s": 3.6405422299994825,
       "median_generated_tokens": 512,
-      "median_tok_per_s": 140.02813824415128
+      "median_tok_per_s": 140.6383905619666
     }
   }
 }
