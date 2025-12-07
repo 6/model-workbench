@@ -15,6 +15,10 @@ Auto routing:
 Local model layout is assumed:
   ~/models/<org>/<repo>/...
 
+Tag inference:
+  * Does NOT use CUDA_VISIBLE_DEVICES.
+  * Always inferred from get_gpu_info().
+
 Examples:
 
   # Auto route (will use vLLM)
@@ -136,6 +140,26 @@ def load_config_models():
     return out
 
 # ----------------------------
+# Tag inference: ALWAYS from get_gpu_info
+# ----------------------------
+
+def infer_tag(cli_tag: str | None) -> str:
+    if cli_tag:
+        return cli_tag
+
+    info = get_gpu_info()
+    gpus = info.get("gpus") or []
+    n = len(gpus)
+
+    if n == 0:
+        return "unknown-gpu"
+    if n == 1:
+        return "single-gpu"
+    if n == 2:
+        return "dual-gpu"
+    return f"{n}-gpu"
+
+# ----------------------------
 # GGUF resolution for llama-server
 # ----------------------------
 
@@ -192,7 +216,7 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
     return None
 
 # ----------------------------
-# vLLM model ref resolution (unchanged idea)
+# vLLM model ref resolution
 # ----------------------------
 
 def resolve_model_ref_vllm(model_arg: str) -> str:
@@ -209,21 +233,6 @@ def resolve_model_ref_vllm(model_arg: str) -> str:
             return str(local)
 
     return model_arg
-
-def infer_tag(cli_tag: str | None) -> str:
-    if cli_tag:
-        return cli_tag
-
-    cvd = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
-    if not cvd:
-        return "unknown-gpu"
-
-    devs = [d.strip() for d in cvd.split(",") if d.strip() != ""]
-    if len(devs) <= 1:
-        return "single-gpu"
-    if len(devs) == 2:
-        return "dual-gpu"
-    return f"{len(devs)}-gpu"
 
 # ----------------------------
 # llama-server process control + HTTP bench
@@ -258,7 +267,7 @@ def start_llama_server(args, gguf_path: Path):
 
     cmd = [args.llama_server_bin, "-m", str(gguf_path), "--port", str(port)]
 
-    # Use CUDA offload as much as possible (llama.cpp will clamp if needed)
+    # GPU offload as much as possible (llama.cpp will clamp if needed)
     if args.llama_n_gpu_layers is not None:
         cmd += ["-ngl", str(args.llama_n_gpu_layers)]
 
@@ -358,7 +367,7 @@ def bench_once_llama_http(prompt: str, args):
     }
 
 # ----------------------------
-# vLLM bench bits (mostly your original code)
+# vLLM bench bits
 # ----------------------------
 
 def try_get_token_counts(outputs):
@@ -378,7 +387,6 @@ def try_get_token_counts(outputs):
     return prompt_tokens, gen_tokens
 
 def bench_once_vllm(llm, prompt: str, max_tokens: int, temperature: float, seed: int):
-    # SamplingParams imported lazily to avoid hard dependency if only using llama-server
     from vllm import SamplingParams
 
     params = SamplingParams(
@@ -416,7 +424,7 @@ def bench_once_vllm(llm, prompt: str, max_tokens: int, temperature: float, seed:
     }
 
 # ----------------------------
-# Unified run
+# Unified run helpers
 # ----------------------------
 
 def med(results, key):
@@ -445,7 +453,7 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
 
         # Timed iterations
         results = []
-        for i in range(args.iterations):
+        for _ in range(args.iterations):
             results.append(bench_once_llama_http(prompt, args))
 
         summary = {
@@ -487,7 +495,6 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
         stop_llama_server(proc)
 
 def run_model_vllm(model_id: str, args):
-    # Import lazily so llama-only users don't need vllm
     from vllm import LLM
 
     model_ref = resolve_model_ref_vllm(model_id)
@@ -590,6 +597,7 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--vary-seed", action="store_true",
                     help="If set, increments seed each iteration (seed+i)")
+
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument("--prompt-set", default="short", choices=tuple(PROMPTS.keys()))
 
@@ -617,6 +625,8 @@ def main():
                     help="Extra raw args appended to llama-server command")
 
     args = ap.parse_args()
+
+    # Tag inference now comes purely from get_gpu_info()
     args.tag = infer_tag(args.tag)
 
     model_id = args.model
@@ -625,14 +635,11 @@ def main():
     gguf_path = resolve_local_gguf(model_id)
 
     if args.engine == "auto":
-        if gguf_path:
-            args.engine = "llama-server"
-        else:
-            args.engine = "vllm"
+        args.engine = "llama-server" if gguf_path else "vllm"
 
     if args.engine == "llama-server":
         if not gguf_path:
-            # User may be passing exact shm path that isn't under mirror
+            # User may be passing exact path not under mirror
             p = Path(model_id).expanduser()
             if is_gguf_file(p):
                 gguf_path = p

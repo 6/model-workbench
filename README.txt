@@ -8,15 +8,10 @@ If you update the model list in `config/models.yaml`, re-run:
 
 Benchmarking:
 
-Single GPU (vLLM):
-    CUDA_VISIBLE_DEVICES=0 uv run python scripts/run_bench.py \
-      --model Qwen/Qwen3-VL-8B-Instruct
+vLLM (safetensors):
+    uv run python scripts/run_bench.py --model openai/gpt-oss-120b
 
-Dual GPU (vLLM):
-    CUDA_VISIBLE_DEVICES=0,1 uv run python scripts/run_bench.py \
-      --model openai/gpt-oss-120b
-
-GGUF (llama-server):
+llama-server (GGUF):
     # start server on port 8080
     ./scripts/llama-server.sh unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
