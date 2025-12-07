@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_210843",
+  "model_id": "unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF/Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf",
+  "model_ref": "/home/peter/models/unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF/Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 8.130432802001451,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 62.973277372634094,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include a brief explanation of how it works and why it's important for efficiency.\n\nWe are writing a concise technical overview of KV cache and its importance for long context.\n Key points:\n - What is KV cache? (Key-Value cache)\n - How it works? (Storing past key and value vectors to avoid recomputation)\n - Why it matters for long context? (Reduces computation and memory for autoregressive generation)\n - Why it's important for efficiency? (Avoids redundant computation, especially for long sequences)\n\n Let's structure the response:\n\n 1. Definition: KV cache is a mechanism used in transformer-based models to store the key and value vectors from previous tokens during autoregressive generation.\n\n 2. How it works:\n    - In a transformer, for each token, we compute key (K) and value (V) vectors for self-attention.\n    - Without caching, for each new token, we would recompute the K and V for all previous tokens (which is O(n^2) in time and memory).\n    - With KV cache, we store the K and V for each token as they are computed. Then, when generating the next token, we only compute K and V for the new token and append them to the cache. The attention computation then uses the entire cache (all previous tokens) without recomputing.\n\n 3. Why it matters for long context:\n    - Without KV cache, the computational cost for generating a sequence of length L would be O(L^2) because each new token requires attention over all previous tokens (which are L-1, then L-2, etc.). \n    - With KV cache, the cost for generating the next token is O(L) for the attention computation (because we have to attend to L tokens) but note: the key point is that we avoid recomputing the K and V for the previous tokens. So the total cost for generating L tokens is O(L^2) for the attention computation (which is unavoidable) but the key saving is in the computation of K and V for the previous tokens. Without cache, we would recompute K and V for all previous tokens for each new token, which would be O(L^3). With cache, we compute K and V only once per token (so O(L) for K and V computation) and then the attention is O(L^2). So the total is O(L^2) which is the same as the attention cost, but without cache the K and V computation would"
+      },
+      {
+        "wall_s": 8.105824737000148,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 63.1644547732331,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include a brief explanation of how it works and why it's important for efficiency.\n\nWe are writing a concise technical overview of KV cache and its importance for long context.\n Key points:\n - What is KV cache? (Key-Value cache)\n - How it works? (Storing past key and value vectors to avoid recomputation)\n - Why it matters for long context? (Reduces computation and memory for autoregressive generation)\n - Why it's important for efficiency? (Avoids redundant computation, especially for long sequences)\n\n Let's structure the response:\n\n 1. Definition: KV cache is a mechanism used in transformer-based models to store the key and value vectors from previous tokens during autoregressive generation.\n\n 2. How it works:\n    - In a transformer, for each token, we compute key (K) and value (V) vectors for self-attention.\n    - Without caching, for each new token, we would recompute the K and V for all previous tokens (which is O(n^2) in time and memory).\n    - With KV cache, we store the K and V for each token as they are computed. Then, when generating the next token, we only compute K and V for the new token and append them to the cache. The attention computation then uses the entire cache (all previous tokens) without recomputing.\n\n 3. Why it matters for long context:\n    - Without KV cache, the computational cost for generating a sequence of length L would be O(L^2) because each new token requires attention over all previous tokens (which are L-1, then L-2, etc.). \n    - With KV cache, the cost for generating the next token is O(L) for the attention computation (because we have to attend to L tokens) but note: the key point is that we avoid recomputing the K and V for the previous tokens. So the total cost for generating L tokens is O(L^2) for the attention computation (which is unavoidable) but the key saving is in the computation of K and V for the previous tokens. Without cache, we would recompute K and V for all previous tokens for each new token, which would be O(L^3). With cache, we compute K and V only once per token (so O(L) for K and V computation) and then the attention is O(L^2). So the total is O(L^2) which is the same as the attention cost, but without cache the K and V computation would"
+      },
+      {
+        "wall_s": 8.107836131999647,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 63.148784911828834,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include a brief explanation of how it works and why it's important for efficiency.\n\nWe are writing a concise technical overview of KV cache and its importance for long context.\n Key points:\n - What is KV cache? (Key-Value cache)\n - How it works? (Storing past key and value vectors to avoid recomputation)\n - Why it matters for long context? (Reduces computation and memory for autoregressive generation)\n - Why it's important for efficiency? (Avoids redundant computation, especially for long sequences)\n\n Let's structure the response:\n\n 1. Definition: KV cache is a mechanism used in transformer-based models to store the key and value vectors from previous tokens during autoregressive generation.\n\n 2. How it works:\n    - In a transformer, for each token, we compute key (K) and value (V) vectors for self-attention.\n    - Without caching, for each new token, we would recompute the K and V for all previous tokens (which is O(n^2) in time and memory).\n    - With KV cache, we store the K and V for each token as they are computed. Then, when generating the next token, we only compute K and V for the new token and append them to the cache. The attention computation then uses the entire cache (all previous tokens) without recomputing.\n\n 3. Why it matters for long context:\n    - Without KV cache, the computational cost for generating a sequence of length L would be O(L^2) because each new token requires attention over all previous tokens (which are L-1, then L-2, etc.). \n    - With KV cache, the cost for generating the next token is O(L) for the attention computation (because we have to attend to L tokens) but note: the key point is that we avoid recomputing the K and V for the previous tokens. So the total cost for generating L tokens is O(L^2) for the attention computation (which is unavoidable) but the key saving is in the computation of K and V for the previous tokens. Without cache, we would recompute K and V for all previous tokens for each new token, which would be O(L^3). With cache, we compute K and V only once per token (so O(L) for K and V computation) and then the attention is O(L^2). So the total is O(L^2) which is the same as the attention cost, but without cache the K and V computation would"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 8.107836131999647,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 63.148784911828834
+    }
+  }
+}
