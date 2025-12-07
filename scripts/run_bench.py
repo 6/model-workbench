@@ -170,8 +170,16 @@ def is_gguf_file(p: Path) -> bool:
 
 def find_first_gguf_shard(dir_path: Path) -> Path | None:
     # Prefer shard 00001-of-xxxxx if present
-    candidates = sorted(dir_path.rglob("*-00001-of-*.gguf"))
-    return candidates[0] if candidates else None
+    candidates = sorted(local.rglob("*-00001-of-*.gguf"))
+    if len(candidates) == 1:
+        return candidates[0]
+    if len(candidates) > 1:
+        raise SystemExit(
+            f"Multiple GGUF quant variants found under {local}.\n"
+            f"Pass a more specific --model like:\n"
+            f"  {model_arg}/UD-Q4_K_XL\n"
+            f"  or an exact .gguf file path."
+        )
 
 def find_single_nonshard_gguf(dir_path: Path) -> Path | None:
     ggufs = sorted(dir_path.rglob("*.gguf"))
