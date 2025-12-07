@@ -27,7 +27,7 @@ Assumptions:
       model-workbench/
         config/models.yaml
         scripts/run_bench.py
-        benchmarks/results/...
+        benchmarks/...
 
 Examples:
 
@@ -78,7 +78,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "models.yaml"
 MODELS_ROOT = Path.home() / "models"
 
-RESULTS_ROOT = ROOT / "benchmarks" / "results"
+RESULTS_ROOT = ROOT / "benchmarks"
 
 PROMPTS = {
     "short": "Explain speculative decoding in 2 sentences.",
