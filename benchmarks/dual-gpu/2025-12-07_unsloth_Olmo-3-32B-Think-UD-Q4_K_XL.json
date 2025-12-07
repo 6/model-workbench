@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_194048",
+  "model_id": "unsloth/Olmo-3-32B-Think-GGUF",
+  "model_ref": "/home/peter/models/unsloth/Olmo-3-32B-Think-GGUF/Olmo-3-32B-Think-UD-Q4_K_XL.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 6.453342122000322,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 424,
+        "tok_per_s": 65.70238986005813,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Use the following information:\n\nKV cache is a key-value cache that stores the results of recent requests. It is used to speed up the processing of repeated requests, especially when the model is being asked to perform the same or similar computations on the same or similar inputs. This can significantly reduce the time and computational resources required to generate responses, making the system more efficient and scalable.\n\nThe KV cache is particularly useful for long context because it allows the model to retrieve and reuse the results of previous computations, rather than having to recompute them from scratch. This can help to reduce the latency and memory requirements of generating long responses, as well as improving the consistency and coherence of the output.\n\nThe KV cache is implemented as a dictionary that maps input tokens to output tokens. When a new request is received, the system checks if the input tokens are present in the cache. If they are, the system returns the corresponding output tokens, without having to run the model. If they are not, the system runs the model on the input tokens and stores the results in the cache for future use.\n\nThe KV cache can be configured to store a fixed number of recent requests, or to store requests based on a time-to-live (TTL) or a least-recently-used (LRU) policy. The size and policy of the KV cache can be adjusted to balance the trade-offs between performance, memory usage, and accuracy. For example, a larger KV cache can store more requests, but may require more memory and may increase the risk of cache misses or staleness. A smaller KV cache can save memory and reduce staleness, but may result in more cache misses and slower responses.\n\nThe KV cache can also be used in combination with other techniques, such as batching or caching, to further optimize the performance and scalability of the system. For example, the system can batch multiple requests that have similar inputs and run them together through the model, and then store the results in the KV cache for each request. This can reduce the number of model runs and the amount of cache storage required, while still providing fast and accurate responses."
+      },
+      {
+        "wall_s": 6.458850304999942,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 424,
+        "tok_per_s": 65.64635809437665,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Use the following information:\n\nKV cache is a key-value cache that stores the results of recent requests. It is used to speed up the processing of repeated requests, especially when the model is being asked to perform the same or similar computations on the same or similar inputs. This can significantly reduce the time and computational resources required to generate responses, making the system more efficient and scalable.\n\nThe KV cache is particularly useful for long context because it allows the model to retrieve and reuse the results of previous computations, rather than having to recompute them from scratch. This can help to reduce the latency and memory requirements of generating long responses, as well as improving the consistency and coherence of the output.\n\nThe KV cache is implemented as a dictionary that maps input tokens to output tokens. When a new request is received, the system checks if the input tokens are present in the cache. If they are, the system returns the corresponding output tokens, without having to run the model. If they are not, the system runs the model on the input tokens and stores the results in the cache for future use.\n\nThe KV cache can be configured to store a fixed number of recent requests, or to store requests based on a time-to-live (TTL) or a least-recently-used (LRU) policy. The size and policy of the KV cache can be adjusted to balance the trade-offs between performance, memory usage, and accuracy. For example, a larger KV cache can store more requests, but may require more memory and may increase the risk of cache misses or staleness. A smaller KV cache can save memory and reduce staleness, but may result in more cache misses and slower responses.\n\nThe KV cache can also be used in combination with other techniques, such as batching or caching, to further optimize the performance and scalability of the system. For example, the system can batch multiple requests that have similar inputs and run them together through the model, and then store the results in the KV cache for each request. This can reduce the number of model runs and the amount of cache storage required, while still providing fast and accurate responses."
+      },
+      {
+        "wall_s": 6.432173098000931,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 424,
+        "tok_per_s": 65.91862400776743,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Use the following information:\n\nKV cache is a key-value cache that stores the results of recent requests. It is used to speed up the processing of repeated requests, especially when the model is being asked to perform the same or similar computations on the same or similar inputs. This can significantly reduce the time and computational resources required to generate responses, making the system more efficient and scalable.\n\nThe KV cache is particularly useful for long context because it allows the model to retrieve and reuse the results of previous computations, rather than having to recompute them from scratch. This can help to reduce the latency and memory requirements of generating long responses, as well as improving the consistency and coherence of the output.\n\nThe KV cache is implemented as a dictionary that maps input tokens to output tokens. When a new request is received, the system checks if the input tokens are present in the cache. If they are, the system returns the corresponding output tokens, without having to run the model. If they are not, the system runs the model on the input tokens and stores the results in the cache for future use.\n\nThe KV cache can be configured to store a fixed number of recent requests, or to store requests based on a time-to-live (TTL) or a least-recently-used (LRU) policy. The size and policy of the KV cache can be adjusted to balance the trade-offs between performance, memory usage, and accuracy. For example, a larger KV cache can store more requests, but may require more memory and may increase the risk of cache misses or staleness. A smaller KV cache can save memory and reduce staleness, but may result in more cache misses and slower responses.\n\nThe KV cache can also be used in combination with other techniques, such as batching or caching, to further optimize the performance and scalability of the system. For example, the system can batch multiple requests that have similar inputs and run them together through the model, and then store the results in the KV cache for each request. This can reduce the number of model runs and the amount of cache storage required, while still providing fast and accurate responses."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 6.453342122000322,
+      "median_generated_tokens": 424,
+      "median_tok_per_s": 65.70238986005813
+    }
+  }
+}
