@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-12-07_204426",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct-FP8",
+  "model_ref": "/home/peter/models/Qwen/Qwen3-VL-8B-Instruct-FP8",
+  "engine": "vllm",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "vllm",
+    "dtype": "auto",
+    "max_model_len": null,
+    "gpu_memory_utilization": 0.9,
+    "temperature": 0.0,
+    "seed": 0,
+    "vary_seed": false
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 1.4868814159999602,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 111,
+        "tok_per_s": 74.65289350284205,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " In 2.5-3 sentences.\n\nKV cache is a mechanism that stores the key-value pairs generated during the decoding phase of transformer-based language models, enabling efficient reuse of past computations without recomputing attention scores for previously seen tokens. This is critical for long-context processing because it drastically reduces computational and memory overhead, allowing models to handle sequences longer than their original training context without proportional increases in cost. Without KV cache, each new token would require recomputing attention over the entire history, making long-context inference prohibitively expensive and impractical."
+      },
+      {
+        "wall_s": 1.4880618679999316,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 111,
+        "tok_per_s": 74.59367274103492,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " In 2.5-3 sentences.\n\nKV cache is a mechanism that stores the key-value pairs generated during the decoding phase of transformer-based language models, enabling efficient reuse of past computations without recomputing attention scores for previously seen tokens. This is critical for long-context processing because it drastically reduces computational and memory overhead, allowing models to handle sequences longer than their original training context without proportional increases in cost. Without KV cache, each new token would require recomputing attention over the entire history, making long-context inference prohibitively expensive and impractical."
+      },
+      {
+        "wall_s": 1.486762254999121,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 111,
+        "tok_per_s": 74.65887678192746,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " In 2.5-3 sentences.\n\nKV cache is a mechanism that stores the key-value pairs generated during the decoding phase of transformer-based language models, enabling efficient reuse of past computations without recomputing attention scores for previously seen tokens. This is critical for long-context processing because it drastically reduces computational and memory overhead, allowing models to handle sequences longer than their original training context without proportional increases in cost. Without KV cache, each new token would require recomputing attention over the entire history, making long-context inference prohibitively expensive and impractical."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 1.4868814159999602,
+      "median_generated_tokens": 111,
+      "median_tok_per_s": 74.65289350284205
+    }
+  }
+}
