@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-12-07_164609",
+  "model_id": "openai/gpt-oss-20b",
+  "model_ref": "openai/gpt-oss-20b",
+  "engine": "vllm",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "vllm",
+    "dtype": "auto",
+    "max_model_len": null,
+    "gpu_memory_utilization": 0.9,
+    "temperature": 0.0,
+    "seed": 0,
+    "vary_seed": false
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 2.079870358999983,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 246.1691892403204,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": "\n\nThe KV cache, or Key-Value cache, is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently process long input sequences without having to recompute the key and value vectors for each token. This is especially useful for tasks such as language modeling, where the model needs to predict the next word in a long sequence of text. By using the KV cache, the model can efficiently compute the attention scores for each token in the input sequence, which can improve the overall performance of the model.\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently process long input sequences without having to recompute the key and value vectors for each token. This is especially useful for tasks such as language modeling, where the model needs to predict the next word in a long sequence of text. By using the KV cache, the model can efficiently compute the attention scores for each token in the input sequence, which can improve the overall performance of the model.\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently"
+      },
+      {
+        "wall_s": 2.0804610769999954,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 246.09929292130715,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": "\n\nThe KV cache, or Key-Value cache, is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently process long input sequences without having to recompute the key and value vectors for each token. This is especially useful for tasks such as language modeling, where the model needs to predict the next word in a long sequence of text. By using the KV cache, the model can efficiently compute the attention scores for each token in the input sequence, which can improve the overall performance of the model.\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently process long input sequences without having to recompute the key and value vectors for each token. This is especially useful for tasks such as language modeling, where the model needs to predict the next word in a long sequence of text. By using the KV cache, the model can efficiently compute the attention scores for each token in the input sequence, which can improve the overall performance of the model.\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently"
+      },
+      {
+        "wall_s": 2.0812095119999867,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 246.01079182459708,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": "\n\nThe KV cache, or Key-Value cache, is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently process long input sequences without having to recompute the key and value vectors for each token. This is especially useful for tasks such as language modeling, where the model needs to predict the next word in a long sequence of text. By using the KV cache, the model can efficiently compute the attention scores for each token in the input sequence, which can improve the overall performance of the model.\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently process long input sequences without having to recompute the key and value vectors for each token. This is especially useful for tasks such as language modeling, where the model needs to predict the next word in a long sequence of text. By using the KV cache, the model can efficiently compute the attention scores for each token in the input sequence, which can improve the overall performance of the model.\n\nThe KV cache is a memory structure used in transformer-based language models to store intermediate results of the self-attention mechanism. In the self-attention mechanism, each token in the input sequence is represented as a query, key, and value vector. The KV cache stores the key and value vectors for each token in the input sequence, allowing the model to efficiently compute the attention scores for each token without recomputing the key and value vectors.\n\nThe KV cache is particularly important for long context because it allows the model to efficiently"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 2.0804610769999954,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 246.09929292130715
+    }
+  }
+}

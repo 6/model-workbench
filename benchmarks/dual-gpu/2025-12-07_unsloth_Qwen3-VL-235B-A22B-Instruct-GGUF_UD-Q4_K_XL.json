@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_194307",
+  "model_id": "unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF/UD-Q4_K_XL",
+  "model_ref": "/home/peter/models/unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF/UD-Q4_K_XL/Qwen3-VL-235B-A22B-Instruct-UD-Q4_K_XL-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 8.690051818999564,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 58.917945561680625,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Use the term 'KV cache' exactly three times.\n\nWe are writing a concise technical overview of KV cache and its importance for long context.\n We must use the term 'KV cache' exactly three times.\n\n Structure:\n 1. Define what KV cache is (first use).\n 2. Explain why it matters for long context (second and third use in context of efficiency and scalability).\n\n Let's write:\n\n The KV cache (Key-Value cache) is a mechanism in transformer-based language models that stores the key and value vectors from previous attention layers to avoid recomputing them during autoregressive generation. This optimization is critical for long-context inference because recomputing these vectors for every token in a long sequence would be prohibitively expensive. By reusing the cached KV vectors, the model can generate subsequent tokens with constant-time attention per token, rather than linear time. Thus, the KV cache enables efficient scaling to long contexts, and without the KV cache, handling long sequences would be computationally infeasible for real-time applications.\n\n Note: We have used \"KV cache\" exactly three times.\n\n Let me check:\n  1. \"The KV cache (Key-Value cache) ...\"\n  2. \"By reusing the cached KV vectors, ...\"\n  3. \"without the KV cache, ...\"\n\n Actually, the second occurrence is \"cached KV vectors\" which is not the exact term \"KV cache\". We must use the exact term \"KV cache\" three times.\n\n Revised:\n\n The KV cache (Key-Value cache) is a mechanism in transformer-based language models that stores the key and value vectors from previous attention layers to avoid recomputing them during autoregressive generation. This optimization is critical for long-context inference because recomputing these vectors for every token in a long sequence would be prohibitively expensive. By reusing the KV cache, the model can generate subsequent tokens with constant-time attention per token, rather than linear time. Thus, the KV cache enables efficient scaling to long contexts, and without the KV cache, handling long sequences would be computationally infeasible for real-time applications.\n\n Now:\n  1. First: \"The KV cache (Key-Value cache) ...\"\n  2. Second: \"By reusing the KV cache, ...\"\n  3. Third: \"without the KV cache, ...\"\n\n Perfect.\n\n\n**Technical Overview of KV Cache for Long Context**\n\nThe KV cache (Key-Value cache) is a memory optimization in transformer models that stores precomputed key and value vectors from prior decoder layers"
+      },
+      {
+        "wall_s": 8.521928645999651,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 60.08029652305786,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Use the term 'KV cache' exactly three times.\n\nWe are writing a concise technical overview of KV cache and its importance for long context.\n We must use the term 'KV cache' exactly three times.\n\n Structure:\n 1. Define what KV cache is (first use).\n 2. Explain why it matters for long context (second and third use in context of efficiency and scalability).\n\n Let's write:\n\n The KV cache (Key-Value cache) is a mechanism in transformer-based language models that stores the key and value vectors from previous attention layers to avoid recomputing them during autoregressive generation. This optimization is critical for long-context inference because recomputing these vectors for every token in a long sequence would be prohibitively expensive. By reusing the cached KV vectors, the model can generate subsequent tokens with constant-time attention per token, rather than linear time. Thus, the KV cache enables efficient scaling to long contexts, and without the KV cache, handling long sequences would be computationally infeasible for real-time applications.\n\n Note: We have used \"KV cache\" exactly three times.\n\n Let me check:\n  1. \"The KV cache (Key-Value cache) ...\"\n  2. \"By reusing the cached KV vectors, ...\"\n  3. \"without the KV cache, ...\"\n\n Actually, the second occurrence is \"cached KV vectors\" which is not the exact term \"KV cache\". We must use the exact term \"KV cache\" three times.\n\n Revised:\n\n The KV cache (Key-Value cache) is a mechanism in transformer-based language models that stores the key and value vectors from previous attention layers to avoid recomputing them during autoregressive generation. This optimization is critical for long-context inference because recomputing these vectors for every token in a long sequence would be prohibitively expensive. By reusing the KV cache, the model can generate subsequent tokens with constant-time attention per token, rather than linear time. Thus, the KV cache enables efficient scaling to long contexts, and without the KV cache, handling long sequences would be computationally infeasible for real-time applications.\n\n Now:\n  1. First: \"The KV cache (Key-Value cache) ...\"\n  2. Second: \"By reusing the KV cache, ...\"\n  3. Third: \"without the KV cache, ...\"\n\n Perfect.\n\n\n**Technical Overview of KV Cache for Long Context**\n\nThe KV cache (Key-Value cache) is a memory optimization in transformer models that stores precomputed key and value vectors from prior decoder layers"
+      },
+      {
+        "wall_s": 8.502389863000644,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 60.21836310141936,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Use the term 'KV cache' exactly three times.\n\nWe are writing a concise technical overview of KV cache and its importance for long context.\n We must use the term 'KV cache' exactly three times.\n\n Structure:\n 1. Define what KV cache is (first use).\n 2. Explain why it matters for long context (second and third use in context of efficiency and scalability).\n\n Let's write:\n\n The KV cache (Key-Value cache) is a mechanism in transformer-based language models that stores the key and value vectors from previous attention layers to avoid recomputing them during autoregressive generation. This optimization is critical for long-context inference because recomputing these vectors for every token in a long sequence would be prohibitively expensive. By reusing the cached KV vectors, the model can generate subsequent tokens with constant-time attention per token, rather than linear time. Thus, the KV cache enables efficient scaling to long contexts, and without the KV cache, handling long sequences would be computationally infeasible for real-time applications.\n\n Note: We have used \"KV cache\" exactly three times.\n\n Let me check:\n  1. \"The KV cache (Key-Value cache) ...\"\n  2. \"By reusing the cached KV vectors, ...\"\n  3. \"without the KV cache, ...\"\n\n Actually, the second occurrence is \"cached KV vectors\" which is not the exact term \"KV cache\". We must use the exact term \"KV cache\" three times.\n\n Revised:\n\n The KV cache (Key-Value cache) is a mechanism in transformer-based language models that stores the key and value vectors from previous attention layers to avoid recomputing them during autoregressive generation. This optimization is critical for long-context inference because recomputing these vectors for every token in a long sequence would be prohibitively expensive. By reusing the KV cache, the model can generate subsequent tokens with constant-time attention per token, rather than linear time. Thus, the KV cache enables efficient scaling to long contexts, and without the KV cache, handling long sequences would be computationally infeasible for real-time applications.\n\n Now:\n  1. First: \"The KV cache (Key-Value cache) ...\"\n  2. Second: \"By reusing the KV cache, ...\"\n  3. Third: \"without the KV cache, ...\"\n\n Perfect.\n\n\n**Technical Overview of KV Cache for Long Context**\n\nThe KV cache (Key-Value cache) is a memory optimization in transformer models that stores precomputed key and value vectors from prior decoder layers"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 8.521928645999651,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 60.08029652305786
+    }
+  }
+}
