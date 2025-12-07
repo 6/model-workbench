@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_172438",
+  "model_id": "unsloth/GLM-4.6-GGUF/UD-Q3_K_XL",
+  "model_ref": "/home/peter/models/unsloth/GLM-4.6-GGUF/UD-Q3_K_XL/GLM-4.6-UD-Q3_K_XL-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 10.408930503000192,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 49.18853093047599,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " 1. KV cache is a memory mechanism used in autoregressive language models (like GPT) to avoid recomputing past token representations during sequential generation. 1.1. It stores the Key (K) and Value (V) matrices from the self-attention layers for all previously processed tokens. 1.2. For each new token, the model only needs to compute its own K and V, then attend to the cached K/V of all prior tokens. 1.3. This avoids the O(n\u00b2) cost of recomputing attention for the full sequence at each step, reducing it to O(n) per new token. 1.4. The cache grows linearly with sequence length, with size proportional to `num_layers * batch_size * sequence_length * hidden_dim * 2`. 1.5. Memory usage is the primary bottleneck for long contexts. 1.6. The cache is typically stored in GPU VRAM, but can be offloaded to CPU RAM or NVMe for very long contexts. 1.6.1. Offloading introduces latency, trading speed for context length. 1.6.2. Techniques like PagedAttention manage this by treating KV cache as pages and swapping them efficiently. 1.7. The KV cache is ephemeral; it's discarded after generation is complete. 1.8. It's distinct from the model's weights, which are static. 1.9. The cache is crucial for enabling fast, interactive inference. 1.10. Without it, generating a 1000-token response from a 100k-token prompt would be computationally prohibitive. 1.11. The KV cache is the reason why \"context length\" is a key model specification. 1.12. It's the primary reason why models like Gemini 1.5 Pro can handle 1M+ token contexts. 1.1.1. The KV cache is the reason why \"context length\" is a key model specification. 1.1.2. It's the primary reason why models like Gemini 1.5 Pro can handle 1M+ token contexts. 1.1.3. The KV cache is the self-attention mechanism's memory. 1.1.4. The KV cache is the reason why \"context length\" is a large language model's memory. 1.1.5. The KV cache is the reason why \"context length\" is a key model specification."
+      },
+      {
+        "wall_s": 10.174632215000202,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 50.321229227840924,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " 1. KV cache is a memory mechanism used in autoregressive language models (like GPT) to avoid recomputing past token representations during sequential generation. 1.1. It stores the Key (K) and Value (V) matrices from the self-attention layers for all previously processed tokens. 1.2. For each new token, the model only needs to compute its own K and V, then attend to the cached K/V of all prior tokens. 1.3. This avoids the O(n\u00b2) cost of recomputing attention for the full sequence at each step, reducing it to O(n) per new token. 1.4. The cache grows linearly with sequence length, with size proportional to `num_layers * batch_size * sequence_length * hidden_dim * 2`. 1.5. Memory usage is the primary bottleneck for long contexts. 1.6. The cache is typically stored in GPU VRAM, but can be offloaded to CPU RAM or NVMe for very long contexts. 1.6.1. Offloading introduces latency, trading speed for context length. 1.6.2. Techniques like PagedAttention manage this by treating KV cache as pages and swapping them efficiently. 1.7. The KV cache is ephemeral; it's discarded after generation is complete. 1.8. It's distinct from the model's weights, which are static. 1.9. The cache is crucial for enabling fast, interactive inference. 1.10. Without it, generating a 1000-token response from a 100k-token prompt would be computationally prohibitive. 1.11. The KV cache is the reason why \"context length\" is a key model specification. 1.12. It's the primary reason why models like Gemini 1.5 Pro can handle 1M+ token contexts. 1.1.1. The KV cache is the reason why \"context length\" is a key model specification. 1.1.2. It's the primary reason why models like Gemini 1.5 Pro can handle 1M+ token contexts. 1.1.3. The KV cache is the self-attention mechanism's memory. 1.1.4. The KV cache is the reason why \"context length\" is a large language model's memory. 1.1.5. The KV cache is the reason why \"context length\" is a key model specification."
+      },
+      {
+        "wall_s": 10.125428259000273,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 50.565762445148366,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " 1. KV cache is a memory mechanism used in autoregressive language models (like GPT) to avoid recomputing past token representations during sequential generation. 1.1. It stores the Key (K) and Value (V) matrices from the self-attention layers for all previously processed tokens. 1.2. For each new token, the model only needs to compute its own K and V, then attend to the cached K/V of all prior tokens. 1.3. This avoids the O(n\u00b2) cost of recomputing attention for the full sequence at each step, reducing it to O(n) per new token. 1.4. The cache grows linearly with sequence length, with size proportional to `num_layers * batch_size * sequence_length * hidden_dim * 2`. 1.5. Memory usage is the primary bottleneck for long contexts. 1.6. The cache is typically stored in GPU VRAM, but can be offloaded to CPU RAM or NVMe for very long contexts. 1.6.1. Offloading introduces latency, trading speed for context length. 1.6.2. Techniques like PagedAttention manage this by treating KV cache as pages and swapping them efficiently. 1.7. The KV cache is ephemeral; it's discarded after generation is complete. 1.8. It's distinct from the model's weights, which are static. 1.9. The cache is crucial for enabling fast, interactive inference. 1.10. Without it, generating a 1000-token response from a 100k-token prompt would be computationally prohibitive. 1.11. The KV cache is the reason why \"context length\" is a key model specification. 1.12. It's the primary reason why models like Gemini 1.5 Pro can handle 1M+ token contexts. 1.1.1. The KV cache is the reason why \"context length\" is a key model specification. 1.1.2. It's the primary reason why models like Gemini 1.5 Pro can handle 1M+ token contexts. 1.1.3. The KV cache is the self-attention mechanism's memory. 1.1.4. The KV cache is the reason why \"context length\" is a large language model's memory. 1.1.5. The KV cache is the reason why \"context length\" is a key model specification."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 10.174632215000202,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 50.321229227840924
+    }
+  }
+}

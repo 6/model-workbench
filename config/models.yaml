@@ -1,5 +1,15 @@
 models:
   - source: hf
+    repo_id: unsloth/MiniMax-M2-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-235B-A22B-Thinking-2507-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
+
+  - source: hf
     repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507
 
   - source: hf
@@ -30,6 +40,11 @@ models:
     repo_id: unsloth/GLM-4.5-Air-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
+
+  - source: hf
+    repo_id: unsloth/GLM-4.6-GGUF
+    include:
+      - "UD-Q3_K_XL/*.gguf"
 
   - source: hf
     repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
