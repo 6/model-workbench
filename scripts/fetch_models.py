@@ -2,7 +2,6 @@
 import os
 import subprocess
 from pathlib import Path
-
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +18,13 @@ def expand(p: str) -> Path:
 def local_dir_for_repo(repo_id: str) -> Path:
     # Mirror HF structure under ~/models/<org>/<repo>
     return MODELS_ROOT / repo_id
+
+def normalize_to_list(val):
+    if val is None:
+        return []
+    if isinstance(val, list):
+        return val
+    return [val]
 
 def main():
     if not CONFIG.exists():
@@ -38,37 +44,62 @@ def main():
         if item.get("source") != "hf":
             continue
         repo_id = item.get("repo_id")
-        if not repo_id:
+        if not repo_id or "REPLACE_ME" in repo_id:
             continue
 
-        # allow override, but default to mirroring repo_id
         out_dir = item.get("local_dir")
-        if out_dir:
-            out_path = expand(out_dir)
-        else:
-            out_path = local_dir_for_repo(repo_id)
+        out_path = expand(out_dir) if out_dir else local_dir_for_repo(repo_id)
 
-        hf_models.append((repo_id, out_path))
+        hf_models.append((item, repo_id, out_path))
 
     if not hf_models:
         print("No HF models found in config.")
         return
 
-    for repo_id, out_path in hf_models:
-        if "REPLACE_ME" in repo_id:
-            print(f"Skipping placeholder repo_id: {repo_id}")
-            continue
-
+    for item, repo_id, out_path in hf_models:
         out_path.mkdir(parents=True, exist_ok=True)
+
+        files = normalize_to_list(item.get("files"))
+        include = normalize_to_list(item.get("include"))
+        exclude = normalize_to_list(item.get("exclude"))
+        revision = item.get("revision")
+        repo_type = item.get("repo_type")  # optional: "model", "dataset", "space"
 
         print(f"\nDownloading:")
         print(f"  repo_id:   {repo_id}")
         print(f"  local_dir: {out_path}")
+        if files:
+            print(f"  files:     {files}")
+        if include:
+            print(f"  include:   {include}")
+        if exclude:
+            print(f"  exclude:   {exclude}")
+        if revision:
+            print(f"  revision:  {revision}")
+        if repo_type:
+            print(f"  repo_type: {repo_type}")
 
-        run([
-            "hf", "download", repo_id,
-            "--local-dir", str(out_path),
-        ])
+        cmd = ["hf", "download", repo_id]
+
+        # If files are specified, download only those exact files.
+        # Paths can include subdirectories like "UD-Q4_K_XL/xyz.gguf".
+        if files:
+            cmd.extend(files)
+
+        # Pattern-based filtering for partial repo downloads.
+        for pat in include:
+            cmd.extend(["--include", pat])
+        for pat in exclude:
+            cmd.extend(["--exclude", pat])
+
+        if revision:
+            cmd.extend(["--revision", str(revision)])
+        if repo_type:
+            cmd.extend(["--repo-type", str(repo_type)])
+
+        cmd.extend(["--local-dir", str(out_path)])
+
+        run(cmd)
 
     print("\nModel fetch complete.")
 

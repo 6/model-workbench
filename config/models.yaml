@@ -25,3 +25,8 @@ models:
 
   - source: hf
     repo_id: openai/gpt-oss-120b
+
+  - source: hf
+    repo_id: unsloth/GLM-4.5-Air-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
