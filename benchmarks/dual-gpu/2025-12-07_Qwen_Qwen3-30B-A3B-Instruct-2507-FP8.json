@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-12-07_203804",
+  "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+  "model_ref": "/home/peter/models/Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+  "engine": "vllm",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "vllm",
+    "dtype": "auto",
+    "max_model_len": null,
+    "gpu_memory_utilization": 0.9,
+    "temperature": 0.0,
+    "seed": 0,
+    "vary_seed": false
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 3.8487442759997066,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 133.03040245951613,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include a brief explanation of how it works and its impact on inference speed and memory usage.\n\nWe are writing a concise technical overview of KV cache and its importance for long context in large language models (LLMs).\n\nKey points to cover:\n- What is KV cache?\n- Why it matters for long context?\n- How it works (briefly)?\n- Impact on inference speed and memory usage?\n\nLet's write it concisely and technically:\n\n---\n\n**KV Cache: Technical Overview**\n\n**What it is:**  \nKV cache (Key-Value cache) is a memory optimization technique used during autoregressive inference in large language models (LLMs). It stores the computed key (K) and value (V) vectors from previous attention layers to avoid redundant computation of self-attention for repeated tokens.\n\n**How it works:**  \nIn autoregressive generation, each new token depends on all preceding tokens via self-attention. Without caching, the model recomputes K and V for all prior tokens at every step, leading to O(n\u00b2) computational cost. With KV cache, the K and V for each token in the context are computed once and stored. At each generation step, the model reuses the cached K and V for the history, only computing K and V for the new token. The attention mechanism then operates on the cached history plus the new token.\n\n**Why it matters for long context:**  \nFor long sequences (e.g., 32K+ tokens), recomputing attention over the entire context at every step is prohibitively expensive. KV cache reduces the per-step computation from O(n\u00b2) to O(n), making long-context inference feasible. Without it, generating a single token in a 32K context would require computing attention over 32K tokens, which is intractable.\n\n**Impact on inference speed and memory:**  \n- **Speed:** Dramatically improves inference speed by eliminating redundant computation. Generation time per token becomes nearly constant (O(1) per step after initial cache fill), enabling real-time generation even for long contexts.  \n- **Memory:** Increases memory usage linearly with context length (O(n) for cache storage). However, this is a necessary trade-off: the memory cost is typically much lower than the computational cost saved. Modern systems use optimizations (e.g., quantization, offloading, sliding window attention) to manage this.\n\n**Conclusion:**  \nKV cache is essential for efficient long-context LLM inference, enabling practical generation of long documents by trading memory for massive speedups."
+      },
+      {
+        "wall_s": 3.848343780000505,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 133.04424689416206,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include a brief explanation of how it works and its impact on inference speed and memory usage.\n\nWe are writing a concise technical overview of KV cache and its importance for long context in large language models (LLMs).\n\nKey points to cover:\n- What is KV cache?\n- Why it matters for long context?\n- How it works (briefly)?\n- Impact on inference speed and memory usage?\n\nLet's write it concisely and technically:\n\n---\n\n**KV Cache: Technical Overview**\n\n**What it is:**  \nKV cache (Key-Value cache) is a memory optimization technique used during autoregressive inference in large language models (LLMs). It stores the computed key (K) and value (V) vectors from previous attention layers to avoid redundant computation of self-attention for repeated tokens.\n\n**How it works:**  \nIn autoregressive generation, each new token depends on all preceding tokens via self-attention. Without caching, the model recomputes K and V for all prior tokens at every step, leading to O(n\u00b2) computational cost. With KV cache, the K and V for each token in the context are computed once and stored. At each generation step, the model reuses the cached K and V for the history, only computing K and V for the new token. The attention mechanism then operates on the cached history plus the new token.\n\n**Why it matters for long context:**  \nFor long sequences (e.g., 32K+ tokens), recomputing attention over the entire context at every step is prohibitively expensive. KV cache reduces the per-step computation from O(n\u00b2) to O(n), making long-context inference feasible. Without it, generating a single token in a 32K context would require computing attention over 32K tokens, which is intractable.\n\n**Impact on inference speed and memory:**  \n- **Speed:** Dramatically improves inference speed by eliminating redundant computation. Generation time per token becomes nearly constant (O(1) per step after initial cache fill), enabling real-time generation even for long contexts.  \n- **Memory:** Increases memory usage linearly with context length (O(n) for cache storage). However, this is a necessary trade-off: the memory cost is typically much lower than the computational cost saved. Modern systems use optimizations (e.g., quantization, offloading, sliding window attention) to manage this.\n\n**Conclusion:**  \nKV cache is essential for efficient long-context LLM inference, enabling practical generation of long documents by trading memory for massive speedups."
+      },
+      {
+        "wall_s": 3.84592012199937,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 133.12808996506865,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include a brief explanation of how it works and its impact on inference speed and memory usage.\n\nWe are writing a concise technical overview of KV cache and its importance for long context in large language models (LLMs).\n\nKey points to cover:\n- What is KV cache?\n- Why it matters for long context?\n- How it works (briefly)?\n- Impact on inference speed and memory usage?\n\nLet's write it concisely and technically:\n\n---\n\n**KV Cache: Technical Overview**\n\n**What it is:**  \nKV cache (Key-Value cache) is a memory optimization technique used during autoregressive inference in large language models (LLMs). It stores the computed key (K) and value (V) vectors from previous attention layers to avoid redundant computation of self-attention for repeated tokens.\n\n**How it works:**  \nIn autoregressive generation, each new token depends on all preceding tokens via self-attention. Without caching, the model recomputes K and V for all prior tokens at every step, leading to O(n\u00b2) computational cost. With KV cache, the K and V for each token in the context are computed once and stored. At each generation step, the model reuses the cached K and V for the history, only computing K and V for the new token. The attention mechanism then operates on the cached history plus the new token.\n\n**Why it matters for long context:**  \nFor long sequences (e.g., 32K+ tokens), recomputing attention over the entire context at every step is prohibitively expensive. KV cache reduces the per-step computation from O(n\u00b2) to O(n), making long-context inference feasible. Without it, generating a single token in a 32K context would require computing attention over 32K tokens, which is intractable.\n\n**Impact on inference speed and memory:**  \n- **Speed:** Dramatically improves inference speed by eliminating redundant computation. Generation time per token becomes nearly constant (O(1) per step after initial cache fill), enabling real-time generation even for long contexts.  \n- **Memory:** Increases memory usage linearly with context length (O(n) for cache storage). However, this is a necessary trade-off: the memory cost is typically much lower than the computational cost saved. Modern systems use optimizations (e.g., quantization, offloading, sliding window attention) to manage this.\n\n**Conclusion:**  \nKV cache is essential for efficient long-context LLM inference, enabling practical generation of long documents by trading memory for massive speedups."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 3.848343780000505,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 133.04424689416206
+    }
+  }
+}

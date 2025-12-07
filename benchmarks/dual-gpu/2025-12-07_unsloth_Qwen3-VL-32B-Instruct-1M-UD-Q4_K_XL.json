@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_210946",
+  "model_id": "unsloth/Qwen3-VL-32B-Instruct-1M-GGUF/Qwen3-VL-32B-Instruct-1M-UD-Q4_K_XL.gguf",
+  "model_ref": "/home/peter/models/unsloth/Qwen3-VL-32B-Instruct-1M-GGUF/Qwen3-VL-32B-Instruct-1M-UD-Q4_K_XL.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 7.695042184999693,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 440,
+        "tok_per_s": 57.17967353807529,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include the following: 1. What is KV cache? 2. Why is it important for long context? 3. How does it improve efficiency? 4. What are the trade-offs?\n\n**KV Cache (Key-Value Cache) Technical Overview**\n\n1. **What is KV Cache?**  \n   KV cache is a memory optimization technique used in transformer-based language models (e.g., LLMs) during autoregressive generation. It stores the computed Key (K) and Value (V) matrices from previous attention layers for each token in the sequence, avoiding redundant recalculations during subsequent decoding steps.\n\n2. **Why is it Important for Long Context?**  \n   In long-context scenarios, the attention mechanism must compute interactions between the current token and all previous tokens. Without KV cache, this would require recomputing attention scores for the entire history at each step, leading to quadratic computational complexity (O(n\u00b2)) in sequence length. KV cache enables efficient incremental updates, making long-context generation feasible.\n\n3. **How Does it Improve Efficiency?**  \n   During decoding, only the new token\u2019s K and V are computed, while previously stored K/V matrices are reused. This reduces the attention computation from O(n\u00b2) to O(n) per step, significantly lowering latency and memory bandwidth usage. It also allows for faster generation by avoiding reprocessing of the entire context.\n\n4. **What Are the Trade-offs?**  \n   - **Memory Usage**: KV cache grows linearly with context length, consuming significant GPU memory (especially for long sequences).  \n   - **Cache Management**: Requires careful handling (e.g., eviction, truncation) to manage memory and avoid overflow.  \n   - **Inference vs. Training**: Only applicable during inference; not used in training due to dynamic sequence lengths and gradient computation.  \n   - **Accuracy**: In some cases, cache-based approximations (e.g., in speculative decoding or quantization) may introduce minor accuracy degradation.\n\nIn summary, KV cache is essential for efficient long-context generation in LLMs, trading off memory for speed and scalability. Proper management is critical to balance performance and resource constraints."
+      },
+      {
+        "wall_s": 7.698838107000483,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 440,
+        "tok_per_s": 57.15148102671649,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include the following: 1. What is KV cache? 2. Why is it important for long context? 3. How does it improve efficiency? 4. What are the trade-offs?\n\n**KV Cache (Key-Value Cache) Technical Overview**\n\n1. **What is KV Cache?**  \n   KV cache is a memory optimization technique used in transformer-based language models (e.g., LLMs) during autoregressive generation. It stores the computed Key (K) and Value (V) matrices from previous attention layers for each token in the sequence, avoiding redundant recalculations during subsequent decoding steps.\n\n2. **Why is it Important for Long Context?**  \n   In long-context scenarios, the attention mechanism must compute interactions between the current token and all previous tokens. Without KV cache, this would require recomputing attention scores for the entire history at each step, leading to quadratic computational complexity (O(n\u00b2)) in sequence length. KV cache enables efficient incremental updates, making long-context generation feasible.\n\n3. **How Does it Improve Efficiency?**  \n   During decoding, only the new token\u2019s K and V are computed, while previously stored K/V matrices are reused. This reduces the attention computation from O(n\u00b2) to O(n) per step, significantly lowering latency and memory bandwidth usage. It also allows for faster generation by avoiding reprocessing of the entire context.\n\n4. **What Are the Trade-offs?**  \n   - **Memory Usage**: KV cache grows linearly with context length, consuming significant GPU memory (especially for long sequences).  \n   - **Cache Management**: Requires careful handling (e.g., eviction, truncation) to manage memory and avoid overflow.  \n   - **Inference vs. Training**: Only applicable during inference; not used in training due to dynamic sequence lengths and gradient computation.  \n   - **Accuracy**: In some cases, cache-based approximations (e.g., in speculative decoding or quantization) may introduce minor accuracy degradation.\n\nIn summary, KV cache is essential for efficient long-context generation in LLMs, trading off memory for speed and scalability. Proper management is critical to balance performance and resource constraints."
+      },
+      {
+        "wall_s": 7.669315360999462,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 440,
+        "tok_per_s": 57.37148354043683,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include the following: 1. What is KV cache? 2. Why is it important for long context? 3. How does it improve efficiency? 4. What are the trade-offs?\n\n**KV Cache (Key-Value Cache) Technical Overview**\n\n1. **What is KV Cache?**  \n   KV cache is a memory optimization technique used in transformer-based language models (e.g., LLMs) during autoregressive generation. It stores the computed Key (K) and Value (V) matrices from previous attention layers for each token in the sequence, avoiding redundant recalculations during subsequent decoding steps.\n\n2. **Why is it Important for Long Context?**  \n   In long-context scenarios, the attention mechanism must compute interactions between the current token and all previous tokens. Without KV cache, this would require recomputing attention scores for the entire history at each step, leading to quadratic computational complexity (O(n\u00b2)) in sequence length. KV cache enables efficient incremental updates, making long-context generation feasible.\n\n3. **How Does it Improve Efficiency?**  \n   During decoding, only the new token\u2019s K and V are computed, while previously stored K/V matrices are reused. This reduces the attention computation from O(n\u00b2) to O(n) per step, significantly lowering latency and memory bandwidth usage. It also allows for faster generation by avoiding reprocessing of the entire context.\n\n4. **What Are the Trade-offs?**  \n   - **Memory Usage**: KV cache grows linearly with context length, consuming significant GPU memory (especially for long sequences).  \n   - **Cache Management**: Requires careful handling (e.g., eviction, truncation) to manage memory and avoid overflow.  \n   - **Inference vs. Training**: Only applicable during inference; not used in training due to dynamic sequence lengths and gradient computation.  \n   - **Accuracy**: In some cases, cache-based approximations (e.g., in speculative decoding or quantization) may introduce minor accuracy degradation.\n\nIn summary, KV cache is essential for efficient long-context generation in LLMs, trading off memory for speed and scalability. Proper management is critical to balance performance and resource constraints."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 7.695042184999693,
+      "median_generated_tokens": 440,
+      "median_tok_per_s": 57.17967353807529
+    }
+  }
+}

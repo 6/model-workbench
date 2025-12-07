@@ -18,13 +18,19 @@ models:
     repo_id: Qwen/Qwen3-Omni-30B-A3B-Instruct
 
   - source: hf
-    repo_id: Qwen/Qwen-Image-Edit
+    repo_id: Qwen/Qwen-Image-Edit-2509
 
   - source: hf
-    repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507
+    repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
 
   - source: hf
-    repo_id: Qwen/Qwen3-VL-8B-Instruct
+    repo_id: Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8
+
+  #- source: hf
+  #  repo_id: Qwen/Qwen3-Next-80B-A3B-Thinking-FP8
+
+  - source: hf
+    repo_id: Qwen/Qwen3-VL-8B-Instruct-FP8
 
   #- source: hf
   #  repo_id: Qwen/Qwen3-VL-4B-Instruct
@@ -50,12 +56,18 @@ models:
     repo_id: openai/gpt-oss-20b
 
   - source: hf
+    repo_id: openai/gpt-oss-safeguard-20b
+
+  - source: hf
     repo_id: openai/gpt-oss-120b
 
   - source: hf
     repo_id: unsloth/GLM-4.5-Air-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
+
+  #- source: hf
+  #  repo_id: zai-org/GLM-4.5-Air-FP8
 
   - source: hf
     repo_id: unsloth/GLM-4.6-GGUF
@@ -66,3 +78,48 @@ models:
     repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
     include:
       - "Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Ministral-3-14B-Reasoning-2512-GGUF
+    include:
+      - "Ministral-3-14B-Reasoning-2512-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF
+    include:
+      - "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-VL-32B-Instruct-1M-GGUF
+    include:
+      - "Qwen3-VL-32B-Instruct-1M-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF
+    include:
+      - "Qwen3-VL-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-VL-8B-Instruct-1M-GGUF
+    include:
+      - "Qwen3-VL-8B-Instruct-1M-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-VL-2B-Instruct-1M-GGUF
+    include:
+      - "Qwen3-VL-2B-Instruct-1M-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-VL-2B-Thinking-1M-GGUF
+    include:
+      - "Qwen3-VL-2B-Thinking-1M-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-0.6B-GGUF
+    include:
+      - "Qwen3-0.6B-UD-Q4_K_XL.gguf"
+
+  - source: hf
+    repo_id: unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
+    include:
+      - "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
