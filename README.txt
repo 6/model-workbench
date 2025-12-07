@@ -16,4 +16,4 @@ llama-server (GGUF):
     ./scripts/llama-server.sh unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
     # run benchmark
-    uv run python scripts/run_bench.py --model unsloth/GLM-4.5-Air-GGUF
+    uv run python scripts/run_bench.py --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
