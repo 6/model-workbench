@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_222747",
+  "model_id": "unsloth/Qwen3-235B-A22B-Thinking-2507-GGUF/UD-Q5_K_XL",
+  "model_ref": "/home/peter/models/unsloth/Qwen3-235B-A22B-Thinking-2507-GGUF/UD-Q5_K_XL/Qwen3-235B-A22B-Thinking-2507-UD-Q5_K_XL-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 7.421211502998631,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 68.99143081869047,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include the following keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding. Write in a professional technical style. Limit to 200 words.\n\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding.\n Professional technical style, limit to 200 words.\n\n Structure:\n 1. Introduce KV cache in the context of transformer models and attention mechanism.\n 2. Explain how it works (during prefilling and decoding).\n 3. Why it matters for long context: computational efficiency, memory bandwidth, latency, sequence length.\n\n Note: \n - KV cache stores the key (K) and value (V) vectors from previous tokens to avoid recomputation during autoregressive decoding.\n - Without KV cache, each new token would require recomputing attention over the entire sequence, which is O(n^2) in sequence length.\n - With KV cache, we only compute attention for the new token against the cached K and V, reducing computation per step.\n\n Let's write within 200 words.\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding.\n Professional technical style, limit to 200 words.\n\n Structure:\n 1. Introduce KV cache in the context of transformer models and attention mechanism.\n 2. Explain how it works (during prefilling and decoding).\n 3. Why it matters for long context: computational efficiency, memory bandwidth, latency, sequence length.\n\n Note: \n - KV cache stores the key (K) and value (V) vectors from previous tokens to avoid recomputation during autoregressive decoding.\n - Without KV cache, each new token would require recomputing attention over the entire sequence, which is O(n^2) in sequence length.\n - With KV cache, we only compute attention for the new token against the cached K and V, reducing computation per step.\n\n Let's write within 200 words.\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling"
+      },
+      {
+        "wall_s": 7.413167817998328,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 69.06629022439263,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include the following keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding. Write in a professional technical style. Limit to 200 words.\n\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding.\n Professional technical style, limit to 200 words.\n\n Structure:\n 1. Introduce KV cache in the context of transformer models and attention mechanism.\n 2. Explain how it works (during prefilling and decoding).\n 3. Why it matters for long context: computational efficiency, memory bandwidth, latency, sequence length.\n\n Note: \n - KV cache stores the key (K) and value (V) vectors from previous tokens to avoid recomputation during autoregressive decoding.\n - Without KV cache, each new token would require recomputing attention over the entire sequence, which is O(n^2) in sequence length.\n - With KV cache, we only compute attention for the new token against the cached K and V, reducing computation per step.\n\n Let's write within 200 words.\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding.\n Professional technical style, limit to 200 words.\n\n Structure:\n 1. Introduce KV cache in the context of transformer models and attention mechanism.\n 2. Explain how it works (during prefilling and decoding).\n 3. Why it matters for long context: computational efficiency, memory bandwidth, latency, sequence length.\n\n Note: \n - KV cache stores the key (K) and value (V) vectors from previous tokens to avoid recomputation during autoregressive decoding.\n - Without KV cache, each new token would require recomputing attention over the entire sequence, which is O(n^2) in sequence length.\n - With KV cache, we only compute attention for the new token against the cached K and V, reducing computation per step.\n\n Let's write within 200 words.\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling"
+      },
+      {
+        "wall_s": 7.39618234199952,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 69.22490229757958,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include the following keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding. Write in a professional technical style. Limit to 200 words.\n\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding.\n Professional technical style, limit to 200 words.\n\n Structure:\n 1. Introduce KV cache in the context of transformer models and attention mechanism.\n 2. Explain how it works (during prefilling and decoding).\n 3. Why it matters for long context: computational efficiency, memory bandwidth, latency, sequence length.\n\n Note: \n - KV cache stores the key (K) and value (V) vectors from previous tokens to avoid recomputation during autoregressive decoding.\n - Without KV cache, each new token would require recomputing attention over the entire sequence, which is O(n^2) in sequence length.\n - With KV cache, we only compute attention for the new token against the cached K and V, reducing computation per step.\n\n Let's write within 200 words.\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling, decoding.\n Professional technical style, limit to 200 words.\n\n Structure:\n 1. Introduce KV cache in the context of transformer models and attention mechanism.\n 2. Explain how it works (during prefilling and decoding).\n 3. Why it matters for long context: computational efficiency, memory bandwidth, latency, sequence length.\n\n Note: \n - KV cache stores the key (K) and value (V) vectors from previous tokens to avoid recomputation during autoregressive decoding.\n - Without KV cache, each new token would require recomputing attention over the entire sequence, which is O(n^2) in sequence length.\n - With KV cache, we only compute attention for the new token against the cached K and V, reducing computation per step.\n\n Let's write within 200 words.\nWe are writing a concise technical overview of KV cache and its importance for long context in transformer models.\n Required keywords: attention mechanism, computational efficiency, memory bandwidth, latency, sequence length, transformer models, inference, prefilling"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 7.413167817998328,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 69.06629022439263
+    }
+  }
+}
