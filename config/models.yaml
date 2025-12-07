@@ -87,7 +87,14 @@ models:
     include:
       - "UD-Q3_K_XL/*.gguf"
       - "IQ4_XS/*.gguf"
-      #- "Q4_K_XL/*.gguf"
+      - "UD-Q4_K_XL/*.gguf"
+      - "UD-Q5_K_XL/*.gguf"
+
+  - source: hf
+    repo_id: unsloth/GLM-4.6-REAP-268B-A32B-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
+      - "UD-Q5_K_XL/*.gguf"
 
   - source: hf
     repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
