@@ -87,10 +87,12 @@ def main():
             cmd.extend(files)
 
         # Pattern-based filtering for partial repo downloads.
-        for pat in include:
-            cmd.extend(["--include", pat])
-        for pat in exclude:
-            cmd.extend(["--exclude", pat])
+        if include:
+            cmd.append("--include")
+            cmd.extend(include)
+        if exclude:
+            cmd.append("--exclude")
+            cmd.extend(exclude)
 
         if revision:
             cmd.extend(["--revision", str(revision)])
