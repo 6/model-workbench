@@ -1,0 +1,67 @@
+{
+  "timestamp": "2025-12-07_020323",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+  "model_ref": "/home/peter/models/Qwen/Qwen3-VL-8B-Instruct",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "single-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "0",
+    "dtype": "auto",
+    "max_model_len": null,
+    "gpu_memory_utilization": 0.9,
+    "temperature": 0.0,
+    "seed": 0,
+    "vary_seed": false
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 2.276738672000647,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 192,
+        "tok_per_s": 84.33115419051722,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " The overview should be a single paragraph, no more than 150 words.\n\nKV cache is a mechanism in transformer-based models that stores the key (K) and value (V) vectors from previous time steps during autoregressive generation, enabling efficient reuse without recomputing them. This avoids redundant computation and memory overhead, especially critical for long-context tasks where sequences exceed typical 2048-token limits. By caching K/V states, models can maintain context coherence over extended sequences, preserving semantic continuity and reducing latency. KV cache also supports streaming and real-time applications, such as chatbots or document summarization, where context length dynamically grows. Without KV cache, each new token would require recomputing all prior K/V states, making long-context inference prohibitively slow and memory-intensive. Thus, KV cache is foundational for scalable, efficient long-context processing in LLMs, enabling practical deployment of models handling thousands of tokens without architectural redesign."
+      },
+      {
+        "wall_s": 2.2856036339981074,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 192,
+        "tok_per_s": 84.00406664743647,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " The overview should be a single paragraph, no more than 150 words.\n\nKV cache is a mechanism in transformer-based models that stores the key (K) and value (V) vectors from previous time steps during autoregressive generation, enabling efficient reuse without recomputing them. This avoids redundant computation and memory overhead, especially critical for long-context tasks where sequences exceed typical 2048-token limits. By caching K/V states, models can maintain context coherence over extended sequences, preserving semantic continuity and reducing latency. KV cache also supports streaming and real-time applications, such as chatbots or document summarization, where context length dynamically grows. Without KV cache, each new token would require recomputing all prior K/V states, making long-context inference prohibitively slow and memory-intensive. Thus, KV cache is foundational for scalable, efficient long-context processing in LLMs, enabling practical deployment of models handling thousands of tokens without architectural redesign."
+      },
+      {
+        "wall_s": 2.2889344340001117,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 192,
+        "tok_per_s": 83.88182603573459,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " The overview should be a single paragraph, no more than 150 words.\n\nKV cache is a mechanism in transformer-based models that stores the key (K) and value (V) vectors from previous time steps during autoregressive generation, enabling efficient reuse without recomputing them. This avoids redundant computation and memory overhead, especially critical for long-context tasks where sequences exceed typical 2048-token limits. By caching K/V states, models can maintain context coherence over extended sequences, preserving semantic continuity and reducing latency. KV cache also supports streaming and real-time applications, such as chatbots or document summarization, where context length dynamically grows. Without KV cache, each new token would require recomputing all prior K/V states, making long-context inference prohibitively slow and memory-intensive. Thus, KV cache is foundational for scalable, efficient long-context processing in LLMs, enabling practical deployment of models handling thousands of tokens without architectural redesign."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 2.2856036339981074,
+      "median_generated_tokens": 192,
+      "median_tok_per_s": 84.00406664743647
+    }
+  }
+}

@@ -1,0 +1,27 @@
+models:
+  - source: hf
+    repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507
+
+  - source: hf
+    repo_id: Qwen/Qwen3-VL-8B-Instruct
+
+  #- source: hf
+  #  repo_id: Qwen/Qwen3-VL-4B-Instruct
+
+  - source: hf
+    repo_id: allenai/Olmo-3-32B-Think
+
+  - source: hf
+    repo_id: allenai/Olmo-3-7B-Think
+
+  #- source: hf
+  #  repo_id: mistralai/Ministral-3-14B-Instruct-2512
+
+  #- source: hf
+  #  repo_id: mistralai/Ministral-3-8B-Instruct-2512
+
+  - source: hf
+    repo_id: openai/gpt-oss-20b
+
+  - source: hf
+    repo_id: openai/gpt-oss-120b
