@@ -435,7 +435,25 @@ def write_payload(payload, tag: str, model_id: str):
     out_base = ROOT / "benchmarks" / "results" / tag
     out_base.mkdir(parents=True, exist_ok=True)
 
-    fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(model_id)}.json"
+    label = model_id
+
+    # If llama-server and we resolved a GGUF path, use a richer label
+    try:
+        if payload.get("engine") == "llama-server":
+            gguf = payload.get("model_ref")
+            if gguf:
+                # Make a stable label relative to ~/models when possible
+                p = Path(gguf)
+                try:
+                    rel = p.relative_to(MODELS_ROOT)
+                    label = str(rel.parent)  # include quant folder
+                except Exception:
+                    label = p.stem
+    except Exception:
+        pass
+    
+    fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(label)}.json"
+
     out_path = out_base / fname
 
     with open(out_path, "w") as f:
