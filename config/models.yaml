@@ -30,3 +30,8 @@ models:
     repo_id: unsloth/GLM-4.5-Air-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
+
+  - source: hf
+    repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
+    include:
+      - "Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf"

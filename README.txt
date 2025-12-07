@@ -11,9 +11,13 @@ Benchmarking:
 vLLM (safetensors):
     uv run python scripts/run_bench.py --model openai/gpt-oss-120b
 
-llama-server (GGUF):
+llama-server (GGUF, sharded):
     # start server on port 8080
     ./scripts/llama-server.sh unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
     # run benchmark
     uv run python scripts/run_bench.py --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+llama-server (GGUF, non-sharded):
+    ./scripts/llama-server.sh unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf 
+    uv run python scripts/run_bench.py --model unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf

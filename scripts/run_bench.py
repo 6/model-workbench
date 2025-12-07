@@ -9,7 +9,7 @@ Engines:
 Auto routing:
   --engine auto (default)
     * If --model resolves to a GGUF file or a directory containing GGUF,
-      or if local mirror under ~/models/<org>/<repo> contains GGUF shards,
+      or if local mirror under ~/models contains GGUF variants,
       route to llama-server.
     * Else route to vLLM.
 
@@ -18,8 +18,8 @@ Tag inference:
   * Always inferred from get_gpu_info().
 
 Result filenames:
-  * For llama-server GGUF runs, filename includes the quant folder when possible,
-    to avoid collisions across multiple variants.
+  * For llama-server GGUF runs, filename includes quant folder when possible,
+    otherwise uses GGUF file stem (captures root-level quant names).
 
 Assumptions:
   * Local mirror layout: ~/models/<org>/<repo>/...
@@ -27,7 +27,7 @@ Assumptions:
       model-workbench/
         config/models.yaml
         scripts/run_bench.py
-        benchmarks/...
+        benchmarks/results/...
 
 Examples:
 
@@ -41,6 +41,11 @@ Examples:
   uv run python scripts/run_bench.py \
     --engine llama-server \
     --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+  # Root-level quant file in repo (no folders)
+  uv run python scripts/run_bench.py \
+    --engine llama-server \
+    --model unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf
 
   # Explicit shard file
   uv run python scripts/run_bench.py \
@@ -77,8 +82,7 @@ except Exception:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "models.yaml"
 MODELS_ROOT = Path.home() / "models"
-
-RESULTS_ROOT = ROOT / "benchmarks"
+RESULTS_ROOT = ROOT / "benchmarks" / "results"
 
 PROMPTS = {
     "short": "Explain speculative decoding in 2 sentences.",
@@ -202,20 +206,16 @@ def find_shard_entrypoints(dir_path: Path):
     """
     return sorted(dir_path.rglob("*-00001-of-*.gguf"))
 
-def find_single_nonshard_gguf(dir_path: Path) -> Path | None:
-    ggufs = sorted(dir_path.rglob("*.gguf"))
-    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
-    if len(non_shards) == 1:
-        return non_shards[0]
-    return None
+def list_all_ggufs(dir_path: Path):
+    return sorted(dir_path.rglob("*.gguf"))
 
 def pick_gguf_from_dir(dir_path: Path) -> Path | None:
     """
-    For a given directory:
+    Pick a GGUF entrypoint from a directory ONLY if unambiguous.
+
       1) If exactly one shard entrypoint (*-00001-of-*.gguf) -> return it
-      2) Else if exactly one non-sharded gguf -> return it
-      3) Else if multiple candidates -> None (caller can raise ambiguity)
-      4) Else -> None
+      2) Else if exactly one non-sharded gguf anywhere -> return it
+      3) Else -> None (caller decides whether to raise ambiguity)
     """
     entrypoints = find_shard_entrypoints(dir_path)
     if len(entrypoints) == 1:
@@ -223,27 +223,61 @@ def pick_gguf_from_dir(dir_path: Path) -> Path | None:
     if len(entrypoints) > 1:
         return None
 
-    single = find_single_nonshard_gguf(dir_path)
-    if single:
-        return single
+    ggufs = list_all_ggufs(dir_path)
+    if len(ggufs) == 1:
+        return ggufs[0]
+
+    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
+    if len(non_shards) == 1:
+        return non_shards[0]
 
     return None
+
+def raise_if_multiple_variants(dir_path: Path, model_arg: str):
+    """
+    Raise helpful errors if GGUF variants exist but are ambiguous:
+      - multiple shard entrypoints
+      - multiple root-level quant files
+    """
+    ggufs = list_all_ggufs(dir_path)
+    if len(ggufs) <= 1:
+        return
+
+    entrypoints = find_shard_entrypoints(dir_path)
+    if len(entrypoints) > 1:
+        raise SystemExit(
+            f"Multiple split GGUF variants found under:\n  {dir_path}\n"
+            f"Pass a more specific --model like:\n"
+            f"  {model_arg}/UD-Q4_K_XL\n"
+            f"  or an exact .gguf file path."
+        )
+
+    # Multiple non-sharded GGUFs (very common for root-level quant repos)
+    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
+    if len(non_shards) > 1:
+        raise SystemExit(
+            f"Multiple GGUF files found under:\n  {dir_path}\n"
+            f"This repo appears to store multiple quant files in the root.\n"
+            f"Please pass an exact quant file path, e.g.:\n"
+            f"  {model_arg}/<model>-UD-Q4_K_XL.gguf"
+        )
 
 def resolve_local_gguf(model_arg: str) -> Path | None:
     """
     Resolve a GGUF path from:
       1) explicit filesystem path
-      2) local mirror of HF id under ~/models/<org>/<repo>
+      2) path relative to ~/models (e.g. org/repo/UD-Q4_K_XL)
+      3) HF-style repo id with local mirror under ~/models/org/repo
 
     Returns:
       - a GGUF file path (prefer shard entrypoint)
       - None if not GGUF
 
     Ambiguity:
-      - If multiple shard entrypoints exist under a repo root,
-        require a more specific --model such as <repo>/UD-Q4_K_XL.
+      - If multiple variants exist and model_arg is too broad,
+        raise a helpful error telling you to pass a quant folder or exact file.
     """
-    # 1) User passed a filesystem path
+    # 1) User passed a filesystem-ish path (absolute or relative to cwd)
     p = Path(model_arg).expanduser()
     if is_gguf_file(p):
         return p
@@ -251,34 +285,32 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
         chosen = pick_gguf_from_dir(p)
         if chosen:
             return chosen
-
-        # If ambiguous at directory level:
-        entrypoints = find_shard_entrypoints(p)
-        if len(entrypoints) > 1:
-            raise SystemExit(
-                f"Multiple GGUF quant variants found under:\n  {p}\n"
-                f"Pass a more specific --model like:\n"
-                f"  {model_arg}/UD-Q4_K_XL\n"
-                f"  or an exact .gguf file path."
-            )
+        raise_if_multiple_variants(p, model_arg)
         return None
 
-    # 2) HF-style id with local mirror
+    # 2) Treat model_arg as a path under ~/models if it looks like org/repo[/...]
+    #    This enables:
+    #      --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+    #      --model unsloth/Ministral...-GGUF/Ministral...-UD-Q4_K_XL.gguf
+    candidate = MODELS_ROOT / model_arg
+    if candidate.exists():
+        if is_gguf_file(candidate):
+            return candidate
+        if candidate.is_dir():
+            chosen = pick_gguf_from_dir(candidate)
+            if chosen:
+                return chosen
+            raise_if_multiple_variants(candidate, model_arg)
+            return None
+
+    # 3) If it's a plain HF-style repo id, look at the local mirror root
     if "/" in model_arg:
         local_repo = MODELS_ROOT / model_arg
-        if local_repo.exists():
+        if local_repo.exists() and local_repo.is_dir():
             chosen = pick_gguf_from_dir(local_repo)
             if chosen:
                 return chosen
-
-            entrypoints = find_shard_entrypoints(local_repo)
-            if len(entrypoints) > 1:
-                raise SystemExit(
-                    f"Multiple GGUF quant variants found under:\n  {local_repo}\n"
-                    f"Pass a more specific --model like:\n"
-                    f"  {model_arg}/UD-Q4_K_XL\n"
-                    f"  or an exact .gguf file path."
-                )
+            raise_if_multiple_variants(local_repo, model_arg)
 
     return None
 
@@ -497,7 +529,9 @@ def med(results, key):
 def derive_label_for_payload(payload, model_id: str) -> str:
     """
     For vLLM: use model_id
-    For llama-server: attempt to include quant folder relative to ~/models
+    For llama-server: attempt to include quant folder relative to ~/models.
+      - If GGUF sits in repo root among multiple quants, prefer file stem.
+      - If GGUF is in a quant folder, use that folder path.
     """
     engine = payload.get("engine")
     if engine != "llama-server":
@@ -508,14 +542,18 @@ def derive_label_for_payload(payload, model_id: str) -> str:
         return model_id
 
     p = Path(gguf)
-    # Prefer quant folder label if under MODELS_ROOT
+
     try:
         rel = p.relative_to(MODELS_ROOT)
-        # Use parent directory path relative to models root
-        # e.g. unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
-        return str(rel.parent)
+        parent = str(rel.parent)
+
+        # parent like "org/repo" -> not specific enough; use file stem
+        if parent.count("/") <= 1:
+            return p.stem
+
+        # parent like "org/repo/UD-Q4_K_XL" -> good label
+        return parent
     except Exception:
-        # fallback: file stem
         return p.stem
 
 def write_payload(payload, tag: str, model_id: str):
@@ -562,7 +600,7 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
             "gpu_info": get_gpu_info(),
             "tag": args.tag,
             "env": {
-                # Keep for debugging, but not used for tag logic
+                # kept for debugging
                 "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
                 "engine": args.engine,
                 "llama_server_bin": args.llama_server_bin,
@@ -723,30 +761,35 @@ def main():
 
     args = ap.parse_args()
 
-    # Tag inference is now purely from get_gpu_info
+    # Tag inference is purely from get_gpu_info
     args.tag = infer_tag(args.tag)
 
     model_id = args.model
 
-    # Auto-detect GGUF
+    # Auto-detect GGUF (may raise ambiguity errors)
     gguf_path = resolve_local_gguf(model_id)
 
     if args.engine == "auto":
         args.engine = "llama-server" if gguf_path else "vllm"
 
     if args.engine == "llama-server":
-        # If not resolved via mirror/dir logic, allow explicit .gguf path
+        # Allow explicit .gguf path under MODELS_ROOT via --model org/repo/file.gguf
         if not gguf_path:
             p = Path(model_id).expanduser()
             if is_gguf_file(p):
                 gguf_path = p
+            else:
+                cand = MODELS_ROOT / model_id
+                if is_gguf_file(cand):
+                    gguf_path = cand
 
         if not gguf_path:
             raise SystemExit(
                 "Engine set to llama-server but no GGUF path could be resolved.\n"
                 "Pass --model with:\n"
-                "  * a quant subfolder (recommended): <repo>/UD-Q4_K_XL\n"
+                "  * a quant subfolder: <repo>/UD-Q4_K_XL\n"
                 "  * or an explicit .gguf file path\n"
+                "  * or <org>/<repo>/<file>.gguf relative to ~/models\n"
             )
 
         print(f"\n== Loading model ==")
