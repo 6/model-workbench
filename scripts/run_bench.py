@@ -2,38 +2,56 @@
 """
 Model Workbench Benchmark Runner
 
-Supports two engines:
-  - vLLM (HF weights, GPT-OSS, etc.)
-  - llama.cpp llama-server (GGUF, including split/sharded files)
+Engines:
+  - vLLM for standard HF models
+  - llama.cpp llama-server for GGUF (including split shards)
 
 Auto routing:
   --engine auto (default)
-    * If model resolves to .gguf (file) OR local mirror contains
-      *-00001-of-*.gguf, route to llama-server
-    * Else route to vLLM
-
-Local model layout is assumed:
-  ~/models/<org>/<repo>/...
+    * If --model resolves to a GGUF file or a directory containing GGUF,
+      or if local mirror under ~/models/<org>/<repo> contains GGUF shards,
+      route to llama-server.
+    * Else route to vLLM.
 
 Tag inference:
-  * Does NOT use CUDA_VISIBLE_DEVICES.
+  * DOES NOT use CUDA_VISIBLE_DEVICES.
   * Always inferred from get_gpu_info().
+
+Result filenames:
+  * For llama-server GGUF runs, filename includes the quant folder when possible,
+    to avoid collisions across multiple variants.
+
+Assumptions:
+  * Local mirror layout: ~/models/<org>/<repo>/...
+  * Repo structure:
+      model-workbench/
+        config/models.yaml
+        scripts/run_bench.py
+        benchmarks/results/...
 
 Examples:
 
-  # Auto route (will use vLLM)
-  uv run python benchmarks/run_bench.py --model Qwen/Qwen3-30B-A3B-Instruct-2507
+  # vLLM path
+  uv run python scripts/run_bench.py --model Qwen/Qwen3-30B-A3B-Instruct-2507
 
-  # Auto route (will use llama-server if GGUF shards exist locally)
-  uv run python benchmarks/run_bench.py --model unsloth/GLM-4.5-Air-GGUF
+  # llama-server auto path (if GGUF exists locally)
+  uv run python scripts/run_bench.py --model unsloth/GLM-4.5-Air-GGUF
 
-  # Force llama-server with explicit shard path
-  uv run python benchmarks/run_bench.py \
+  # Explicit quant folder (recommended when multiple quants exist)
+  uv run python scripts/run_bench.py \
+    --engine llama-server \
+    --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+  # Explicit shard file
+  uv run python scripts/run_bench.py \
     --engine llama-server \
     --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL/GLM-4.5-Air-UD-Q4_K_XL-00001-of-00002.gguf
 
-  # Force vLLM
-  uv run python benchmarks/run_bench.py --engine vllm --model allenai/Olmo-3-7B-Think
+  # Use an already running server
+  uv run python scripts/run_bench.py \
+    --engine llama-server \
+    --llama-no-autostart \
+    --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 """
 
 import argparse
@@ -60,11 +78,17 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "models.yaml"
 MODELS_ROOT = Path.home() / "models"
 
+RESULTS_ROOT = ROOT / "benchmarks" / "results"
+
 PROMPTS = {
     "short": "Explain speculative decoding in 2 sentences.",
     "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
     "long": "Write a concise technical overview of KV cache and why it matters for long context.",
 }
+
+# ----------------------------
+# Utility
+# ----------------------------
 
 def sanitize(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
@@ -72,6 +96,10 @@ def sanitize(s: str) -> str:
 def run(cmd):
     print("+", " ".join(cmd))
     subprocess.check_call(cmd)
+
+# ----------------------------
+# GPU info + tag inference
+# ----------------------------
 
 def get_gpu_info():
     """
@@ -117,6 +145,26 @@ def get_gpu_info():
             "gpus": [],
         }
 
+def infer_tag(cli_tag: str | None) -> str:
+    if cli_tag:
+        return cli_tag
+
+    info = get_gpu_info()
+    gpus = info.get("gpus") or []
+    n = len(gpus)
+
+    if n == 0:
+        return "unknown-gpu"
+    if n == 1:
+        return "single-gpu"
+    if n == 2:
+        return "dual-gpu"
+    return f"{n}-gpu"
+
+# ----------------------------
+# Config loader (optional)
+# ----------------------------
+
 def load_config_models():
     """
     Expects config/models.yaml like:
@@ -140,27 +188,7 @@ def load_config_models():
     return out
 
 # ----------------------------
-# Tag inference: ALWAYS from get_gpu_info
-# ----------------------------
-
-def infer_tag(cli_tag: str | None) -> str:
-    if cli_tag:
-        return cli_tag
-
-    info = get_gpu_info()
-    gpus = info.get("gpus") or []
-    n = len(gpus)
-
-    if n == 0:
-        return "unknown-gpu"
-    if n == 1:
-        return "single-gpu"
-    if n == 2:
-        return "dual-gpu"
-    return f"{n}-gpu"
-
-# ----------------------------
-# GGUF resolution for llama-server
+# GGUF / llama-server resolution
 # ----------------------------
 
 _SHARD_RE = re.compile(r".*-\d{5}-of-\d{5}\.gguf$")
@@ -168,24 +196,37 @@ _SHARD_RE = re.compile(r".*-\d{5}-of-\d{5}\.gguf$")
 def is_gguf_file(p: Path) -> bool:
     return p.is_file() and p.suffix == ".gguf"
 
-def find_first_gguf_shard(dir_path: Path) -> Path | None:
-    # Prefer shard 00001-of-xxxxx if present
-    candidates = sorted(local.rglob("*-00001-of-*.gguf"))
-    if len(candidates) == 1:
-        return candidates[0]
-    if len(candidates) > 1:
-        raise SystemExit(
-            f"Multiple GGUF quant variants found under {local}.\n"
-            f"Pass a more specific --model like:\n"
-            f"  {model_arg}/UD-Q4_K_XL\n"
-            f"  or an exact .gguf file path."
-        )
+def find_shard_entrypoints(dir_path: Path):
+    """
+    Return all *-00001-of-*.gguf under dir_path (sorted).
+    """
+    return sorted(dir_path.rglob("*-00001-of-*.gguf"))
 
 def find_single_nonshard_gguf(dir_path: Path) -> Path | None:
     ggufs = sorted(dir_path.rglob("*.gguf"))
     non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
     if len(non_shards) == 1:
         return non_shards[0]
+    return None
+
+def pick_gguf_from_dir(dir_path: Path) -> Path | None:
+    """
+    For a given directory:
+      1) If exactly one shard entrypoint (*-00001-of-*.gguf) -> return it
+      2) Else if exactly one non-sharded gguf -> return it
+      3) Else if multiple candidates -> None (caller can raise ambiguity)
+      4) Else -> None
+    """
+    entrypoints = find_shard_entrypoints(dir_path)
+    if len(entrypoints) == 1:
+        return entrypoints[0]
+    if len(entrypoints) > 1:
+        return None
+
+    single = find_single_nonshard_gguf(dir_path)
+    if single:
+        return single
+
     return None
 
 def resolve_local_gguf(model_arg: str) -> Path | None:
@@ -195,37 +236,51 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
       2) local mirror of HF id under ~/models/<org>/<repo>
 
     Returns:
-      - a .gguf file (prefer 00001 shard if split)
+      - a GGUF file path (prefer shard entrypoint)
       - None if not GGUF
+
+    Ambiguity:
+      - If multiple shard entrypoints exist under a repo root,
+        require a more specific --model such as <repo>/UD-Q4_K_XL.
     """
-    # 1) If user passes a filesystem path
+    # 1) User passed a filesystem path
     p = Path(model_arg).expanduser()
     if is_gguf_file(p):
         return p
     if p.is_dir():
-        shard = find_first_gguf_shard(p)
-        if shard:
-            return shard
-        single = find_single_nonshard_gguf(p)
-        if single:
-            return single
+        chosen = pick_gguf_from_dir(p)
+        if chosen:
+            return chosen
 
-    # 2) If user passes HF-style id and we have a local mirror
+        # If ambiguous at directory level:
+        entrypoints = find_shard_entrypoints(p)
+        if len(entrypoints) > 1:
+            raise SystemExit(
+                f"Multiple GGUF quant variants found under:\n  {p}\n"
+                f"Pass a more specific --model like:\n"
+                f"  {model_arg}/UD-Q4_K_XL\n"
+                f"  or an exact .gguf file path."
+            )
+        return None
+
+    # 2) HF-style id with local mirror
     if "/" in model_arg:
-        local = MODELS_ROOT / model_arg
-        if local.exists():
-            shard = find_first_gguf_shard(local)
-            if shard:
-                return shard
-            single = find_single_nonshard_gguf(local)
-            if single:
-                return single
+        local_repo = MODELS_ROOT / model_arg
+        if local_repo.exists():
+            chosen = pick_gguf_from_dir(local_repo)
+            if chosen:
+                return chosen
+
+            entrypoints = find_shard_entrypoints(local_repo)
+            if len(entrypoints) > 1:
+                raise SystemExit(
+                    f"Multiple GGUF quant variants found under:\n  {local_repo}\n"
+                    f"Pass a more specific --model like:\n"
+                    f"  {model_arg}/UD-Q4_K_XL\n"
+                    f"  or an exact .gguf file path."
+                )
 
     return None
-
-# ----------------------------
-# vLLM model ref resolution
-# ----------------------------
 
 def resolve_model_ref_vllm(model_arg: str) -> str:
     """
@@ -243,7 +298,7 @@ def resolve_model_ref_vllm(model_arg: str) -> str:
     return model_arg
 
 # ----------------------------
-# llama-server process control + HTTP bench
+# llama-server control + HTTP bench
 # ----------------------------
 
 def port_open(host: str, port: int) -> bool:
@@ -275,7 +330,7 @@ def start_llama_server(args, gguf_path: Path):
 
     cmd = [args.llama_server_bin, "-m", str(gguf_path), "--port", str(port)]
 
-    # GPU offload as much as possible (llama.cpp will clamp if needed)
+    # GPU offload as much as possible
     if args.llama_n_gpu_layers is not None:
         cmd += ["-ngl", str(args.llama_n_gpu_layers)]
 
@@ -283,11 +338,11 @@ def start_llama_server(args, gguf_path: Path):
     if args.llama_ctx:
         cmd += ["-c", str(args.llama_ctx)]
 
-    # Parallel sequences (server-side concurrency)
+    # Parallel sequences
     if args.llama_parallel and args.llama_parallel > 1:
         cmd += ["-np", str(args.llama_parallel)]
 
-    # Add any raw extra args
+    # Extra raw args
     if args.llama_extra_args:
         cmd += args.llama_extra_args
 
@@ -299,7 +354,7 @@ def start_llama_server(args, gguf_path: Path):
         text=True
     )
 
-    # quick readiness poll
+    # readiness poll
     for _ in range(200):
         if port_open(host, port):
             break
@@ -375,7 +430,7 @@ def bench_once_llama_http(prompt: str, args):
     }
 
 # ----------------------------
-# vLLM bench bits
+# vLLM bench
 # ----------------------------
 
 def try_get_token_counts(outputs):
@@ -432,42 +487,53 @@ def bench_once_vllm(llm, prompt: str, max_tokens: int, temperature: float, seed:
     }
 
 # ----------------------------
-# Unified run helpers
+# Unified helpers
 # ----------------------------
 
 def med(results, key):
     vals = [r.get(key) for r in results if r.get(key) is not None]
     return statistics.median(vals) if vals else None
 
+def derive_label_for_payload(payload, model_id: str) -> str:
+    """
+    For vLLM: use model_id
+    For llama-server: attempt to include quant folder relative to ~/models
+    """
+    engine = payload.get("engine")
+    if engine != "llama-server":
+        return model_id
+
+    gguf = payload.get("model_ref")
+    if not gguf:
+        return model_id
+
+    p = Path(gguf)
+    # Prefer quant folder label if under MODELS_ROOT
+    try:
+        rel = p.relative_to(MODELS_ROOT)
+        # Use parent directory path relative to models root
+        # e.g. unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+        return str(rel.parent)
+    except Exception:
+        # fallback: file stem
+        return p.stem
+
 def write_payload(payload, tag: str, model_id: str):
-    out_base = ROOT / "benchmarks" / "results" / tag
+    out_base = RESULTS_ROOT / tag
     out_base.mkdir(parents=True, exist_ok=True)
 
-    label = model_id
-
-    # If llama-server and we resolved a GGUF path, use a richer label
-    try:
-        if payload.get("engine") == "llama-server":
-            gguf = payload.get("model_ref")
-            if gguf:
-                # Make a stable label relative to ~/models when possible
-                p = Path(gguf)
-                try:
-                    rel = p.relative_to(MODELS_ROOT)
-                    label = str(rel.parent)  # include quant folder
-                except Exception:
-                    label = p.stem
-    except Exception:
-        pass
-    
+    label = derive_label_for_payload(payload, model_id)
     fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(label)}.json"
 
     out_path = out_base / fname
-
     with open(out_path, "w") as f:
         json.dump(payload, f, indent=2)
 
     print(f"Wrote: {out_path}")
+
+# ----------------------------
+# Engine runners
+# ----------------------------
 
 def run_model_llama(model_id: str, args, gguf_path: Path):
     prompt = PROMPTS[args.prompt_set]
@@ -477,7 +543,6 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
         # Warmup
         _ = bench_once_llama_http(prompt, args)
 
-        # Timed iterations
         results = []
         for _ in range(args.iterations):
             results.append(bench_once_llama_http(prompt, args))
@@ -497,6 +562,7 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
             "gpu_info": get_gpu_info(),
             "tag": args.tag,
             "env": {
+                # Keep for debugging, but not used for tag logic
                 "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
                 "engine": args.engine,
                 "llama_server_bin": args.llama_server_bin,
@@ -517,6 +583,7 @@ def run_model_llama(model_id: str, args, gguf_path: Path):
         }
 
         write_payload(payload, args.tag, model_id)
+
     finally:
         stop_llama_server(proc)
 
@@ -598,6 +665,10 @@ def run_model_vllm(model_id: str, args):
 
     write_payload(payload, args.tag, model_id)
 
+# ----------------------------
+# Main
+# ----------------------------
+
 def main():
     ap = argparse.ArgumentParser(description="Benchmark runner (vLLM + llama-server)")
 
@@ -607,8 +678,8 @@ def main():
                     choices=("auto", "vllm", "llama-server"),
                     help="Inference engine")
 
-    # Output tag
-    ap.add_argument("--tag", default=None, help="Optional output tag; inferred if omitted")
+    ap.add_argument("--tag", default=None,
+                    help="Optional output tag; inferred if omitted")
 
     ap.add_argument("--iterations", type=int, default=3,
                     help="Number of timed iterations (median reported)")
@@ -652,7 +723,7 @@ def main():
 
     args = ap.parse_args()
 
-    # Tag inference now comes purely from get_gpu_info()
+    # Tag inference is now purely from get_gpu_info
     args.tag = infer_tag(args.tag)
 
     model_id = args.model
@@ -664,8 +735,8 @@ def main():
         args.engine = "llama-server" if gguf_path else "vllm"
 
     if args.engine == "llama-server":
+        # If not resolved via mirror/dir logic, allow explicit .gguf path
         if not gguf_path:
-            # User may be passing exact path not under mirror
             p = Path(model_id).expanduser()
             if is_gguf_file(p):
                 gguf_path = p
@@ -673,7 +744,9 @@ def main():
         if not gguf_path:
             raise SystemExit(
                 "Engine set to llama-server but no GGUF path could be resolved.\n"
-                "Pass --model with an explicit .gguf file or a local repo containing shards."
+                "Pass --model with:\n"
+                "  * a quant subfolder (recommended): <repo>/UD-Q4_K_XL\n"
+                "  * or an explicit .gguf file path\n"
             )
 
         print(f"\n== Loading model ==")

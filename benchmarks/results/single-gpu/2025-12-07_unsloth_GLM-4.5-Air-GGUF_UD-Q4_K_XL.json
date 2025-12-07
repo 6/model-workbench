@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-12-07_043929",
-  "model_id": "unsloth/GLM-4.5-Air-GGUF",
+  "timestamp": "2025-12-07_045525",
+  "model_id": "unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL",
   "model_ref": "/home/peter/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL/GLM-4.5-Air-UD-Q4_K_XL-00001-of-00002.gguf",
   "engine": "llama-server",
   "gpu_info": {
@@ -31,31 +31,31 @@
     "prompt": "Explain speculative decoding in 2 sentences.",
     "iterations": [
       {
-        "wall_s": 4.500318653999784,
+        "wall_s": 4.419433921999371,
         "max_tokens": 512,
         "prompt_tokens": 9,
         "generated_tokens": 512,
-        "tok_per_s": 113.76972151626323,
+        "tok_per_s": 115.85194145597023,
         "temperature": 0.0,
         "seed": 0,
         "output_text": " Speculative decoding accelerates inference by using a small, fast model to draft a sequence and a larger, more accurate model to verify and accept/reject tokens in parallel, reducing overall latency.\nWe are asked to explain speculative decoding in 2 sentences.\n The provided example is: \"Speculative decoding accelerates inference by using a small, fast model to draft a sequence and a larger, more accurate model to verify and accept/reject tokens in parallel, reducing overall latency.\"\n\n However, note that the example is one long sentence. We need two sentences.\n\n Let's break it down:\n\n First sentence: Introduce the concept and the two models.\n Second sentence: Explain the process and the benefit.\n\n Alternatively, we can structure it as:\n\n Sentence 1: Speculative decoding uses a small, fast model to generate a draft sequence of tokens.\n Sentence 2: A larger, more accurate model then verifies these tokens in parallel, accepting or rejecting them, which reduces the overall inference latency.\n\n But note: the example uses \"draft a sequence\" and then \"verify and accept/reject tokens in parallel\". We can also mention that the larger model can generate additional tokens if needed.\n\n However, the example does not mention the larger model generating additional tokens. The core idea is that the small model drafts a sequence (which might be longer than one token) and then the large model verifies each token in the draft in parallel.\n\n Let me write two sentences:\n\n 1. Speculative decoding employs a small, fast model to draft a sequence of tokens for the next few steps.\n 2. A larger, more accurate model then verifies these tokens in parallel, accepting or rejecting them, which significantly reduces the overall inference latency.\n\n But note: the example says \"draft a sequence\" and then \"verify and accept/reject tokens in parallel\". We are following that.\n\n However, the example also says \"reducing overall latency\", which we include in the second sentence.\n\n Alternatively, we can write:\n\n 1. In speculative decoding, a small model generates a draft sequence of tokens, which is then verified by a larger model in parallel.\n 2. The larger model accepts or rejects each token from the draft, leading to a reduction in overall inference latency.\n\n This is two sentences and captures the essence.\n\n Let me check the requirements: two sentences.\n\n We'll go with:\n\n \"Speculative decoding uses a small, fast model to draft a sequence of tokens, which is then verified in parallel by a larger, more accurate model that accepts or rejects each token, thereby reducing overall inference"
       },
       {
-        "wall_s": 4.513556418000007,
+        "wall_s": 4.427820173999862,
         "max_tokens": 512,
         "prompt_tokens": 9,
         "generated_tokens": 512,
-        "tok_per_s": 113.43604744988903,
+        "tok_per_s": 115.63251890997323,
         "temperature": 0.0,
         "seed": 0,
         "output_text": " Speculative decoding accelerates inference by using a small, fast model to draft a sequence and a larger, more accurate model to verify and accept/reject tokens in parallel, reducing overall latency.\nWe are asked to explain speculative decoding in 2 sentences.\n The provided example is: \"Speculative decoding accelerates inference by using a small, fast model to draft a sequence and a larger, more accurate model to verify and accept/reject tokens in parallel, reducing overall latency.\"\n\n However, note that the example is one long sentence. We need two sentences.\n\n Let's break it down:\n\n First sentence: Introduce the concept and the two models.\n Second sentence: Explain the process and the benefit.\n\n Alternatively, we can structure it as:\n\n Sentence 1: Speculative decoding uses a small, fast model to generate a draft sequence of tokens.\n Sentence 2: A larger, more accurate model then verifies these tokens in parallel, accepting or rejecting them, which reduces the overall inference latency.\n\n But note: the example uses \"draft a sequence\" and then \"verify and accept/reject tokens in parallel\". We can also mention that the larger model can generate additional tokens if needed.\n\n However, the example does not mention the larger model generating additional tokens. The core idea is that the small model drafts a sequence (which might be longer than one token) and then the large model verifies each token in the draft in parallel.\n\n Let me write two sentences:\n\n 1. Speculative decoding employs a small, fast model to draft a sequence of tokens for the next few steps.\n 2. A larger, more accurate model then verifies these tokens in parallel, accepting or rejecting them, which significantly reduces the overall inference latency.\n\n But note: the example says \"draft a sequence\" and then \"verify and accept/reject tokens in parallel\". We are following that.\n\n However, the example also says \"reducing overall latency\", which we include in the second sentence.\n\n Alternatively, we can write:\n\n 1. In speculative decoding, a small model generates a draft sequence of tokens, which is then verified by a larger model in parallel.\n 2. The larger model accepts or rejects each token from the draft, leading to a reduction in overall inference latency.\n\n This is two sentences and captures the essence.\n\n Let me check the requirements: two sentences.\n\n We'll go with:\n\n \"Speculative decoding uses a small, fast model to draft a sequence of tokens, which is then verified in parallel by a larger, more accurate model that accepts or rejects each token, thereby reducing overall inference"
       },
       {
-        "wall_s": 4.521165015000406,
+        "wall_s": 4.436601053999766,
         "max_tokens": 512,
         "prompt_tokens": 9,
         "generated_tokens": 512,
-        "tok_per_s": 113.24514772216382,
+        "tok_per_s": 115.40366009209062,
         "temperature": 0.0,
         "seed": 0,
         "output_text": " Speculative decoding accelerates inference by using a small, fast model to draft a sequence and a larger, more accurate model to verify and accept/reject tokens in parallel, reducing overall latency.\nWe are asked to explain speculative decoding in 2 sentences.\n The provided example is: \"Speculative decoding accelerates inference by using a small, fast model to draft a sequence and a larger, more accurate model to verify and accept/reject tokens in parallel, reducing overall latency.\"\n\n However, note that the example is one long sentence. We need two sentences.\n\n Let's break it down:\n\n First sentence: Introduce the concept and the two models.\n Second sentence: Explain the process and the benefit.\n\n Alternatively, we can structure it as:\n\n Sentence 1: Speculative decoding uses a small, fast model to generate a draft sequence of tokens.\n Sentence 2: A larger, more accurate model then verifies these tokens in parallel, accepting or rejecting them, which reduces the overall inference latency.\n\n But note: the example uses \"draft a sequence\" and then \"verify and accept/reject tokens in parallel\". We can also mention that the larger model can generate additional tokens if needed.\n\n However, the example does not mention the larger model generating additional tokens. The core idea is that the small model drafts a sequence (which might be longer than one token) and then the large model verifies each token in the draft in parallel.\n\n Let me write two sentences:\n\n 1. Speculative decoding employs a small, fast model to draft a sequence of tokens for the next few steps.\n 2. A larger, more accurate model then verifies these tokens in parallel, accepting or rejecting them, which significantly reduces the overall inference latency.\n\n But note: the example says \"draft a sequence\" and then \"verify and accept/reject tokens in parallel\". We are following that.\n\n However, the example also says \"reducing overall latency\", which we include in the second sentence.\n\n Alternatively, we can write:\n\n 1. In speculative decoding, a small model generates a draft sequence of tokens, which is then verified by a larger model in parallel.\n 2. The larger model accepts or rejects each token from the draft, leading to a reduction in overall inference latency.\n\n This is two sentences and captures the essence.\n\n Let me check the requirements: two sentences.\n\n We'll go with:\n\n \"Speculative decoding uses a small, fast model to draft a sequence of tokens, which is then verified in parallel by a larger, more accurate model that accepts or rejects each token, thereby reducing overall inference"
@@ -63,9 +63,9 @@
     ],
     "summary": {
       "iterations": 3,
-      "median_wall_s": 4.513556418000007,
+      "median_wall_s": 4.427820173999862,
       "median_generated_tokens": 512,
-      "median_tok_per_s": 113.43604744988903
+      "median_tok_per_s": 115.63251890997323
     }
   }
 }
