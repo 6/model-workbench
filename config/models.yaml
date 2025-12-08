@@ -5,6 +5,22 @@ models:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
 
+  # Seems buggy
+  #- source: hf
+  #  repo_id: bartowski/cerebras_MiniMax-M2-REAP-139B-A10B-GGUF
+  #  include:
+  #    - "cerebras_MiniMax-M2-REAP-139B-A10B-Q4_K_M/*.gguf"
+
+  #- source: hf
+  #  repo_id: bartowski/cerebras_MiniMax-M2-REAP-162B-A10B-GGUF
+  #  include:
+  #    - "cerebras_MiniMax-M2-REAP-162B-A10B-IQ4_XS/*.gguf"
+
+  - source: hf
+    repo_id: bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF
+    include:
+      - "cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/*.gguf"
+
   - source: hf
     repo_id: unsloth/Qwen3-235B-A22B-Thinking-2507-GGUF
     include:

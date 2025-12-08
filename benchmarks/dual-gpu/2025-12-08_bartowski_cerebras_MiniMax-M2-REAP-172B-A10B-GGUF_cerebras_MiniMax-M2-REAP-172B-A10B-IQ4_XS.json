@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-08_152333",
+  "model_id": "bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF/cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS",
+  "model_ref": "/home/peter/models/bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF/cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 4.231547804999991,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 120.99591534686705,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include key concepts like context window, attention mechanism, and how KV cache enables efficient inference. Keep it under 200 words.\n\nI need to create a concise technical overview of KV cache and its importance for long context. I'll focus on key concepts like context window, attention mechanism, and efficient inference. The overview should be under 200 words, so I need to be concise. I\u2019ll include a brief explanation of KV cache, its role in the attention mechanism, and how it enables efficient inference. I\u2019ll also mention the context window and its limitations. Let\u2019s get started on this!\n\nI need to clarify that the context window is the maximum number of tokens processed at once, while KV cache stores key and value tensors for previous tokens. This allows for efficient incremental computation by avoiding recomputation. I\u2019ll mention that the attention mechanism uses Q, K, and V, and that the KV cache grows with each step. I\u2019ll also touch on memory usage and techniques like sliding window attention. Finally, I\u2019ll explain how KV cache enables efficient inference by reusing previous computations. Let\u2019s put this all together!\n\nI need to create a concise technical overview of KV cache and its importance for long context. I\u2019ll start with a definition: KV cache stores key and value tensors from previous tokens, enabling incremental attention computation. I\u2019ll explain that the context window limits tokens processed at once, and without KV cache, each step would recompute attention from scratch, leading to quadratic complexity. With KV cache, we only compute Q for the new token and reuse K/V, achieving linear complexity. I\u2019ll also mention memory growth and techniques like sliding windows. Let\u2019s keep it under 200 words!\n\nI need to create a concise technical overview of KV cache and its importance for long context. I\u2019ll start with a definition: KV cache stores key and value tensors from previous tokens, enabling incremental attention computation. I\u2019ll explain that the context window limits tokens processed at once, and without KV cache, each step would recompute attention from scratch, leading to quadratic complexity. With KV cache, we only compute Q for the new token and reuse K/V, achieving linear complexity. I\u2019ll also mention memory growth and techniques like sliding windows. Let\u2019s keep it under 200 words!\n</think>\n\nKV cache stores the key (K) and value (V) tensors computed for previous tokens during autoregressive generation. At each step, the model computes a query (Q) for the new token and performs attention over all previous tokens. Without a cache, this would recompute K/V for the entire"
+      },
+      {
+        "wall_s": 4.229069920000029,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 121.06680894034415,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include key concepts like context window, attention mechanism, and how KV cache enables efficient inference. Keep it under 200 words.\n\nI need to create a concise technical overview of KV cache and its importance for long context. I'll focus on key concepts like context window, attention mechanism, and efficient inference. The overview should be under 200 words, so I need to be concise. I\u2019ll include a brief explanation of KV cache, its role in the attention mechanism, and how it enables efficient inference. I\u2019ll also mention the context window and its limitations. Let\u2019s get started on this!\n\nI need to clarify that the context window is the maximum number of tokens processed at once, while KV cache stores key and value tensors for previous tokens. This allows for efficient incremental computation by avoiding recomputation. I\u2019ll mention that the attention mechanism uses Q, K, and V, and that the KV cache grows with each step. I\u2019ll also touch on memory usage and techniques like sliding window attention. Finally, I\u2019ll explain how KV cache enables efficient inference by reusing previous computations. Let\u2019s put this all together!\n\nI need to create a concise technical overview of KV cache and its importance for long context. I\u2019ll start with a definition: KV cache stores key and value tensors from previous tokens, enabling incremental attention computation. I\u2019ll explain that the context window limits tokens processed at once, and without KV cache, each step would recompute attention from scratch, leading to quadratic complexity. With KV cache, we only compute Q for the new token and reuse K/V, achieving linear complexity. I\u2019ll also mention memory growth and techniques like sliding windows. Let\u2019s keep it under 200 words!\n\nI need to create a concise technical overview of KV cache and its importance for long context. I\u2019ll start with a definition: KV cache stores key and value tensors from previous tokens, enabling incremental attention computation. I\u2019ll explain that the context window limits tokens processed at once, and without KV cache, each step would recompute attention from scratch, leading to quadratic complexity. With KV cache, we only compute Q for the new token and reuse K/V, achieving linear complexity. I\u2019ll also mention memory growth and techniques like sliding windows. Let\u2019s keep it under 200 words!\n</think>\n\nKV cache stores the key (K) and value (V) tensors computed for previous tokens during autoregressive generation. At each step, the model computes a query (Q) for the new token and performs attention over all previous tokens. Without a cache, this would recompute K/V for the entire"
+      },
+      {
+        "wall_s": 4.195692329999929,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 122.0299201490803,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " Include key concepts like context window, attention mechanism, and how KV cache enables efficient inference. Keep it under 200 words.\n\nI need to create a concise technical overview of KV cache and its importance for long context. I'll focus on key concepts like context window, attention mechanism, and efficient inference. The overview should be under 200 words, so I need to be concise. I\u2019ll include a brief explanation of KV cache, its role in the attention mechanism, and how it enables efficient inference. I\u2019ll also mention the context window and its limitations. Let\u2019s get started on this!\n\nI need to clarify that the context window is the maximum number of tokens processed at once, while KV cache stores key and value tensors for previous tokens. This allows for efficient incremental computation by avoiding recomputation. I\u2019ll mention that the attention mechanism uses Q, K, and V, and that the KV cache grows with each step. I\u2019ll also touch on memory usage and techniques like sliding window attention. Finally, I\u2019ll explain how KV cache enables efficient inference by reusing previous computations. Let\u2019s put this all together!\n\nI need to create a concise technical overview of KV cache and its importance for long context. I\u2019ll start with a definition: KV cache stores key and value tensors from previous tokens, enabling incremental attention computation. I\u2019ll explain that the context window limits tokens processed at once, and without KV cache, each step would recompute attention from scratch, leading to quadratic complexity. With KV cache, we only compute Q for the new token and reuse K/V, achieving linear complexity. I\u2019ll also mention memory growth and techniques like sliding windows. Let\u2019s keep it under 200 words!\n\nI need to create a concise technical overview of KV cache and its importance for long context. I\u2019ll start with a definition: KV cache stores key and value tensors from previous tokens, enabling incremental attention computation. I\u2019ll explain that the context window limits tokens processed at once, and without KV cache, each step would recompute attention from scratch, leading to quadratic complexity. With KV cache, we only compute Q for the new token and reuse K/V, achieving linear complexity. I\u2019ll also mention memory growth and techniques like sliding windows. Let\u2019s keep it under 200 words!\n</think>\n\nKV cache stores the key (K) and value (V) tensors computed for previous tokens during autoregressive generation. At each step, the model computes a query (Q) for the new token and performs attention over all previous tokens. Without a cache, this would recompute K/V for the entire"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 4.229069920000029,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 121.06680894034415
+    }
+  }
+}
