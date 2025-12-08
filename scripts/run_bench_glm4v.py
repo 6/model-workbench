@@ -178,10 +178,17 @@ def main():
         raise NotImplementedError("Vision mode not yet supported - processor bug in transformers 5.0.0rc0")
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+    # Explicitly set max_memory to avoid unnecessary disk offload
+    # MoE models trigger conservative memory estimation without this
+    n_gpus = torch.cuda.device_count()
+    max_memory = {i: "90GiB" for i in range(n_gpus)} if n_gpus > 0 else None
+
     model = Glm46VForConditionalGeneration.from_pretrained(
         model_path,
         torch_dtype="auto",
         device_map="auto",
+        max_memory=max_memory,
     )
 
     # Warmup
