@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """
-Model Workbench vLLM Benchmark Runner
+Model Workbench SGLang Benchmark Runner
 
-Uses vLLM for high-performance inference with tensor parallelism for multi-GPU support.
-Recommended for models like GLM-4.6V-FP8 that have native transformers issues.
+Uses SGLang for high-performance inference with tensor parallelism for multi-GPU support.
+Recommended for models like GLM-4.6V-FP8 that require transformers 5.x (which vLLM doesn't support).
 
 Examples:
 
   # Basic usage with tensor parallelism
-  uv run python scripts/run_bench_vllm.py \
+  uv run python scripts/run_bench_sglang.py \
     --model zai-org/GLM-4.6V-FP8 \
     --tensor-parallel 2
 
   # Text-only benchmark
-  uv run python scripts/run_bench_vllm.py \
+  uv run python scripts/run_bench_sglang.py \
     --model zai-org/GLM-4.6V-FP8 \
     --tensor-parallel 2 \
     --prompt-set short
 
   # Vision benchmark with image
-  uv run python scripts/run_bench_vllm.py \
+  uv run python scripts/run_bench_sglang.py \
     --model zai-org/GLM-4.6V-FP8 \
     --tensor-parallel 2 \
     --image config/example.jpg \
@@ -36,7 +36,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from vllm import LLM, SamplingParams
+import sglang as sgl
+from sglang import Engine
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
@@ -134,44 +135,62 @@ def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     return image_arg, image_arg
 
 
-def build_prompt(prompt_text: str, image_path: str | None) -> dict:
-    """Build vLLM prompt dict for text or multimodal input."""
-    if image_path is None:
-        return {"prompt": prompt_text}
-    else:
-        # For vision models, use multi_modal_data
-        from PIL import Image
-        image = Image.open(image_path) if not image_path.startswith("http") else None
+def bench_once(engine, prompt: str, image_path: str | None, max_tokens: int, temperature: float):
+    """Run single inference and measure throughput using SGLang offline engine."""
 
+    # Build input for SGLang
+    if image_path is not None:
+        # Vision mode - load image
+        from PIL import Image
         if image_path.startswith("http"):
-            # For URLs, vLLM can fetch directly in some cases
-            # But safer to download first
             import requests
             from io import BytesIO
             response = requests.get(image_path)
             image = Image.open(BytesIO(response.content))
+        else:
+            image = Image.open(image_path)
 
-        return {
-            "prompt": f"<image>\n{prompt_text}",
-            "multi_modal_data": {"image": image},
+        # SGLang multimodal format
+        input_data = {
+            "text": f"<image>\n{prompt}",
+            "image_data": image,
         }
+    else:
+        input_data = prompt
 
+    sampling_params = {
+        "max_new_tokens": max_tokens,
+        "temperature": temperature,
+    }
 
-def bench_once(llm, sampling_params, prompt_dict: dict, is_vision: bool):
-    """Run single inference and measure throughput."""
     t0 = time.perf_counter()
 
-    if is_vision:
-        outputs = llm.generate([prompt_dict], sampling_params=sampling_params)
+    if isinstance(input_data, dict):
+        # Multimodal
+        outputs = engine.generate(
+            input_data["text"],
+            sampling_params=sampling_params,
+            image_data=input_data["image_data"],
+        )
     else:
-        outputs = llm.generate([prompt_dict["prompt"]], sampling_params=sampling_params)
+        # Text only
+        outputs = engine.generate(input_data, sampling_params=sampling_params)
 
     t1 = time.perf_counter()
 
-    output = outputs[0]
-    gen_tokens = len(output.outputs[0].token_ids)
-    prompt_tokens = len(output.prompt_token_ids)
-    output_text = output.outputs[0].text
+    # Extract results
+    output = outputs[0] if isinstance(outputs, list) else outputs
+
+    # SGLang output structure
+    if hasattr(output, 'text'):
+        output_text = output.text
+        gen_tokens = output.meta_info.get("completion_tokens", len(output_text.split()))
+        prompt_tokens = output.meta_info.get("prompt_tokens", 0)
+    else:
+        # Fallback for different output format
+        output_text = str(output)
+        gen_tokens = len(output_text.split())
+        prompt_tokens = 0
 
     wall = t1 - t0
     return {
@@ -184,7 +203,7 @@ def bench_once(llm, sampling_params, prompt_dict: dict, is_vision: bool):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="vLLM benchmark runner")
+    ap = argparse.ArgumentParser(description="SGLang benchmark runner")
     ap.add_argument("--model", default="zai-org/GLM-4.6V-FP8")
     ap.add_argument("--tensor-parallel", type=int, default=2, help="Tensor parallel size (GPUs)")
     ap.add_argument("--image", default=None, help="Image path/URL or 'none' for text-only")
@@ -194,8 +213,7 @@ def main():
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--iterations", type=int, default=3)
     ap.add_argument("--tag", default=None)
-    ap.add_argument("--gpu-memory-utilization", type=float, default=0.9)
-    ap.add_argument("--trust-remote-code", action="store_true")
+    ap.add_argument("--mem-fraction", type=float, default=0.9, help="GPU memory fraction")
     args = ap.parse_args()
 
     tag = infer_tag(args.tag, args.tensor_parallel)
@@ -212,40 +230,30 @@ def main():
         prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
     mode = "vision" if is_vision else "text-only"
-    print(f"\n== vLLM Benchmark ==")
+    print(f"\n== SGLang Benchmark ==")
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
     print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
 
-    # Initialize vLLM
-    print("\n== Loading model with vLLM ==")
-    llm = LLM(
-        model=model_path,
-        tensor_parallel_size=args.tensor_parallel,
-        gpu_memory_utilization=args.gpu_memory_utilization,
-        trust_remote_code=args.trust_remote_code,
+    # Initialize SGLang engine
+    print("\n== Loading model with SGLang ==")
+    engine = Engine(
+        model_path=model_path,
+        tp_size=args.tensor_parallel,
+        mem_fraction_static=args.mem_fraction,
     )
-
-    sampling_params = SamplingParams(
-        max_tokens=args.max_tokens,
-        temperature=args.temperature,
-    )
-
-    # Build prompt
-    prompt_dict = build_prompt(prompt_text, image_source)
 
     # Warmup
     print("\n== Warmup ==")
-    warmup_params = SamplingParams(max_tokens=min(64, args.max_tokens), temperature=args.temperature)
-    bench_once(llm, warmup_params, prompt_dict, is_vision)
+    bench_once(engine, prompt_text, image_source, min(64, args.max_tokens), args.temperature)
 
     # Benchmark
     print(f"\n== Running {args.iterations} iterations ==")
     results = []
     for i in range(args.iterations):
-        r = bench_once(llm, sampling_params, prompt_dict, is_vision)
+        r = bench_once(engine, prompt_text, image_source, args.max_tokens, args.temperature)
         print(f"  iter {i+1}: {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
         results.append(r)
 
@@ -255,18 +263,18 @@ def main():
     # Save
     out_dir = RESULTS_ROOT / tag
     out_dir.mkdir(parents=True, exist_ok=True)
-    fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(args.model)}_vllm_{mode}.json"
+    fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(args.model)}_sglang_{mode}.json"
 
     payload = {
         "timestamp": datetime.now().isoformat(),
         "model_id": args.model,
-        "engine": "vllm",
+        "engine": "sglang",
         "mode": mode,
         "gpu_info": get_gpu_info(),
         "tag": tag,
         "config": {
             "tensor_parallel_size": args.tensor_parallel,
-            "gpu_memory_utilization": args.gpu_memory_utilization,
+            "mem_fraction_static": args.mem_fraction,
             "image": image_label,
             "prompt": prompt_text,
             "max_tokens": args.max_tokens,
@@ -279,6 +287,9 @@ def main():
     out_path = out_dir / fname
     out_path.write_text(json.dumps(payload, indent=2))
     print(f"Wrote: {out_path}")
+
+    # Cleanup
+    engine.shutdown()
 
 
 if __name__ == "__main__":
