@@ -2,25 +2,24 @@
 """
 GLM-4.6V Benchmark Runner
 
-Dedicated benchmark script for GLM-4.6V models following the official HuggingFace example.
-Supports both text-only and vision modes.
+Dedicated benchmark script for GLM-4.6V-FP8 model following the official HuggingFace example EXACTLY.
+Uses Glm4vMoeForConditionalGeneration (NOT Glm46VForConditionalGeneration).
 
 Examples:
+
+  # Vision benchmark (recommended - matches official example)
+  uv run python scripts/run_bench_glm4v.py \
+    --model zai-org/GLM-4.6V-FP8 \
+    --image config/example.jpg
 
   # Text-only benchmark
   uv run python scripts/run_bench_glm4v.py \
     --model zai-org/GLM-4.6V-FP8 \
     --image none
-
-  # Vision benchmark with local image
-  uv run python scripts/run_bench_glm4v.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --image config/example.jpg
 """
 
 import argparse
 import json
-import os
 import re
 import statistics
 import subprocess
@@ -33,7 +32,8 @@ from pathlib import Path
 warnings.filterwarnings("ignore", message="Unrecognized keys in.*rope_parameters.*mrope_section")
 
 import torch
-from transformers import AutoTokenizer, Glm46VForConditionalGeneration
+# Use EXACTLY the classes from official example
+from transformers import AutoProcessor, Glm4vMoeForConditionalGeneration
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
@@ -100,17 +100,35 @@ def resolve_model_path(model_arg: str) -> str:
         return str(p)
     return model_arg
 
-def bench_once_text(model, tokenizer, prompt, max_tokens, temperature, seed):
-    """Text-only benchmark using tokenizer directly (bypasses buggy processor)."""
+def bench_once(model, processor, image_path, prompt, max_tokens, temperature, seed):
+    """Benchmark following official HuggingFace example EXACTLY."""
     torch.manual_seed(seed)
 
-    # Build chat message and apply template
-    messages = [{"role": "user", "content": prompt}]
-    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    # Build message - EXACTLY like official example
+    if image_path is None:
+        # Text-only
+        messages = [{"role": "user", "content": prompt}]
+    else:
+        # Vision - use URL for http, path for local files
+        if image_path.startswith("http"):
+            image_content = {"type": "image", "url": image_path}
+        else:
+            image_content = {"type": "image", "path": image_path}
+        messages = [{
+            "role": "user",
+            "content": [image_content, {"type": "text", "text": prompt}]
+        }]
 
-    # Tokenize
-    inputs = tokenizer(text, return_tensors="pt").to(model.device)
-    inputs.pop("token_type_ids", None)  # Model doesn't use this
+    # Process EXACTLY like official example
+    inputs = processor.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_dict=True,
+        return_tensors="pt"
+    ).to(model.device)
+    inputs.pop("token_type_ids", None)  # From official example
+
     prompt_tokens = inputs["input_ids"].shape[1]
 
     gen_kwargs = {"max_new_tokens": max_tokens}
@@ -124,7 +142,7 @@ def bench_once_text(model, tokenizer, prompt, max_tokens, temperature, seed):
     t1 = time.perf_counter()
 
     gen_tokens = outputs.shape[1] - prompt_tokens
-    output_text = tokenizer.decode(outputs[0][prompt_tokens:], skip_special_tokens=True)
+    output_text = processor.decode(outputs[0][prompt_tokens:], skip_special_tokens=True)
 
     wall = t1 - t0
     return {
@@ -136,7 +154,7 @@ def bench_once_text(model, tokenizer, prompt, max_tokens, temperature, seed):
     }
 
 def main():
-    ap = argparse.ArgumentParser(description="GLM-4.6V benchmark")
+    ap = argparse.ArgumentParser(description="GLM-4.6V benchmark (official example)")
     ap.add_argument("--model", default="zai-org/GLM-4.6V-FP8")
     ap.add_argument("--image", default=None, help="Image path/URL or 'none' for text-only")
     ap.add_argument("--prompt", default=None, help="Custom prompt (overrides --prompt-set)")
@@ -166,44 +184,30 @@ def main():
         prompt = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
 
     mode = "text-only" if image_path is None else "vision"
-    print(f"\n== GLM-4.6V Benchmark ==")
+    print(f"\n== GLM-4.6V Benchmark (Official Example) ==")
     print(f"model:  {model_path}")
     print(f"mode:   {mode}")
     print(f"image:  {image_path or 'none'}")
     print(f"prompt: {prompt[:50]}...")
 
+    # Load EXACTLY like official example
     print("\n== Loading model ==")
-    # Text-only mode: use tokenizer directly to bypass buggy processor (transformers 5.0.0rc0 bug)
-    # The Glm46VProcessor requires video_processor which triggers the bug
-    if image_path is not None:
-        raise NotImplementedError("Vision mode not yet supported - processor bug in transformers 5.0.0rc0")
-
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-    # Explicitly set max_memory to use available VRAM
-    n_gpus = torch.cuda.device_count()
-    max_memory = {i: "90GiB" for i in range(n_gpus)} if n_gpus > 0 else None
-
-    # MoE models require offload_folder during loading for weight format conversion
-    # (weights are re-saved during load, but model runs from VRAM after loading)
-    # Use explicit bfloat16 for proper FP8 decompression (not "auto")
-    model = Glm46VForConditionalGeneration.from_pretrained(
-        model_path,
-        torch_dtype=torch.bfloat16,
+    processor = AutoProcessor.from_pretrained(model_path)
+    model = Glm4vMoeForConditionalGeneration.from_pretrained(
+        pretrained_model_name_or_path=model_path,
+        torch_dtype="auto",
         device_map="auto",
-        max_memory=max_memory,
-        offload_folder="/tmp/glm4v_offload",
     )
 
     # Warmup
     print("\n== Warmup ==")
-    bench_once_text(model, tokenizer, prompt, min(64, args.max_tokens), args.temperature, 0)
+    bench_once(model, processor, image_path, prompt, min(64, args.max_tokens), args.temperature, 0)
 
     # Benchmark
     print(f"\n== Running {args.iterations} iterations ==")
     results = []
     for i in range(args.iterations):
-        r = bench_once_text(model, tokenizer, prompt, args.max_tokens, args.temperature, i)
+        r = bench_once(model, processor, image_path, prompt, args.max_tokens, args.temperature, i)
         print(f"  iter {i+1}: {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
         results.append(r)
 
