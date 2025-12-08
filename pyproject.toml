@@ -16,5 +16,5 @@ dependencies = [
     "torch>=2.9.0",
     "transformers>=5.0.0rc0",
     "uvicorn>=0.38.0",
-    "sglang[all] @ git+https://github.com/sgl-project/sglang.git@v0.5.6.post1",  # For GLM-4.6V-FP8
+    "sglang[all] @ git+https://github.com/sgl-project/sglang.git@v0.5.6.post1#subdirectory=python",  # For GLM-4.6V-FP8
 ]
