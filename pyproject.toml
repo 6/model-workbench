@@ -17,5 +17,5 @@ dependencies = [
     "torch>=2.9.0",
     "transformers>=5.0.0rc0",  # GLM-4.6V requires transformers 5.x
     "uvicorn>=0.38.0",
-    "vllm @ git+https://github.com/vllm-project/vllm.git@main",  # Main branch for transformers 5.x support
+    "vllm @ git+https://github.com/vllm-project/vllm.git@799804d140fc99ce3964648ba91aaa810cf28fef",  # Dec 8 2025 commit for transformers 5.x
 ]
