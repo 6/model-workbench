@@ -198,11 +198,7 @@ def main():
     # Load components separately to bypass buggy from_pretrained() which
     # tries to auto-load video processor even when not needed (transformers 5.0.0rc0 bug)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-    # Only load image processor for vision mode
-    image_processor = None
-    if image_path is not None:
-        image_processor = Glm46VImageProcessor.from_pretrained(model_path)
+    image_processor = Glm46VImageProcessor.from_pretrained(model_path)  # Required even for text-only
 
     # Instantiate processor manually with video_processor=None to skip video code path
     processor = Glm46VProcessor(
