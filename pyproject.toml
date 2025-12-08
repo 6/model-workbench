@@ -10,12 +10,19 @@ dependencies = [
     "fastapi==0.123.0",
     "httpx>=0.28.1",
     "huggingface-hub[cli]>=0.36.0",
-    "openai>=1.0.0",  # For vLLM server benchmarking
+    "openai>=1.0.0",  # For server benchmarking
     "pillow>=10.0.0",
     "pyyaml>=6.0.3",
     "requests>=2.32.5",
     "torch>=2.9.0",
-    "transformers>=4.56.0",  # vLLM 0.12.0 requires <5
+    "transformers>=5.0.0rc0",  # GLM-4.6V requires transformers 5.x
     "uvicorn>=0.38.0",
-    "vllm>=0.12.0",  # For GLM-4.6V with tensor parallelism
+    "vllm",  # Nightly from extra index below (supports transformers 5.x)
 ]
+
+[[tool.uv.index]]
+name = "vllm-nightly"
+url = "https://wheels.vllm.ai/nightly"
+
+[tool.uv]
+prerelease = "allow"
