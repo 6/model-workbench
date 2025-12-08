@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-07_222050",
+  "model_id": "unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF/UD-Q2_K_XL",
+  "model_ref": "/home/peter/models/unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF/UD-Q2_K_XL/Qwen3-Coder-480B-A35B-Instruct-UD-Q2_K_XL-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 3.809930160998192,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 244,
+        "tok_per_s": 64.04316869054435,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " KV cache (Key-Value cache) is a mechanism used in transformer-based models to store previously computed key and value vectors from attention layers, avoiding redundant calculations during autoregressive generation. \n\n**How it works:**\n- During token generation, each new token's attention computation reuses cached K/V vectors from previous tokens\n- Only the query vectors for new tokens are computed fresh\n- This reduces computational complexity from O(n\u00b2) to O(n) for each new token generation\n\n**Why it matters for long context:**\n1. **Efficiency**: Enables processing of much longer sequences without exponential computational growth\n2. **Memory optimization**: Stores only essential attention intermediates rather than full attention matrices\n3. **Scalability**: Allows models to handle contexts of 32K+ tokens efficiently (vs. ~4K without caching)\n4. **Real-time generation**: Makes streaming inference practical for long documents\n\n**Limitations:**\n- Memory usage still scales linearly with context length\n- Cache invalidation becomes important for dynamic contexts\n- Hardware memory constraints ultimately limit maximum context length\n\nKV cache is fundamental for practical long-context transformer applications, enabling efficient inference on extended sequences while maintaining model performance."
+      },
+      {
+        "wall_s": 3.7903358309995383,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 244,
+        "tok_per_s": 64.37424304317,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " KV cache (Key-Value cache) is a mechanism used in transformer-based models to store previously computed key and value vectors from attention layers, avoiding redundant calculations during autoregressive generation. \n\n**How it works:**\n- During token generation, each new token's attention computation reuses cached K/V vectors from previous tokens\n- Only the query vectors for new tokens are computed fresh\n- This reduces computational complexity from O(n\u00b2) to O(n) for each new token generation\n\n**Why it matters for long context:**\n1. **Efficiency**: Enables processing of much longer sequences without exponential computational growth\n2. **Memory optimization**: Stores only essential attention intermediates rather than full attention matrices\n3. **Scalability**: Allows models to handle contexts of 32K+ tokens efficiently (vs. ~4K without caching)\n4. **Real-time generation**: Makes streaming inference practical for long documents\n\n**Limitations:**\n- Memory usage still scales linearly with context length\n- Cache invalidation becomes important for dynamic contexts\n- Hardware memory constraints ultimately limit maximum context length\n\nKV cache is fundamental for practical long-context transformer applications, enabling efficient inference on extended sequences while maintaining model performance."
+      },
+      {
+        "wall_s": 3.780641781999293,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 244,
+        "tok_per_s": 64.53930683455734,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " KV cache (Key-Value cache) is a mechanism used in transformer-based models to store previously computed key and value vectors from attention layers, avoiding redundant calculations during autoregressive generation. \n\n**How it works:**\n- During token generation, each new token's attention computation reuses cached K/V vectors from previous tokens\n- Only the query vectors for new tokens are computed fresh\n- This reduces computational complexity from O(n\u00b2) to O(n) for each new token generation\n\n**Why it matters for long context:**\n1. **Efficiency**: Enables processing of much longer sequences without exponential computational growth\n2. **Memory optimization**: Stores only essential attention intermediates rather than full attention matrices\n3. **Scalability**: Allows models to handle contexts of 32K+ tokens efficiently (vs. ~4K without caching)\n4. **Real-time generation**: Makes streaming inference practical for long documents\n\n**Limitations:**\n- Memory usage still scales linearly with context length\n- Cache invalidation becomes important for dynamic contexts\n- Hardware memory constraints ultimately limit maximum context length\n\nKV cache is fundamental for practical long-context transformer applications, enabling efficient inference on extended sequences while maintaining model performance."
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 3.7903358309995383,
+      "median_generated_tokens": 244,
+      "median_tok_per_s": 64.37424304317
+    }
+  }
+}
