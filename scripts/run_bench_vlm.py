@@ -1,37 +1,40 @@
 #!/usr/bin/env python3
 """
-Model Workbench Vision Benchmark Runner
+Model Workbench VLM Benchmark Runner
 
 Uses native HuggingFace transformers inference with device_map="auto" for
 multi-GPU support via accelerate. For vision-language models like GLM-4.6V.
 
+Supports both text-only and image+text benchmarking for VLMs.
+
 Use this for models that:
   - Require transformers 5.x
-  - Support image+text multimodal inputs
+  - Are vision-language models (VLMs)
   - Need simple multi-GPU inference via accelerate
 
 Examples:
 
+  # Text-only benchmark for VLMs
+  uv run python scripts/run_bench_vlm.py \
+    --model zai-org/GLM-4.6V-FP8 \
+    --image none \
+    --prompt-set short
+
   # Use default test image (config/example.jpg)
-  uv run python scripts/run_bench_basic_image.py \
+  uv run python scripts/run_bench_vlm.py \
     --model zai-org/GLM-4.6V-FP8 \
     --prompt-set describe
 
   # Use custom local image
-  uv run python scripts/run_bench_basic_image.py \
+  uv run python scripts/run_bench_vlm.py \
     --model zai-org/GLM-4.6V-FP8 \
     --image /path/to/test.jpg \
     --prompt-set analyze
 
   # Use image URL
-  uv run python scripts/run_bench_basic_image.py \
+  uv run python scripts/run_bench_vlm.py \
     --model zai-org/GLM-4.6V-FP8 \
     --image https://example.com/image.jpg
-
-  # Use other builtin images (grayscale, color)
-  uv run python scripts/run_bench_basic_image.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --image color
 """
 
 import argparse
@@ -41,8 +44,12 @@ import re
 import statistics
 import subprocess
 import time
+import warnings
 from datetime import datetime
 from pathlib import Path
+
+# Suppress MRoPE warning from transformers (harmless for VLMs like GLM-4.6V)
+warnings.filterwarnings("ignore", message="Unrecognized keys in.*rope_parameters.*mrope_section")
 
 import torch
 from transformers import AutoProcessor, AutoModelForImageTextToText
@@ -59,12 +66,22 @@ BUILTIN_IMAGES = {
 }
 DEFAULT_IMAGE = "example"
 
-# Vision prompts of varying complexity
-PROMPTS = {
+# Text-only prompts (for VLMs without image input)
+TEXT_PROMPTS = {
+    "short": "Explain speculative decoding in 2 sentences.",
+    "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
+    "long": "Write a concise technical overview of KV cache and why it matters for long context.",
+}
+
+# Vision prompts (for image+text input)
+VISION_PROMPTS = {
     "describe": "Describe this image in detail.",
     "analyze": "Analyze this image and explain what you see, including any text, objects, colors, and their relationships.",
     "caption": "Provide a brief caption for this image.",
 }
+
+# Combined for CLI choices
+ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
 
 # ----------------------------
 # Utility
@@ -160,16 +177,21 @@ def resolve_model_path(model_arg: str) -> str:
 # Image handling
 # ----------------------------
 
-def resolve_image_source(image_arg: str | None) -> tuple[str, str]:
+def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     """
     Resolve image source. Returns (image_url_or_path, source_label).
 
+    If image_arg is "none", returns (None, "none") for text-only mode.
     If image_arg is None, uses default built-in image (config/example.jpg).
     If image_arg is a builtin key (example, grayscale, color), uses that.
     Otherwise treats as URL or local path.
     """
     if image_arg is None:
         image_arg = DEFAULT_IMAGE
+
+    # Text-only mode
+    if image_arg.lower() == "none":
+        return None, "none"
 
     if image_arg in BUILTIN_IMAGES:
         src = BUILTIN_IMAGES[image_arg]
@@ -187,22 +209,37 @@ def resolve_image_source(image_arg: str | None) -> tuple[str, str]:
 # Benchmarking
 # ----------------------------
 
-def bench_once(model, processor, image_source: str, prompt: str, max_tokens: int, temperature: float, seed: int):
+def bench_once(model, processor, image_source: str | None, prompt: str, max_tokens: int, temperature: float, seed: int):
     """
-    Run a single vision inference and measure throughput.
+    Run a single inference and measure throughput.
+    Supports both text-only (image_source=None) and vision (image_source=path/url) modes.
     """
     torch.manual_seed(seed)
 
-    # Build chat message with image
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {"type": "image", "url": image_source} if image_source.startswith("http") else {"type": "image", "path": image_source},
-                {"type": "text", "text": prompt},
-            ],
-        }
-    ]
+    # Build chat message - with or without image
+    if image_source is None:
+        # Text-only mode
+        messages = [
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ]
+    else:
+        # Vision mode - include image
+        if image_source.startswith("http"):
+            image_content = {"type": "image", "url": image_source}
+        else:
+            image_content = {"type": "image", "path": image_source}
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    image_content,
+                    {"type": "text", "text": prompt},
+                ],
+            }
+        ]
 
     # Process inputs using chat template
     inputs = processor.apply_chat_template(
@@ -260,11 +297,12 @@ def med(results, key):
 # Output
 # ----------------------------
 
-def write_payload(payload, tag: str, model_id: str):
+def write_payload(payload, tag: str, model_id: str, is_text_only: bool):
     out_base = RESULTS_ROOT / tag
     out_base.mkdir(parents=True, exist_ok=True)
 
-    label = sanitize(model_id) + "_vision"
+    suffix = "_vlm_text" if is_text_only else "_vlm_vision"
+    label = sanitize(model_id) + suffix
     fname = f"{datetime.now().strftime('%Y-%m-%d')}_{label}.json"
 
     out_path = out_base / fname
@@ -287,7 +325,7 @@ def main():
 
     # Image input
     ap.add_argument("--image", default=None,
-                    help="Image path, URL, or builtin name (example, grayscale, color). Default: example")
+                    help="Image path, URL, builtin name (example, grayscale, color), or 'none' for text-only. Default: example")
 
     # Model loading options
     ap.add_argument("--dtype", default="auto",
@@ -303,7 +341,8 @@ def main():
     ap.add_argument("--vary-seed", action="store_true",
                     help="If set, increments seed each iteration (seed+i)")
     ap.add_argument("--max-tokens", type=int, default=512)
-    ap.add_argument("--prompt-set", default="describe", choices=tuple(PROMPTS.keys()))
+    ap.add_argument("--prompt-set", default="describe", choices=tuple(ALL_PROMPTS.keys()),
+                    help="Prompt type: short/medium/long (text-only) or describe/analyze/caption (vision)")
 
     args = ap.parse_args()
 
@@ -314,10 +353,11 @@ def main():
     model_path = resolve_model_path(model_id)
     image_source, image_label = resolve_image_source(args.image)
 
+    mode = "text-only" if image_source is None else "vision"
     print(f"\n== Loading model ==")
     print(f"model_id:   {model_id}")
     print(f"model_path: {model_path}")
-    print(f"engine:     transformers-vision")
+    print(f"engine:     transformers-vlm ({mode})")
     print(f"dtype:      {args.dtype}")
     print(f"device_map: auto")
     print(f"image:      {image_label}")
@@ -353,7 +393,8 @@ def main():
         **model_kwargs,
     )
 
-    prompt = PROMPTS[args.prompt_set]
+    prompt = ALL_PROMPTS[args.prompt_set]
+    is_text_only = image_source is None
 
     # Warmup
     print("\n== Warmup ==")
@@ -394,7 +435,7 @@ def main():
         "timestamp": datetime.now().strftime("%Y-%m-%d_%H%M%S"),
         "model_id": model_id,
         "model_ref": model_path,
-        "engine": "transformers-vision",
+        "engine": "transformers-vlm-text" if is_text_only else "transformers-vlm-vision",
         "gpu_info": get_gpu_info(),
         "tag": args.tag,
         "env": {
@@ -417,7 +458,7 @@ def main():
         },
     }
 
-    write_payload(payload, args.tag, model_id)
+    write_payload(payload, args.tag, model_id, is_text_only)
 
 if __name__ == "__main__":
     main()
