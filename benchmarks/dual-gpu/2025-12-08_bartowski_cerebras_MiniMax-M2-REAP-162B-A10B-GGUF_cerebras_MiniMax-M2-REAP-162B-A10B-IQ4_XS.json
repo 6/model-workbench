@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-12-08_152124",
+  "model_id": "bartowski/cerebras_MiniMax-M2-REAP-162B-A10B-GGUF/cerebras_MiniMax-M2-REAP-162B-A10B-IQ4_XS",
+  "model_ref": "/home/peter/models/bartowski/cerebras_MiniMax-M2-REAP-162B-A10B-GGUF/cerebras_MiniMax-M2-REAP-162B-A10B-IQ4_XS/cerebras_MiniMax-M2-REAP-162B-A10B-IQ4_XS-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "engine": "llama-server",
+    "llama_server_bin": "llama-server",
+    "llama_host": "127.0.0.1",
+    "llama_port": 8080,
+    "llama_ctx": null,
+    "llama_n_gpu_layers": 999,
+    "llama_parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "iterations": [
+      {
+        "wall_s": 4.247265319000007,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 120.54815547067054,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " KV cache is the hidden state that grows during generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It"
+      },
+      {
+        "wall_s": 4.25451794899999,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 120.34265835459547,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " KV cache is the hidden state that grows during generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It"
+      },
+      {
+        "wall_s": 4.209872676000032,
+        "max_tokens": 512,
+        "prompt_tokens": 16,
+        "generated_tokens": 512,
+        "tok_per_s": 121.61888004804736,
+        "temperature": 0.0,
+        "seed": 0,
+        "output_text": " KV cache is the hidden state that grows during generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It is cached for generation and is cached for generation. It"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_wall_s": 4.247265319000007,
+      "median_generated_tokens": 512,
+      "median_tok_per_s": 120.54815547067054
+    }
+  }
+}
