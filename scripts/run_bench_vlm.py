@@ -388,10 +388,19 @@ def main():
     if args.attn_implementation:
         model_kwargs["attn_implementation"] = args.attn_implementation
 
-    model = AutoModelForImageTextToText.from_pretrained(
-        model_path,
-        **model_kwargs,
-    )
+    # Use explicit model class for GLM-4.6V (avoids AutoModel issues)
+    model_path_lower = model_path.lower()
+    if "glm-4" in model_path_lower and "v" in model_path_lower:
+        from transformers import Glm4vMoeForConditionalGeneration
+        model = Glm4vMoeForConditionalGeneration.from_pretrained(
+            model_path,
+            **model_kwargs,
+        )
+    else:
+        model = AutoModelForImageTextToText.from_pretrained(
+            model_path,
+            **model_kwargs,
+        )
 
     prompt = ALL_PROMPTS[args.prompt_set]
     is_text_only = image_source is None
