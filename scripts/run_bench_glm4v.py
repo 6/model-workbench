@@ -179,16 +179,18 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
 
-    # Explicitly set max_memory to avoid unnecessary disk offload
-    # MoE models trigger conservative memory estimation without this
+    # Explicitly set max_memory to use available VRAM
     n_gpus = torch.cuda.device_count()
     max_memory = {i: "90GiB" for i in range(n_gpus)} if n_gpus > 0 else None
 
+    # MoE models require offload_folder during loading for weight format conversion
+    # (weights are re-saved during load, but model runs from VRAM after loading)
     model = Glm46VForConditionalGeneration.from_pretrained(
         model_path,
         torch_dtype="auto",
         device_map="auto",
         max_memory=max_memory,
+        offload_folder="/tmp/glm4v_offload",
     )
 
     # Warmup
