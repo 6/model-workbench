@@ -211,22 +211,23 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
         text=True,
     )
 
-    # Collect server output for debugging
+    # Stream server output in real-time
     server_output_lines = []
 
     def read_output():
-        """Non-blocking read of server output."""
+        """Non-blocking read of server output, print in real-time."""
         if proc.stdout:
             import select
             while select.select([proc.stdout], [], [], 0)[0]:
                 line = proc.stdout.readline()
                 if line:
                     server_output_lines.append(line)
+                    print(f"  [vllm] {line.rstrip()}")
                 else:
                     break
 
     # Wait for server to be ready
-    print("Waiting for server to be ready...")
+    print("Waiting for server to be ready (streaming logs)...")
     max_wait = args.server_timeout
     start_time = time.time()
 
