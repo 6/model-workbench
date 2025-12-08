@@ -116,14 +116,31 @@ def infer_tag(cli_tag, tensor_parallel):
 
 
 def resolve_model_path(model_arg: str) -> str:
+    """
+    Resolve model path - MUST exist locally. Never download from HuggingFace.
+    Checks:
+      1. Absolute/expandable path (e.g., /home/peter/models/... or ~/models/...)
+      2. Relative to MODELS_ROOT (e.g., zai-org/GLM-4.6V-FP8 -> ~/models/zai-org/GLM-4.6V-FP8)
+    """
+    # Check if it's an absolute or expandable path
+    p = Path(model_arg).expanduser()
+    if p.exists():
+        return str(p)
+
+    # Check relative to MODELS_ROOT
     if "/" in model_arg:
         local = MODELS_ROOT / model_arg
         if local.exists():
             return str(local)
-    p = Path(model_arg).expanduser()
-    if p.exists():
-        return str(p)
-    return model_arg
+
+    # Not found - raise error instead of falling back to HuggingFace download
+    raise SystemExit(
+        f"Model not found locally: {model_arg}\n"
+        f"Checked:\n"
+        f"  - {p}\n"
+        f"  - {MODELS_ROOT / model_arg if '/' in model_arg else 'N/A'}\n"
+        f"\nPlease download the model first or provide the correct path."
+    )
 
 
 def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
@@ -194,12 +211,28 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
         text=True,
     )
 
-    # Wait for server to be ready (model loading can take a while)
+    # Collect server output for debugging
+    server_output_lines = []
+
+    def read_output():
+        """Non-blocking read of server output."""
+        if proc.stdout:
+            import select
+            while select.select([proc.stdout], [], [], 0)[0]:
+                line = proc.stdout.readline()
+                if line:
+                    server_output_lines.append(line)
+                else:
+                    break
+
+    # Wait for server to be ready
     print("Waiting for server to be ready...")
-    max_wait = 600  # 10 minutes for large model loading
+    max_wait = args.server_timeout
     start_time = time.time()
 
     while time.time() - start_time < max_wait:
+        read_output()
+
         if port_open(host, port):
             # Additional check: try to hit the models endpoint
             try:
@@ -213,12 +246,18 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
 
         # Check if process died
         if proc.poll() is not None:
-            stdout = proc.stdout.read() if proc.stdout else ""
-            raise SystemExit(f"vLLM server exited unexpectedly:\n{stdout}")
+            read_output()
+            output = "".join(server_output_lines[-50:])  # Last 50 lines
+            raise SystemExit(f"vLLM server exited unexpectedly. Last output:\n{output}")
 
-    # Timeout
+    # Timeout - show recent logs
+    read_output()
     proc.terminate()
-    raise SystemExit(f"vLLM server failed to start within {max_wait}s")
+    output = "".join(server_output_lines[-50:])  # Last 50 lines
+    raise SystemExit(
+        f"vLLM server failed to start within {max_wait}s.\n"
+        f"Last server output:\n{output}"
+    )
 
 
 def stop_vllm_server(proc: subprocess.Popen | None):
@@ -320,6 +359,8 @@ def main():
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--no-autostart", action="store_true",
                     help="Don't start server; require it already running")
+    ap.add_argument("--server-timeout", type=int, default=180,
+                    help="Timeout in seconds waiting for server to start (default: 180)")
 
     # vLLM server options
     ap.add_argument("--max-model-len", type=int, default=65536,
