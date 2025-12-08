@@ -391,8 +391,13 @@ def main():
     # Use explicit model class for GLM-4.6V (avoids AutoModel issues)
     model_path_lower = model_path.lower()
     if "glm-4" in model_path_lower and "v" in model_path_lower:
-        from transformers import Glm4vMoeForConditionalGeneration
-        model = Glm4vMoeForConditionalGeneration.from_pretrained(
+        from transformers import Glm46VProcessor, Glm46VForConditionalGeneration
+        # Override processor with GLM-4.6V specific one
+        processor = Glm46VProcessor.from_pretrained(
+            model_path,
+            trust_remote_code=args.trust_remote_code,
+        )
+        model = Glm46VForConditionalGeneration.from_pretrained(
             model_path,
             **model_kwargs,
         )

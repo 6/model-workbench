@@ -33,7 +33,7 @@ from pathlib import Path
 warnings.filterwarnings("ignore", message="Unrecognized keys in.*rope_parameters.*mrope_section")
 
 import torch
-from transformers import AutoProcessor, Glm4vMoeForConditionalGeneration
+from transformers import Glm46VProcessor, Glm46VForConditionalGeneration
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
@@ -190,8 +190,8 @@ def main():
     print(f"prompt: {prompt[:50]}...")
 
     print("\n== Loading model ==")
-    processor = AutoProcessor.from_pretrained(model_path)
-    model = Glm4vMoeForConditionalGeneration.from_pretrained(
+    processor = Glm46VProcessor.from_pretrained(model_path)
+    model = Glm46VForConditionalGeneration.from_pretrained(
         model_path,
         torch_dtype="auto",
         device_map="auto",
