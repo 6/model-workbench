@@ -405,8 +405,8 @@ def main():
             api_key="dummy",  # vLLM doesn't require auth by default
         )
 
-        # Use model name for API calls (not path)
-        api_model = args.model
+        # Use model_path for API calls (vLLM registers model under this name)
+        api_model = model_path
 
         # Warmup
         print("\n== Warmup ==")
