@@ -33,7 +33,12 @@ from pathlib import Path
 warnings.filterwarnings("ignore", message="Unrecognized keys in.*rope_parameters.*mrope_section")
 
 import torch
-from transformers import Glm46VProcessor, Glm46VForConditionalGeneration
+from transformers import (
+    AutoTokenizer,
+    Glm46VImageProcessor,
+    Glm46VProcessor,
+    Glm46VForConditionalGeneration,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
@@ -190,7 +195,22 @@ def main():
     print(f"prompt: {prompt[:50]}...")
 
     print("\n== Loading model ==")
-    processor = Glm46VProcessor.from_pretrained(model_path)
+    # Load components separately to bypass buggy from_pretrained() which
+    # tries to auto-load video processor even when not needed (transformers 5.0.0rc0 bug)
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+    # Only load image processor for vision mode
+    image_processor = None
+    if image_path is not None:
+        image_processor = Glm46VImageProcessor.from_pretrained(model_path)
+
+    # Instantiate processor manually with video_processor=None to skip video code path
+    processor = Glm46VProcessor(
+        image_processor=image_processor,
+        tokenizer=tokenizer,
+        video_processor=None,
+    )
+
     model = Glm46VForConditionalGeneration.from_pretrained(
         model_path,
         torch_dtype="auto",
