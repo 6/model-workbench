@@ -186,9 +186,10 @@ def main():
 
     # MoE models require offload_folder during loading for weight format conversion
     # (weights are re-saved during load, but model runs from VRAM after loading)
+    # Use explicit bfloat16 for proper FP8 decompression (not "auto")
     model = Glm46VForConditionalGeneration.from_pretrained(
         model_path,
-        torch_dtype="auto",
+        torch_dtype=torch.bfloat16,
         device_map="auto",
         max_memory=max_memory,
         offload_folder="/tmp/glm4v_offload",
