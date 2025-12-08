@@ -214,6 +214,9 @@ def main():
     ap.add_argument("--iterations", type=int, default=3)
     ap.add_argument("--tag", default=None)
     ap.add_argument("--mem-fraction", type=float, default=0.9, help="GPU memory fraction")
+    ap.add_argument("--attention-backend", default=None,
+                    choices=["flashinfer", "triton", "torch_native", "fa3"],
+                    help="Attention backend (default: auto)")
     args = ap.parse_args()
 
     tag = infer_tag(args.tag, args.tensor_parallel)
@@ -239,11 +242,16 @@ def main():
 
     # Initialize SGLang engine
     print("\n== Loading model with SGLang ==")
-    engine = Engine(
-        model_path=model_path,
-        tp_size=args.tensor_parallel,
-        mem_fraction_static=args.mem_fraction,
-    )
+    engine_kwargs = {
+        "model_path": model_path,
+        "tp_size": args.tensor_parallel,
+        "mem_fraction_static": args.mem_fraction,
+    }
+    if args.attention_backend:
+        engine_kwargs["attention_backend"] = args.attention_backend
+        print(f"attention_backend: {args.attention_backend}")
+
+    engine = Engine(**engine_kwargs)
 
     # Warmup
     print("\n== Warmup ==")
