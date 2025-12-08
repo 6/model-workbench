@@ -33,12 +33,7 @@ from pathlib import Path
 warnings.filterwarnings("ignore", message="Unrecognized keys in.*rope_parameters.*mrope_section")
 
 import torch
-from transformers import (
-    AutoTokenizer,
-    Glm46VImageProcessor,
-    Glm46VProcessor,
-    Glm46VForConditionalGeneration,
-)
+from transformers import AutoTokenizer, Glm46VForConditionalGeneration
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
@@ -105,34 +100,16 @@ def resolve_model_path(model_arg: str) -> str:
         return str(p)
     return model_arg
 
-def bench_once(model, processor, image_path, prompt, max_tokens, temperature, seed):
+def bench_once_text(model, tokenizer, prompt, max_tokens, temperature, seed):
+    """Text-only benchmark using tokenizer directly (bypasses buggy processor)."""
     torch.manual_seed(seed)
 
-    # Build message following official example format
-    if image_path is None:
-        # Text-only
-        messages = [{"role": "user", "content": prompt}]
-    else:
-        # Vision - use URL for http, path for local files
-        if image_path.startswith("http"):
-            image_content = {"type": "image", "url": image_path}
-        else:
-            image_content = {"type": "image", "path": image_path}
-        messages = [{
-            "role": "user",
-            "content": [image_content, {"type": "text", "text": prompt}]
-        }]
+    # Build chat message and apply template
+    messages = [{"role": "user", "content": prompt}]
+    text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
-    # Process exactly like official example
-    inputs = processor.apply_chat_template(
-        messages,
-        tokenize=True,
-        add_generation_prompt=True,
-        return_dict=True,
-        return_tensors="pt"
-    ).to(model.device)
-    inputs.pop("token_type_ids", None)
-
+    # Tokenize
+    inputs = tokenizer(text, return_tensors="pt").to(model.device)
     prompt_tokens = inputs["input_ids"].shape[1]
 
     gen_kwargs = {"max_new_tokens": max_tokens}
@@ -146,7 +123,7 @@ def bench_once(model, processor, image_path, prompt, max_tokens, temperature, se
     t1 = time.perf_counter()
 
     gen_tokens = outputs.shape[1] - prompt_tokens
-    text = processor.decode(outputs[0][prompt_tokens:], skip_special_tokens=True)
+    output_text = tokenizer.decode(outputs[0][prompt_tokens:], skip_special_tokens=True)
 
     wall = t1 - t0
     return {
@@ -154,7 +131,7 @@ def bench_once(model, processor, image_path, prompt, max_tokens, temperature, se
         "prompt_tokens": prompt_tokens,
         "generated_tokens": gen_tokens,
         "tok_per_s": gen_tokens / wall if wall > 0 else 0,
-        "output_text": text,
+        "output_text": output_text,
     }
 
 def main():
@@ -195,18 +172,12 @@ def main():
     print(f"prompt: {prompt[:50]}...")
 
     print("\n== Loading model ==")
-    # Load components separately to bypass buggy from_pretrained() which
-    # tries to auto-load video processor even when not needed (transformers 5.0.0rc0 bug)
+    # Text-only mode: use tokenizer directly to bypass buggy processor (transformers 5.0.0rc0 bug)
+    # The Glm46VProcessor requires video_processor which triggers the bug
+    if image_path is not None:
+        raise NotImplementedError("Vision mode not yet supported - processor bug in transformers 5.0.0rc0")
+
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    image_processor = Glm46VImageProcessor.from_pretrained(model_path)  # Required even for text-only
-
-    # Instantiate processor manually with video_processor=None to skip video code path
-    processor = Glm46VProcessor(
-        image_processor=image_processor,
-        tokenizer=tokenizer,
-        video_processor=None,
-    )
-
     model = Glm46VForConditionalGeneration.from_pretrained(
         model_path,
         torch_dtype="auto",
@@ -215,13 +186,13 @@ def main():
 
     # Warmup
     print("\n== Warmup ==")
-    bench_once(model, processor, image_path, prompt, min(64, args.max_tokens), args.temperature, 0)
+    bench_once_text(model, tokenizer, prompt, min(64, args.max_tokens), args.temperature, 0)
 
     # Benchmark
     print(f"\n== Running {args.iterations} iterations ==")
     results = []
     for i in range(args.iterations):
-        r = bench_once(model, processor, image_path, prompt, args.max_tokens, args.temperature, i)
+        r = bench_once_text(model, tokenizer, prompt, args.max_tokens, args.temperature, i)
         print(f"  iter {i+1}: {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
         results.append(r)
 
