@@ -51,16 +51,23 @@ def run_ifeval(model: LocalServerLLM) -> dict:
     """Run IFEval benchmark (541 instruction-following prompts).
 
     Returns:
-        Dict with benchmark name, question count, and overall score.
+        Dict with benchmark name, question count, correct count, overall score,
+        and per-instruction-type breakdown (~25 instruction types).
     """
     log("Running IFEval (541 prompts)...")
     benchmark = IFEval()
     benchmark.evaluate(model=model)
 
+    # Count correct vs total from predictions
+    correct = benchmark.predictions["All_Instructions_Correct"].sum()
+    total = len(benchmark.predictions)
+
     return {
         "benchmark": "ifeval",
-        "questions": 541,
+        "questions": total,
+        "correct": int(correct),
         "overall_score": benchmark.overall_score,
+        "instruction_breakdown": benchmark.instruction_breakdown,
     }
 
 
@@ -71,15 +78,20 @@ def run_gsm8k(model: LocalServerLLM) -> dict:
     Uses 3-shot prompting with chain-of-thought enabled for best results.
 
     Returns:
-        Dict with benchmark name, question count, and overall score.
+        Dict with benchmark name, question count, correct count, and overall score.
     """
     log("Running GSM8K (1319 problems)...")
     benchmark = GSM8K(n_shots=3, enable_cot=True)
     benchmark.evaluate(model=model)
 
+    # Count correct vs total from predictions
+    correct = benchmark.predictions["Correct"].sum()
+    total = len(benchmark.predictions)
+
     return {
         "benchmark": "gsm8k",
-        "questions": 1319,
+        "questions": total,
+        "correct": int(correct),
         "overall_score": benchmark.overall_score,
     }
 
