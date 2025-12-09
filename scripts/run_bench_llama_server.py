@@ -49,11 +49,7 @@ from bench_utils import (
     resolve_local_gguf,
     write_benchmark_result,
 )
-from server_manager import (
-    ServerManager,
-    wait_for_llama_ready,
-    build_llama_cmd,
-)
+from server_manager import ServerManager
 
 
 def bench_once(prompt: str, args):
@@ -136,22 +132,13 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
     with server:
         # Start server if not already running
         if not server.is_running():
-            cmd = build_llama_cmd(
-                gguf_path=gguf_path,
+            gguf_path = server.start_llama(
+                model_path=model_id,
                 llama_server_bin=args.llama_server_bin,
-                port=args.port,
                 n_gpu_layers=args.n_gpu_layers,
                 ctx=args.ctx,
                 parallel=args.parallel,
                 extra_args=args.extra_args,
-            )
-            server.start(
-                cmd,
-                lambda: wait_for_llama_ready(args.host, args.port),
-                stream_stderr=True,  # llama-server outputs to stderr
-                label="llama-server",
-                sigint_wait=2,  # llama-server shuts down quickly
-                term_wait=2,
             )
 
         # Capture GPU info with memory usage after model loads

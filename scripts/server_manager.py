@@ -7,7 +7,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from bench_utils import log, port_open, get_venv_python
+from bench_utils import log, port_open, get_venv_python, resolve_local_gguf
 
 
 # ----------------------------
@@ -169,6 +169,104 @@ class ServerManager:
 
     def __exit__(self, *args):
         self.stop()
+
+    def start_llama(
+        self,
+        model_path: str,
+        llama_server_bin: str,
+        n_gpu_layers: int | None = None,
+        ctx: int | None = None,
+        parallel: int | None = None,
+        extra_args: list[str] | None = None,
+    ) -> Path:
+        """Start llama-server for a GGUF model.
+
+        Resolves GGUF path, builds command, starts server, and waits for readiness.
+
+        Args:
+            model_path: Path to .gguf file or directory containing GGUF files
+            llama_server_bin: Path to llama-server binary
+            n_gpu_layers: GPU layers to offload (optional)
+            ctx: Context length (optional)
+            parallel: Parallel sequences (optional)
+            extra_args: Extra raw args (optional)
+
+        Returns:
+            Path to resolved GGUF file
+
+        Raises:
+            SystemExit if GGUF not found or server fails to start
+        """
+        gguf_path = resolve_local_gguf(model_path)
+        if not gguf_path:
+            raise SystemExit(
+                f"No GGUF found at: {Path(model_path).expanduser()}\n"
+                "Pass --model with an explicit path, e.g.:\n"
+                "  --model ~/models/org/repo/quant-folder\n"
+                "  --model ~/models/org/repo/model.gguf"
+            )
+
+        cmd = build_llama_cmd(
+            gguf_path=gguf_path,
+            llama_server_bin=llama_server_bin,
+            port=self.port,
+            n_gpu_layers=n_gpu_layers,
+            ctx=ctx,
+            parallel=parallel,
+            extra_args=extra_args,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_llama_ready(self.host, self.port),
+            stream_stderr=True,
+            label="llama-server",
+            sigint_wait=2,
+            term_wait=2,
+        )
+
+        return gguf_path
+
+    def start_vllm(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        use_nightly: bool,
+        max_model_len: int | None = None,
+        gpu_memory_utilization: float | None = None,
+        max_num_batched_tokens: int | None = None,
+    ) -> None:
+        """Start vLLM server for a safetensors model.
+
+        Builds command, starts server, and waits for readiness.
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size
+            use_nightly: If True, use nightly venv; otherwise stable
+            max_model_len: Max context length (optional)
+            gpu_memory_utilization: GPU memory fraction (optional)
+            max_num_batched_tokens: Max batched tokens (optional)
+
+        Raises:
+            SystemExit if server fails to start
+        """
+        cmd = build_vllm_cmd(
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            use_nightly=use_nightly,
+            max_model_len=max_model_len,
+            gpu_memory_utilization=gpu_memory_utilization,
+            max_num_batched_tokens=max_num_batched_tokens,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_vllm_ready(self.host, self.port),
+            label="vLLM",
+        )
 
 
 # ----------------------------

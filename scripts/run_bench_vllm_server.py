@@ -52,11 +52,7 @@ from bench_utils import (
     log,
     write_benchmark_result,
 )
-from server_manager import (
-    ServerManager,
-    wait_for_vllm_ready,
-    build_vllm_cmd,
-)
+from server_manager import ServerManager
 
 # Built-in test images
 BUILTIN_IMAGES = {
@@ -232,20 +228,13 @@ def main():
     with server:
         # Start server if not already running
         if not server.is_running():
-            cmd = build_vllm_cmd(
+            server.start_vllm(
                 model_path=model_path,
-                host=args.host,
-                port=args.port,
                 tensor_parallel=args.tensor_parallel,
                 use_nightly=use_nightly,
                 max_model_len=args.max_model_len,
                 gpu_memory_utilization=args.gpu_memory_utilization,
                 max_num_batched_tokens=args.max_num_batched_tokens,
-            )
-            server.start(
-                cmd,
-                lambda: wait_for_vllm_ready(args.host, args.port),
-                label="vLLM",
             )
 
         # Capture GPU info with memory usage after model loads

@@ -36,18 +36,11 @@ from bench_utils import (
     get_gpu_info,
     get_gpu_count,
     resolve_model_path,
-    resolve_local_gguf,
     detect_model_format,
     model_needs_nightly,
     log,
 )
-from server_manager import (
-    ServerManager,
-    wait_for_vllm_ready,
-    wait_for_llama_ready,
-    build_vllm_cmd,
-    build_llama_cmd,
-)
+from server_manager import ServerManager
 from eval_model_wrapper import LocalServerLLM
 
 
@@ -237,18 +230,6 @@ def main():
     repo_id = extract_repo_id(model_path)
     model_format = detect_model_format(model_path)
 
-    # For GGUF models, resolve the actual .gguf file path
-    gguf_path = None
-    if model_format == "gguf":
-        gguf_path = resolve_local_gguf(model_path)
-        if not gguf_path:
-            raise SystemExit(
-                f"No GGUF found at: {model_path}\n"
-                "Pass --model with an explicit path, e.g.:\n"
-                "  --model ~/models/org/repo/quant-folder\n"
-                "  --model ~/models/org/repo/model.gguf"
-            )
-
     # Set default port based on backend
     if args.port is None:
         args.port = 8080 if model_format == "gguf" else 8000
@@ -289,37 +270,21 @@ def main():
         if not server.is_running():
             if model_format == "gguf":
                 # llama.cpp backend for GGUF models
-                cmd = build_llama_cmd(
-                    gguf_path=gguf_path,
+                server.start_llama(
+                    model_path=model_path,
                     llama_server_bin=args.llama_server_bin,
-                    port=args.port,
                     n_gpu_layers=args.n_gpu_layers,
                     ctx=args.ctx,
                     parallel=args.parallel,
                 )
-                server.start(
-                    cmd,
-                    lambda: wait_for_llama_ready(args.host, args.port),
-                    stream_stderr=True,  # llama-server outputs to stderr
-                    label="llama-server",
-                    sigint_wait=2,
-                    term_wait=2,
-                )
             else:
                 # vLLM backend for safetensors models
-                cmd = build_vllm_cmd(
+                server.start_vllm(
                     model_path=model_path,
-                    host=args.host,
-                    port=args.port,
                     tensor_parallel=args.tensor_parallel,
                     use_nightly=use_nightly,
                     max_model_len=args.max_model_len,
                     gpu_memory_utilization=args.gpu_memory_utilization,
-                )
-                server.start(
-                    cmd,
-                    lambda: wait_for_vllm_ready(args.host, args.port),
-                    label="vLLM",
                 )
 
         # Model name differs by backend:
