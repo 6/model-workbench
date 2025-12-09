@@ -79,5 +79,6 @@
       "median_ttft_ms": 16.921,
       "median_generation_tok_per_s": 65.97596361631781
     }
-  }
+  },
+  "mode": "text-only"
 }

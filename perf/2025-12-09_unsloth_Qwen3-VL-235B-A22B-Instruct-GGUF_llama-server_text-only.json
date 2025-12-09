@@ -49,7 +49,7 @@
         "tok_per_s": 59.10307588902263,
         "generation_tok_per_s": 60.34291485986055,
         "generation_ms": 1077.177,
-        "output_text": " Speculative decoding is a technique used in large language models to accelerate text generation by predicting multiple possible next tokens in parallel, rather than generating them sequentially. These speculative predictions are then verified against the model\u2019s actual output, allowing for faster inference when the predictions are correct, while falling back to standard decoding if they\u2019re wrong."
+        "output_text": " Speculative decoding is a technique used in large language models to accelerate text generation by predicting multiple possible next tokens in parallel, rather than generating them sequentially. These speculative predictions are then verified against the model’s actual output, allowing for faster inference when the predictions are correct, while falling back to standard decoding if they’re wrong."
       },
       {
         "wall_s": 1.092835969000589,
@@ -59,7 +59,7 @@
         "tok_per_s": 59.4782765609767,
         "generation_tok_per_s": 60.46663497594824,
         "generation_ms": 1074.973,
-        "output_text": " Speculative decoding is a technique used in large language models to accelerate text generation by predicting multiple possible next tokens in parallel, rather than generating them sequentially. These speculative predictions are then verified against the model\u2019s actual output, allowing for faster inference when the predictions are correct, while falling back to standard decoding if they\u2019re wrong."
+        "output_text": " Speculative decoding is a technique used in large language models to accelerate text generation by predicting multiple possible next tokens in parallel, rather than generating them sequentially. These speculative predictions are then verified against the model’s actual output, allowing for faster inference when the predictions are correct, while falling back to standard decoding if they’re wrong."
       },
       {
         "wall_s": 1.0880941100040218,
@@ -69,7 +69,7 @@
         "tok_per_s": 59.73747987640495,
         "generation_tok_per_s": 60.74823129188123,
         "generation_ms": 1069.99,
-        "output_text": " Speculative decoding is a technique used in large language models to accelerate text generation by predicting multiple possible next tokens in parallel, rather than generating them sequentially. These speculative predictions are then verified against the model\u2019s actual output, allowing for faster inference when the predictions are correct, while falling back to standard decoding if they\u2019re wrong."
+        "output_text": " Speculative decoding is a technique used in large language models to accelerate text generation by predicting multiple possible next tokens in parallel, rather than generating them sequentially. These speculative predictions are then verified against the model’s actual output, allowing for faster inference when the predictions are correct, while falling back to standard decoding if they’re wrong."
       }
     ],
     "summary": {
@@ -79,5 +79,6 @@
       "median_ttft_ms": 16.674,
       "median_generation_tok_per_s": 60.46663497594824
     }
-  }
+  },
+  "mode": "text-only"
 }
