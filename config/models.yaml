@@ -75,6 +75,10 @@ models:
   - source: hf
     repo_id: Qwen/Qwen3-VL-8B-Instruct-FP8
 
+  # Small model to trial evals
+  - source: hf
+    repo_id: Qwen/Qwen3-VL-2B-Instruct
+
   #- source: hf
   #  repo_id: Qwen/Qwen3-VL-4B-Instruct
 
