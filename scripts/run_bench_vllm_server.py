@@ -260,10 +260,10 @@ def main():
                     help="Tensor parallel size (default: auto-detect GPU count)")
     ap.add_argument("--image", default=None, help="Image path/URL or 'none' for text-only")
     ap.add_argument("--prompt", default=None, help="Custom prompt")
-    ap.add_argument("--prompt-set", default="short", choices=list(ALL_PROMPTS.keys()))
+    ap.add_argument("--prompt-set", default="long", choices=list(ALL_PROMPTS.keys()))
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument("--temperature", type=float, default=0.0)
-    ap.add_argument("--iterations", type=int, default=3)
+    ap.add_argument("--iterations", type=int, default=5)
 
     # Server options
     ap.add_argument("--host", default="127.0.0.1")

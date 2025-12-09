@@ -367,14 +367,14 @@ def main():
     ap.add_argument("--mmproj", default=None,
                     help="Path to mmproj file (auto-detected if not specified)")
 
-    ap.add_argument("--iterations", type=int, default=3,
+    ap.add_argument("--iterations", type=int, default=5,
                     help="Number of timed iterations (median reported)")
 
     # Sampling
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-tokens", type=int, default=512)
-    ap.add_argument("--prompt-set", default="short", choices=tuple(ALL_PROMPTS.keys()))
+    ap.add_argument("--prompt-set", default="long", choices=tuple(ALL_PROMPTS.keys()))
 
     # llama-server options
     ap.add_argument("--llama-server-bin", default=default_bin,
