@@ -365,6 +365,7 @@ def build_vllm_cmd(
             "--tokenizer_mode", "mistral",
             "--config_format", "mistral",
             "--load_format", "mistral",
+            "--enforce-eager",
         ]
 
     if max_model_len is not None:
