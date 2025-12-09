@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-12-09T02:06:00.718380",
+  "model_id": "openai/gpt-oss-20b",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "config": {
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0
+  },
+  "results": [
+    {
+      "wall_s": 0.5214136960021278,
+      "prompt_tokens": 77,
+      "generated_tokens": 149,
+      "tok_per_s": 285.7615769252673,
+      "output_text": "Speculative decoding is a technique where a language model generates several candidate next tokens in parallel, then selects the most likely one based on a scoring function, allowing faster inference by reducing the number of sequential steps. By speculatively exploring multiple paths, it can achieve higher throughput while maintaining comparable quality to traditional decoding methods."
+    },
+    {
+      "wall_s": 0.5201403020000726,
+      "prompt_tokens": 77,
+      "generated_tokens": 149,
+      "tok_per_s": 286.4611710091621,
+      "output_text": "Speculative decoding is a technique where a language model generates several candidate next tokens in parallel, then selects the most likely one based on a scoring function, allowing faster inference by reducing the number of sequential steps. By speculatively exploring multiple paths, it can achieve higher throughput while maintaining comparable quality to traditional decoding methods."
+    },
+    {
+      "wall_s": 0.5192737489996944,
+      "prompt_tokens": 77,
+      "generated_tokens": 149,
+      "tok_per_s": 286.9392113254847,
+      "output_text": "Speculative decoding is a technique where a language model generates several candidate next tokens in parallel, then selects the most likely one based on a scoring function, allowing faster inference by reducing the number of sequential steps. By speculatively exploring multiple paths, it can achieve higher throughput while maintaining comparable quality to traditional decoding methods."
+    }
+  ],
+  "summary": {
+    "median_tok_per_s": 286.4611710091621
+  }
+}

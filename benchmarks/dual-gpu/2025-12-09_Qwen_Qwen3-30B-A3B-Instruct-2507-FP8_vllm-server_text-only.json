@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-12-09T02:15:13.138300",
+  "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "config": {
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0
+  },
+  "results": [
+    {
+      "wall_s": 0.4849449100001948,
+      "prompt_tokens": 17,
+      "generated_tokens": 65,
+      "tok_per_s": 134.03584337027868,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting and computing multiple future tokens in parallel before confirming their accuracy. It works by generating a speculative sequence using a smaller, faster model, then verifying the predictions against the original model, accepting only the correct tokens and discarding incorrect ones."
+    },
+    {
+      "wall_s": 0.48398181599986856,
+      "prompt_tokens": 17,
+      "generated_tokens": 65,
+      "tok_per_s": 134.3025664419129,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting and computing multiple future tokens in parallel before confirming their accuracy. It works by generating a speculative sequence using a smaller, faster model, then verifying the predictions against the original model, accepting only the correct tokens and discarding incorrect ones."
+    },
+    {
+      "wall_s": 0.4835541069987812,
+      "prompt_tokens": 17,
+      "generated_tokens": 65,
+      "tok_per_s": 134.42135855990946,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting and computing multiple future tokens in parallel before confirming their accuracy. It works by generating a speculative sequence using a smaller, faster model, then verifying the predictions against the original model, accepting only the correct tokens and discarding incorrect ones."
+    }
+  ],
+  "summary": {
+    "median_tok_per_s": 134.3025664419129
+  }
+}
