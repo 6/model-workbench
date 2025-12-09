@@ -166,6 +166,24 @@ def resolve_model_path(model_arg: str) -> str:
 
     raise SystemExit(f"Model not found: {p}")
 
+
+def detect_model_format(model_arg: str) -> str:
+    """
+    Detect model format based on file extension.
+
+    Args:
+        model_arg: Path to model file or directory
+
+    Returns:
+        'gguf' if GGUF model, 'safetensors' otherwise
+    """
+    p = Path(model_arg).expanduser()
+    if p.suffix == ".gguf":
+        return "gguf"
+    if p.is_dir() and any(p.rglob("*.gguf")):
+        return "gguf"
+    return "safetensors"
+
 # ----------------------------
 # Model config utilities
 # ----------------------------
