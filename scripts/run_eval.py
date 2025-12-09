@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""
+Model Workbench Eval Runner
+
+Runs IFEval and HumanEval benchmarks against local model servers using DeepEval.
+
+Examples:
+  # Run both benchmarks (requires server already running)
+  uv run python scripts/run_eval.py --model ~/models/org/model
+
+  # Run IFEval only (541 instruction-following prompts)
+  uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval
+
+  # Run HumanEval only (164 coding problems)
+  uv run python scripts/run_eval.py --model ~/models/org/model --benchmark humaneval
+
+  # Specify custom port
+  uv run python scripts/run_eval.py --model ~/models/org/model --port 8080
+"""
+
+import argparse
+import json
+from datetime import datetime
+from pathlib import Path
+
+from deepeval.benchmarks import IFEval, HumanEval
+
+from bench_utils import (
+    ROOT,
+    sanitize,
+    extract_repo_id,
+    get_gpu_info,
+    resolve_model_path,
+    detect_model_format,
+    log,
+    port_open,
+)
+from eval_model_wrapper import LocalServerLLM
+
+
+EVAL_RESULTS_ROOT = ROOT / "evals"
+
+
+def run_ifeval(model: LocalServerLLM) -> dict:
+    """Run IFEval benchmark (541 instruction-following prompts).
+
+    Returns:
+        Dict with benchmark name, question count, and overall score.
+    """
+    log("Running IFEval (541 prompts)...")
+    benchmark = IFEval()
+    benchmark.evaluate(model=model)
+
+    return {
+        "benchmark": "ifeval",
+        "questions": 541,
+        "overall_score": benchmark.overall_score,
+    }
+
+
+def run_humaneval(model: LocalServerLLM, n_samples: int = 1) -> dict:
+    """Run HumanEval benchmark (164 coding problems).
+
+    Args:
+        model: The model wrapper to evaluate.
+        n_samples: Number of code samples per problem. Default 1 (pass@1 with temp=0).
+                   Standard papers use n=200 for statistical pass@k, but that's 32,800 calls.
+                   For quick quantization comparison, n=1 with temp=0 is sufficient.
+
+    Returns:
+        Dict with benchmark name, question count, n_samples, and overall score.
+    """
+    log(f"Running HumanEval (164 problems, n={n_samples})...")
+    benchmark = HumanEval(n=n_samples)
+    benchmark.evaluate(model=model, k=1)  # pass@1
+
+    return {
+        "benchmark": "humaneval",
+        "questions": 164,
+        "n_samples": n_samples,
+        "overall_score": benchmark.overall_score,
+    }
+
+
+def save_results(results: dict, repo_id: str, benchmark_name: str) -> Path:
+    """Save results to evals/.
+
+    Args:
+        results: The results dict to save.
+        repo_id: Model repo ID for filename.
+        benchmark_name: Benchmark name(s) for filename.
+
+    Returns:
+        Path to saved results file.
+    """
+    EVAL_RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
+
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    safe_name = sanitize(repo_id)
+    filename = f"{date_str}_{safe_name}_{benchmark_name}.json"
+    path = EVAL_RESULTS_ROOT / filename
+
+    with open(path, "w") as f:
+        json.dump(results, f, indent=2)
+
+    log(f"Results saved to {path}")
+    return path
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run evals (IFEval, HumanEval) on local model servers"
+    )
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="Path to model (used for result labeling)",
+    )
+    parser.add_argument(
+        "--benchmark",
+        nargs="+",
+        choices=["ifeval", "humaneval"],
+        default=["ifeval", "humaneval"],
+        help="Benchmark(s) to run (default: both)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Server port (default: 8000)",
+    )
+    parser.add_argument(
+        "--host",
+        default="localhost",
+        help="Server host (default: localhost)",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=512,
+        help="Max tokens for generation (default: 512)",
+    )
+    args = parser.parse_args()
+
+    # Resolve and validate model path
+    model_path = resolve_model_path(args.model)
+    repo_id = extract_repo_id(model_path)
+    model_format = detect_model_format(model_path)
+
+    log(f"Model: {repo_id} ({model_format})")
+
+    # Check server is running
+    if not port_open(args.host, args.port):
+        raise SystemExit(
+            f"Server not running on {args.host}:{args.port}\n"
+            f"Start the server first, e.g.:\n"
+            f"  uv run python scripts/run_bench_vllm_server.py --model {args.model} --no-bench"
+        )
+
+    base_url = f"http://{args.host}:{args.port}/v1"
+    model = LocalServerLLM(
+        base_url=base_url,
+        model_name=repo_id,
+        max_tokens=args.max_tokens,
+    )
+
+    log(f"Connected to server at {base_url}")
+
+    # Build results structure
+    all_results = {
+        "timestamp": datetime.now().isoformat(),
+        "repo_id": repo_id,
+        "model_path": str(model_path),
+        "model_format": model_format,
+        "gpu_info": get_gpu_info(include_memory=True),
+        "benchmarks": {},
+    }
+
+    # Run requested benchmarks
+    for benchmark in args.benchmark:
+        if benchmark == "ifeval":
+            result = run_ifeval(model)
+        elif benchmark == "humaneval":
+            result = run_humaneval(model)
+
+        all_results["benchmarks"][benchmark] = result
+        log(f"{benchmark.upper()} score: {result['overall_score']:.3f}")
+
+    # Save combined results
+    benchmarks_str = "-".join(args.benchmark)
+    save_results(all_results, repo_id, benchmarks_str)
+
+
+if __name__ == "__main__":
+    main()
