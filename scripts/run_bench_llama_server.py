@@ -298,27 +298,20 @@ def bench_once(prompt: str, args):
     gen_tok_per_s = timings.get("predicted_per_second")
     ms_per_token = timings.get("predicted_per_token_ms")
 
-    # Use prompt_ms as TTFT (time to first token = time to process prompt)
-    ttft_ms = prompt_ms
-
-    # tok_per_s: total throughput including TTFT (for apples-to-apples with vLLM)
+    # tok_per_s: total throughput including TTFT
     # generation_tok_per_s: pure generation speed excluding prompt processing (llama.cpp native)
     tok_per_s = gen_tokens / wall if wall > 0 and gen_tokens else None
 
     return {
         "wall_s": wall,
-        "ttft_ms": ttft_ms,
         "prompt_tokens": prompt_tokens,
         "generated_tokens": gen_tokens,
+        "ttft_ms": prompt_ms,  # time to first token = prompt processing time
         "tok_per_s": tok_per_s,  # overall throughput (includes TTFT)
         "generation_tok_per_s": gen_tok_per_s,  # pure generation speed (excludes prompt)
+        "generation_ms": gen_ms,
+        "ms_per_token": ms_per_token,
         "output_text": text,
-        # Extra metrics specific to llama-server
-        "extra": {
-            "prompt_ms": prompt_ms,
-            "generation_ms": gen_ms,
-            "ms_per_token": ms_per_token,
-        },
     }
 
 # ----------------------------
@@ -398,7 +391,6 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
             "median_tok_per_s": med(results, "tok_per_s"),  # unified field (includes TTFT) for cross-backend comparison
             "median_wall_s": med(results, "wall_s"),
             "median_ttft_ms": med(results, "ttft_ms"),
-            "median_generated_tokens": med(results, "generated_tokens"),
             "median_generation_tok_per_s": med(results, "generation_tok_per_s"),  # pure generation speed
         }
 

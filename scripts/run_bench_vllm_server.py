@@ -278,17 +278,9 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
     t1 = time.perf_counter()
 
     output_text = response.choices[0].message.content or ""
-    usage = response.usage
-
-    prompt_tokens = usage.prompt_tokens if usage else None
-    gen_tokens = usage.completion_tokens if usage else len(output_text.split())
-
     wall = t1 - t0
     return {
         "wall_s": wall,
-        "prompt_tokens": prompt_tokens,
-        "generated_tokens": gen_tokens,
-        "generation_tok_per_s": gen_tokens / wall if wall > 0 else 0,
         "output_text": output_text,
     }
 
@@ -394,11 +386,11 @@ def main():
             log(f"Benchmark {i + 1} of {args.iterations}...")
             r = bench_once(client, api_model, prompt_text, image_source,
                           args.max_tokens, args.temperature)
-            log(f"  {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['generation_tok_per_s']:.1f} tok/s)")
+            log(f"  {r['wall_s']:.2f}s")
             results.append(r)
 
-        med_tps = statistics.median([r["generation_tok_per_s"] for r in results])
-        log(f"Median: {med_tps:.1f} tok/s")
+        med_wall = statistics.median([r["wall_s"] for r in results])
+        log(f"Median: {med_wall:.2f}s")
 
         # Save results
         RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
@@ -424,7 +416,7 @@ def main():
             },
             "results": results,
             "summary": {
-                "median_tok_per_s": med_tps,
+                "median_wall_s": med_wall,
             },
         }
 
