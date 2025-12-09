@@ -407,7 +407,7 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
 
         payload = {
             "timestamp": datetime.now().strftime("%Y-%m-%d_%H%M%S"),
-            "model_id": model_id,
+            "model_id": compact_path(model_id),
             "model_ref": compact_path(str(gguf_path)),
             "engine": "llama-server",
             "gpu_info": gpu_info,

@@ -405,7 +405,7 @@ def main():
 
         payload = {
             "timestamp": datetime.now().isoformat(),
-            "model_id": args.model,
+            "model_id": compact_path(args.model),
             "model_ref": compact_path(model_path),
             "engine": "vllm-server",
             "mode": mode,
