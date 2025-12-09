@@ -4,38 +4,27 @@ Model Workbench Benchmark Runner - llama.cpp / llama-server
 
 Benchmarks GGUF models via llama.cpp's llama-server using OpenAI-compatible API.
 
-Auto resolution:
-  --model can be:
-    * Full path to .gguf file
-    * Directory containing GGUF files (auto-picks if unambiguous)
-    * Path relative to ~/models (e.g., org/repo/quant-folder)
-
-Result filenames:
-  * For GGUF in quant folder: "<org>/<repo>/<quant>" as label
-  * For root-level quant files: "<org>/<gguf-stem>" as label
-  * Otherwise: gguf stem
+--model accepts:
+  * Path to .gguf file
+  * Directory containing GGUF files (auto-picks if unambiguous)
 
 Output:
   benchmarks/<date>_<label>.json
 
 Examples:
 
-  # Quant folder (recommended when multiple quants exist)
+  # Quant folder
   uv run python scripts/run_bench_llama_server.py \\
-    --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+    --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
-  # Root-level quant file in repo
+  # Explicit .gguf file
   uv run python scripts/run_bench_llama_server.py \\
-    --model unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf
-
-  # Explicit shard file
-  uv run python scripts/run_bench_llama_server.py \\
-    --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL/GLM-4.5-Air-UD-Q4_K_XL-00001-of-00002.gguf
+    --model ~/models/unsloth/Repo-GGUF/Model-UD-Q4_K_XL.gguf
 
   # Use an already running server
   uv run python scripts/run_bench_llama_server.py \\
     --no-autostart \\
-    --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+    --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 """
 
 import argparse
@@ -143,20 +132,17 @@ def raise_if_multiple_variants(dir_path: Path, model_arg: str):
 
 def resolve_local_gguf(model_arg: str) -> Path | None:
     """
-    Resolve a GGUF path from:
-      1) explicit filesystem path
-      2) path relative to ~/models (e.g. org/repo/UD-Q4_K_XL)
-      3) HF-style repo id with local mirror under ~/models/org/repo
+    Resolve a GGUF path from explicit filesystem path.
+
+    Args:
+        model_arg: Explicit path to .gguf file or directory containing GGUF files
 
     Returns:
-      - a GGUF file path (prefer shard entrypoint)
-      - None if not GGUF
+        Path to GGUF file (prefer shard entrypoint), or None if not found
 
-    Ambiguity:
-      - If multiple variants exist and model_arg is too broad,
-        raise a helpful error telling you to pass a quant folder or exact file.
+    Raises:
+        SystemExit if directory contains multiple ambiguous GGUF variants
     """
-    # 1) filesystem-ish path
     p = Path(model_arg).expanduser()
     if is_gguf_file(p):
         return p
@@ -165,29 +151,6 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
         if chosen:
             return chosen
         raise_if_multiple_variants(p, model_arg)
-        return None
-
-    # 2) treat as path under ~/models
-    candidate = MODELS_ROOT / model_arg
-    if candidate.exists():
-        if is_gguf_file(candidate):
-            return candidate
-        if candidate.is_dir():
-            chosen = pick_gguf_from_dir(candidate)
-            if chosen:
-                return chosen
-            raise_if_multiple_variants(candidate, model_arg)
-            return None
-
-    # 3) plain HF-style repo id
-    if "/" in model_arg:
-        local_repo = MODELS_ROOT / model_arg
-        if local_repo.exists() and local_repo.is_dir():
-            chosen = pick_gguf_from_dir(local_repo)
-            if chosen:
-                return chosen
-            raise_if_multiple_variants(local_repo, model_arg)
-
     return None
 
 # ----------------------------
@@ -419,8 +382,7 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
     try:
         # Capture GPU info with memory usage after model loads
         gpu_info = get_gpu_info(include_memory=True)
-        mem = gpu_info.get("memory", {})
-        log(f"GPU memory: {mem.get('used_mib', '?')} / {mem.get('total_mib', '?')} MiB")
+        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
 
         log("Warmup request...")
         _ = bench_once(prompt, args)
@@ -528,22 +490,11 @@ def main():
     gguf_path = resolve_local_gguf(model_id)
 
     if not gguf_path:
-        # Try explicit .gguf path under MODELS_ROOT
-        p = Path(model_id).expanduser()
-        if is_gguf_file(p):
-            gguf_path = p
-        else:
-            cand = MODELS_ROOT / model_id
-            if is_gguf_file(cand):
-                gguf_path = cand
-
-    if not gguf_path:
         raise SystemExit(
-            "No GGUF path could be resolved.\n"
-            "Pass --model with:\n"
-            "  * a quant subfolder: <repo>/UD-Q4_K_XL\n"
-            "  * or an explicit .gguf file path\n"
-            "  * or <org>/<repo>/<file>.gguf relative to ~/models\n"
+            f"No GGUF found at: {Path(model_id).expanduser()}\n"
+            "Pass --model with an explicit path, e.g.:\n"
+            "  --model ~/models/org/repo/quant-folder\n"
+            "  --model ~/models/org/repo/model.gguf"
         )
 
     print(f"\n== Loading model ==")

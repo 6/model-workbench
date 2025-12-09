@@ -10,19 +10,19 @@ Benchmarking:
 
 vLLM (safetensors, multi-GPU with tensor parallelism):
     # Auto-detects GPU count, uses all available GPUs
-    uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8
+    uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8
 
     # Force single GPU
-    uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8 --tensor-parallel 1
+    uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --tensor-parallel 1
 
     # Vision benchmark
-    uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8 --image config/example.jpg
+    uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --image config/example.jpg
 
 llama-server (GGUF):
     # Auto-starts server, runs benchmark (auto-splits across GPUs if needed)
-    uv run python scripts/run_bench_llama_server.py --model unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+    uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
     # Non-sharded GGUF
-    uv run python scripts/run_bench_llama_server.py --model unsloth/Ministral-3-14B-Instruct-2512-GGUF/Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf
+    uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/Repo-GGUF/Model-UD-Q4_K_XL.gguf
 
-Results are saved to benchmarks/<tag>/ where tag is inferred from GPU count (single-gpu, dual-gpu, etc.)
+Results are saved to benchmarks/

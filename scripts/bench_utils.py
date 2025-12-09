@@ -96,7 +96,8 @@ def get_gpu_info(include_memory: bool = False) -> dict:
 
         result = {"driver_version": driver_version, "gpus": gpus}
         if include_memory:
-            result["memory"] = {"used_mib": total_used, "total_mib": total_mem}
+            result["memory_used_mib"] = total_used
+            result["memory_total_mib"] = total_mem
         return result
     except Exception as e:
         return {"error": str(e), "driver_version": None, "gpus": []}
@@ -123,42 +124,24 @@ def port_open(host: str, port: int, timeout: float = 0.5) -> bool:
 # Model resolution
 # ----------------------------
 
-def resolve_model_path(model_arg: str, require_local: bool = True) -> str:
+def resolve_model_path(model_arg: str) -> str:
     """
-    Resolve model path - checks local paths first.
+    Resolve model path from explicit filesystem path.
 
     Args:
-        model_arg: Model argument (path or HF-style repo id)
-        require_local: If True, raise error if not found locally
+        model_arg: Explicit path to model (e.g., ~/models/org/repo)
 
     Returns:
-        Resolved path string
+        Resolved absolute path string
 
     Raises:
-        SystemExit if require_local=True and model not found locally
+        SystemExit if path does not exist
     """
-    # Check if it's an absolute or expandable path
     p = Path(model_arg).expanduser()
     if p.exists():
         return str(p)
 
-    # Check relative to MODELS_ROOT
-    if "/" in model_arg:
-        local = MODELS_ROOT / model_arg
-        if local.exists():
-            return str(local)
-
-    if require_local:
-        raise SystemExit(
-            f"Model not found locally: {model_arg}\n"
-            f"Checked:\n"
-            f"  - {p}\n"
-            f"  - {MODELS_ROOT / model_arg if '/' in model_arg else 'N/A'}\n"
-            f"\nPlease download the model first or provide the correct path."
-        )
-
-    # Return as-is for HuggingFace download
-    return model_arg
+    raise SystemExit(f"Model not found: {p}")
 
 # ----------------------------
 # Model config utilities

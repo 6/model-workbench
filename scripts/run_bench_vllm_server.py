@@ -13,20 +13,20 @@ This script:
 Examples:
 
   # Auto-detect GPUs, use all available
-  uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8
+  uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8
 
   # Force single GPU
-  uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8 --tensor-parallel 1
+  uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --tensor-parallel 1
 
   # Vision benchmark with local image
-  uv run python scripts/run_bench_vllm_server.py \
-    --model zai-org/GLM-4.6V-FP8 \
+  uv run python scripts/run_bench_vllm_server.py \\
+    --model ~/models/zai-org/GLM-4.6V-FP8 \\
     --image config/example.jpg
 
   # Use an already running vLLM server
-  uv run python scripts/run_bench_vllm_server.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --no-autostart \
+  uv run python scripts/run_bench_vllm_server.py \\
+    --model ~/models/zai-org/GLM-4.6V-FP8 \\
+    --no-autostart \\
     --port 8000
 """
 
@@ -371,8 +371,7 @@ def main():
     try:
         # Capture GPU info with memory usage after model loads
         gpu_info = get_gpu_info(include_memory=True)
-        mem = gpu_info.get("memory", {})
-        log(f"GPU memory: {mem.get('used_mib', '?')} / {mem.get('total_mib', '?')} MiB")
+        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
 
         # Create OpenAI client
         client = OpenAI(
