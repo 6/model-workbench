@@ -36,7 +36,7 @@ import shutil
 from pathlib import Path
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
+from transformers import AutoModel, AutoTokenizer, AutoConfig
 
 from bench_utils import (
     MODELS_ROOT,
@@ -98,7 +98,7 @@ def dequantize_model(
     log("Loading model (FP8 → BF16 dequantization happens here)...")
     log("This may take several minutes...")
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModel.from_pretrained(
         model_path,
         torch_dtype=torch.bfloat16,
         device_map=device_map,
