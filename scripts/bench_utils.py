@@ -72,12 +72,12 @@ def extract_repo_id(path: str) -> str:
     """
     Extract repo ID from a model path.
 
-    For directories (quant folders): returns org/repo/quant (3 parts)
-    For files (inline GGUFs): returns org/repo (2 parts)
+    For directories: returns up to org/repo/quant (3 parts)
+    For .gguf files: returns org/repo/filename (without .gguf extension)
 
     Examples:
         ~/models/unsloth/GLM-GGUF/Q4_K_XL -> unsloth/GLM-GGUF/Q4_K_XL
-        ~/models/unsloth/GLM-GGUF/model.gguf -> unsloth/GLM-GGUF
+        ~/models/unsloth/Qwen-GGUF/Model-Q4.gguf -> unsloth/Qwen-GGUF/Model-Q4
         ~/models/org/repo -> org/repo
     """
     p = Path(path).expanduser()
@@ -85,16 +85,18 @@ def extract_repo_id(path: str) -> str:
         rel = p.relative_to(MODELS_ROOT)
         parts = rel.parts
 
-        # If path is a directory, include up to 3 parts (org/repo/quant)
-        # If path is a file, include only 2 parts (org/repo)
         if p.is_dir():
-            max_parts = 3
-        else:
-            max_parts = 2
-
-        n = min(len(parts), max_parts)
-        if n >= 1:
+            # Directory: include up to 3 parts (org/repo/quant)
+            n = min(len(parts), 3)
             return "/".join(parts[:n])
+        else:
+            # File: include org/repo + filename without extension
+            if len(parts) >= 2:
+                repo_parts = parts[:2]  # org/repo
+                filename = p.stem  # filename without extension
+                return f"{repo_parts[0]}/{repo_parts[1]}/{filename}"
+            elif len(parts) == 1:
+                return p.stem
     except ValueError:
         pass
     # Fallback: return compacted path
