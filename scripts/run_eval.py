@@ -35,9 +35,9 @@ from bench_utils import (
     extract_repo_id,
     get_gpu_info,
     get_gpu_count,
+    get_model_backend_version,
     resolve_model_path,
     detect_model_format,
-    model_needs_nightly,
     log,
 )
 from server_manager import ServerManager
@@ -189,12 +189,6 @@ def main():
     )
 
     # llama.cpp server options (used when auto-starting GGUF models)
-    default_llama_bin = str(Path.home() / "llama.cpp/build/bin/llama-server")
-    parser.add_argument(
-        "--llama-server-bin",
-        default=default_llama_bin,
-        help=f"Path to llama-server binary (default: {default_llama_bin})",
-    )
     parser.add_argument(
         "--n-gpu-layers",
         type=int,
@@ -214,17 +208,11 @@ def main():
         help="Parallel sequences for llama.cpp (default: 1)",
     )
 
-    # Environment selection
-    env_group = parser.add_mutually_exclusive_group()
-    env_group.add_argument(
-        "--force-stable",
-        action="store_true",
-        help="Force use of stable venv (ignore model config)",
-    )
-    env_group.add_argument(
-        "--force-nightly",
-        action="store_true",
-        help="Force use of nightly venv (ignore model config)",
+    # Backend version (Docker-based execution)
+    parser.add_argument(
+        "--backend-version",
+        default=None,
+        help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp)",
     )
 
     args = parser.parse_args()
@@ -242,21 +230,22 @@ def main():
     if args.port is None:
         args.port = 8080 if model_format == "gguf" else 8000
 
-    # Determine which environment to use (only applies to vLLM)
-    if args.force_nightly:
-        use_nightly = True
-    elif args.force_stable:
-        use_nightly = False
-    else:
-        use_nightly = model_needs_nightly(args.model)
+    # Resolve backend version
+    engine = "llama" if model_format == "gguf" else "vllm"
+    backend_version = args.backend_version or get_model_backend_version(args.model, engine)
+    if not backend_version:
+        raise SystemExit(
+            f"No backend version specified and none found in config.\n"
+            f"Either:\n"
+            f"  1. Set defaults.{engine}_version in config/models.yaml\n"
+            f"  2. Pass --backend-version"
+        )
 
-    env_label = "nightly" if use_nightly else "stable"
     backend_label = "llama-server" if model_format == "gguf" else "vLLM"
 
     log(f"Model: {repo_id} ({model_format})")
     log(f"Backend: {backend_label}")
-    if model_format != "gguf":
-        log(f"Environment: {env_label}")
+    log(f"Backend version: {backend_version}")
 
     # Server management
     server = ServerManager(
@@ -280,7 +269,7 @@ def main():
                 # llama.cpp backend for GGUF models
                 server.start_llama(
                     model_path=model_path,
-                    llama_server_bin=args.llama_server_bin,
+                    version=backend_version,
                     n_gpu_layers=args.n_gpu_layers,
                     ctx=args.ctx,
                     parallel=args.parallel,
@@ -290,7 +279,7 @@ def main():
                 server.start_vllm(
                     model_path=model_path,
                     tensor_parallel=args.tensor_parallel,
-                    use_nightly=use_nightly,
+                    version=backend_version,
                     max_model_len=args.max_model_len,
                     gpu_memory_utilization=args.gpu_memory_utilization,
                 )
@@ -315,7 +304,7 @@ def main():
             "repo_id": repo_id,
             "model_path": str(model_path),
             "model_format": model_format,
-            "environment": env_label,
+            "backend_version": backend_version,
             "gpu_info": get_gpu_info(include_memory=True),
             "benchmarks": {},
         }

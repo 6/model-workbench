@@ -1,8 +1,16 @@
+# Backend version defaults
+# Models without explicit backend_version use these
+defaults:
+  vllm_version: v0.8.0        # Default vLLM version for safetensors models
+  llama_version: b4521        # Default llama.cpp version for GGUF models
+
 models:
+  # vLLM models (safetensors) - use default vllm_version unless overridden
   - source: hf
     repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
-    nightly: true
+    # backend_version: abc123def  # Uncomment to pin to specific commit
 
+  # GGUF models - use default llama_version unless overridden
   - source: hf
     repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
     include:
@@ -10,7 +18,7 @@ models:
 
   - source: hf
     repo_id: zai-org/GLM-4.6V-FP8
-    nightly: true  # Requires nightly transformers/tokenizers
+    # backend_version: v0.8.1  # Can override to specific version if needed
 
   - source: hf
     repo_id: unsloth/MiniMax-M2-GGUF

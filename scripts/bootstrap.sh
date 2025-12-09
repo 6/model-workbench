@@ -3,13 +3,6 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-UPDATE_NIGHTLY=false
-for arg in "$@"; do
-  case $arg in
-    --update-nightly) UPDATE_NIGHTLY=true ;;
-  esac
-done
-
 echo "== model-workbench bootstrap =="
 
 # Require uv
@@ -22,7 +15,7 @@ fi
 # Require NVIDIA driver
 if ! command -v nvidia-smi >/dev/null 2>&1; then
   echo "Error: nvidia-smi not found."
-  echo "Install NVIDIA drivers first (you already did on this machine)."
+  echo "Install NVIDIA drivers first."
   exit 1
 fi
 
@@ -31,27 +24,44 @@ mkdir -p "$HOME/models"
 
 # Sync env from repo lockfile
 cd "$ROOT_DIR"
-# Check Docker (optional, for Mistral models with FP8 issues)
+
+# ============================================================================
+# Docker with GPU support (REQUIRED for benchmarks)
+# ============================================================================
+# All benchmarks run via Docker for reproducibility with version pinning.
+# Each model can specify a backend_version in config/models.yaml.
+# ============================================================================
+
+DOCKER_GPU_OK=false
+
 if ! command -v docker >/dev/null 2>&1; then
   echo
-  echo "Note: Docker not installed. Required for some Mistral models."
+  echo "ERROR: Docker not installed."
+  echo "Docker is REQUIRED for running benchmarks."
+  echo
   echo "Install with:"
   echo "  sudo apt-get update && sudo apt-get install -y docker.io"
   echo "  # Add yourself to docker group:"
   echo "  sudo usermod -aG docker \$USER"
   echo "  # Log out and back in, then continue below"
   echo
+  exit 1
 elif ! docker info >/dev/null 2>&1; then
   echo
-  echo "Note: Docker installed but not accessible. Either:"
+  echo "ERROR: Docker installed but not accessible."
+  echo
+  echo "Either:"
   echo "  - Run: sudo usermod -aG docker \$USER  (then log out/in)"
   echo "  - Or use: sudo docker ..."
   echo
+  exit 1
 else
   # Check nvidia-container-toolkit
   if ! docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi >/dev/null 2>&1; then
     echo
-    echo "Note: nvidia-container-toolkit not configured. Required for GPU Docker."
+    echo "ERROR: nvidia-container-toolkit not configured."
+    echo "Docker with GPU support is REQUIRED for benchmarks."
+    echo
     echo "Install with:"
     echo "  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg"
     echo "  curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \\"
@@ -61,33 +71,25 @@ else
     echo "  sudo nvidia-ctk runtime configure --runtime=docker"
     echo "  sudo systemctl restart docker"
     echo
+    exit 1
   else
     echo "Docker with GPU support: OK"
+    DOCKER_GPU_OK=true
   fi
 fi
 
-if $UPDATE_NIGHTLY; then
-  echo "[1/3] Syncing stable Python environment..."
-else
-  echo "[1/2] Syncing stable Python environment..."
-fi
+echo "[1/2] Syncing Python environment..."
 uv sync --all-extras
 
-if $UPDATE_NIGHTLY; then
-  echo "[2/3] Syncing nightly Python environment (for bleeding-edge models)..."
-  # Upgrade git dependencies to latest commits, then sync
-  (cd "$ROOT_DIR/nightly" && uv lock --upgrade-package transformers --upgrade-package tokenizers && uv sync)
-  echo "[3/3] Downloading models listed in config/models.yaml..."
-else
-  echo "[2/2] Downloading models listed in config/models.yaml..."
-fi
+echo "[2/2] Downloading models listed in config/models.yaml..."
 uv run python scripts/fetch_models.py
 
 echo
 echo "Bootstrap complete."
 echo
-echo "Environments created:"
-echo "  - .venv          (stable transformers/tokenizers)"
-echo "  - nightly/.venv  (git master transformers/tokenizers)"
+echo "Run benchmarks with:"
+echo "  uv run python scripts/run_bench.py --model ~/models/..."
 echo
-echo "Models with 'nightly: true' in config/models.yaml will auto-use nightly/.venv"
+echo "Backend versions are configured in config/models.yaml:"
+echo "  defaults.vllm_version  - for safetensors models"
+echo "  defaults.llama_version - for GGUF models"

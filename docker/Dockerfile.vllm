@@ -1,0 +1,67 @@
+# vLLM Server Docker Image
+# Build with: docker build -f docker/Dockerfile.vllm --build-arg VERSION=v0.8.0 -t model-bench-vllm:v0.8.0 .
+#
+# VERSION can be:
+#   - Release tag: v0.8.0, v0.7.3
+#   - Commit SHA: abc123def (7+ hex chars)
+
+ARG CUDA_VERSION=12.4.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04
+
+# Required: version to checkout (release tag or commit SHA)
+ARG VERSION
+RUN test -n "$VERSION" || (echo "ERROR: VERSION build-arg is required" && exit 1)
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    python3 \
+    python3-pip \
+    python3-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Upgrade pip
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install PyTorch (CUDA 12.4)
+RUN pip3 install --no-cache-dir \
+    torch==2.5.1 \
+    --index-url https://download.pytorch.org/whl/cu124
+
+# Clone vLLM repository
+WORKDIR /opt
+RUN git clone https://github.com/vllm-project/vllm.git
+
+# Checkout specific version
+WORKDIR /opt/vllm
+RUN git checkout ${VERSION}
+
+# Install vLLM from source
+# Note: This takes a while due to CUDA kernel compilation
+RUN pip3 install --no-cache-dir -e .
+
+# Install additional dependencies for benchmarking
+RUN pip3 install --no-cache-dir \
+    transformers \
+    tokenizers \
+    accelerate \
+    safetensors
+
+# Expose default port
+EXPOSE 8000
+
+# Set working directory
+WORKDIR /workspace
+
+# Default entrypoint: vLLM OpenAI-compatible server
+ENTRYPOINT ["python", "-m", "vllm.entrypoints.openai.api_server"]
+
+# Default arguments (can be overridden)
+CMD ["--host", "0.0.0.0", "--port", "8000"]

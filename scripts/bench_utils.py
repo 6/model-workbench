@@ -2,9 +2,11 @@
 Shared utilities for benchmark scripts.
 """
 
+import base64
 import json
 import re
 import socket
+import statistics
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -28,6 +30,9 @@ VISION_PROMPTS = {
     "caption": "Provide a brief caption for this image.",
 }
 
+# Combined prompts for CLI choices
+ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
+
 # ----------------------------
 # Logging
 # ----------------------------
@@ -45,8 +50,12 @@ ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
 RESULTS_ROOT = ROOT / "perf"
 MODELS_CONFIG = ROOT / "config" / "models.yaml"
-VENV_STABLE = ROOT / ".venv"
-VENV_NIGHTLY = ROOT / "nightly" / ".venv"
+
+# Built-in test images
+BUILTIN_IMAGES = {
+    "example": ROOT / "config" / "example.jpg",
+    "grayscale": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Grayscale_8bits_palette_sample_image.png",
+}
 
 # ----------------------------
 # String utilities
@@ -55,6 +64,78 @@ VENV_NIGHTLY = ROOT / "nightly" / ".venv"
 def sanitize(s: str) -> str:
     """Sanitize a string for use in filenames."""
     return re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
+
+
+# ----------------------------
+# Image utilities
+# ----------------------------
+
+def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
+    """Resolve image argument to path and label.
+
+    Args:
+        image_arg: Image path, URL, builtin name ('example', 'grayscale'), or 'none'
+
+    Returns:
+        (image_path, label) tuple where image_path is None for text-only
+    """
+    if image_arg is None or image_arg.lower() == "none":
+        return None, "none"
+
+    if image_arg in BUILTIN_IMAGES:
+        src = BUILTIN_IMAGES[image_arg]
+        return str(src), f"builtin:{image_arg}"
+
+    p = Path(image_arg).expanduser()
+    if p.exists():
+        return str(p), str(p)
+
+    # Assume it's a URL
+    return image_arg, image_arg
+
+
+def encode_image_base64(image_path: str) -> str:
+    """Encode local image to base64 data URL.
+
+    Args:
+        image_path: Path to local image file
+
+    Returns:
+        Base64 data URL string (e.g., "data:image/jpeg;base64,...")
+    """
+    with open(image_path, "rb") as f:
+        data = base64.b64encode(f.read()).decode("utf-8")
+
+    # Determine MIME type from extension
+    suffix = Path(image_path).suffix.lower()
+    mime_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }
+    mime = mime_types.get(suffix, "image/jpeg")
+    return f"data:{mime};base64,{data}"
+
+
+# ----------------------------
+# Statistics utilities
+# ----------------------------
+
+def med(results: list[dict], key: str) -> float | None:
+    """Compute median of a metric across results, ignoring None values.
+
+    Args:
+        results: List of result dicts
+        key: Key to extract from each result
+
+    Returns:
+        Median value or None if no valid values
+    """
+    vals = [r.get(key) for r in results if r.get(key) is not None]
+    return statistics.median(vals) if vals else None
+
 
 # ----------------------------
 # GPU info + tag inference
@@ -380,41 +461,50 @@ def get_model_config(model_arg: str) -> dict | None:
     return None
 
 
-def model_needs_nightly(model_arg: str) -> bool:
+def get_default_backend_version(engine: str) -> str | None:
     """
-    Check if a model requires nightly transformers/tokenizers.
+    Get default backend version for engine from config.
+
+    Args:
+        engine: 'vllm' or 'llama'
+
+    Returns:
+        Default version string or None if not configured
+    """
+    if not MODELS_CONFIG.exists():
+        return None
+    with open(MODELS_CONFIG) as f:
+        data = yaml.safe_load(f)
+    defaults = data.get("defaults", {})
+    if engine == "vllm":
+        return defaults.get("vllm_version")
+    elif engine == "llama":
+        return defaults.get("llama_version")
+    return None
+
+
+def get_model_backend_version(model_arg: str, engine: str) -> str | None:
+    """
+    Get backend version for a specific model.
+
+    Resolution order:
+    1. Model's backend_version if specified
+    2. Global defaults.vllm_version or defaults.llama_version
 
     Args:
         model_arg: Model path or repo_id
+        engine: 'vllm' or 'llama'
 
     Returns:
-        True if model has nightly: true in config
+        Version string or None if not configured
     """
+    # First check model-specific config
     config = get_model_config(model_arg)
-    if config:
-        return config.get("nightly", False)
-    return False
+    if config and config.get("backend_version"):
+        return config["backend_version"]
 
-
-def get_venv_python(nightly: bool = False) -> str:
-    """
-    Get path to Python executable for the appropriate venv.
-
-    Args:
-        nightly: If True, use nightly venv; otherwise stable
-
-    Returns:
-        Path to Python executable
-    """
-    venv = VENV_NIGHTLY if nightly else VENV_STABLE
-    python = venv / "bin" / "python"
-    if not python.exists():
-        env_name = "nightly" if nightly else "stable"
-        raise SystemExit(
-            f"Python not found in {env_name} venv: {python}\n"
-            f"Run bootstrap.sh to create both environments."
-        )
-    return str(python)
+    # Fall back to global default
+    return get_default_backend_version(engine)
 
 
 # ----------------------------
