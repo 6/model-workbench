@@ -24,4 +24,5 @@ dependencies = [
 # Override vllm's transformers<5 constraint with git version
 override-dependencies = [
     "transformers @ git+https://github.com/huggingface/transformers.git",
+    "tokenizers>=0.22.2",  # Match transformers requirements
 ]
