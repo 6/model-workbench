@@ -1,8 +1,9 @@
 {
-  "timestamp": "2025-12-09T02:06:00.718380",
+  "timestamp": "2025-12-09T04:40:45.484853",
   "model_id": "openai/gpt-oss-20b",
   "engine": "vllm-server",
   "mode": "text-only",
+  "environment": "stable",
   "gpu_info": {
     "driver_version": "580.95.05",
     "gpus": [
@@ -15,6 +16,22 @@
         "index": 1,
         "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
         "memory_total_mib": 97887
+      }
+    ]
+  },
+  "gpu_memory": {
+    "used_mib": 189416,
+    "total_mib": 195774,
+    "gpus": [
+      {
+        "index": 0,
+        "used_mib": 94708,
+        "total_mib": 97887
+      },
+      {
+        "index": 1,
+        "used_mib": 94708,
+        "total_mib": 97887
       }
     ]
   },
@@ -31,28 +48,32 @@
   },
   "results": [
     {
-      "wall_s": 0.5214136960021278,
-      "prompt_tokens": 77,
-      "generated_tokens": 149,
-      "tok_per_s": 285.7615769252673,
-      "output_text": "Speculative decoding is a technique where a language model generates several candidate next tokens in parallel, then selects the most likely one based on a scoring function, allowing faster inference by reducing the number of sequential steps. By speculatively exploring multiple paths, it can achieve higher throughput while maintaining comparable quality to traditional decoding methods."
+      "wall_s": 0.4642603130050702,
+      "ttft_ms": 243.30459400516702,
+      "prompt_tokens": null,
+      "generated_tokens": 71,
+      "generation_tok_per_s": 152.93144387128478,
+      "output_text": "Speculative decoding is a technique that lets a language model generate several candidate next tokens in parallel using a fast, low\u2011precision \u201cdraft\u201d model, then verifies the most promising ones with a slower, high\u2011precision \u201creal\u201d model. By doing this, it reduces the number of sequential steps needed for inference, dramatically speeding up generation while maintaining accuracy."
     },
     {
-      "wall_s": 0.5201403020000726,
-      "prompt_tokens": 77,
-      "generated_tokens": 149,
-      "tok_per_s": 286.4611710091621,
-      "output_text": "Speculative decoding is a technique where a language model generates several candidate next tokens in parallel, then selects the most likely one based on a scoring function, allowing faster inference by reducing the number of sequential steps. By speculatively exploring multiple paths, it can achieve higher throughput while maintaining comparable quality to traditional decoding methods."
+      "wall_s": 0.46202113199979067,
+      "ttft_ms": 241.6070370018133,
+      "prompt_tokens": null,
+      "generated_tokens": 71,
+      "generation_tok_per_s": 153.67262465395666,
+      "output_text": "Speculative decoding is a technique that lets a language model generate several candidate next tokens in parallel using a fast, low\u2011precision \u201cdraft\u201d model, then verifies the most promising ones with a slower, high\u2011precision \u201creal\u201d model. By doing this, it reduces the number of sequential steps needed for inference, dramatically speeding up generation while maintaining accuracy."
     },
     {
-      "wall_s": 0.5192737489996944,
-      "prompt_tokens": 77,
-      "generated_tokens": 149,
-      "tok_per_s": 286.9392113254847,
-      "output_text": "Speculative decoding is a technique where a language model generates several candidate next tokens in parallel, then selects the most likely one based on a scoring function, allowing faster inference by reducing the number of sequential steps. By speculatively exploring multiple paths, it can achieve higher throughput while maintaining comparable quality to traditional decoding methods."
+      "wall_s": 0.4614335919977748,
+      "ttft_ms": 240.95558700355468,
+      "prompt_tokens": null,
+      "generated_tokens": 71,
+      "generation_tok_per_s": 153.86829487772184,
+      "output_text": "Speculative decoding is a technique that lets a language model generate several candidate next tokens in parallel using a fast, low\u2011precision \u201cdraft\u201d model, then verifies the most promising ones with a slower, high\u2011precision \u201creal\u201d model. By doing this, it reduces the number of sequential steps needed for inference, dramatically speeding up generation while maintaining accuracy."
     }
   ],
   "summary": {
-    "median_tok_per_s": 286.4611710091621
+    "median_generation_tok_per_s": 153.67262465395666,
+    "median_ttft_ms": 241.6070370018133
   }
 }

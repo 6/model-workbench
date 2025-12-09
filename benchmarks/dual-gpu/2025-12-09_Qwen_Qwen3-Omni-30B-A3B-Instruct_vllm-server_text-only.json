@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-09T03:22:13.383277",
+  "timestamp": "2025-12-09T04:34:37.000816",
   "model_id": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
   "engine": "vllm-server",
   "mode": "text-only",
@@ -19,6 +19,22 @@
       }
     ]
   },
+  "gpu_memory": {
+    "used_mib": 187296,
+    "total_mib": 195774,
+    "gpus": [
+      {
+        "index": 0,
+        "used_mib": 93648,
+        "total_mib": 97887
+      },
+      {
+        "index": 1,
+        "used_mib": 93648,
+        "total_mib": 97887
+      }
+    ]
+  },
   "tag": "dual-gpu",
   "config": {
     "tensor_parallel_size": 2,
@@ -32,28 +48,32 @@
   },
   "results": [
     {
-      "wall_s": 0.35854057599863154,
-      "prompt_tokens": 17,
-      "generated_tokens": 56,
-      "tok_per_s": 156.18873775729568,
-      "output_text": "Speculative decoding is a technique used in large language models to speed up inference by predicting multiple tokens ahead of time and validating them later. If the predictions are correct, the model saves computation; if not, it discards the speculative tokens and continues from the last confirmed one."
+      "wall_s": 0.346473337005591,
+      "ttft_ms": 12.288368001463823,
+      "prompt_tokens": null,
+      "generated_tokens": 53,
+      "generation_tok_per_s": 152.96992391407233,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy."
     },
     {
-      "wall_s": 0.35724863699942944,
-      "prompt_tokens": 17,
-      "generated_tokens": 56,
-      "tok_per_s": 156.75357216293435,
-      "output_text": "Speculative decoding is a technique used in large language models to speed up inference by predicting multiple tokens ahead of time and validating them later. If the predictions are correct, the model saves computation; if not, it discards the speculative tokens and continues from the last confirmed one."
+      "wall_s": 0.34510572499857517,
+      "ttft_ms": 10.58245199965313,
+      "prompt_tokens": null,
+      "generated_tokens": 53,
+      "generation_tok_per_s": 153.57612511417716,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy."
     },
     {
-      "wall_s": 0.35704978499779827,
-      "prompt_tokens": 17,
-      "generated_tokens": 56,
-      "tok_per_s": 156.8408730461645,
-      "output_text": "Speculative decoding is a technique used in large language models to speed up inference by predicting multiple tokens ahead of time and validating them later. If the predictions are correct, the model saves computation; if not, it discards the speculative tokens and continues from the last confirmed one."
+      "wall_s": 0.3458945029997267,
+      "ttft_ms": 11.128606005513575,
+      "prompt_tokens": null,
+      "generated_tokens": 53,
+      "generation_tok_per_s": 153.22591004009647,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy."
     }
   ],
   "summary": {
-    "median_tok_per_s": 156.75357216293435
+    "median_generation_tok_per_s": 153.22591004009647,
+    "median_ttft_ms": 11.128606005513575
   }
 }

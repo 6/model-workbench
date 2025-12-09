@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-09_040905",
+  "timestamp": "2025-12-09_045445",
   "model_id": "unsloth/Qwen3-0.6B-GGUF",
   "model_ref": "/home/peter/models/unsloth/Qwen3-0.6B-GGUF/Qwen3-0.6B-UD-Q4_K_XL.gguf",
   "engine": "llama-server",
@@ -15,6 +15,22 @@
         "index": 1,
         "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
         "memory_total_mib": 97887
+      }
+    ]
+  },
+  "gpu_memory": {
+    "used_mib": 2492,
+    "total_mib": 195774,
+    "gpus": [
+      {
+        "index": 0,
+        "used_mib": 1078,
+        "total_mib": 97887
+      },
+      {
+        "index": 1,
+        "used_mib": 1414,
+        "total_mib": 97887
       }
     ]
   },
@@ -35,41 +51,55 @@
     "prompt": "Explain speculative decoding in 2 sentences.",
     "iterations": [
       {
-        "wall_s": 0.7873519549975754,
-        "max_tokens": 512,
-        "prompt_tokens": 9,
+        "wall_s": 0.7897549240005901,
+        "ttft_ms": 2.447,
+        "prompt_tokens": 1,
         "generated_tokens": 512,
-        "tok_per_s": 650.2809788559891,
-        "temperature": 0.0,
-        "seed": 0,
-        "output_text": " Also, explain the difference between a neural network and a perceptron. Explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a"
+        "tok_per_s": 648.302383993262,
+        "generation_tok_per_s": 665.034388252791,
+        "output_text": " Also, explain the difference between a neural network and a perceptron. Explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a",
+        "extra": {
+          "prompt_ms": 2.447,
+          "generation_ms": 769.885,
+          "ms_per_token": 1.503681640625
+        }
       },
       {
-        "wall_s": 0.7866349199975957,
-        "max_tokens": 512,
-        "prompt_tokens": 9,
+        "wall_s": 0.7891827819985338,
+        "ttft_ms": 2.128,
+        "prompt_tokens": 1,
         "generated_tokens": 512,
-        "tok_per_s": 650.8737242449965,
-        "temperature": 0.0,
-        "seed": 0,
-        "output_text": " Also, explain the difference between a neural network and a perceptron. Explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a"
+        "tok_per_s": 648.7723904763944,
+        "generation_tok_per_s": 664.9618361258699,
+        "output_text": " Also, explain the difference between a neural network and a perceptron. Explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a",
+        "extra": {
+          "prompt_ms": 2.128,
+          "generation_ms": 769.969,
+          "ms_per_token": 1.503845703125
+        }
       },
       {
-        "wall_s": 0.7712682240016875,
-        "max_tokens": 512,
-        "prompt_tokens": 9,
+        "wall_s": 0.7716491070023039,
+        "ttft_ms": 1.93,
+        "prompt_tokens": 1,
         "generated_tokens": 512,
-        "tok_per_s": 663.8416883603904,
-        "temperature": 0.0,
-        "seed": 0,
-        "output_text": " Also, explain the difference between a neural network and a perceptron. Explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a"
+        "tok_per_s": 663.51401868268,
+        "generation_tok_per_s": 666.3534458412126,
+        "output_text": " Also, explain the difference between a neural network and a perceptron. Explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a perceptron and a deep learning model. Also, explain the difference between a perceptron and a neural network. Also, explain the difference between a",
+        "extra": {
+          "prompt_ms": 1.93,
+          "generation_ms": 768.361,
+          "ms_per_token": 1.500705078125
+        }
       }
     ],
     "summary": {
       "iterations": 3,
-      "median_wall_s": 0.7866349199975957,
+      "median_tok_per_s": 648.7723904763944,
+      "median_wall_s": 0.7891827819985338,
+      "median_ttft_ms": 2.128,
       "median_generated_tokens": 512,
-      "median_tok_per_s": 650.8737242449965
+      "median_generation_tok_per_s": 665.034388252791
     }
   }
 }
