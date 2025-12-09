@@ -1,6 +1,7 @@
 models:
   - source: hf
     repo_id: zai-org/GLM-4.6V-FP8
+    nightly: true  # Requires nightly transformers/tokenizers
 
   - source: hf
     repo_id: unsloth/MiniMax-M2-GGUF
@@ -45,6 +46,16 @@ models:
     include:
       - "UD-Q2_K_XL/*.gguf"
       #- "UD-Q4_K_XL/*.gguf"
+
+  - source: hf
+    repo_id: unsloth/gpt-oss-20b-GGUF
+    include:
+      - "gpt-oss-20b-F16.gguf"
+
+  - source: hf
+    repo_id: unsloth/gpt-oss-120b-GGUF
+    include:
+      - "gpt-oss-120b-F16.gguf"
 
   - source: hf
     repo_id: Qwen/Qwen3-Omni-30B-A3B-Instruct

@@ -2,41 +2,38 @@
 """
 Model Workbench vLLM Server Benchmark Runner
 
-Uses vLLM server mode with tensor parallelism for GLM-4.5V/GLM-4.6V models.
+Uses vLLM server mode with tensor parallelism. Auto-detects GPU count.
 Follows the official vLLM recipe: https://docs.vllm.ai/projects/recipes/en/latest/GLM/GLM-V.html
 
 This script:
-  1. Starts a vLLM server with GLM-specific flags
+  1. Starts a vLLM server with tensor parallelism (auto-detects GPUs)
   2. Benchmarks via OpenAI-compatible API
   3. Shuts down the server after completion
 
 Examples:
 
-  # Text-only benchmark (dual GPU setup)
-  uv run python scripts/run_bench_vllm_server.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --tensor-parallel 2 \
-    --image none
+  # Auto-detect GPUs, use all available
+  uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8
+
+  # Force single GPU
+  uv run python scripts/run_bench_vllm_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --tensor-parallel 1
 
   # Vision benchmark with local image
-  uv run python scripts/run_bench_vllm_server.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --tensor-parallel 2 \
+  uv run python scripts/run_bench_vllm_server.py \\
+    --model ~/models/zai-org/GLM-4.6V-FP8 \\
     --image config/example.jpg
 
   # Use an already running vLLM server
-  uv run python scripts/run_bench_vllm_server.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --no-autostart \
+  uv run python scripts/run_bench_vllm_server.py \\
+    --model ~/models/zai-org/GLM-4.6V-FP8 \\
+    --no-autostart \\
     --port 8000
 """
 
 import argparse
 import base64
 import json
-import re
 import signal
-import socket
 import statistics
 import subprocess
 import time
@@ -45,9 +42,21 @@ from pathlib import Path
 
 from openai import OpenAI
 
-ROOT = Path(__file__).resolve().parents[1]
-MODELS_ROOT = Path.home() / "models"
-RESULTS_ROOT = ROOT / "benchmarks"
+from bench_utils import (
+    ROOT,
+    MODELS_ROOT,
+    RESULTS_ROOT,
+    sanitize,
+    compact_path,
+    extract_repo_id,
+    get_gpu_info,
+    get_gpu_count,
+    port_open,
+    resolve_model_path,
+    model_needs_nightly,
+    get_venv_python,
+    log,
+)
 
 # Built-in test images
 BUILTIN_IMAGES = {
@@ -70,79 +79,6 @@ VISION_PROMPTS = {
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
 
 
-def sanitize(s: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
-
-
-def get_gpu_info():
-    try:
-        drv = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-            text=True
-        ).strip().splitlines()
-        driver_version = drv[0].strip() if drv else None
-
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=index,name,memory.total", "--format=csv,noheader,nounits"],
-            text=True
-        ).strip()
-
-        gpus = []
-        for line in out.splitlines():
-            parts = [p.strip() for p in line.split(",")]
-            if len(parts) >= 3:
-                gpus.append({
-                    "index": int(parts[0]),
-                    "name": parts[1],
-                    "memory_total_mib": int(parts[2]),
-                })
-        return {"driver_version": driver_version, "gpus": gpus}
-    except Exception as e:
-        return {"error": str(e), "driver_version": None, "gpus": []}
-
-
-def infer_tag(cli_tag, tensor_parallel):
-    if cli_tag:
-        return cli_tag
-    gpus = get_gpu_info().get("gpus", [])
-    n = len(gpus)
-    if n == 0:
-        return "unknown-gpu"
-    if tensor_parallel == 1:
-        return "single-gpu"
-    if tensor_parallel == 2:
-        return "dual-gpu"
-    return f"{tensor_parallel}-gpu"
-
-
-def resolve_model_path(model_arg: str) -> str:
-    """
-    Resolve model path - MUST exist locally. Never download from HuggingFace.
-    Checks:
-      1. Absolute/expandable path (e.g., /home/peter/models/... or ~/models/...)
-      2. Relative to MODELS_ROOT (e.g., zai-org/GLM-4.6V-FP8 -> ~/models/zai-org/GLM-4.6V-FP8)
-    """
-    # Check if it's an absolute or expandable path
-    p = Path(model_arg).expanduser()
-    if p.exists():
-        return str(p)
-
-    # Check relative to MODELS_ROOT
-    if "/" in model_arg:
-        local = MODELS_ROOT / model_arg
-        if local.exists():
-            return str(local)
-
-    # Not found - raise error instead of falling back to HuggingFace download
-    raise SystemExit(
-        f"Model not found locally: {model_arg}\n"
-        f"Checked:\n"
-        f"  - {p}\n"
-        f"  - {MODELS_ROOT / model_arg if '/' in model_arg else 'N/A'}\n"
-        f"\nPlease download the model first or provide the correct path."
-    )
-
-
 def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     if image_arg is None or image_arg.lower() == "none":
         return None, "none"
@@ -158,16 +94,21 @@ def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     return image_arg, image_arg
 
 
-def port_open(host: str, port: int) -> bool:
-    try:
-        with socket.create_connection((host, port), timeout=0.5):
-            return True
-    except OSError:
-        return False
+def is_glm_vision_model(model_path: str) -> bool:
+    """Check if model is a GLM vision variant (GLM-4.5V, GLM-4.6V, etc.)."""
+    lower = model_path.lower()
+    # Match patterns like glm-4.5v, glm-4.6v, glm4v, etc.
+    return "glm" in lower and "v" in lower.split("glm")[-1]
 
 
-def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
-    """Start vLLM server with GLM-specific flags."""
+def start_vllm_server(args, model_path: str, use_nightly: bool) -> subprocess.Popen | None:
+    """Start vLLM server with appropriate flags for model type.
+
+    Args:
+        args: Parsed command-line arguments
+        model_path: Path to model
+        use_nightly: If True, use nightly venv; otherwise stable
+    """
     host = args.host
     port = args.port
 
@@ -180,17 +121,26 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
             f"vLLM server not detected on {host}:{port} and --no-autostart was set."
         )
 
-    # Build vLLM serve command following official recipe
+    # Get Python from appropriate venv
+    python_path = get_venv_python(nightly=use_nightly)
+
+    # Build vLLM serve command using venv's Python
     cmd = [
-        "vllm", "serve", model_path,
+        python_path, "-m", "vllm.entrypoints.openai.api_server",
+        "--model", model_path,
         "--host", host,
         "--port", str(port),
         "--tensor-parallel-size", str(args.tensor_parallel),
-        "--enable-expert-parallel",
-        "--allowed-local-media-path", "/",
-        "--mm-encoder-tp-mode", "data",
-        "--mm_processor_cache_type", "shm",
     ]
+
+    # GLM vision model specific flags (GLM-4.5V, GLM-4.6V, etc.)
+    if is_glm_vision_model(model_path):
+        cmd += [
+            "--enable-expert-parallel",
+            "--allowed-local-media-path", "/",
+            "--mm-encoder-tp-mode", "data",
+            "--mm_processor_cache_type", "shm",
+        ]
 
     if args.max_model_len:
         cmd += ["--max-model-len", str(args.max_model_len)]
@@ -201,8 +151,8 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
     if args.max_num_batched_tokens:
         cmd += ["--max-num-batched-tokens", str(args.max_num_batched_tokens)]
 
-    print(f"\n== Starting vLLM server ==")
-    print(f"+ {' '.join(cmd)}")
+    log("Starting vLLM server")
+    log(f"+ {' '.join(cmd)}")
 
     proc = subprocess.Popen(
         cmd,
@@ -227,8 +177,8 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
                     break
 
     # Wait for server to be ready
-    print("Waiting for server to be ready (streaming logs)...")
     max_wait = args.server_timeout
+    log(f"Waiting for server to be ready (timeout: {max_wait}s)...")
     start_time = time.time()
 
     while time.time() - start_time < max_wait:
@@ -239,7 +189,7 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
             try:
                 client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
                 client.models.list()
-                print(f"Server ready after {time.time() - start_time:.1f}s")
+                log(f"Server ready in {time.time() - start_time:.1f}s")
                 return proc
             except Exception:
                 pass
@@ -328,17 +278,9 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
     t1 = time.perf_counter()
 
     output_text = response.choices[0].message.content or ""
-    usage = response.usage
-
-    prompt_tokens = usage.prompt_tokens if usage else 0
-    gen_tokens = usage.completion_tokens if usage else len(output_text.split())
-
     wall = t1 - t0
     return {
         "wall_s": wall,
-        "prompt_tokens": prompt_tokens,
-        "generated_tokens": gen_tokens,
-        "tok_per_s": gen_tokens / wall if wall > 0 else 0,
         "output_text": output_text,
     }
 
@@ -346,14 +288,14 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
 def main():
     ap = argparse.ArgumentParser(description="vLLM server benchmark runner for GLM-4.5V/GLM-4.6V")
     ap.add_argument("--model", default="zai-org/GLM-4.6V-FP8")
-    ap.add_argument("--tensor-parallel", type=int, default=2, help="Tensor parallel size (GPUs)")
+    ap.add_argument("--tensor-parallel", type=int, default=None,
+                    help="Tensor parallel size (default: auto-detect GPU count)")
     ap.add_argument("--image", default=None, help="Image path/URL or 'none' for text-only")
     ap.add_argument("--prompt", default=None, help="Custom prompt")
     ap.add_argument("--prompt-set", default="short", choices=list(ALL_PROMPTS.keys()))
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--iterations", type=int, default=3)
-    ap.add_argument("--tag", default=None)
 
     # Server options
     ap.add_argument("--host", default="127.0.0.1")
@@ -371,12 +313,32 @@ def main():
     ap.add_argument("--max-num-batched-tokens", type=int, default=None,
                     help="Max batched tokens (affects throughput/latency tradeoff)")
 
+    # Environment selection
+    env_group = ap.add_mutually_exclusive_group()
+    env_group.add_argument("--force-stable", action="store_true",
+                           help="Force use of stable venv (ignore model config)")
+    env_group.add_argument("--force-nightly", action="store_true",
+                           help="Force use of nightly venv (ignore model config)")
+
     args = ap.parse_args()
 
-    tag = infer_tag(args.tag, args.tensor_parallel)
+    # Auto-detect GPU count for tensor parallelism
+    if args.tensor_parallel is None:
+        args.tensor_parallel = get_gpu_count()
+
     model_path = resolve_model_path(args.model)
     image_source, image_label = resolve_image_source(args.image)
     is_vision = image_source is not None
+
+    # Determine which environment to use
+    if args.force_nightly:
+        use_nightly = True
+    elif args.force_stable:
+        use_nightly = False
+    else:
+        use_nightly = model_needs_nightly(args.model)
+
+    env_label = "nightly" if use_nightly else "stable"
 
     # Select prompt
     if args.prompt:
@@ -390,15 +352,20 @@ def main():
     print(f"\n== vLLM Server Benchmark ==")
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
+    print(f"environment:     {env_label}")
     print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
     print(f"max_model_len:   {args.max_model_len}")
 
     # Start server
-    proc = start_vllm_server(args, model_path)
+    proc = start_vllm_server(args, model_path, use_nightly)
 
     try:
+        # Capture GPU info with memory usage after model loads
+        gpu_info = get_gpu_info(include_memory=True)
+        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
+
         # Create OpenAI client
         client = OpenAI(
             base_url=f"http://{args.host}:{args.port}/v1",
@@ -409,34 +376,34 @@ def main():
         api_model = model_path
 
         # Warmup
-        print("\n== Warmup ==")
+        log("Warmup request...")
         bench_once(client, api_model, prompt_text, image_source,
                    min(64, args.max_tokens), args.temperature)
 
         # Benchmark
-        print(f"\n== Running {args.iterations} iterations ==")
         results = []
         for i in range(args.iterations):
+            log(f"Benchmark {i + 1} of {args.iterations}...")
             r = bench_once(client, api_model, prompt_text, image_source,
                           args.max_tokens, args.temperature)
-            print(f"  iter {i+1}: {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
+            log(f"  {r['wall_s']:.2f}s")
             results.append(r)
 
-        med_tps = statistics.median([r["tok_per_s"] for r in results])
-        print(f"\n== Median: {med_tps:.1f} tok/s ==")
+        med_wall = statistics.median([r["wall_s"] for r in results])
+        log(f"Median: {med_wall:.2f}s")
 
         # Save results
-        out_dir = RESULTS_ROOT / tag
-        out_dir.mkdir(parents=True, exist_ok=True)
-        fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(args.model)}_vllm-server_{mode}.json"
+        RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
+        fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(extract_repo_id(args.model))}_vllm-server_{mode}.json"
 
         payload = {
             "timestamp": datetime.now().isoformat(),
-            "model_id": args.model,
+            "repo_id": extract_repo_id(args.model),
+            "model_ref": compact_path(model_path),
             "engine": "vllm-server",
             "mode": mode,
-            "gpu_info": get_gpu_info(),
-            "tag": tag,
+            "environment": env_label,
+            "gpu_info": gpu_info,
             "config": {
                 "tensor_parallel_size": args.tensor_parallel,
                 "max_model_len": args.max_model_len,
@@ -448,12 +415,14 @@ def main():
                 "temperature": args.temperature,
             },
             "results": results,
-            "summary": {"median_tok_per_s": med_tps},
+            "summary": {
+                "median_wall_s": med_wall,
+            },
         }
 
-        out_path = out_dir / fname
+        out_path = RESULTS_ROOT / fname
         out_path.write_text(json.dumps(payload, indent=2))
-        print(f"Wrote: {out_path}")
+        log(f"Wrote: {out_path}")
 
     finally:
         stop_vllm_server(proc)
