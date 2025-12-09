@@ -28,7 +28,7 @@ echo "[1/3] Syncing stable Python environment..."
 uv sync --all-extras
 
 echo "[2/3] Syncing nightly Python environment (for bleeding-edge models)..."
-UV_PROJECT_ENVIRONMENT=.venv-nightly uv sync --all-extras --config-file pyproject.nightly.toml
+(cd "$ROOT_DIR/nightly" && uv sync)
 
 echo "[3/3] Downloading models listed in config/models.yaml..."
 uv run python scripts/fetch_models.py
@@ -37,7 +37,7 @@ echo
 echo "Bootstrap complete."
 echo
 echo "Environments created:"
-echo "  - .venv         (stable transformers/tokenizers)"
-echo "  - .venv-nightly (git master transformers/tokenizers)"
+echo "  - .venv          (stable transformers/tokenizers)"
+echo "  - nightly/.venv  (git master transformers/tokenizers)"
 echo
-echo "Models with 'nightly: true' in config/models.yaml will auto-use .venv-nightly"
+echo "Models with 'nightly: true' in config/models.yaml will auto-use nightly/.venv"

@@ -18,7 +18,7 @@ MODELS_ROOT = Path.home() / "models"
 RESULTS_ROOT = ROOT / "benchmarks"
 MODELS_CONFIG = ROOT / "config" / "models.yaml"
 VENV_STABLE = ROOT / ".venv"
-VENV_NIGHTLY = ROOT / ".venv-nightly"
+VENV_NIGHTLY = ROOT / "nightly" / ".venv"
 
 # ----------------------------
 # String utilities

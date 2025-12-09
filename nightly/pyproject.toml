@@ -1,14 +1,13 @@
-# Nightly variant of pyproject.toml for models requiring latest transformers/tokenizers
-# Used with: UV_PROJECT_ENVIRONMENT=.venv-nightly uv sync --config-file pyproject.nightly.toml
+# Nightly variant for models requiring latest transformers/tokenizers
+# Creates .venv in this directory (nightly/.venv)
 #
 # Models that need this: GLM-4.6V, and any other bleeding-edge models
 # Mark models with `nightly: true` in models.yaml to use this environment
 
 [project]
-name = "model-workbench"
+name = "model-workbench-nightly"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.txt"
+description = "Nightly deps variant"
 requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.12.0",

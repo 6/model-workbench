@@ -67,11 +67,11 @@ We now maintain two Python environments:
 | Environment | Location | Dependencies | Use case |
 |-------------|----------|--------------|----------|
 | Stable | `.venv` | PyPI releases | Most models (default) |
-| Nightly | `.venv-nightly` | Git master | GLM-4.6V, bleeding-edge models |
+| Nightly | `nightly/.venv` | Git master | GLM-4.6V, bleeding-edge models |
 
 **How it works:**
 
-1. Models with `nightly: true` in `config/models.yaml` automatically use `.venv-nightly`
+1. Models with `nightly: true` in `config/models.yaml` automatically use `nightly/.venv`
 2. Other models use the stable `.venv`
 3. Override with `--force-stable` or `--force-nightly` flags
 
@@ -89,7 +89,7 @@ We now maintain two Python environments:
 uv sync --all-extras
 
 # Nightly env
-UV_PROJECT_ENVIRONMENT=.venv-nightly uv sync --all-extras --config-file pyproject.nightly.toml
+(cd nightly && uv sync)
 ```
 
 **Mark a model as requiring nightly:**

@@ -151,7 +151,7 @@ activemq-data/
 .env
 .envrc
 .venv
-.venv-nightly
+nightly/.venv
 env/
 venv/
 ENV/
