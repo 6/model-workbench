@@ -32,48 +32,32 @@ Examples:
 
 import argparse
 import base64
-import json
-import signal
 import statistics
-import subprocess
 import time
-from datetime import datetime
 from pathlib import Path
 
 from openai import OpenAI
 
 from bench_utils import (
     ROOT,
-    MODELS_ROOT,
     RESULTS_ROOT,
-    sanitize,
+    TEXT_PROMPTS,
+    VISION_PROMPTS,
     compact_path,
     extract_repo_id,
     get_gpu_info,
     get_gpu_count,
-    port_open,
     resolve_model_path,
     model_needs_nightly,
-    get_venv_python,
     log,
+    write_benchmark_result,
 )
+from server_manager import ServerManager
 
 # Built-in test images
 BUILTIN_IMAGES = {
     "example": ROOT / "config" / "example.jpg",
     "grayscale": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Grayscale_8bits_palette_sample_image.png",
-}
-
-TEXT_PROMPTS = {
-    "short": "Explain speculative decoding in 2 sentences.",
-    "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
-    "long": "Write a concise technical overview of KV cache and why it matters for long context.",
-}
-
-VISION_PROMPTS = {
-    "describe": "Describe this image in detail.",
-    "analyze": "Analyze this image and explain what you see.",
-    "caption": "Provide a brief caption for this image.",
 }
 
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
@@ -92,137 +76,6 @@ def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
         return str(p), str(p)
 
     return image_arg, image_arg
-
-
-def is_glm_vision_model(model_path: str) -> bool:
-    """Check if model is a GLM vision variant (GLM-4.5V, GLM-4.6V, etc.)."""
-    lower = model_path.lower()
-    # Match patterns like glm-4.5v, glm-4.6v, glm4v, etc.
-    return "glm" in lower and "v" in lower.split("glm")[-1]
-
-
-def start_vllm_server(args, model_path: str, use_nightly: bool) -> subprocess.Popen | None:
-    """Start vLLM server with appropriate flags for model type.
-
-    Args:
-        args: Parsed command-line arguments
-        model_path: Path to model
-        use_nightly: If True, use nightly venv; otherwise stable
-    """
-    host = args.host
-    port = args.port
-
-    if port_open(host, port):
-        print(f"Server already running on {host}:{port}")
-        return None
-
-    if args.no_autostart:
-        raise SystemExit(
-            f"vLLM server not detected on {host}:{port} and --no-autostart was set."
-        )
-
-    # Get Python from appropriate venv
-    python_path = get_venv_python(nightly=use_nightly)
-
-    # Build vLLM serve command using venv's Python
-    cmd = [
-        python_path, "-m", "vllm.entrypoints.openai.api_server",
-        "--model", model_path,
-        "--host", host,
-        "--port", str(port),
-        "--tensor-parallel-size", str(args.tensor_parallel),
-    ]
-
-    # GLM vision model specific flags (GLM-4.5V, GLM-4.6V, etc.)
-    if is_glm_vision_model(model_path):
-        cmd += [
-            "--enable-expert-parallel",
-            "--allowed-local-media-path", "/",
-            "--mm-encoder-tp-mode", "data",
-            "--mm_processor_cache_type", "shm",
-        ]
-
-    if args.max_model_len:
-        cmd += ["--max-model-len", str(args.max_model_len)]
-
-    if args.gpu_memory_utilization:
-        cmd += ["--gpu-memory-utilization", str(args.gpu_memory_utilization)]
-
-    if args.max_num_batched_tokens:
-        cmd += ["--max-num-batched-tokens", str(args.max_num_batched_tokens)]
-
-    log("Starting vLLM server")
-    log(f"+ {' '.join(cmd)}")
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-
-    # Stream server output in real-time
-    server_output_lines = []
-
-    def read_output():
-        """Non-blocking read of server output, print in real-time."""
-        if proc.stdout:
-            import select
-            while select.select([proc.stdout], [], [], 0)[0]:
-                line = proc.stdout.readline()
-                if line:
-                    server_output_lines.append(line)
-                    print(f"  [vllm] {line.rstrip()}")
-                else:
-                    break
-
-    # Wait for server to be ready
-    max_wait = args.server_timeout
-    log(f"Waiting for server to be ready (timeout: {max_wait}s)...")
-    start_time = time.time()
-
-    while time.time() - start_time < max_wait:
-        read_output()
-
-        if port_open(host, port):
-            # Additional check: try to hit the models endpoint
-            try:
-                client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
-                client.models.list()
-                log(f"Server ready in {time.time() - start_time:.1f}s")
-                return proc
-            except Exception:
-                pass
-        time.sleep(2)
-
-        # Check if process died
-        if proc.poll() is not None:
-            read_output()
-            output = "".join(server_output_lines[-50:])  # Last 50 lines
-            raise SystemExit(f"vLLM server exited unexpectedly. Last output:\n{output}")
-
-    # Timeout - show recent logs
-    read_output()
-    proc.terminate()
-    output = "".join(server_output_lines[-50:])  # Last 50 lines
-    raise SystemExit(
-        f"vLLM server failed to start within {max_wait}s.\n"
-        f"Last server output:\n{output}"
-    )
-
-
-def stop_vllm_server(proc: subprocess.Popen | None):
-    if not proc:
-        return
-    try:
-        proc.send_signal(signal.SIGINT)
-        proc.wait(timeout=10)
-    except Exception:
-        try:
-            proc.terminate()
-            proc.wait(timeout=5)
-        except Exception:
-            proc.kill()
 
 
 def encode_image_base64(image_path: str) -> str:
@@ -358,10 +211,32 @@ def main():
     print(f"prompt:          {prompt_text[:50]}...")
     print(f"max_model_len:   {args.max_model_len}")
 
-    # Start server
-    proc = start_vllm_server(args, model_path, use_nightly)
+    # Server management
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
+    )
 
-    try:
+    # Check if we need to start the server
+    if not server.is_running():
+        if args.no_autostart:
+            raise SystemExit(
+                f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
+            )
+
+    with server:
+        # Start server if not already running
+        if not server.is_running():
+            server.start_vllm(
+                model_path=model_path,
+                tensor_parallel=args.tensor_parallel,
+                use_nightly=use_nightly,
+                max_model_len=args.max_model_len,
+                gpu_memory_utilization=args.gpu_memory_utilization,
+                max_num_batched_tokens=args.max_num_batched_tokens,
+            )
+
         # Capture GPU info with memory usage after model loads
         gpu_info = get_gpu_info(include_memory=True)
         log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
@@ -393,39 +268,27 @@ def main():
         log(f"Median: {med_wall:.2f}s")
 
         # Save results
-        RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
-        fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(extract_repo_id(args.model))}_vllm-server_{mode}.json"
-
-        payload = {
-            "timestamp": datetime.now().isoformat(),
-            "repo_id": extract_repo_id(args.model),
-            "model_ref": compact_path(model_path),
-            "engine": "vllm-server",
-            "mode": mode,
-            "environment": env_label,
-            "gpu_info": gpu_info,
-            "config": {
+        write_benchmark_result(
+            results_dir=RESULTS_ROOT,
+            repo_id=extract_repo_id(args.model),
+            model_ref=compact_path(model_path),
+            engine="vllm-server",
+            gpu_info=gpu_info,
+            config={
+                "prompt_set": args.prompt_set,
+                "prompt": prompt_text,
+                "max_tokens": args.max_tokens,
+                "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
                 "max_model_len": args.max_model_len,
                 "gpu_memory_utilization": args.gpu_memory_utilization,
                 "max_num_batched_tokens": args.max_num_batched_tokens,
                 "image": image_label,
-                "prompt": prompt_text,
-                "max_tokens": args.max_tokens,
-                "temperature": args.temperature,
             },
-            "results": results,
-            "summary": {
-                "median_wall_s": med_wall,
-            },
-        }
-
-        out_path = RESULTS_ROOT / fname
-        out_path.write_text(json.dumps(payload, indent=2))
-        log(f"Wrote: {out_path}")
-
-    finally:
-        stop_vllm_server(proc)
+            iterations=results,
+            summary={"median_wall_s": med_wall},
+            extra={"mode": mode, "environment": env_label},
+        )
 
 
 if __name__ == "__main__":

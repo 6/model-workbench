@@ -28,14 +28,9 @@ Examples:
 """
 
 import argparse
-import json
 import os
-import re
-import signal
 import statistics
-import subprocess
 import time
-from datetime import datetime
 from pathlib import Path
 
 try:
@@ -44,225 +39,18 @@ except Exception:  # pragma: no cover
     requests = None
 
 from bench_utils import (
-    ROOT,
     MODELS_ROOT,
     RESULTS_ROOT,
-    sanitize,
+    TEXT_PROMPTS,
     compact_path,
     extract_repo_id,
     get_gpu_info,
-    port_open,
     log,
+    resolve_local_gguf,
+    write_benchmark_result,
 )
+from server_manager import ServerManager
 
-PROMPTS = {
-    "short": "Explain speculative decoding in 2 sentences.",
-    "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
-    "long": "Write a concise technical overview of KV cache and why it matters for long context.",
-}
-
-# ----------------------------
-# GGUF resolution
-# ----------------------------
-
-_SHARD_RE = re.compile(r".*-\d{5}-of-\d{5}\.gguf$")
-
-def is_gguf_file(p: Path) -> bool:
-    return p.is_file() and p.suffix == ".gguf"
-
-def find_shard_entrypoints(dir_path: Path):
-    """
-    Return all *-00001-of-*.gguf under dir_path (sorted).
-    """
-    return sorted(dir_path.rglob("*-00001-of-*.gguf"))
-
-def list_all_ggufs(dir_path: Path):
-    return sorted(dir_path.rglob("*.gguf"))
-
-def pick_gguf_from_dir(dir_path: Path) -> Path | None:
-    """
-    Pick a GGUF entrypoint from a directory ONLY if unambiguous.
-
-      1) If exactly one shard entrypoint (*-00001-of-*.gguf) -> return it
-      2) Else if exactly one non-sharded gguf anywhere -> return it
-      3) Else -> None (caller decides whether to raise ambiguity)
-    """
-    entrypoints = find_shard_entrypoints(dir_path)
-    if len(entrypoints) == 1:
-        return entrypoints[0]
-    if len(entrypoints) > 1:
-        return None
-
-    ggufs = list_all_ggufs(dir_path)
-    if len(ggufs) == 1:
-        return ggufs[0]
-
-    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
-    if len(non_shards) == 1:
-        return non_shards[0]
-
-    return None
-
-def raise_if_multiple_variants(dir_path: Path, model_arg: str):
-    """
-    Raise helpful errors if GGUF variants exist but are ambiguous:
-      - multiple shard entrypoints
-      - multiple root-level quant files
-    """
-    ggufs = list_all_ggufs(dir_path)
-    if len(ggufs) <= 1:
-        return
-
-    entrypoints = find_shard_entrypoints(dir_path)
-    if len(entrypoints) > 1:
-        raise SystemExit(
-            f"Multiple split GGUF variants found under:\n  {dir_path}\n"
-            f"Pass a more specific --model like:\n"
-            f"  {model_arg}/UD-Q4_K_XL\n"
-            f"  or an exact .gguf file path."
-        )
-
-    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
-    if len(non_shards) > 1:
-        raise SystemExit(
-            f"Multiple GGUF files found under:\n  {dir_path}\n"
-            f"This repo appears to store multiple quant files in the root.\n"
-            f"Please pass an exact quant file path, e.g.:\n"
-            f"  {model_arg}/<model>-UD-Q4_K_XL.gguf"
-        )
-
-def resolve_local_gguf(model_arg: str) -> Path | None:
-    """
-    Resolve a GGUF path from explicit filesystem path.
-
-    Args:
-        model_arg: Explicit path to .gguf file or directory containing GGUF files
-
-    Returns:
-        Path to GGUF file (prefer shard entrypoint), or None if not found
-
-    Raises:
-        SystemExit if directory contains multiple ambiguous GGUF variants
-    """
-    p = Path(model_arg).expanduser()
-    if is_gguf_file(p):
-        return p
-    if p.is_dir():
-        chosen = pick_gguf_from_dir(p)
-        if chosen:
-            return chosen
-        raise_if_multiple_variants(p, model_arg)
-    return None
-
-# ----------------------------
-# llama-server control + HTTP bench
-# ----------------------------
-
-def start_llama_server(args, gguf_path: Path):
-    """
-    Starts llama-server unless:
-      - --no-autostart is set, OR
-      - port is already open (assume user-managed server)
-
-    Waits up to --server-timeout seconds for the server to be ready,
-    verifying readiness via API call (not just port open).
-    """
-    host = args.host
-    port = args.port
-    timeout = args.server_timeout
-
-    if port_open(host, port):
-        return None  # already running
-
-    if args.no_autostart:
-        raise SystemExit(
-            f"llama-server not detected on {host}:{port} and --no-autostart was set."
-        )
-
-    if not gguf_path.exists():
-        raise SystemExit(f"GGUF not found: {gguf_path}")
-
-    cmd = [args.llama_server_bin, "-m", str(gguf_path), "--port", str(port)]
-
-    # GPU offload
-    if args.n_gpu_layers is not None:
-        cmd += ["-ngl", str(args.n_gpu_layers)]
-
-    # Context length
-    if args.ctx:
-        cmd += ["-c", str(args.ctx)]
-
-    # Parallel sequences
-    if args.parallel and args.parallel > 1:
-        cmd += ["-np", str(args.parallel)]
-
-    # Extra raw args
-    if args.extra_args:
-        cmd += args.extra_args
-
-    log(f"+ {' '.join(cmd)}")
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    # Wait for server to be ready (with API verification)
-    log(f"Waiting for server to be ready (timeout: {timeout}s)...")
-    start_time = time.time()
-    base_url = f"http://{host}:{port}"
-
-    while time.time() - start_time < timeout:
-        # Check if process crashed
-        if proc.poll() is not None:
-            stderr_output = ""
-            try:
-                stderr_output = proc.stderr.read() if proc.stderr else ""
-            except Exception:
-                pass
-            raise SystemExit(
-                f"llama-server exited unexpectedly (exit code: {proc.returncode}).\n"
-                f"Last output:\n{stderr_output[-2000:] if stderr_output else '(no output)'}"
-            )
-
-        # Check if server is ready via API
-        if port_open(host, port):
-            try:
-                r = requests.get(f"{base_url}/health", timeout=5)
-                if r.status_code == 200 and r.json().get("status") == "ok":
-                    elapsed = time.time() - start_time
-                    log(f"Server ready in {elapsed:.1f}s")
-                    return proc
-            except Exception:
-                pass  # Not ready yet
-
-        time.sleep(1)
-
-    # Timeout reached
-    try:
-        proc.terminate()
-    except Exception:
-        pass
-    raise SystemExit(
-        f"llama-server failed to become ready within {timeout}s on {host}:{port}.\n"
-        f"Check your binary path, that it was built with CUDA, and that the model fits in GPU memory.\n"
-        f"Try increasing --server-timeout if the model is very large."
-    )
-
-    return proc
-
-def stop_llama_server(proc):
-    if not proc:
-        return
-    try:
-        proc.send_signal(signal.SIGINT)
-        proc.wait(timeout=2)
-    except Exception:
-        try:
-            proc.terminate()
-        except Exception:
-            pass
 
 def bench_once(prompt: str, args):
     """Run a single benchmark using the native /completion endpoint for detailed timings."""
@@ -320,58 +108,39 @@ def med(results, key):
     vals = [r.get(key) for r in results if r.get(key) is not None]
     return statistics.median(vals) if vals else None
 
-def derive_label(model_id: str, gguf_path: Path) -> str:
-    """
-    Derive a label for result filenames:
-      - If GGUF is in a quant folder under ~/models, label = "<org>/<repo>/<quant>"
-      - If GGUF is a root-level quant file, label = "<org>/<gguf-stem>"
-      - Else fallback to gguf stem
-    """
-    try:
-        rel = gguf_path.relative_to(MODELS_ROOT)
-        parts = rel.parts  # e.g. ("unsloth", "Repo-GGUF", "file.gguf") or ("unsloth","Repo","UD-Q4_K_XL","file")
-        org = parts[0] if len(parts) >= 1 else None
-
-        parent_rel = Path(*parts[:-1])  # relative parent dir
-        parent_str = str(parent_rel)
-
-        # parent like "unsloth/Repo-GGUF"
-        if parent_str.count("/") <= 1:
-            if org:
-                return f"{org}/{gguf_path.stem}"
-            return gguf_path.stem
-
-        # parent like "unsloth/Repo-GGUF/UD-Q4_K_XL"
-        return parent_str
-
-    except Exception:
-        # If not under MODELS_ROOT, attempt best-effort org extraction from model_id
-        if model_id.endswith(".gguf") and "/" in model_id:
-            org = model_id.split("/", 1)[0]
-            return f"{org}/{gguf_path.stem}"
-
-        return gguf_path.stem
-
-def write_payload(payload, label: str):
-    RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
-
-    fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(label)}.json"
-
-    out_path = RESULTS_ROOT / fname
-    with open(out_path, "w") as f:
-        json.dump(payload, f, indent=2)
-
-    log(f"Wrote: {out_path}")
-
 # ----------------------------
 # Main runner
 # ----------------------------
 
 def run_benchmark(model_id: str, args, gguf_path: Path):
-    prompt = PROMPTS[args.prompt_set]
+    prompt = TEXT_PROMPTS[args.prompt_set]
 
-    proc = start_llama_server(args, gguf_path)
-    try:
+    # Server management
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
+    )
+
+    # Check if we need to start the server
+    if not server.is_running():
+        if args.no_autostart:
+            raise SystemExit(
+                f"llama-server not detected on {args.host}:{args.port} and --no-autostart was set."
+            )
+
+    with server:
+        # Start server if not already running
+        if not server.is_running():
+            gguf_path = server.start_llama(
+                model_path=model_id,
+                llama_server_bin=args.llama_server_bin,
+                n_gpu_layers=args.n_gpu_layers,
+                ctx=args.ctx,
+                parallel=args.parallel,
+                extra_args=args.extra_args,
+            )
+
         # Capture GPU info with memory usage after model loads
         gpu_info = get_gpu_info(include_memory=True)
         log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
@@ -385,46 +154,36 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
             results.append(bench_once(prompt, args))
 
         summary = {
-            "iterations": args.iterations,
-            "median_tok_per_s": med(results, "tok_per_s"),  # unified field (includes TTFT) for cross-backend comparison
             "median_wall_s": med(results, "wall_s"),
+            "median_tok_per_s": med(results, "tok_per_s"),
             "median_ttft_ms": med(results, "ttft_ms"),
-            "median_generation_tok_per_s": med(results, "generation_tok_per_s"),  # pure generation speed
+            "median_generation_tok_per_s": med(results, "generation_tok_per_s"),
         }
 
         log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
 
-        label = derive_label(model_id, gguf_path)
-
-        payload = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d_%H%M%S"),
-            "repo_id": extract_repo_id(model_id),
-            "model_ref": compact_path(str(gguf_path)),
-            "engine": "llama-server",
-            "gpu_info": gpu_info,
-            "env": {
-                "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
+        # Save results using unified writer
+        write_benchmark_result(
+            results_dir=RESULTS_ROOT,
+            repo_id=extract_repo_id(model_id),
+            model_ref=compact_path(str(gguf_path)),
+            engine="llama-server",
+            gpu_info=gpu_info,
+            config={
+                "prompt_set": args.prompt_set,
+                "prompt": prompt,
+                "max_tokens": args.max_tokens,
+                "temperature": args.temperature,
                 "llama_server_bin": compact_path(args.llama_server_bin),
-                "host": args.host,
-                "port": args.port,
                 "ctx": args.ctx,
                 "n_gpu_layers": args.n_gpu_layers,
                 "parallel": args.parallel,
-                "temperature": args.temperature,
                 "seed": args.seed,
+                "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
             },
-            "bench": {
-                "prompt_set": args.prompt_set,
-                "prompt": prompt,
-                "iterations": results,
-                "summary": summary,
-            },
-        }
-
-        write_payload(payload, label)
-
-    finally:
-        stop_llama_server(proc)
+            iterations=results,
+            summary=summary,
+        )
 
 # ----------------------------
 # Main
@@ -445,7 +204,7 @@ def main():
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-tokens", type=int, default=512)
-    ap.add_argument("--prompt-set", default="short", choices=tuple(PROMPTS.keys()))
+    ap.add_argument("--prompt-set", default="short", choices=tuple(TEXT_PROMPTS.keys()))
 
     # llama-server options
     ap.add_argument("--llama-server-bin", default=default_bin,
