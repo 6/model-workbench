@@ -1,8 +1,6 @@
 """Server lifecycle management for vLLM and llama.cpp servers."""
 
-import json
 import select
-import shutil
 import signal
 import subprocess
 import time
@@ -39,7 +37,6 @@ class ServerManager:
         self.proc: subprocess.Popen | None = None
         self._output_lines: list[str] = []
         self._we_started_it = False
-        self._mistral_model_path: str | None = None  # For config restore on stop
 
     def is_running(self) -> bool:
         """Check if server is already running on port."""
@@ -167,11 +164,6 @@ class ServerManager:
         self.proc = None
         self._we_started_it = False
 
-        # Restore Mistral config if we patched it
-        if self._mistral_model_path:
-            restore_mistral_config(self._mistral_model_path)
-            self._mistral_model_path = None
-
     def __enter__(self):
         return self
 
@@ -247,6 +239,7 @@ class ServerManager:
         """Start vLLM server for a safetensors model.
 
         Builds command, starts server, and waits for readiness.
+        For Mistral models, automatically uses Docker if available (FP8 compatibility).
 
         Args:
             model_path: Path to model directory
@@ -259,10 +252,13 @@ class ServerManager:
         Raises:
             SystemExit if server fails to start
         """
-        # Patch Mistral config to disable FP8 (workaround for vLLM FP8 kernel issues)
-        if is_mistral_model(model_path):
-            if patch_mistral_config(model_path):
-                self._mistral_model_path = model_path
+        # For Mistral models, prefer Docker if available (FP8 kernel issues on some GPUs)
+        if is_mistral_model(model_path) and docker_gpu_available():
+            log("Using Docker for Mistral model (FP8 compatibility)")
+            return self.start_vllm_docker(
+                model_path=model_path,
+                tensor_parallel=tensor_parallel,
+            )
 
         cmd = build_vllm_cmd(
             model_path=model_path,
@@ -279,6 +275,36 @@ class ServerManager:
             cmd,
             lambda: wait_for_vllm_ready(self.host, self.port),
             label="vLLM",
+        )
+
+    def start_vllm_docker(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        image: str = "vllm/vllm-openai:latest",
+    ) -> None:
+        """Start vLLM server via Docker.
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size
+            image: Docker image to use
+
+        Raises:
+            SystemExit if server fails to start
+        """
+        cmd = build_vllm_docker_cmd(
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            image=image,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_vllm_ready(self.host, self.port),
+            label="vLLM (Docker)",
         )
 
 
@@ -325,48 +351,54 @@ def is_mistral_model(model_path: str) -> bool:
 
 
 # ----------------------------
-# Config patching (FP8 workaround)
+# Docker support
 # ----------------------------
 
-def patch_mistral_config(model_path: str) -> bool:
-    """Remove quantization_config from Mistral model config to avoid FP8 issues.
-
-    Backs up to config.original.json if not already backed up.
-    Returns True if config was patched.
-    """
-    config_path = Path(model_path).expanduser() / "config.json"
-    backup_path = config_path.with_name("config.original.json")
-
-    if not config_path.exists():
+def docker_gpu_available() -> bool:
+    """Check if Docker with GPU support is available."""
+    try:
+        result = subprocess.run(
+            ["docker", "run", "--rm", "--gpus", "all",
+             "nvidia/cuda:12.6.0-base-ubuntu24.04", "nvidia-smi"],
+            capture_output=True, timeout=60
+        )
+        return result.returncode == 0
+    except Exception:
         return False
 
-    # Backup original if not already done
-    if not backup_path.exists():
-        shutil.copy(config_path, backup_path)
 
-    # Load and patch
-    with open(config_path) as f:
-        config = json.load(f)
+def build_vllm_docker_cmd(
+    model_path: str,
+    host: str,
+    port: int,
+    tensor_parallel: int,
+    image: str = "vllm/vllm-openai:latest",
+) -> list[str]:
+    """Build Docker command for vLLM server."""
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
 
-    if "quantization_config" in config:
-        del config["quantization_config"]
-        with open(config_path, "w") as f:
-            json.dump(config, f, indent=2)
-        log(f"Patched {config_path} (removed quantization_config, backup at {backup_path.name})")
-        return True
-    return False
+    cmd = [
+        "docker", "run", "--rm",
+        "--gpus", "all",
+        "--shm-size", "16g",
+        "-p", f"{port}:{port}",
+        "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
+        image,
+        "--model", model_path_resolved,
+        "--host", "0.0.0.0",
+        "--port", str(port),
+        "--tensor-parallel-size", str(tensor_parallel),
+    ]
 
+    # Mistral-specific flags
+    if is_mistral_model(model_path):
+        cmd += [
+            "--tokenizer_mode", "mistral",
+            "--config_format", "mistral",
+            "--load_format", "mistral",
+        ]
 
-def restore_mistral_config(model_path: str) -> bool:
-    """Restore original config.json from backup."""
-    config_path = Path(model_path).expanduser() / "config.json"
-    backup_path = config_path.with_name("config.original.json")
-
-    if backup_path.exists():
-        shutil.copy(backup_path, config_path)
-        log(f"Restored {config_path} from {backup_path.name}")
-        return True
-    return False
+    return cmd
 
 
 # ----------------------------
