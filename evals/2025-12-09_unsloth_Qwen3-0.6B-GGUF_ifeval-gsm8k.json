@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-09T14:44:32.371043",
+  "timestamp": "2025-12-09T15:10:52.046520",
   "repo_id": "unsloth/Qwen3-0.6B-GGUF",
   "model_path": "/home/peter/models/unsloth/Qwen3-0.6B-GGUF",
   "model_format": "gguf",
@@ -31,11 +31,40 @@
     "ifeval": {
       "benchmark": "ifeval",
       "questions": 541,
-      "overall_score": 0.6894639556377079
+      "correct": 373,
+      "overall_score": 0.6894639556377079,
+      "instruction_breakdown": {
+        "punctuation:no_comma": 0.5,
+        "detectable_format:number_highlighted_sections": 0.6875,
+        "length_constraints:number_words": 0.4,
+        "detectable_content:number_placeholders": 0.8148148148148148,
+        "combination:repeat_prompt": 0.5365853658536586,
+        "detectable_format:title": 0.7027027027027027,
+        "change_case:english_lowercase": 0.7948717948717948,
+        "detectable_format:number_bullet_lists": 1.0,
+        "change_case:english_capital": 1.0,
+        "detectable_format:multiple_sections": 1.0,
+        "change_case:capital_word_frequency": 1.0,
+        "startend:quotation": 1.0,
+        "keywords:existence": 1.0,
+        "detectable_format:json_format": 1.0,
+        "length_constraints:number_paragraphs": 1.0,
+        "combination:two_responses": 1.0,
+        "language:response_language": 0.0,
+        "keywords:letter_frequency": 1.0,
+        "startend:end_checker": 1.0,
+        "keywords:forbidden_words": 1.0,
+        "keywords:frequency": 1.0,
+        "length_constraints:number_sentences": 0.5869565217391305,
+        "detectable_content:postscript": 0.6923076923076923,
+        "length_constraints:nth_paragraph_first_word": 1.0,
+        "detectable_format:constrained_response": 1.0
+      }
     },
     "gsm8k": {
       "benchmark": "gsm8k",
       "questions": 1319,
+      "correct": 685,
       "overall_score": 0.5193328278999242
     }
   }
