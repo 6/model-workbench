@@ -2,26 +2,25 @@
 """
 Model Workbench vLLM Server Benchmark Runner
 
-Uses vLLM server mode with tensor parallelism for GLM-4.5V/GLM-4.6V models.
+Uses vLLM server mode with tensor parallelism. Auto-detects GPU count.
 Follows the official vLLM recipe: https://docs.vllm.ai/projects/recipes/en/latest/GLM/GLM-V.html
 
 This script:
-  1. Starts a vLLM server with GLM-specific flags
+  1. Starts a vLLM server with tensor parallelism (auto-detects GPUs)
   2. Benchmarks via OpenAI-compatible API
   3. Shuts down the server after completion
 
 Examples:
 
-  # Text-only benchmark (dual GPU setup)
-  uv run python scripts/run_bench_vllm_server.py \
-    --model zai-org/GLM-4.6V-FP8 \
-    --tensor-parallel 2 \
-    --image none
+  # Auto-detect GPUs, use all available
+  uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8
+
+  # Force single GPU
+  uv run python scripts/run_bench_vllm_server.py --model zai-org/GLM-4.6V-FP8 --tensor-parallel 1
 
   # Vision benchmark with local image
   uv run python scripts/run_bench_vllm_server.py \
     --model zai-org/GLM-4.6V-FP8 \
-    --tensor-parallel 2 \
     --image config/example.jpg
 
   # Use an already running vLLM server
@@ -34,9 +33,7 @@ Examples:
 import argparse
 import base64
 import json
-import re
 import signal
-import socket
 import statistics
 import subprocess
 import time
@@ -45,9 +42,17 @@ from pathlib import Path
 
 from openai import OpenAI
 
-ROOT = Path(__file__).resolve().parents[1]
-MODELS_ROOT = Path.home() / "models"
-RESULTS_ROOT = ROOT / "benchmarks"
+from bench_utils import (
+    ROOT,
+    MODELS_ROOT,
+    RESULTS_ROOT,
+    sanitize,
+    get_gpu_info,
+    get_gpu_count,
+    infer_tag,
+    port_open,
+    resolve_model_path,
+)
 
 # Built-in test images
 BUILTIN_IMAGES = {
@@ -70,79 +75,6 @@ VISION_PROMPTS = {
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
 
 
-def sanitize(s: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
-
-
-def get_gpu_info():
-    try:
-        drv = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-            text=True
-        ).strip().splitlines()
-        driver_version = drv[0].strip() if drv else None
-
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=index,name,memory.total", "--format=csv,noheader,nounits"],
-            text=True
-        ).strip()
-
-        gpus = []
-        for line in out.splitlines():
-            parts = [p.strip() for p in line.split(",")]
-            if len(parts) >= 3:
-                gpus.append({
-                    "index": int(parts[0]),
-                    "name": parts[1],
-                    "memory_total_mib": int(parts[2]),
-                })
-        return {"driver_version": driver_version, "gpus": gpus}
-    except Exception as e:
-        return {"error": str(e), "driver_version": None, "gpus": []}
-
-
-def infer_tag(cli_tag, tensor_parallel):
-    if cli_tag:
-        return cli_tag
-    gpus = get_gpu_info().get("gpus", [])
-    n = len(gpus)
-    if n == 0:
-        return "unknown-gpu"
-    if tensor_parallel == 1:
-        return "single-gpu"
-    if tensor_parallel == 2:
-        return "dual-gpu"
-    return f"{tensor_parallel}-gpu"
-
-
-def resolve_model_path(model_arg: str) -> str:
-    """
-    Resolve model path - MUST exist locally. Never download from HuggingFace.
-    Checks:
-      1. Absolute/expandable path (e.g., /home/peter/models/... or ~/models/...)
-      2. Relative to MODELS_ROOT (e.g., zai-org/GLM-4.6V-FP8 -> ~/models/zai-org/GLM-4.6V-FP8)
-    """
-    # Check if it's an absolute or expandable path
-    p = Path(model_arg).expanduser()
-    if p.exists():
-        return str(p)
-
-    # Check relative to MODELS_ROOT
-    if "/" in model_arg:
-        local = MODELS_ROOT / model_arg
-        if local.exists():
-            return str(local)
-
-    # Not found - raise error instead of falling back to HuggingFace download
-    raise SystemExit(
-        f"Model not found locally: {model_arg}\n"
-        f"Checked:\n"
-        f"  - {p}\n"
-        f"  - {MODELS_ROOT / model_arg if '/' in model_arg else 'N/A'}\n"
-        f"\nPlease download the model first or provide the correct path."
-    )
-
-
 def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     if image_arg is None or image_arg.lower() == "none":
         return None, "none"
@@ -156,14 +88,6 @@ def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
         return str(p), str(p)
 
     return image_arg, image_arg
-
-
-def port_open(host: str, port: int) -> bool:
-    try:
-        with socket.create_connection((host, port), timeout=0.5):
-            return True
-    except OSError:
-        return False
 
 
 def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
@@ -346,7 +270,8 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
 def main():
     ap = argparse.ArgumentParser(description="vLLM server benchmark runner for GLM-4.5V/GLM-4.6V")
     ap.add_argument("--model", default="zai-org/GLM-4.6V-FP8")
-    ap.add_argument("--tensor-parallel", type=int, default=2, help="Tensor parallel size (GPUs)")
+    ap.add_argument("--tensor-parallel", type=int, default=None,
+                    help="Tensor parallel size (default: auto-detect GPU count)")
     ap.add_argument("--image", default=None, help="Image path/URL or 'none' for text-only")
     ap.add_argument("--prompt", default=None, help="Custom prompt")
     ap.add_argument("--prompt-set", default="short", choices=list(ALL_PROMPTS.keys()))
@@ -372,6 +297,10 @@ def main():
                     help="Max batched tokens (affects throughput/latency tradeoff)")
 
     args = ap.parse_args()
+
+    # Auto-detect GPU count for tensor parallelism
+    if args.tensor_parallel is None:
+        args.tensor_parallel = get_gpu_count()
 
     tag = infer_tag(args.tag, args.tensor_parallel)
     model_path = resolve_model_path(args.model)
