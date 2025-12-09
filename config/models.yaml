@@ -1,6 +1,7 @@
 models:
   - source: hf
     repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
+    nightly: true
 
   - source: hf
     repo_id: zai-org/GLM-4.6V-FP8
