@@ -81,6 +81,7 @@ class ServerManager:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                errors='replace',  # Handle non-UTF-8 bytes gracefully
             )
             stream = self.proc.stderr
         else:
@@ -89,6 +90,7 @@ class ServerManager:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                errors='replace',  # Handle non-UTF-8 bytes gracefully
             )
             stream = self.proc.stdout
 
