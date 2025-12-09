@@ -3,10 +3,14 @@
 Model Workbench Eval Runner
 
 Runs IFEval and HumanEval benchmarks against local model servers using DeepEval.
+Auto-detects GGUF (llama.cpp) vs safetensors (vLLM) based on model format.
 
 Examples:
-  # Run both benchmarks (auto-starts vLLM server)
-  uv run python scripts/run_eval.py --model ~/models/org/model
+  # Safetensors model -> vLLM backend
+  uv run python scripts/run_eval.py --model ~/models/zai-org/GLM-4.6V-FP8
+
+  # GGUF model -> llama.cpp backend
+  uv run python scripts/run_eval.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
   # Run IFEval only (541 instruction-following prompts)
   uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval
@@ -32,6 +36,7 @@ from bench_utils import (
     get_gpu_info,
     get_gpu_count,
     resolve_model_path,
+    resolve_local_gguf,
     detect_model_format,
     model_needs_nightly,
     log,
@@ -39,7 +44,9 @@ from bench_utils import (
 from server_manager import (
     ServerManager,
     wait_for_vllm_ready,
+    wait_for_llama_ready,
     build_vllm_cmd,
+    build_llama_cmd,
 )
 from eval_model_wrapper import LocalServerLLM
 
@@ -145,8 +152,8 @@ def main():
     parser.add_argument(
         "--port",
         type=int,
-        default=8000,
-        help="Server port (default: 8000)",
+        default=None,
+        help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)",
     )
     parser.add_argument(
         "--no-autostart",
@@ -160,7 +167,7 @@ def main():
         help="Timeout in seconds waiting for server to start (default: 180)",
     )
 
-    # vLLM server options (used when auto-starting)
+    # vLLM server options (used when auto-starting safetensors models)
     parser.add_argument(
         "--tensor-parallel",
         type=int,
@@ -178,6 +185,32 @@ def main():
         type=float,
         default=0.95,
         help="GPU memory fraction (default: 0.95)",
+    )
+
+    # llama.cpp server options (used when auto-starting GGUF models)
+    default_llama_bin = str(Path.home() / "llama.cpp/build/bin/llama-server")
+    parser.add_argument(
+        "--llama-server-bin",
+        default=default_llama_bin,
+        help=f"Path to llama-server binary (default: {default_llama_bin})",
+    )
+    parser.add_argument(
+        "--n-gpu-layers",
+        type=int,
+        default=999,
+        help="GPU layers to offload for llama.cpp (default: 999 = all)",
+    )
+    parser.add_argument(
+        "--ctx",
+        type=int,
+        default=None,
+        help="Context length for llama.cpp (default: model default)",
+    )
+    parser.add_argument(
+        "--parallel",
+        type=int,
+        default=1,
+        help="Parallel sequences for llama.cpp (default: 1)",
     )
 
     # Environment selection
@@ -204,7 +237,23 @@ def main():
     repo_id = extract_repo_id(model_path)
     model_format = detect_model_format(model_path)
 
-    # Determine which environment to use
+    # For GGUF models, resolve the actual .gguf file path
+    gguf_path = None
+    if model_format == "gguf":
+        gguf_path = resolve_local_gguf(model_path)
+        if not gguf_path:
+            raise SystemExit(
+                f"No GGUF found at: {model_path}\n"
+                "Pass --model with an explicit path, e.g.:\n"
+                "  --model ~/models/org/repo/quant-folder\n"
+                "  --model ~/models/org/repo/model.gguf"
+            )
+
+    # Set default port based on backend
+    if args.port is None:
+        args.port = 8080 if model_format == "gguf" else 8000
+
+    # Determine which environment to use (only applies to vLLM)
     if args.force_nightly:
         use_nightly = True
     elif args.force_stable:
@@ -213,9 +262,12 @@ def main():
         use_nightly = model_needs_nightly(args.model)
 
     env_label = "nightly" if use_nightly else "stable"
+    backend_label = "llama-server" if model_format == "gguf" else "vLLM"
 
     log(f"Model: {repo_id} ({model_format})")
-    log(f"Environment: {env_label}")
+    log(f"Backend: {backend_label}")
+    if model_format != "gguf":
+        log(f"Environment: {env_label}")
 
     # Server management
     server = ServerManager(
@@ -235,25 +287,50 @@ def main():
     with server:
         # Start server if not already running
         if not server.is_running():
-            cmd = build_vllm_cmd(
-                model_path=model_path,
-                host=args.host,
-                port=args.port,
-                tensor_parallel=args.tensor_parallel,
-                use_nightly=use_nightly,
-                max_model_len=args.max_model_len,
-                gpu_memory_utilization=args.gpu_memory_utilization,
-            )
-            server.start(
-                cmd,
-                lambda: wait_for_vllm_ready(args.host, args.port),
-                label="vLLM",
-            )
+            if model_format == "gguf":
+                # llama.cpp backend for GGUF models
+                cmd = build_llama_cmd(
+                    gguf_path=gguf_path,
+                    llama_server_bin=args.llama_server_bin,
+                    port=args.port,
+                    n_gpu_layers=args.n_gpu_layers,
+                    ctx=args.ctx,
+                    parallel=args.parallel,
+                )
+                server.start(
+                    cmd,
+                    lambda: wait_for_llama_ready(args.host, args.port),
+                    stream_stderr=True,  # llama-server outputs to stderr
+                    label="llama-server",
+                    sigint_wait=2,
+                    term_wait=2,
+                )
+            else:
+                # vLLM backend for safetensors models
+                cmd = build_vllm_cmd(
+                    model_path=model_path,
+                    host=args.host,
+                    port=args.port,
+                    tensor_parallel=args.tensor_parallel,
+                    use_nightly=use_nightly,
+                    max_model_len=args.max_model_len,
+                    gpu_memory_utilization=args.gpu_memory_utilization,
+                )
+                server.start(
+                    cmd,
+                    lambda: wait_for_vllm_ready(args.host, args.port),
+                    label="vLLM",
+                )
+
+        # Model name differs by backend:
+        # - vLLM: registers model under full path
+        # - llama.cpp: uses "gpt-3.5-turbo" as default model name
+        model_name = "gpt-3.5-turbo" if model_format == "gguf" else model_path
 
         base_url = f"http://{args.host}:{args.port}/v1"
         model = LocalServerLLM(
             base_url=base_url,
-            model_name=model_path,  # vLLM registers model under full path
+            model_name=model_name,
             max_tokens=args.max_tokens,
         )
 

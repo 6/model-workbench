@@ -201,6 +201,107 @@ def detect_model_format(model_arg: str) -> str:
         return "gguf"
     return "safetensors"
 
+
+# ----------------------------
+# GGUF resolution
+# ----------------------------
+
+_SHARD_RE = re.compile(r".*-\d{5}-of-\d{5}\.gguf$")
+
+
+def is_gguf_file(p: Path) -> bool:
+    """Check if path is a GGUF file."""
+    return p.is_file() and p.suffix == ".gguf"
+
+
+def find_shard_entrypoints(dir_path: Path) -> list[Path]:
+    """Return all *-00001-of-*.gguf under dir_path (sorted)."""
+    return sorted(dir_path.rglob("*-00001-of-*.gguf"))
+
+
+def list_all_ggufs(dir_path: Path) -> list[Path]:
+    """Return all .gguf files under dir_path (sorted)."""
+    return sorted(dir_path.rglob("*.gguf"))
+
+
+def pick_gguf_from_dir(dir_path: Path) -> Path | None:
+    """
+    Pick a GGUF entrypoint from a directory ONLY if unambiguous.
+
+      1) If exactly one shard entrypoint (*-00001-of-*.gguf) -> return it
+      2) Else if exactly one non-sharded gguf anywhere -> return it
+      3) Else -> None (caller decides whether to raise ambiguity)
+    """
+    entrypoints = find_shard_entrypoints(dir_path)
+    if len(entrypoints) == 1:
+        return entrypoints[0]
+    if len(entrypoints) > 1:
+        return None
+
+    ggufs = list_all_ggufs(dir_path)
+    if len(ggufs) == 1:
+        return ggufs[0]
+
+    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
+    if len(non_shards) == 1:
+        return non_shards[0]
+
+    return None
+
+
+def raise_if_multiple_variants(dir_path: Path, model_arg: str):
+    """
+    Raise helpful errors if GGUF variants exist but are ambiguous:
+      - multiple shard entrypoints
+      - multiple root-level quant files
+    """
+    ggufs = list_all_ggufs(dir_path)
+    if len(ggufs) <= 1:
+        return
+
+    entrypoints = find_shard_entrypoints(dir_path)
+    if len(entrypoints) > 1:
+        raise SystemExit(
+            f"Multiple split GGUF variants found under:\n  {dir_path}\n"
+            f"Pass a more specific --model like:\n"
+            f"  {model_arg}/UD-Q4_K_XL\n"
+            f"  or an exact .gguf file path."
+        )
+
+    non_shards = [p for p in ggufs if not _SHARD_RE.match(p.name)]
+    if len(non_shards) > 1:
+        raise SystemExit(
+            f"Multiple GGUF files found under:\n  {dir_path}\n"
+            f"This repo appears to store multiple quant files in the root.\n"
+            f"Please pass an exact quant file path, e.g.:\n"
+            f"  {model_arg}/<model>-UD-Q4_K_XL.gguf"
+        )
+
+
+def resolve_local_gguf(model_arg: str) -> Path | None:
+    """
+    Resolve a GGUF path from explicit filesystem path.
+
+    Args:
+        model_arg: Explicit path to .gguf file or directory containing GGUF files
+
+    Returns:
+        Path to GGUF file (prefer shard entrypoint), or None if not found
+
+    Raises:
+        SystemExit if directory contains multiple ambiguous GGUF variants
+    """
+    p = Path(model_arg).expanduser()
+    if is_gguf_file(p):
+        return p
+    if p.is_dir():
+        chosen = pick_gguf_from_dir(p)
+        if chosen:
+            return chosen
+        raise_if_multiple_variants(p, model_arg)
+    return None
+
+
 # ----------------------------
 # Model config utilities
 # ----------------------------
