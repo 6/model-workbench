@@ -296,7 +296,6 @@ def bench_once(prompt: str, args):
     gen_tokens = timings.get("predicted_n")
     gen_ms = timings.get("predicted_ms")
     gen_tok_per_s = timings.get("predicted_per_second")
-    ms_per_token = timings.get("predicted_per_token_ms")
 
     # tok_per_s: total throughput including TTFT
     # generation_tok_per_s: pure generation speed excluding prompt processing (llama.cpp native)
@@ -310,7 +309,6 @@ def bench_once(prompt: str, args):
         "tok_per_s": tok_per_s,  # overall throughput (includes TTFT)
         "generation_tok_per_s": gen_tok_per_s,  # pure generation speed (excludes prompt)
         "generation_ms": gen_ms,
-        "ms_per_token": ms_per_token,
         "output_text": text,
     }
 
