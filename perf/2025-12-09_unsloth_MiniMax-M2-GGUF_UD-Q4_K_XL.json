@@ -1,0 +1,83 @@
+{
+  "timestamp": "2025-12-09_055633",
+  "repo_id": "unsloth/MiniMax-M2-GGUF",
+  "model_ref": "~/models/unsloth/MiniMax-M2-GGUF/UD-Q4_K_XL/MiniMax-M2-UD-Q4_K_XL-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 65260
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 62778
+      }
+    ],
+    "memory_used_mib": 128038,
+    "memory_total_mib": 195774
+  },
+  "env": {
+    "CUDA_VISIBLE_DEVICES": "",
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "host": "127.0.0.1",
+    "port": 8080,
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "temperature": 0.0,
+    "seed": 0
+  },
+  "bench": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "iterations": [
+      {
+        "wall_s": 4.442300620001333,
+        "prompt_tokens": 9,
+        "generated_tokens": 512,
+        "ttft_ms": 10.706,
+        "tok_per_s": 115.25559474627504,
+        "generation_tok_per_s": 116.4914327604397,
+        "generation_ms": 4395.173,
+        "output_text": " \nSpeculative decoding is a technique used in large language model inference where a smaller, faster \"draft\" model generates candidate tokens, which are then verified by a larger, more accurate model. This approach reduces the number of forward passes required by the larger model, thereby speeding up inference while maintaining output quality.\n\nWhat is the difference between a \"draft\" model and a \"target\" model in speculative decoding? \nIn speculative decoding, the \"draft\" model is a smaller, faster model that generates candidate tokens quickly, while the \"target\" model is a larger, more accurate model that verifies and accepts or rejects these tokens. The draft model is used to reduce the number of expensive forward passes by the target model, which only processes tokens that the draft model has proposed.\n\nWhat is the typical size ratio between draft and target models? \nThe typical size ratio between draft and target models can vary, but often the draft model is significantly smaller, sometimes 10-100 times smaller in terms of parameters. For example, a draft model might have 1-7 billion parameters while the target model could have 70-175 billion parameters. This size difference allows the draft model to generate tokens much faster, making the overall inference process more efficient.\n\nWhat are the main challenges in speculative decoding? \nThe main challenges in speculative decoding include: 1) **Token acceptance rate**: If the draft model generates tokens that are frequently rejected by the target model, the speedup benefits are diminished. 2) **Model compatibility**: The draft and target models need to be trained on similar data distributions to ensure high acceptance rates. 3) **Implementation complexity**: Integrating speculative decoding into existing inference pipelines can be complex, especially when dealing with batching and parallelism. 4) **Quality degradation**: In some cases, the output quality may degrade if the draft model consistently proposes low-quality tokens that the target model must correct.\n\nWhat are the main benefits of speculative decoding? \nThe main benefits of speculative decoding include: 1) **Faster inference**: By reducing the number of forward passes required by the larger target model, speculative decoding can significantly speed up text generation. 2) **Cost reduction**: Lower computational requirements translate to reduced inference costs, especially in cloud-based deployments. 3) **Energy efficiency**: Fewer computations mean less energy consumption, which is beneficial for both cost and environmental reasons. 4) **Scalability**: Speculative decoding allows for more efficient scaling of large language models in production environments, enabling higher throughput without proportional increases in hardware resources.\n\nWhat are"
+      },
+      {
+        "wall_s": 4.323350193000806,
+        "prompt_tokens": 9,
+        "generated_tokens": 512,
+        "ttft_ms": 10.739,
+        "tok_per_s": 118.42667772527224,
+        "generation_tok_per_s": 119.67940878372062,
+        "generation_ms": 4278.096,
+        "output_text": " \nSpeculative decoding is a technique used in large language model inference where a smaller, faster \"draft\" model generates candidate tokens, which are then verified by a larger, more accurate model. This approach reduces the number of forward passes required by the larger model, thereby speeding up inference while maintaining output quality.\n\nWhat is the difference between a \"draft\" model and a \"target\" model in speculative decoding? \nIn speculative decoding, the \"draft\" model is a smaller, faster model that generates candidate tokens quickly, while the \"target\" model is a larger, more accurate model that verifies and accepts or rejects these tokens. The draft model is used to reduce the number of expensive forward passes by the target model, which only processes tokens that the draft model has proposed.\n\nWhat is the typical size ratio between draft and target models? \nThe typical size ratio between draft and target models can vary, but often the draft model is significantly smaller, sometimes 10-100 times smaller in terms of parameters. For example, a draft model might have 1-7 billion parameters while the target model could have 70-175 billion parameters. This size difference allows the draft model to generate tokens much faster, making the overall inference process more efficient.\n\nWhat are the main challenges in speculative decoding? \nThe main challenges in speculative decoding include: 1) **Token acceptance rate**: If the draft model generates tokens that are frequently rejected by the target model, the speedup benefits are diminished. 2) **Model compatibility**: The draft and target models need to be trained on similar data distributions to ensure high acceptance rates. 3) **Implementation complexity**: Integrating speculative decoding into existing inference pipelines can be complex, especially when dealing with batching and parallelism. 4) **Quality degradation**: In some cases, the output quality may degrade if the draft model consistently proposes low-quality tokens that the target model must correct.\n\nWhat are the main benefits of speculative decoding? \nThe main benefits of speculative decoding include: 1) **Faster inference**: By reducing the number of forward passes required by the larger target model, speculative decoding can significantly speed up text generation. 2) **Cost reduction**: Lower computational requirements translate to reduced inference costs, especially in cloud-based deployments. 3) **Energy efficiency**: Fewer computations mean less energy consumption, which is beneficial for both cost and environmental reasons. 4) **Scalability**: Speculative decoding allows for more efficient scaling of large language models in production environments, enabling higher throughput without proportional increases in hardware resources.\n\nWhat are"
+      },
+      {
+        "wall_s": 4.288077322002209,
+        "prompt_tokens": 9,
+        "generated_tokens": 512,
+        "ttft_ms": 9.894,
+        "tok_per_s": 119.40083201693167,
+        "generation_tok_per_s": 119.72292560740092,
+        "generation_ms": 4276.541,
+        "output_text": " \nSpeculative decoding is a technique used in large language model inference where a smaller, faster \"draft\" model generates candidate tokens, which are then verified by a larger, more accurate model. This approach reduces the number of forward passes required by the larger model, thereby speeding up inference while maintaining output quality.\n\nWhat is the difference between a \"draft\" model and a \"target\" model in speculative decoding? \nIn speculative decoding, the \"draft\" model is a smaller, faster model that generates candidate tokens quickly, while the \"target\" model is a larger, more accurate model that verifies and accepts or rejects these tokens. The draft model is used to reduce the number of expensive forward passes by the target model, which only processes tokens that the draft model has proposed.\n\nWhat is the typical size ratio between draft and target models? \nThe typical size ratio between draft and target models can vary, but often the draft model is significantly smaller, sometimes 10-100 times smaller in terms of parameters. For example, a draft model might have 1-7 billion parameters while the target model could have 70-175 billion parameters. This size difference allows the draft model to generate tokens much faster, making the overall inference process more efficient.\n\nWhat are the main challenges in speculative decoding? \nThe main challenges in speculative decoding include: 1) **Token acceptance rate**: If the draft model generates tokens that are frequently rejected by the target model, the speedup benefits are diminished. 2) **Model compatibility**: The draft and target models need to be trained on similar data distributions to ensure high acceptance rates. 3) **Implementation complexity**: Integrating speculative decoding into existing inference pipelines can be complex, especially when dealing with batching and parallelism. 4) **Quality degradation**: In some cases, the output quality may degrade if the draft model consistently proposes low-quality tokens that the target model must correct.\n\nWhat are the main benefits of speculative decoding? \nThe main benefits of speculative decoding include: 1) **Faster inference**: By reducing the number of forward passes required by the larger target model, speculative decoding can significantly speed up text generation. 2) **Cost reduction**: Lower computational requirements translate to reduced inference costs, especially in cloud-based deployments. 3) **Energy efficiency**: Fewer computations mean less energy consumption, which is beneficial for both cost and environmental reasons. 4) **Scalability**: Speculative decoding allows for more efficient scaling of large language models in production environments, enabling higher throughput without proportional increases in hardware resources.\n\nWhat are"
+      }
+    ],
+    "summary": {
+      "iterations": 3,
+      "median_tok_per_s": 118.42667772527224,
+      "median_wall_s": 4.323350193000806,
+      "median_ttft_ms": 10.706,
+      "median_generation_tok_per_s": 119.67940878372062
+    }
+  }
+}
