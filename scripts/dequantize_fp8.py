@@ -36,6 +36,7 @@ import shutil
 from pathlib import Path
 
 import torch
+from safetensors.torch import save_file as safetensors_save
 from transformers import AutoModel, AutoTokenizer, AutoConfig
 
 from bench_utils import (
@@ -131,36 +132,92 @@ def dequantize_model(
     # Create output directory
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Save model without quantization config
+    # Save model bypassing save_pretrained (FP8 transformations can't be reversed)
     log(f"Saving dequantized model to: {compact_path(str(output_path))}")
     log("This may take several minutes...")
 
-    # Clean config to avoid JSON serialization issues with torch.dtype
-    log("Cleaning config for JSON serialization...")
+    # Get state dict (weights are already dequantized BF16)
+    log("Extracting state dict...")
+    state_dict = model.state_dict()
+
+    # Move tensors to CPU for saving
+    log(f"Moving {len(state_dict)} tensors to CPU...")
+    state_dict = {k: v.cpu().contiguous() for k, v in state_dict.items()}
+
+    # Save weights directly with safetensors
+    # Split into shards if needed (5GB max per shard)
+    max_shard_bytes = 5 * 1024 * 1024 * 1024  # 5GB
+    total_size = sum(v.numel() * v.element_size() for v in state_dict.values())
+
+    if total_size <= max_shard_bytes:
+        # Single file
+        log("Saving model.safetensors...")
+        safetensors_save(state_dict, output_path / "model.safetensors")
+    else:
+        # Shard into multiple files
+        log(f"Sharding model ({total_size / 1e9:.1f} GB) into ~5GB chunks...")
+        shard_idx = 1
+        current_shard = {}
+        current_size = 0
+        index_map = {}  # weight_name -> shard_file
+
+        for key, tensor in state_dict.items():
+            tensor_size = tensor.numel() * tensor.element_size()
+
+            if current_size + tensor_size > max_shard_bytes and current_shard:
+                # Save current shard
+                shard_name = f"model-{shard_idx:05d}-of-XXXXX.safetensors"
+                safetensors_save(current_shard, output_path / shard_name)
+                log(f"  Saved shard {shard_idx}: {current_size / 1e9:.2f} GB")
+                shard_idx += 1
+                current_shard = {}
+                current_size = 0
+
+            current_shard[key] = tensor
+            current_size += tensor_size
+            index_map[key] = f"model-{shard_idx:05d}-of-XXXXX.safetensors"
+
+        # Save last shard
+        if current_shard:
+            shard_name = f"model-{shard_idx:05d}-of-XXXXX.safetensors"
+            safetensors_save(current_shard, output_path / shard_name)
+            log(f"  Saved shard {shard_idx}: {current_size / 1e9:.2f} GB")
+
+        # Rename with correct total count
+        total_shards = shard_idx
+        for i in range(1, total_shards + 1):
+            old_name = output_path / f"model-{i:05d}-of-XXXXX.safetensors"
+            new_name = output_path / f"model-{i:05d}-of-{total_shards:05d}.safetensors"
+            old_name.rename(new_name)
+            # Update index map
+            for k, v in index_map.items():
+                if v == f"model-{i:05d}-of-XXXXX.safetensors":
+                    index_map[k] = new_name.name
+
+        # Save index file
+        index = {
+            "metadata": {"total_size": total_size},
+            "weight_map": index_map
+        }
+        with open(output_path / "model.safetensors.index.json", "w") as f:
+            json.dump(index, f, indent=2)
+        log(f"  Saved index with {total_shards} shards")
+
+    # Save config manually (cleaned)
+    log("Saving config.json...")
     clean_config_for_json(model.config)
     if hasattr(model.config, "quantization_config"):
         model.config.quantization_config = None
 
-    # Save the model - this saves as standard safetensors without FP8
-    model.save_pretrained(
-        output_path,
-        safe_serialization=True,
-        max_shard_size="5GB",
-    )
+    config_dict = model.config.to_dict()
+    if "quantization_config" in config_dict:
+        del config_dict["quantization_config"]
+    with open(output_path / "config.json", "w") as f:
+        json.dump(config_dict, f, indent=2)
 
     # Save tokenizer
+    log("Saving tokenizer...")
     tokenizer.save_pretrained(output_path)
-
-    # Fix the config to remove quantization_config
-    config_path = output_path / "config.json"
-    with open(config_path) as f:
-        config = json.load(f)
-
-    if "quantization_config" in config:
-        log("Removing quantization_config from saved config...")
-        del config["quantization_config"]
-        with open(config_path, "w") as f:
-            json.dump(config, f, indent=2)
 
     # Copy any additional files that might be needed (chat templates, etc.)
     for extra_file in ["tokenizer_config.json", "special_tokens_map.json",
