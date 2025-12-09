@@ -115,10 +115,11 @@ def dequantize_model(
     log(f"Saving dequantized model to: {compact_path(str(output_path))}")
     log("This may take several minutes...")
 
-    # Move to CPU before saving if on GPU (to avoid CUDA tensors in safetensors)
-    if device_map != "cpu":
-        log("Moving model to CPU for saving...")
-        model = model.to("cpu")
+    # Clean config to avoid JSON serialization issues with torch.dtype
+    if hasattr(model.config, "torch_dtype") and isinstance(model.config.torch_dtype, torch.dtype):
+        model.config.torch_dtype = str(model.config.torch_dtype).replace("torch.", "")
+    if hasattr(model.config, "quantization_config"):
+        model.config.quantization_config = None
 
     # Save the model - this saves as standard safetensors without FP8
     model.save_pretrained(
