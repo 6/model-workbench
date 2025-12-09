@@ -60,6 +60,7 @@ uv run python scripts/run_eval.py --model ~/models/org/model --benchmark gsm8k  
 - **vLLM** (`run_bench_vllm_server.py`): OpenAI-compatible API, tensor parallelism, FP8, vision models
   - Auto-uses all GPUs (`--tensor-parallel 1` for single); pre-allocates 95% VRAM for KV cache (`--gpu-memory-utilization` to adjust)
   - Scrapes Prometheus `/metrics` for detailed timing (`ttft_ms`, `generation_ms`, `generation_tok_per_s`)
+  - Docker mode available for Mistral models via `ServerManager.start_vllm_docker()`
 - **llama.cpp** (`run_bench_llama_server.py`): Native `/completion` endpoint for detailed metrics, GGUF models, GPU sharding
 - **Shared metrics**: Both engines output matching field names (`wall_s`, `ttft_ms`, `generation_tok_per_s`, `prompt_tokens`, `generated_tokens`)
 
