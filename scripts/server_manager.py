@@ -239,6 +239,7 @@ class ServerManager:
         """Start vLLM server for a safetensors model.
 
         Builds command, starts server, and waits for readiness.
+        For Mistral models, automatically uses Docker if available (FP8 compatibility).
 
         Args:
             model_path: Path to model directory
@@ -251,6 +252,14 @@ class ServerManager:
         Raises:
             SystemExit if server fails to start
         """
+        # For Mistral models, prefer Docker if available (FP8 kernel issues on some GPUs)
+        if is_mistral_model(model_path) and docker_gpu_available():
+            log("Using Docker for Mistral model (FP8 compatibility)")
+            return self.start_vllm_docker(
+                model_path=model_path,
+                tensor_parallel=tensor_parallel,
+            )
+
         cmd = build_vllm_cmd(
             model_path=model_path,
             host=self.host,
@@ -266,6 +275,36 @@ class ServerManager:
             cmd,
             lambda: wait_for_vllm_ready(self.host, self.port),
             label="vLLM",
+        )
+
+    def start_vllm_docker(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        image: str = "vllm/vllm-openai:latest",
+    ) -> None:
+        """Start vLLM server via Docker.
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size
+            image: Docker image to use
+
+        Raises:
+            SystemExit if server fails to start
+        """
+        cmd = build_vllm_docker_cmd(
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            image=image,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_vllm_ready(self.host, self.port),
+            label="vLLM (Docker)",
         )
 
 
@@ -309,6 +348,57 @@ def is_mistral_model(model_path: str) -> bool:
     """Check if model is a Mistral/Devstral model requiring mistral tokenizer mode."""
     lower = model_path.lower()
     return "mistral" in lower or "devstral" in lower or "ministral" in lower
+
+
+# ----------------------------
+# Docker support
+# ----------------------------
+
+def docker_gpu_available() -> bool:
+    """Check if Docker with GPU support is available."""
+    try:
+        result = subprocess.run(
+            ["docker", "run", "--rm", "--gpus", "all",
+             "nvidia/cuda:12.6.0-base-ubuntu24.04", "nvidia-smi"],
+            capture_output=True, timeout=60
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def build_vllm_docker_cmd(
+    model_path: str,
+    host: str,
+    port: int,
+    tensor_parallel: int,
+    image: str = "vllm/vllm-openai:latest",
+) -> list[str]:
+    """Build Docker command for vLLM server."""
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
+
+    cmd = [
+        "docker", "run", "--rm",
+        "--gpus", "all",
+        "--shm-size", "16g",
+        "-p", f"{port}:{port}",
+        "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
+        image,
+        "--model", model_path_resolved,
+        "--host", "0.0.0.0",
+        "--port", str(port),
+        "--tensor-parallel-size", str(tensor_parallel),
+    ]
+
+    # Mistral-specific flags
+    if is_mistral_model(model_path):
+        cmd += [
+            "--tokenizer_mode", "mistral",
+            "--config_format", "mistral",
+            "--load_format", "mistral",
+        ]
+
+    return cmd
 
 
 # ----------------------------
