@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-12-09T02:39:58.434321",
+  "model_id": "allenai/Olmo-3-7B-Think",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "config": {
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0
+  },
+  "results": [
+    {
+      "wall_s": 3.467251400998066,
+      "prompt_tokens": 84,
+      "generated_tokens": 512,
+      "tok_per_s": 147.6674001350517,
+      "output_text": "Okay, I need to explain speculative decoding in two sentences. Let me start by recalling what I know about it. Speculative decoding is a term I've heard in the context of computer memory and caching. From what I remember, it's a technique used to improve the efficiency of data retrieval from memory by making educated guesses about which data might be needed next, before it's actually requested. This is different from regular decoding where the CPU waits for the exact memory address to be accessed.\n\nSo, the basic idea is that the system predicts which memory locations are likely to be accessed soon and preloads or decodes that data into the cache. This prediction is based on patterns or heuristics, maybe like the recent access patterns of the CPU. The goal is to reduce the time spent waiting for data from main memory, which is slower than cache. But how exactly does it work? Maybe it uses some form of prediction algorithm, like a cache predictor that anticipates future accesses. If the prediction is right, the cache has the data ready, so the access is fast. If wrong, there might be a penalty, but overall it's supposed to be faster on average.\n\nWait, but I should make sure I'm not mixing it up with other caching techniques. For example, there's prefetching, which is similar. Maybe speculative decoding is a specific type of prefetching that's more aggressive or uses different prediction methods. Or perhaps it's used in a different context, like in GPUs or specialized hardware? I think it's more about memory systems in general. \n\nAnother point: speculative decoding might involve the CPU or memory controller making guesses about the next memory addresses to access, then proactively fetching that data into the cache. This is speculative because it's a guess, and if the guess is wrong, the extra data in the cache might not be used, but the time saved by having it ready is worth it. The key is that it reduces the latency of subsequent accesses by being prepared.\n\nSo, putting this into two sentences. First sentence should define it as a technique that predicts future memory accesses to pre load data into cache. Second sentence could explain the purpose and benefit: to reduce memory access latency by anticipating needs, even if some predictions are incorrect, leading to overall performance improvement.\n\nWait, but maybe I should mention that it's used in memory systems or CPUs. Let me check if there's a standard definition. From what I recall, speculative decoding is indeed a method in computer architecture where the memory controller or CPU guesses which memory locations will be"
+    },
+    {
+      "wall_s": 3.4639820660013356,
+      "prompt_tokens": 84,
+      "generated_tokens": 512,
+      "tok_per_s": 147.80676985173588,
+      "output_text": "Okay, I need to explain speculative decoding in two sentences. Let me start by recalling what I know about it. Speculative decoding is a term I've heard in the context of computer memory and caching. From what I remember, it's a technique used to improve the efficiency of data retrieval from memory by making educated guesses about which data might be needed next, before it's actually requested. This is different from regular decoding where the CPU waits for the exact memory address to be accessed.\n\nSo, the basic idea is that the system predicts which memory locations are likely to be accessed soon and preloads or decodes that data into the cache. This prediction is based on patterns or heuristics, maybe like the recent access patterns of the CPU. The goal is to reduce the time spent waiting for data from main memory, which is slower than cache. But how exactly does it work? Maybe it uses some form of prediction algorithm, like a cache predictor that anticipates future accesses. If the prediction is right, the cache has the data ready, so the access is fast. If wrong, there might be a penalty, but overall it's supposed to be faster on average.\n\nWait, but I should make sure I'm not mixing it up with other caching techniques. For example, there's prefetching, which is similar. Maybe speculative decoding is a specific type of prefetching that's more aggressive or uses different prediction methods. Or perhaps it's used in a different context, like in GPUs or specialized hardware? I think it's more about memory systems in general. \n\nAnother point: speculative decoding might involve the CPU or memory controller making guesses about the next memory addresses to access, then proactively fetching that data into the cache. This is speculative because it's a guess, and if the guess is wrong, the extra data in the cache might not be used, but the time saved by having it ready is worth it. The key is that it reduces the latency of subsequent accesses by being prepared.\n\nSo, putting this into two sentences. First sentence should define it as a technique that predicts future memory accesses to pre load data into cache. Second sentence could explain the purpose and benefit: to reduce memory access latency by anticipating needs, even if some predictions are incorrect, leading to overall performance improvement.\n\nWait, but maybe I should mention that it's used in memory systems or CPUs. Let me check if there's a standard definition. From what I recall, speculative decoding is indeed a method in computer architecture where the memory controller or CPU guesses which memory locations will be"
+    },
+    {
+      "wall_s": 3.461417779999465,
+      "prompt_tokens": 84,
+      "generated_tokens": 512,
+      "tok_per_s": 147.9162679981609,
+      "output_text": "Okay, I need to explain speculative decoding in two sentences. Let me start by recalling what I know about it. Speculative decoding is a term I've heard in the context of computer memory and caching. From what I remember, it's a technique used to improve the efficiency of data retrieval from memory by making educated guesses about which data might be needed next, before it's actually requested. This is different from regular decoding where the CPU waits for the exact memory address to be accessed.\n\nSo, the basic idea is that the system predicts which memory locations are likely to be accessed soon and preloads or decodes that data into the cache. This prediction is based on patterns or heuristics, maybe like the recent access patterns of the CPU. The goal is to reduce the time spent waiting for data from main memory, which is slower than cache. But how exactly does it work? Maybe it uses some form of prediction algorithm, like a cache predictor that anticipates future accesses. If the prediction is right, the cache has the data ready, so the access is fast. If wrong, there might be a penalty, but overall it's supposed to be faster on average.\n\nWait, but I should make sure I'm not mixing it up with other caching techniques. For example, there's prefetching, which is similar. Maybe speculative decoding is a specific type of prefetching that's more aggressive or uses different prediction methods. Or perhaps it's used in a different context, like in GPUs or specialized hardware? I think it's more about memory systems in general. \n\nAnother point: speculative decoding might involve the CPU or memory controller making guesses about the next memory addresses to access, then proactively fetching that data into the cache. This is speculative because it's a guess, and if the guess is wrong, the extra data in the cache might not be used, but the time saved by having it ready is worth it. The key is that it reduces the latency of subsequent accesses by being prepared.\n\nSo, putting this into two sentences. First sentence should define it as a technique that predicts future memory accesses to pre load data into cache. Second sentence could explain the purpose and benefit: to reduce memory access latency by anticipating needs, even if some predictions are incorrect, leading to overall performance improvement.\n\nWait, but maybe I should mention that it's used in memory systems or CPUs. Let me check if there's a standard definition. From what I recall, speculative decoding is indeed a method in computer architecture where the memory controller or CPU guesses which memory locations will be"
+    }
+  ],
+  "summary": {
+    "median_tok_per_s": 147.80676985173588
+  }
+}
