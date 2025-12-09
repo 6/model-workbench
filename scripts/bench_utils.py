@@ -2,6 +2,7 @@
 Shared utilities for benchmark scripts.
 """
 
+import json
 import re
 import socket
 import subprocess
@@ -10,6 +11,22 @@ from pathlib import Path
 
 import yaml
 
+
+# ----------------------------
+# Benchmark prompts
+# ----------------------------
+
+TEXT_PROMPTS = {
+    "short": "Explain speculative decoding in 2 sentences.",
+    "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
+    "long": "Write a concise technical overview of KV cache and why it matters for long context.",
+}
+
+VISION_PROMPTS = {
+    "describe": "Describe this image in detail.",
+    "analyze": "Analyze this image and explain what you see.",
+    "caption": "Provide a brief caption for this image.",
+}
 
 # ----------------------------
 # Logging
@@ -253,3 +270,65 @@ def get_venv_python(nightly: bool = False) -> str:
             f"Run bootstrap.sh to create both environments."
         )
     return str(python)
+
+
+# ----------------------------
+# Result writing
+# ----------------------------
+
+def write_benchmark_result(
+    results_dir: Path,
+    repo_id: str,
+    model_ref: str,
+    engine: str,
+    gpu_info: dict,
+    config: dict,
+    iterations: list[dict],
+    summary: dict,
+    extra: dict | None = None,
+) -> Path:
+    """Write benchmark results with consistent format and naming.
+
+    Args:
+        results_dir: Directory to write results to
+        repo_id: Model repo ID (e.g., "org/repo")
+        model_ref: Compacted model path for reference
+        engine: Engine name (e.g., "vllm-server", "llama-server")
+        gpu_info: GPU info dict from get_gpu_info()
+        config: Benchmark configuration (prompt, max_tokens, etc.)
+        iterations: List of per-iteration results
+        summary: Summary statistics (median_wall_s, etc.)
+        extra: Optional extra fields to include at top level
+
+    Returns:
+        Path to written results file
+    """
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    payload = {
+        "timestamp": datetime.now().isoformat(),
+        "repo_id": repo_id,
+        "model_ref": model_ref,
+        "engine": engine,
+        "gpu_info": gpu_info,
+        "config": config,
+        "iterations": iterations,
+        "summary": summary,
+    }
+
+    # Merge extra fields at top level
+    if extra:
+        payload.update(extra)
+
+    # Generate filename: DATE_REPO-ID_ENGINE.json
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    safe_repo = sanitize(repo_id)
+    safe_engine = sanitize(engine)
+    filename = f"{date_str}_{safe_repo}_{safe_engine}.json"
+
+    out_path = results_dir / filename
+    with open(out_path, "w") as f:
+        json.dump(payload, f, indent=2)
+
+    log(f"Wrote: {out_path}")
+    return out_path

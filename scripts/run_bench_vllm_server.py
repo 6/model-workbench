@@ -32,10 +32,8 @@ Examples:
 
 import argparse
 import base64
-import json
 import statistics
 import time
-from datetime import datetime
 from pathlib import Path
 
 from openai import OpenAI
@@ -43,7 +41,8 @@ from openai import OpenAI
 from bench_utils import (
     ROOT,
     RESULTS_ROOT,
-    sanitize,
+    TEXT_PROMPTS,
+    VISION_PROMPTS,
     compact_path,
     extract_repo_id,
     get_gpu_info,
@@ -51,6 +50,7 @@ from bench_utils import (
     resolve_model_path,
     model_needs_nightly,
     log,
+    write_benchmark_result,
 )
 from server_manager import (
     ServerManager,
@@ -62,18 +62,6 @@ from server_manager import (
 BUILTIN_IMAGES = {
     "example": ROOT / "config" / "example.jpg",
     "grayscale": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Grayscale_8bits_palette_sample_image.png",
-}
-
-TEXT_PROMPTS = {
-    "short": "Explain speculative decoding in 2 sentences.",
-    "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
-    "long": "Write a concise technical overview of KV cache and why it matters for long context.",
-}
-
-VISION_PROMPTS = {
-    "describe": "Describe this image in detail.",
-    "analyze": "Analyze this image and explain what you see.",
-    "caption": "Provide a brief caption for this image.",
 }
 
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
@@ -291,36 +279,27 @@ def main():
         log(f"Median: {med_wall:.2f}s")
 
         # Save results
-        RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
-        fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(extract_repo_id(args.model))}_vllm-server_{mode}.json"
-
-        payload = {
-            "timestamp": datetime.now().isoformat(),
-            "repo_id": extract_repo_id(args.model),
-            "model_ref": compact_path(model_path),
-            "engine": "vllm-server",
-            "mode": mode,
-            "environment": env_label,
-            "gpu_info": gpu_info,
-            "config": {
+        write_benchmark_result(
+            results_dir=RESULTS_ROOT,
+            repo_id=extract_repo_id(args.model),
+            model_ref=compact_path(model_path),
+            engine="vllm-server",
+            gpu_info=gpu_info,
+            config={
+                "prompt_set": args.prompt_set,
+                "prompt": prompt_text,
+                "max_tokens": args.max_tokens,
+                "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
                 "max_model_len": args.max_model_len,
                 "gpu_memory_utilization": args.gpu_memory_utilization,
                 "max_num_batched_tokens": args.max_num_batched_tokens,
                 "image": image_label,
-                "prompt": prompt_text,
-                "max_tokens": args.max_tokens,
-                "temperature": args.temperature,
             },
-            "results": results,
-            "summary": {
-                "median_wall_s": med_wall,
-            },
-        }
-
-        out_path = RESULTS_ROOT / fname
-        out_path.write_text(json.dumps(payload, indent=2))
-        log(f"Wrote: {out_path}")
+            iterations=results,
+            summary={"median_wall_s": med_wall},
+            extra={"mode": mode, "environment": env_label},
+        )
 
 
 if __name__ == "__main__":
