@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-12-09T18:59:34.790721",
+  "repo_id": "unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF/UD-Q4_K_XL",
+  "model_ref": "~/models/unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF/UD-Q4_K_XL/Qwen3-VL-235B-A22B-Instruct-UD-Q4_K_XL-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "mode": "vision",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 67302
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 64392
+      }
+    ],
+    "memory_used_mib": 131694,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Describe this image in detail.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": "",
+    "image": "config/example.jpg",
+    "mmproj": "~/models/unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF/mmproj-F16.gguf"
+  },
+  "iterations": [
+    {
+      "wall_s": 5.788756717000069,
+      "prompt_tokens": 121,
+      "generated_tokens": 341,
+      "ttft_ms": 17.19,
+      "tok_per_s": 58.907295067103426,
+      "generation_tok_per_s": 59.255984637234334,
+      "generation_ms": 5754.693,
+      "output_text": "This is a vibrant, sun-drenched photograph of a vast field of blooming sunflowers under a bright blue sky with wispy white clouds.\n\n**Foreground and Midground:**\n- The image is dominated by rows upon rows of tall, healthy sunflowers, their large, bright yellow petals radiating outward from dark brown, textured centers.\n- The sunflowers are in full bloom, with many facing toward the viewer or slightly angled, giving a sense of depth and natural variation.\n- Lush, dark green leaves and sturdy stems are visible beneath and between the flowers, adding contrast and reinforcing the vitality of the scene.\n- The composition draws the eye from the sharply focused sunflowers in the foreground, which appear larger and more detailed, into the slightly softer-focused expanse stretching toward the horizon.\n\n**Background:**\n- The field extends far into the distance, creating a sense of scale and abundance.\n- Above the field, the sky is a clear, vivid blue, lightly streaked with soft, white clouds, suggesting a warm, sunny day.\n\n**Text Overlay:**\n- Superimposed across the center of the image, in large, white, sans-serif font, are the words \u201cExample Image.\u201d This text is semi-transparent, allowing the sunflowers behind it to remain partially visible.\n\n**Overall Impression:**\nThe image evokes feelings of warmth, joy, and natural beauty. The saturated colors \u2014 golden yellows, deep greens, and bright blues \u2014 create a cheerful and energetic atmosphere. The sheer number of sunflowers conveys abundance and the splendor of nature in full bloom. The \u201cExample Image\u201d text indicates this is likely a stock or placeholder image used for demonstration purposes."
+    },
+    {
+      "wall_s": 5.777784023001004,
+      "prompt_tokens": 121,
+      "generated_tokens": 341,
+      "ttft_ms": 17.383,
+      "tok_per_s": 59.01916697517593,
+      "generation_tok_per_s": 59.36058036195332,
+      "generation_ms": 5744.553,
+      "output_text": "This is a vibrant, sun-drenched photograph of a vast field of blooming sunflowers under a bright blue sky with wispy white clouds.\n\n**Foreground and Midground:**\n- The image is dominated by rows upon rows of tall, healthy sunflowers, their large, bright yellow petals radiating outward from dark brown, textured centers.\n- The sunflowers are in full bloom, with many facing toward the viewer or slightly angled, giving a sense of depth and natural variation.\n- Lush, dark green leaves and sturdy stems are visible beneath and between the flowers, adding contrast and reinforcing the vitality of the scene.\n- The composition draws the eye from the sharply focused sunflowers in the foreground, which appear larger and more detailed, into the slightly softer-focused expanse stretching toward the horizon.\n\n**Background:**\n- The field extends far into the distance, creating a sense of scale and abundance.\n- Above the field, the sky is a clear, vivid blue, lightly streaked with soft, white clouds, suggesting a warm, sunny day.\n\n**Text Overlay:**\n- Superimposed across the center of the image, in large, white, sans-serif font, are the words \u201cExample Image.\u201d This text is semi-transparent, allowing the sunflowers behind it to remain partially visible.\n\n**Overall Impression:**\nThe image evokes feelings of warmth, joy, and natural beauty. The saturated colors \u2014 golden yellows, deep greens, and bright blues \u2014 create a cheerful and energetic atmosphere. The sheer number of sunflowers conveys abundance and the splendor of nature in full bloom. The \u201cExample Image\u201d text indicates this is likely a stock or placeholder image used for demonstration purposes."
+    },
+    {
+      "wall_s": 5.778696450999632,
+      "prompt_tokens": 121,
+      "generated_tokens": 341,
+      "ttft_ms": 17.363,
+      "tok_per_s": 59.00984813642735,
+      "generation_tok_per_s": 59.35097188521836,
+      "generation_ms": 5745.483,
+      "output_text": "This is a vibrant, sun-drenched photograph of a vast field of blooming sunflowers under a bright blue sky with wispy white clouds.\n\n**Foreground and Midground:**\n- The image is dominated by rows upon rows of tall, healthy sunflowers, their large, bright yellow petals radiating outward from dark brown, textured centers.\n- The sunflowers are in full bloom, with many facing toward the viewer or slightly angled, giving a sense of depth and natural variation.\n- Lush, dark green leaves and sturdy stems are visible beneath and between the flowers, adding contrast and reinforcing the vitality of the scene.\n- The composition draws the eye from the sharply focused sunflowers in the foreground, which appear larger and more detailed, into the slightly softer-focused expanse stretching toward the horizon.\n\n**Background:**\n- The field extends far into the distance, creating a sense of scale and abundance.\n- Above the field, the sky is a clear, vivid blue, lightly streaked with soft, white clouds, suggesting a warm, sunny day.\n\n**Text Overlay:**\n- Superimposed across the center of the image, in large, white, sans-serif font, are the words \u201cExample Image.\u201d This text is semi-transparent, allowing the sunflowers behind it to remain partially visible.\n\n**Overall Impression:**\nThe image evokes feelings of warmth, joy, and natural beauty. The saturated colors \u2014 golden yellows, deep greens, and bright blues \u2014 create a cheerful and energetic atmosphere. The sheer number of sunflowers conveys abundance and the splendor of nature in full bloom. The \u201cExample Image\u201d text indicates this is likely a stock or placeholder image used for demonstration purposes."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 5.778696450999632,
+    "median_tok_per_s": 59.00984813642735,
+    "median_ttft_ms": 17.363,
+    "median_generation_tok_per_s": 59.35097188521836
+  }
+}
