@@ -331,7 +331,7 @@ def bench_once(prompt: str, args):
 
     # Extract detailed timings from native endpoint
     timings = data.get("timings", {})
-    prompt_tokens = timings.get("prompt_n")
+    prompt_tokens = data.get("tokens_evaluated")
     prompt_ms = timings.get("prompt_ms")
     gen_tokens = timings.get("predicted_n")
     gen_ms = timings.get("predicted_ms")
