@@ -305,6 +305,12 @@ def is_glm_vision_model(model_path: str) -> bool:
     return "glm" in lower and "v" in lower.split("glm")[-1]
 
 
+def is_mistral_model(model_path: str) -> bool:
+    """Check if model is a Mistral/Devstral model requiring mistral tokenizer mode."""
+    lower = model_path.lower()
+    return "mistral" in lower or "devstral" in lower or "ministral" in lower
+
+
 # ----------------------------
 # Command builders
 # ----------------------------
@@ -351,6 +357,14 @@ def build_vllm_cmd(
             "--allowed-local-media-path", "/",
             "--mm-encoder-tp-mode", "data",
             "--mm_processor_cache_type", "shm",
+        ]
+
+    # Mistral/Devstral models require native mistral tokenizer
+    if is_mistral_model(model_path):
+        cmd += [
+            "--tokenizer_mode", "mistral",
+            "--config_format", "mistral",
+            "--load_format", "mistral",
         ]
 
     if max_model_len is not None:
