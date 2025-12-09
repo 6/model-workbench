@@ -25,4 +25,4 @@ llama-server (GGUF):
     # Non-sharded GGUF
     uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/Repo-GGUF/Model-UD-Q4_K_XL.gguf
 
-Results are saved to benchmarks/
+Results are saved to perf/

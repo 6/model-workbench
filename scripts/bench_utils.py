@@ -26,7 +26,7 @@ def log(msg: str):
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
-RESULTS_ROOT = ROOT / "benchmarks"
+RESULTS_ROOT = ROOT / "perf"
 MODELS_CONFIG = ROOT / "config" / "models.yaml"
 VENV_STABLE = ROOT / ".venv"
 VENV_NIGHTLY = ROOT / "nightly" / ".venv"
