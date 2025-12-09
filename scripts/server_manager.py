@@ -29,7 +29,7 @@ class ServerManager:
         self,
         host: str = "127.0.0.1",
         port: int = 8000,
-        timeout: int = 180,
+        timeout: int = 300,
     ):
         self.host = host
         self.port = port
@@ -401,6 +401,7 @@ def build_vllm_docker_cmd(
             "--tokenizer_mode", "mistral",
             "--config_format", "mistral",
             "--load_format", "mistral",
+            "--max-model-len", "5000", # cap for now to avoid overloading kv
         ]
 
     return cmd
