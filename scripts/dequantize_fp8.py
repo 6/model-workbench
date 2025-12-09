@@ -8,21 +8,25 @@ This is needed because llama.cpp cannot directly convert FP8 models to GGUF.
 The script leverages transformers' auto-dequantization (when config has "dequantize": true)
 to load the FP8 weights as BF16, then saves them as standard safetensors.
 
+NOTE: New models often require nightly transformers/tokenizers. Run from nightly/ directory.
+
 Examples:
 
-  # Basic dequantization
-  uv run python scripts/dequantize_fp8.py \\
-    --model ~/models/mistralai/Devstral-Small-2-24B-Instruct-2512 \\
-    --output ~/models/mistralai/Devstral-Small-2-24B-bf16
-
-  # Use GPU for faster loading (if you have enough VRAM)
-  uv run python scripts/dequantize_fp8.py \\
-    --model ~/models/mistralai/Devstral-Small-2-24B-Instruct-2512 \\
-    --output ~/models/mistralai/Devstral-Small-2-24B-bf16 \\
+  # Dequantize with GPU (run from nightly for new models)
+  cd nightly
+  uv run python ../scripts/dequantize_fp8.py \
+    --model ~/models/mistralai/Devstral-Small-2-24B-Instruct-2512 \
+    --output ~/models/mistralai/Devstral-Small-2-24B-bf16 \
     --device cuda:0
 
-  # Then convert to GGUF with quantize_gguf.py
-  uv run python scripts/quantize_gguf.py \\
+  # CPU-only (slower, uses ~100GB RAM for 24B model)
+  cd nightly
+  uv run python ../scripts/dequantize_fp8.py \
+    --model ~/models/mistralai/Devstral-Small-2-24B-Instruct-2512 \
+    --output ~/models/mistralai/Devstral-Small-2-24B-bf16
+
+  # Then convert to GGUF (from project root)
+  uv run python scripts/quantize_gguf.py \
     --model ~/models/mistralai/Devstral-Small-2-24B-bf16
 """
 
