@@ -46,9 +46,9 @@ uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/GLM-4.5
 - `nightly/` - Separate pyproject.toml for bleeding-edge deps
 
 ### Benchmark Engines
-Both engines expose OpenAI-compatible APIs for unified benchmarking:
-- **vLLM** (`run_bench_vllm_server.py`): High-performance serving with tensor parallelism, FP8 support, vision models
-- **llama.cpp** (`run_bench_llama_server.py`): GGUF quantized models with GPU sharding
+- **vLLM** (`run_bench_vllm_server.py`): OpenAI-compatible API, tensor parallelism, FP8, vision models
+  - Auto-uses all GPUs (`--tensor-parallel 1` for single); pre-allocates 95% VRAM for KV cache (`--gpu-memory-utilization` to adjust)
+- **llama.cpp** (`run_bench_llama_server.py`): Native `/completion` endpoint (for detailed metrics), GGUF models, GPU sharding
 
 ### Shared Utilities (`bench_utils.py`)
 - GPU detection via nvidia-smi
