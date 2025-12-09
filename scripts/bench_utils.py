@@ -51,6 +51,29 @@ def compact_path(path: str) -> str:
     return path
 
 
+def extract_repo_id(path: str) -> str:
+    """
+    Extract repo ID (org/repo) from a model path.
+
+    Examples:
+        ~/models/unsloth/Qwen3-GGUF/file.gguf -> unsloth/Qwen3-GGUF
+        /home/user/models/org/repo -> org/repo
+    """
+    p = Path(path).expanduser()
+    try:
+        rel = p.relative_to(MODELS_ROOT)
+        parts = rel.parts
+        # Return org/repo (first two parts)
+        if len(parts) >= 2:
+            return f"{parts[0]}/{parts[1]}"
+        elif len(parts) == 1:
+            return parts[0]
+    except ValueError:
+        pass
+    # Fallback: return compacted path
+    return compact_path(path)
+
+
 def get_gpu_info(include_memory: bool = False) -> dict:
     """
     Returns a dict with driver_version and a list of GPUs with PCIe info.

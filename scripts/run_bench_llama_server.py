@@ -49,6 +49,7 @@ from bench_utils import (
     RESULTS_ROOT,
     sanitize,
     compact_path,
+    extract_repo_id,
     get_gpu_info,
     port_open,
     log,
@@ -407,7 +408,7 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
 
         payload = {
             "timestamp": datetime.now().strftime("%Y-%m-%d_%H%M%S"),
-            "model_id": compact_path(model_id),
+            "repo_id": extract_repo_id(model_id),
             "model_ref": compact_path(str(gguf_path)),
             "engine": "llama-server",
             "gpu_info": gpu_info,

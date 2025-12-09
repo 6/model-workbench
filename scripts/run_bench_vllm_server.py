@@ -48,6 +48,7 @@ from bench_utils import (
     RESULTS_ROOT,
     sanitize,
     compact_path,
+    extract_repo_id,
     get_gpu_info,
     get_gpu_count,
     port_open,
@@ -405,7 +406,7 @@ def main():
 
         payload = {
             "timestamp": datetime.now().isoformat(),
-            "model_id": compact_path(args.model),
+            "repo_id": extract_repo_id(args.model),
             "model_ref": compact_path(model_path),
             "engine": "vllm-server",
             "mode": mode,
