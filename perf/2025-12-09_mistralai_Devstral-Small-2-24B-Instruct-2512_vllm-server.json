@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-09T17:12:00.644637",
+  "timestamp": "2025-12-09T17:34:05.928037",
   "repo_id": "mistralai/Devstral-Small-2-24B-Instruct-2512",
   "model_ref": "~/models/mistralai/Devstral-Small-2-24B-Instruct-2512",
   "engine": "vllm-server",
@@ -20,10 +20,10 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 89478
+        "memory_used_mib": 89464
       }
     ],
-    "memory_used_mib": 178956,
+    "memory_used_mib": 178942,
     "memory_total_mib": 195774
   },
   "config": {
@@ -39,20 +39,44 @@
   },
   "iterations": [
     {
-      "wall_s": 0.5950505979999434,
-      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output."
+      "wall_s": 0.5939464019998013,
+      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output.",
+      "prompt_tokens": 12,
+      "generated_tokens": 56,
+      "tok_per_s": 94.28460179479079,
+      "generation_tok_per_s": 97.22478348761777,
+      "ttft_ms": 15.457868576049805,
+      "prefill_ms": 14.86622599986731,
+      "generation_ms": 575.9848259999671
     },
     {
-      "wall_s": 0.5934749399998509,
-      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output."
+      "wall_s": 0.5932700449998265,
+      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output.",
+      "prompt_tokens": 12,
+      "generated_tokens": 56,
+      "tok_per_s": 94.39209087324875,
+      "generation_tok_per_s": 97.21041588218485,
+      "ttft_ms": 15.06495475769043,
+      "prefill_ms": 14.631144999839307,
+      "generation_ms": 576.069956000083
     },
     {
-      "wall_s": 0.5941251599997486,
-      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output."
+      "wall_s": 0.5935523850002937,
+      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output.",
+      "prompt_tokens": 12,
+      "generated_tokens": 56,
+      "tok_per_s": 94.34719060217792,
+      "generation_tok_per_s": 97.15974664966977,
+      "ttft_ms": 15.092849731445312,
+      "prefill_ms": 14.65780500029723,
+      "generation_ms": 576.3703789998544
     }
   ],
   "summary": {
-    "median_wall_s": 0.5941251599997486
+    "median_wall_s": 0.5935523850002937,
+    "median_tok_per_s": 94.34719060217792,
+    "median_ttft_ms": 15.092849731445312,
+    "median_generation_tok_per_s": 97.21041588218485
   },
   "mode": "text-only",
   "environment": "nightly"
