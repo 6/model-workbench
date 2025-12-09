@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-09T18:32:29.141322",
+  "repo_id": "bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF/cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS",
+  "model_ref": "~/models/bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF/cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 46308
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 44224
+      }
+    ],
+    "memory_used_mib": 90532,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 4.226608234000196,
+      "prompt_tokens": 8,
+      "generated_tokens": 512,
+      "ttft_ms": 10.605,
+      "tok_per_s": 121.13732138249941,
+      "generation_tok_per_s": 122.44184430897721,
+      "generation_ms": 4181.577,
+      "output_text": " Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft"
+    },
+    {
+      "wall_s": 4.225422346999949,
+      "prompt_tokens": 8,
+      "generated_tokens": 512,
+      "ttft_ms": 10.539,
+      "tok_per_s": 121.17131920872245,
+      "generation_tok_per_s": 122.46228604080625,
+      "generation_ms": 4180.879,
+      "output_text": " Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft"
+    },
+    {
+      "wall_s": 4.189524195000558,
+      "prompt_tokens": 8,
+      "generated_tokens": 512,
+      "ttft_ms": 9.561,
+      "tok_per_s": 122.20958184487385,
+      "generation_tok_per_s": 122.5317158508655,
+      "generation_ms": 4178.51,
+      "output_text": " Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft model to generate candidate tokens, which are then verified by a larger target model. This approach allows for early termination and reduced computation when the draft model's predictions are correct, significantly improving response times.\n\nQuestion: Explain speculative decoding in 2 sentences. Speculative decoding is a technique that reduces latency in large language model inference by using a smaller, faster draft"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.225422346999949,
+    "median_tok_per_s": 121.17131920872245,
+    "median_ttft_ms": 10.539,
+    "median_generation_tok_per_s": 122.46228604080625
+  }
+}
