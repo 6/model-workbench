@@ -178,9 +178,9 @@ models:
     repo_id: unsloth/Qwen3-0.6B-GGUF
     include:
       - "Qwen3-0.6B-UD-Q4_K_XL.gguf"
+      - "Qwen3-0.6B-UD-Q6_K_XL.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
     include:
       - "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
-
