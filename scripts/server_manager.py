@@ -177,6 +177,7 @@ class ServerManager:
         n_gpu_layers: int | None = None,
         ctx: int | None = None,
         parallel: int | None = None,
+        mmproj_path: Path | None = None,
         extra_args: list[str] | None = None,
     ) -> Path:
         """Start llama-server for a GGUF model.
@@ -189,6 +190,7 @@ class ServerManager:
             n_gpu_layers: GPU layers to offload (optional)
             ctx: Context length (optional)
             parallel: Parallel sequences (optional)
+            mmproj_path: Path to multimodal projector for vision models (optional)
             extra_args: Extra raw args (optional)
 
         Returns:
@@ -213,6 +215,7 @@ class ServerManager:
             n_gpu_layers=n_gpu_layers,
             ctx=ctx,
             parallel=parallel,
+            mmproj_path=mmproj_path,
             extra_args=extra_args,
         )
 
@@ -476,6 +479,7 @@ def build_llama_cmd(
     n_gpu_layers: int | None = None,
     ctx: int | None = None,
     parallel: int | None = None,
+    mmproj_path: Path | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
     """Build llama-server command with appropriate flags.
@@ -487,6 +491,7 @@ def build_llama_cmd(
         n_gpu_layers: GPU layers to offload (optional)
         ctx: Context length (optional)
         parallel: Parallel sequences (optional)
+        mmproj_path: Path to multimodal projector for vision models (optional)
         extra_args: Extra raw args (optional)
 
     Returns:
@@ -508,6 +513,12 @@ def build_llama_cmd(
     # Parallel sequences
     if parallel is not None and parallel > 1:
         cmd += ["-np", str(parallel)]
+
+    # Multimodal projector for vision models
+    if mmproj_path is not None:
+        if not mmproj_path.exists():
+            raise SystemExit(f"mmproj not found: {mmproj_path}")
+        cmd += ["--mmproj", str(mmproj_path)]
 
     # Extra raw args
     if extra_args:

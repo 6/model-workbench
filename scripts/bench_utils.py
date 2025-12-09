@@ -314,6 +314,38 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
     return None
 
 
+def find_mmproj(gguf_path: Path) -> Path | None:
+    """
+    Find multimodal projector file (mmproj-*.gguf) for a vision GGUF model.
+
+    Searches in:
+      1. Same directory as the GGUF file
+      2. Parent directory (for quant subfolders like UD-Q4_K_XL/)
+      3. Up to MODELS_ROOT
+
+    Args:
+        gguf_path: Path to the main GGUF model file
+
+    Returns:
+        Path to mmproj file if found, None otherwise
+    """
+    # Start from the directory containing the GGUF
+    search_dir = gguf_path.parent if gguf_path.is_file() else gguf_path
+
+    # Search up to MODELS_ROOT
+    while search_dir != MODELS_ROOT.parent and search_dir != search_dir.parent:
+        mmproj_files = list(search_dir.glob("mmproj-*.gguf"))
+        if mmproj_files:
+            # If multiple, prefer F16 over lower precision
+            for f in mmproj_files:
+                if "F16" in f.name or "f16" in f.name:
+                    return f
+            return mmproj_files[0]
+        search_dir = search_dir.parent
+
+    return None
+
+
 # ----------------------------
 # Model config utilities
 # ----------------------------
