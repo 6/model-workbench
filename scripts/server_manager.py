@@ -29,7 +29,7 @@ class ServerManager:
         self,
         host: str = "127.0.0.1",
         port: int = 8000,
-        timeout: int = 300,
+        timeout: int = 180,
     ):
         self.host = host
         self.port = port
