@@ -1,0 +1,83 @@
+{
+  "timestamp": "2025-12-09T17:57:48.552126",
+  "repo_id": "openai/gpt-oss-120b",
+  "model_ref": "~/models/openai/gpt-oss-120b",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94932
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94934
+      }
+    ],
+    "memory_used_mib": 189866,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none"
+  },
+  "iterations": [
+    {
+      "wall_s": 0.5116683469996133,
+      "output_text": "Speculative decoding is a technique where a language model generates multiple possible next tokens in parallel, using a fast, lightweight \u201cdraft\u201d model to propose candidates and a more accurate \u201cverification\u201d model to confirm or correct them, thereby accelerating inference. By only fully evaluating the verified token(s), the system reduces the number of expensive full-model forward passes while maintaining output quality.",
+      "prompt_tokens": 77,
+      "generated_tokens": 117,
+      "tok_per_s": 228.66374417350548,
+      "generation_tok_per_s": 235.07248908238859,
+      "ttft_ms": 11.679410934448242,
+      "prefill_ms": 11.117570999886084,
+      "generation_ms": 497.71881200013013
+    },
+    {
+      "wall_s": 0.5115786689993911,
+      "output_text": "Speculative decoding is a technique where a language model generates multiple possible next tokens in parallel, using a fast, lightweight \u201cdraft\u201d model to propose candidates and a more accurate \u201cverification\u201d model to confirm or correct them, thereby accelerating inference. By only fully evaluating the verified token(s), the system reduces the number of expensive full-model forward passes while maintaining output quality.",
+      "prompt_tokens": 77,
+      "generated_tokens": 117,
+      "tok_per_s": 228.70382814991697,
+      "generation_tok_per_s": 235.05396033319582,
+      "ttft_ms": 11.395931243896484,
+      "prefill_ms": 10.848146000171255,
+      "generation_ms": 497.75804599994444
+    },
+    {
+      "wall_s": 0.5110316560003412,
+      "output_text": "Speculative decoding is a technique where a language model generates multiple possible next tokens in parallel, using a fast, lightweight \u201cdraft\u201d model to propose candidates and a more accurate \u201cverification\u201d model to confirm or correct them, thereby accelerating inference. By only fully evaluating the verified token(s), the system reduces the number of expensive full-model forward passes while maintaining output quality.",
+      "prompt_tokens": 77,
+      "generated_tokens": 117,
+      "tok_per_s": 228.94863483745104,
+      "generation_tok_per_s": 235.19193390597198,
+      "ttft_ms": 11.321783065795898,
+      "prefill_ms": 10.826906000147574,
+      "generation_ms": 497.4660399993809
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.5115786689993911,
+    "median_tok_per_s": 228.70382814991697,
+    "median_ttft_ms": 11.395931243896484,
+    "median_generation_tok_per_s": 235.07248908238859
+  },
+  "environment": "stable"
+}
