@@ -201,9 +201,13 @@ def start_llama_server(args, gguf_path: Path):
     Starts llama-server unless:
       - --no-autostart is set, OR
       - port is already open (assume user-managed server)
+
+    Waits up to --server-timeout seconds for the server to be ready,
+    verifying readiness via API call (not just port open).
     """
     host = args.host
     port = args.port
+    timeout = args.server_timeout
 
     if port_open(host, port):
         return None  # already running
@@ -242,21 +246,47 @@ def start_llama_server(args, gguf_path: Path):
         text=True
     )
 
-    # readiness poll
-    for _ in range(200):
-        if port_open(host, port):
-            break
-        time.sleep(0.05)
+    # Wait for server to be ready (with API verification)
+    print(f"Waiting for server to be ready (timeout: {timeout}s)...")
+    start_time = time.time()
+    base_url = f"http://{host}:{port}"
 
-    if not port_open(host, port):
-        try:
-            proc.terminate()
-        except Exception:
-            pass
-        raise SystemExit(
-            f"llama-server failed to start on {host}:{port}. "
-            f"Check your binary path and that it was built with CUDA."
-        )
+    while time.time() - start_time < timeout:
+        # Check if process crashed
+        if proc.poll() is not None:
+            stderr_output = ""
+            try:
+                stderr_output = proc.stderr.read() if proc.stderr else ""
+            except Exception:
+                pass
+            raise SystemExit(
+                f"llama-server exited unexpectedly (exit code: {proc.returncode}).\n"
+                f"Last output:\n{stderr_output[-2000:] if stderr_output else '(no output)'}"
+            )
+
+        # Check if server is ready via API
+        if port_open(host, port):
+            try:
+                r = requests.get(f"{base_url}/v1/models", timeout=5)
+                if r.status_code == 200:
+                    elapsed = time.time() - start_time
+                    print(f"Server ready in {elapsed:.1f}s")
+                    return proc
+            except Exception:
+                pass  # Not ready yet
+
+        time.sleep(1)
+
+    # Timeout reached
+    try:
+        proc.terminate()
+    except Exception:
+        pass
+    raise SystemExit(
+        f"llama-server failed to become ready within {timeout}s on {host}:{port}.\n"
+        f"Check your binary path, that it was built with CUDA, and that the model fits in GPU memory.\n"
+        f"Try increasing --server-timeout if the model is very large."
+    )
 
     return proc
 
@@ -466,6 +496,9 @@ def main():
 
     ap.add_argument("--no-autostart", action="store_true",
                     help="Do not auto-start llama-server; require it already running")
+
+    ap.add_argument("--server-timeout", type=int, default=180,
+                    help="Max seconds to wait for server to be ready (default: 180)")
 
     ap.add_argument("--extra-args", nargs=argparse.REMAINDER,
                     help="Extra raw args appended to llama-server command")
