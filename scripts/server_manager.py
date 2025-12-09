@@ -380,7 +380,7 @@ def build_vllm_docker_cmd(
     cmd = [
         "docker", "run", "--rm",
         "--gpus", "all",
-        "--shm-size", "16g",
+        "--ipc", "host",
         "-p", f"{port}:{port}",
         "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
         image,
