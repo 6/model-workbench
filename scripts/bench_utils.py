@@ -70,21 +70,31 @@ def compact_path(path: str) -> str:
 
 def extract_repo_id(path: str) -> str:
     """
-    Extract repo ID (org/repo) from a model path.
+    Extract repo ID from a model path.
+
+    For directories (quant folders): returns org/repo/quant (3 parts)
+    For files (inline GGUFs): returns org/repo (2 parts)
 
     Examples:
-        ~/models/unsloth/Qwen3-GGUF/file.gguf -> unsloth/Qwen3-GGUF
-        /home/user/models/org/repo -> org/repo
+        ~/models/unsloth/GLM-GGUF/Q4_K_XL -> unsloth/GLM-GGUF/Q4_K_XL
+        ~/models/unsloth/GLM-GGUF/model.gguf -> unsloth/GLM-GGUF
+        ~/models/org/repo -> org/repo
     """
     p = Path(path).expanduser()
     try:
         rel = p.relative_to(MODELS_ROOT)
         parts = rel.parts
-        # Return org/repo (first two parts)
-        if len(parts) >= 2:
-            return f"{parts[0]}/{parts[1]}"
-        elif len(parts) == 1:
-            return parts[0]
+
+        # If path is a directory, include up to 3 parts (org/repo/quant)
+        # If path is a file, include only 2 parts (org/repo)
+        if p.is_dir():
+            max_parts = 3
+        else:
+            max_parts = 2
+
+        n = min(len(parts), max_parts)
+        if n >= 1:
+            return "/".join(parts[:n])
     except ValueError:
         pass
     # Fallback: return compacted path
