@@ -1,8 +1,9 @@
 {
-  "timestamp": "2025-12-09T00:52:22.109686",
+  "timestamp": "2025-12-09T03:53:15.703042",
   "model_id": "zai-org/GLM-4.6V-FP8",
   "engine": "vllm-server",
   "mode": "vision",
+  "environment": "nightly",
   "gpu_info": {
     "driver_version": "580.95.05",
     "gpus": [
@@ -31,28 +32,28 @@
   },
   "results": [
     {
-      "wall_s": 5.620186380001542,
+      "wall_s": 5.599951342999702,
       "prompt_tokens": 154,
       "generated_tokens": 449,
-      "tok_per_s": 79.89058896653118,
+      "tok_per_s": 80.17926808619127,
       "output_text": "<think>Got it, let's describe this image in detail. First, the main subject is a vast field of sunflowers. The sunflowers are bright yellow with dark brown centers, and they're surrounded by green leaves. The field stretches out to the horizon, so it looks like a large, expansive meadow filled with these flowers. The sky above is partly cloudy, with some blue sky visible, giving a sense of a pleasant day. In the center of the image, there's a white text overlay that says \"Example Image,\" which is probably a placeholder. The sunflowers are in various stages, some fully open, others maybe a bit smaller, but all vibrant and lively. The green foliage is dense, providing a rich background for the yellow blooms. The overall scene is cheerful and vibrant, typical of a sunflower field in full bloom, maybe during late summer or early fall. The composition is wide, showing the expanse of the field, so it feels like you're looking out over a sea of sunflowers. The colors are vivid: the yellow of the petals, the green of the leaves, and the blue of the sky with white clouds. The text is clear and stands out against the busy background of the flowers. So putting it all together, it's a beautiful, expansive sunflower field with a text overlay, bright and colorful, evoking a sense of warmth and nature's beauty.</think>\nThe image depicts a vast, vibrant field of sunflowers stretching to the horizon. The sunflowers, with their bright yellow petals and dark brown centers, are densely packed, surrounded by lush green leaves. The sky above is partly cloudy, with patches of blue visible, suggesting a pleasant, sunny day. In the center of the image, the text \u201cExample Image\u201d is overlaid in white, standing out against the colorful floral backdrop. The scene conveys a sense of warmth and natural beauty, with the sunflowers in full bloom, creating a cheerful, expansive landscape typical of a late summer or early fall meadow. The vivid colors\u2014yellow petals, green foliage, and blue sky with white clouds\u2014enhance the lively, inviting atmosphere of the sunflower field. <|begin_of_box|>This is a placeholder image.<|end_of_box|>"
     },
     {
-      "wall_s": 5.612791941002797,
+      "wall_s": 5.59483757000271,
       "prompt_tokens": 154,
       "generated_tokens": 449,
-      "tok_per_s": 79.99583891929912,
+      "tok_per_s": 80.25255324790109,
       "output_text": "<think>Got it, let's describe this image in detail. First, the main subject is a vast field of sunflowers. The sunflowers are bright yellow with dark brown centers, and they're surrounded by green leaves. The field stretches out to the horizon, so it looks like a large, expansive meadow filled with these flowers. The sky above is partly cloudy, with some blue sky visible, giving a sense of a pleasant day. In the center of the image, there's a white text overlay that says \"Example Image,\" which is probably a placeholder. The sunflowers are in various stages, some fully open, others maybe a bit smaller, but all vibrant and lively. The green foliage is dense, providing a rich background for the yellow blooms. The overall scene is cheerful and vibrant, typical of a sunflower field in full bloom, maybe during late summer or early fall. The composition is wide, showing the expanse of the field, so it feels like you're looking out over a sea of sunflowers. The colors are vivid: the yellow of the petals, the green of the leaves, and the blue of the sky with white clouds. The text is clear and stands out against the busy background of the flowers. So putting it all together, it's a beautiful, expansive sunflower field with a text overlay, bright and colorful, evoking a sense of warmth and nature's beauty.</think>\nThe image depicts a vast, vibrant field of sunflowers stretching to the horizon. The sunflowers, with their bright yellow petals and dark brown centers, are densely packed, surrounded by lush green leaves. The sky above is partly cloudy, with patches of blue visible, suggesting a pleasant, sunny day. In the center of the image, the text \u201cExample Image\u201d is overlaid in white, standing out against the colorful floral backdrop. The scene conveys a sense of warmth and natural beauty, with the sunflowers in full bloom, creating a cheerful, expansive landscape typical of a late summer or early fall meadow. The vivid colors\u2014yellow petals, green foliage, and blue sky with white clouds\u2014enhance the lively, inviting atmosphere of the sunflower field. <|begin_of_box|>This is a placeholder image.<|end_of_box|>"
     },
     {
-      "wall_s": 5.612539025001752,
+      "wall_s": 5.590149454001221,
       "prompt_tokens": 154,
       "generated_tokens": 449,
-      "tok_per_s": 79.99944374549091,
+      "tok_per_s": 80.3198561495744,
       "output_text": "<think>Got it, let's describe this image in detail. First, the main subject is a vast field of sunflowers. The sunflowers are bright yellow with dark brown centers, and they're surrounded by green leaves. The field stretches out to the horizon, so it looks like a large, expansive meadow filled with these flowers. The sky above is partly cloudy, with some blue sky visible, giving a sense of a pleasant day. In the center of the image, there's a white text overlay that says \"Example Image,\" which is probably a placeholder. The sunflowers are in various stages, some fully open, others maybe a bit smaller, but all vibrant and lively. The green foliage is dense, providing a rich background for the yellow blooms. The overall scene is cheerful and vibrant, typical of a sunflower field in full bloom, maybe during late summer or early fall. The composition is wide, showing the expanse of the field, so it feels like you're looking out over a sea of sunflowers. The colors are vivid: the yellow of the petals, the green of the leaves, and the blue of the sky with white clouds. The text is clear and stands out against the busy background of the flowers. So putting it all together, it's a beautiful, expansive sunflower field with a text overlay, bright and colorful, evoking a sense of warmth and nature's beauty.</think>\nThe image depicts a vast, vibrant field of sunflowers stretching to the horizon. The sunflowers, with their bright yellow petals and dark brown centers, are densely packed, surrounded by lush green leaves. The sky above is partly cloudy, with patches of blue visible, suggesting a pleasant, sunny day. In the center of the image, the text \u201cExample Image\u201d is overlaid in white, standing out against the colorful floral backdrop. The scene conveys a sense of warmth and natural beauty, with the sunflowers in full bloom, creating a cheerful, expansive landscape typical of a late summer or early fall meadow. The vivid colors\u2014yellow petals, green foliage, and blue sky with white clouds\u2014enhance the lively, inviting atmosphere of the sunflower field. <|begin_of_box|>This is a placeholder image.<|end_of_box|>"
     }
   ],
   "summary": {
-    "median_tok_per_s": 79.99583891929912
+    "median_tok_per_s": 80.25255324790109
   }
 }
