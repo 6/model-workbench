@@ -28,7 +28,8 @@ echo "[1/3] Syncing stable Python environment..."
 uv sync --all-extras
 
 echo "[2/3] Syncing nightly Python environment (for bleeding-edge models)..."
-(cd "$ROOT_DIR/nightly" && uv sync)
+# Upgrade git dependencies to latest commits, then sync
+(cd "$ROOT_DIR/nightly" && uv lock --upgrade-package transformers --upgrade-package tokenizers && uv sync)
 
 echo "[3/3] Downloading models listed in config/models.yaml..."
 uv run python scripts/fetch_models.py
