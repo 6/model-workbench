@@ -90,8 +90,15 @@ def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     return image_arg, image_arg
 
 
+def is_glm_vision_model(model_path: str) -> bool:
+    """Check if model is a GLM vision variant (GLM-4.5V, GLM-4.6V, etc.)."""
+    lower = model_path.lower()
+    # Match patterns like glm-4.5v, glm-4.6v, glm4v, etc.
+    return "glm" in lower and "v" in lower.split("glm")[-1]
+
+
 def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
-    """Start vLLM server with GLM-specific flags."""
+    """Start vLLM server with appropriate flags for model type."""
     host = args.host
     port = args.port
 
@@ -104,17 +111,22 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
             f"vLLM server not detected on {host}:{port} and --no-autostart was set."
         )
 
-    # Build vLLM serve command following official recipe
+    # Build vLLM serve command
     cmd = [
         "vllm", "serve", model_path,
         "--host", host,
         "--port", str(port),
         "--tensor-parallel-size", str(args.tensor_parallel),
-        "--enable-expert-parallel",
-        "--allowed-local-media-path", "/",
-        "--mm-encoder-tp-mode", "data",
-        "--mm_processor_cache_type", "shm",
     ]
+
+    # GLM vision model specific flags (GLM-4.5V, GLM-4.6V, etc.)
+    if is_glm_vision_model(model_path):
+        cmd += [
+            "--enable-expert-parallel",
+            "--allowed-local-media-path", "/",
+            "--mm-encoder-tp-mode", "data",
+            "--mm_processor_cache_type", "shm",
+        ]
 
     if args.max_model_len:
         cmd += ["--max-model-len", str(args.max_model_len)]
