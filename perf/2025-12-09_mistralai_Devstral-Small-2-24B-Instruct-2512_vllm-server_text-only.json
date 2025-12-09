@@ -1,8 +1,9 @@
 {
-  "timestamp": "2025-12-09T17:34:05.928037",
+  "timestamp": "2025-12-09T19:06:07.444161",
   "repo_id": "mistralai/Devstral-Small-2-24B-Instruct-2512",
   "model_ref": "~/models/mistralai/Devstral-Small-2-24B-Instruct-2512",
   "engine": "vllm-server",
+  "mode": "text-only",
   "gpu_info": {
     "driver_version": "580.95.05",
     "gpus": [
@@ -12,7 +13,7 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 89478
+        "memory_used_mib": 89466
       },
       {
         "index": 1,
@@ -20,15 +21,15 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 89464
+        "memory_used_mib": 89478
       }
     ],
-    "memory_used_mib": 178942,
+    "memory_used_mib": 178944,
     "memory_total_mib": 195774
   },
   "config": {
-    "prompt_set": "short",
-    "prompt": "Explain speculative decoding in 2 sentences.",
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
     "max_tokens": 512,
     "temperature": 0.0,
     "tensor_parallel_size": 2,
@@ -39,45 +40,66 @@
   },
   "iterations": [
     {
-      "wall_s": 0.5939464019998013,
-      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output.",
-      "prompt_tokens": 12,
-      "generated_tokens": 56,
-      "tok_per_s": 94.28460179479079,
-      "generation_tok_per_s": 97.22478348761777,
-      "ttft_ms": 15.457868576049805,
-      "prefill_ms": 14.86622599986731,
-      "generation_ms": 575.9848259999671
+      "wall_s": 4.52767163200042,
+      "output_text": "### **KV Cache: Technical Overview & Importance for Long Context**\n\n#### **What is KV Cache?**\nThe **Key-Value (KV) Cache** is a temporary memory structure in transformer-based models (e.g., LLMs) that stores intermediate computations during inference. It consists of:\n- **Keys (K)** and **Values (V)** from self-attention layers.\n- **Positional embeddings** (for tracking sequence order).\n\n#### **Why It Matters for Long Context**\n1. **Efficiency in Attention Computation**\n   - Without KV caching, the model recomputes attention for every new token, leading to **O(n\u00b2) complexity** for sequence length *n*.\n   - KV caching **reuses past keys/values**, reducing computation to **O(1)** per new token (after initial pass).\n\n2. **Memory Optimization**\n   - Stores only necessary past states (not full model weights), enabling **longer context windows** without excessive memory usage.\n   - Critical for **sliding window attention** (e.g., in RWKV, some LLMs) to handle sequences beyond typical limits (e.g., 4K/8K tokens).\n\n3. **Latency Reduction**\n   - Avoids reprocessing entire sequences for each new token, improving **real-time generation** (e.g., chatbots, streaming responses).\n\n4. **Scalability for Long Documents**\n   - Enables models to process **books, codebases, or research papers** by maintaining context across thousands of tokens.\n\n#### **Challenges**\n- **Memory Bloat**: Storing large KV caches can exhaust GPU/CPU RAM (mitigated by techniques like **quantization** or **offloading**).\n- **Context Window Limits**: Some models (e.g., older LLMs) struggle with very long sequences due to fixed KV cache sizes.\n\n#### **Key Takeaway**\nKV caching is essential for **scalable, efficient long-context inference**, balancing speed, memory, and accuracy in modern LLMs. Without it, handling extended inputs would be computationally prohibitive.",
+      "prompt_tokens": 19,
+      "generated_tokens": 432,
+      "tok_per_s": 95.41327974112235,
+      "generation_tok_per_s": 95.71706649858932,
+      "ttft_ms": 11.537790298461914,
+      "prefill_ms": 10.8842409990757,
+      "generation_ms": 4513.301711000167
     },
     {
-      "wall_s": 0.5932700449998265,
-      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output.",
-      "prompt_tokens": 12,
-      "generated_tokens": 56,
-      "tok_per_s": 94.39209087324875,
-      "generation_tok_per_s": 97.21041588218485,
-      "ttft_ms": 15.06495475769043,
-      "prefill_ms": 14.631144999839307,
-      "generation_ms": 576.069956000083
+      "wall_s": 4.528026215999489,
+      "output_text": "### **KV Cache: Technical Overview & Importance for Long Context**\n\n#### **What is KV Cache?**\nThe **Key-Value (KV) Cache** is a temporary memory structure in transformer-based models (e.g., LLMs) that stores intermediate computations during inference. It consists of:\n- **Keys (K)** and **Values (V)** from self-attention layers.\n- **Positional embeddings** (for tracking sequence order).\n\n#### **Why It Matters for Long Context**\n1. **Efficiency in Attention Computation**\n   - Without KV caching, the model recomputes attention for every new token, leading to **O(n\u00b2) complexity** for sequence length *n*.\n   - KV caching **reuses past keys/values**, reducing computation to **O(1)** per new token (after initial pass).\n\n2. **Memory Optimization**\n   - Stores only necessary past states (not full model weights), enabling **longer context windows** without excessive memory usage.\n   - Critical for **sliding window attention** (e.g., in RWKV, some LLMs) to handle sequences beyond typical limits (e.g., 4K/8K tokens).\n\n3. **Latency Reduction**\n   - Avoids reprocessing entire sequences for each new token, improving **real-time generation** (e.g., chatbots, streaming responses).\n\n4. **Scalability for Long Documents**\n   - Enables models to process **books, codebases, or research papers** by maintaining context across thousands of tokens.\n\n#### **Challenges**\n- **Memory Bloat**: Storing large KV caches can exhaust GPU/CPU RAM (mitigated by techniques like **quantization** or **offloading**).\n- **Context Window Limits**: Some models (e.g., older LLMs) struggle with very long sequences due to fixed KV cache sizes.\n\n#### **Key Takeaway**\nKV caching is essential for **scalable, efficient long-context inference**, balancing speed, memory, and accuracy in modern LLMs. Without it, handling extended inputs would be computationally prohibitive.",
+      "prompt_tokens": 19,
+      "generated_tokens": 432,
+      "tok_per_s": 95.40580804800905,
+      "generation_tok_per_s": 95.68499468476259,
+      "ttft_ms": 11.125564575195312,
+      "prefill_ms": 10.66899800025567,
+      "generation_ms": 4514.814485000898
     },
     {
-      "wall_s": 0.5935523850002937,
-      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output.",
-      "prompt_tokens": 12,
-      "generated_tokens": 56,
-      "tok_per_s": 94.34719060217792,
-      "generation_tok_per_s": 97.15974664966977,
-      "ttft_ms": 15.092849731445312,
-      "prefill_ms": 14.65780500029723,
-      "generation_ms": 576.3703789998544
+      "wall_s": 4.532728406000388,
+      "output_text": "### **KV Cache: Technical Overview & Importance for Long Context**\n\n#### **What is KV Cache?**\nThe **Key-Value (KV) Cache** is a temporary memory structure in transformer-based models (e.g., LLMs) that stores intermediate computations during inference. It consists of:\n- **Keys (K)** and **Values (V)** from self-attention layers.\n- **Positional embeddings** (for tracking sequence order).\n\n#### **Why It Matters for Long Context**\n1. **Efficiency in Attention Computation**\n   - Without KV caching, the model recomputes attention for every new token, leading to **O(n\u00b2) complexity** for sequence length *n*.\n   - KV caching **reuses past keys/values**, reducing computation to **O(1)** per new token (after initial pass).\n\n2. **Memory Optimization**\n   - Stores only necessary past states (not full model weights), enabling **longer context windows** without excessive memory usage.\n   - Critical for **sliding window attention** (e.g., in RWKV, some LLMs) to handle sequences beyond typical limits (e.g., 4K/8K tokens).\n\n3. **Latency Reduction**\n   - Avoids reprocessing entire sequences for each new token, improving **real-time generation** (e.g., chatbots, streaming responses).\n\n4. **Scalability for Long Documents**\n   - Enables models to process **books, codebases, or research papers** by maintaining context across thousands of tokens.\n\n#### **Challenges**\n- **Memory Bloat**: Storing large KV caches can exhaust GPU/CPU RAM (mitigated by techniques like **quantization** or **offloading**).\n- **Context Window Limits**: Some models (e.g., older LLMs) struggle with very long sequences due to fixed KV cache sizes.\n\n#### **Key Takeaway**\nKV caching is essential for **scalable, efficient long-context inference**, balancing speed, memory, and accuracy in modern LLMs. Without it, handling extended inputs would be computationally prohibitive.",
+      "prompt_tokens": 19,
+      "generated_tokens": 432,
+      "tok_per_s": 95.30683537714769,
+      "generation_tok_per_s": 95.59688089072661,
+      "ttft_ms": 11.084794998168945,
+      "prefill_ms": 10.631746999933966,
+      "generation_ms": 4518.975891000082
+    },
+    {
+      "wall_s": 4.528798534000089,
+      "output_text": "### **KV Cache: Technical Overview & Importance for Long Context**\n\n#### **What is KV Cache?**\nThe **Key-Value (KV) Cache** is a temporary memory structure in transformer-based models (e.g., LLMs) that stores intermediate computations during inference. It consists of:\n- **Keys (K)** and **Values (V)** from self-attention layers.\n- **Positional embeddings** (for tracking sequence order).\n\n#### **Why It Matters for Long Context**\n1. **Efficiency in Attention Computation**\n   - Without KV caching, the model recomputes attention for every new token, leading to **O(n\u00b2) complexity** for sequence length *n*.\n   - KV caching **reuses past keys/values**, reducing computation to **O(1)** per new token (after initial pass).\n\n2. **Memory Optimization**\n   - Stores only necessary past states (not full model weights), enabling **longer context windows** without excessive memory usage.\n   - Critical for **sliding window attention** (e.g., in RWKV, some LLMs) to handle sequences beyond typical limits (e.g., 4K/8K tokens).\n\n3. **Latency Reduction**\n   - Avoids reprocessing entire sequences for each new token, improving **real-time generation** (e.g., chatbots, streaming responses).\n\n4. **Scalability for Long Documents**\n   - Enables models to process **books, codebases, or research papers** by maintaining context across thousands of tokens.\n\n#### **Challenges**\n- **Memory Bloat**: Storing large KV caches can exhaust GPU/CPU RAM (mitigated by techniques like **quantization** or **offloading**).\n- **Context Window Limits**: Some models (e.g., older LLMs) struggle with very long sequences due to fixed KV cache sizes.\n\n#### **Key Takeaway**\nKV caching is essential for **scalable, efficient long-context inference**, balancing speed, memory, and accuracy in modern LLMs. Without it, handling extended inputs would be computationally prohibitive.",
+      "prompt_tokens": 19,
+      "generated_tokens": 432,
+      "tok_per_s": 95.38953803238259,
+      "generation_tok_per_s": 95.66623951725686,
+      "ttft_ms": 11.100530624389648,
+      "prefill_ms": 10.627088999171974,
+      "generation_ms": 4515.699605000918
+    },
+    {
+      "wall_s": 4.527012406999347,
+      "output_text": "### **KV Cache: Technical Overview & Importance for Long Context**\n\n#### **What is KV Cache?**\nThe **Key-Value (KV) Cache** is a temporary memory structure in transformer-based models (e.g., LLMs) that stores intermediate computations during inference. It consists of:\n- **Keys (K)** and **Values (V)** from self-attention layers.\n- **Positional embeddings** (for tracking sequence order).\n\n#### **Why It Matters for Long Context**\n1. **Efficiency in Attention Computation**\n   - Without KV caching, the model recomputes attention for every new token, leading to **O(n\u00b2) complexity** for sequence length *n*.\n   - KV caching **reuses past keys/values**, reducing computation to **O(1)** per new token (after initial pass).\n\n2. **Memory Optimization**\n   - Stores only necessary past states (not full model weights), enabling **longer context windows** without excessive memory usage.\n   - Critical for **sliding window attention** (e.g., in RWKV, some LLMs) to handle sequences beyond typical limits (e.g., 4K/8K tokens).\n\n3. **Latency Reduction**\n   - Avoids reprocessing entire sequences for each new token, improving **real-time generation** (e.g., chatbots, streaming responses).\n\n4. **Scalability for Long Documents**\n   - Enables models to process **books, codebases, or research papers** by maintaining context across thousands of tokens.\n\n#### **Challenges**\n- **Memory Bloat**: Storing large KV caches can exhaust GPU/CPU RAM (mitigated by techniques like **quantization** or **offloading**).\n- **Context Window Limits**: Some models (e.g., older LLMs) struggle with very long sequences due to fixed KV cache sizes.\n\n#### **Key Takeaway**\nKV caching is essential for **scalable, efficient long-context inference**, balancing speed, memory, and accuracy in modern LLMs. Without it, handling extended inputs would be computationally prohibitive.",
+      "prompt_tokens": 19,
+      "generated_tokens": 432,
+      "tok_per_s": 95.42717385357109,
+      "generation_tok_per_s": 95.70658536656377,
+      "ttft_ms": 11.083602905273438,
+      "prefill_ms": 10.626678000335232,
+      "generation_ms": 4513.7959769999725
     }
   ],
   "summary": {
-    "median_wall_s": 0.5935523850002937,
-    "median_tok_per_s": 94.34719060217792,
-    "median_ttft_ms": 15.092849731445312,
-    "median_generation_tok_per_s": 97.21041588218485
+    "median_wall_s": 4.528026215999489,
+    "median_tok_per_s": 95.40580804800905,
+    "median_ttft_ms": 11.100530624389648,
+    "median_generation_tok_per_s": 95.68499468476259
   },
-  "mode": "text-only",
   "environment": "nightly"
 }
