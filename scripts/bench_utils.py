@@ -382,6 +382,7 @@ def write_benchmark_result(
     repo_id: str,
     model_ref: str,
     engine: str,
+    mode: str,
     gpu_info: dict,
     config: dict,
     iterations: list[dict],
@@ -395,6 +396,7 @@ def write_benchmark_result(
         repo_id: Model repo ID (e.g., "org/repo")
         model_ref: Compacted model path for reference
         engine: Engine name (e.g., "vllm-server", "llama-server")
+        mode: Benchmark mode (e.g., "vision", "text-only")
         gpu_info: GPU info dict from get_gpu_info()
         config: Benchmark configuration (prompt, max_tokens, etc.)
         iterations: List of per-iteration results
@@ -411,6 +413,7 @@ def write_benchmark_result(
         "repo_id": repo_id,
         "model_ref": model_ref,
         "engine": engine,
+        "mode": mode,
         "gpu_info": gpu_info,
         "config": config,
         "iterations": iterations,
@@ -421,11 +424,12 @@ def write_benchmark_result(
     if extra:
         payload.update(extra)
 
-    # Generate filename: DATE_REPO-ID_ENGINE.json
+    # Generate filename: DATE_REPO-ID_ENGINE_MODE.json
     date_str = datetime.now().strftime("%Y-%m-%d")
     safe_repo = sanitize(repo_id)
     safe_engine = sanitize(engine)
-    filename = f"{date_str}_{safe_repo}_{safe_engine}.json"
+    safe_mode = sanitize(mode)
+    filename = f"{date_str}_{safe_repo}_{safe_engine}_{safe_mode}.json"
 
     out_path = results_dir / filename
     with open(out_path, "w") as f:

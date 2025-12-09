@@ -168,6 +168,7 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
             repo_id=extract_repo_id(model_id),
             model_ref=compact_path(str(gguf_path)),
             engine="llama-server",
+            mode="text-only",
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
