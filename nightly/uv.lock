@@ -3398,7 +3398,7 @@ wheels = [
 [[package]]
 name = "transformers"
 version = "5.0.0.dev0"
-source = { git = "https://github.com/huggingface/transformers.git#73a13f86f6d208882d59d1200609986c5a5f49a7" }
+source = { git = "https://github.com/huggingface/transformers.git#3f3cae74245cba80b5cc34c6c3e914940ac3f109" }
 dependencies = [
     { name = "filelock" },
     { name = "huggingface-hub" },
