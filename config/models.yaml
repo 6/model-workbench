@@ -48,6 +48,16 @@ models:
       #- "UD-Q4_K_XL/*.gguf"
 
   - source: hf
+    repo_id: unsloth/gpt-oss-20b-GGUF
+    include:
+      - "gpt-oss-20b-F16.gguf"
+
+  - source: hf
+    repo_id: unsloth/gpt-oss-120b-GGUF
+    include:
+      - "gpt-oss-120b-F16.gguf"
+
+  - source: hf
     repo_id: Qwen/Qwen3-Omni-30B-A3B-Instruct
 
   - source: hf
