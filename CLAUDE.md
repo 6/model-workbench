@@ -34,6 +34,10 @@ uv run python scripts/run_bench_vllm_server.py --model ~/models/org/model --imag
 
 # Benchmark with llama.cpp (GGUF models)
 uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+# Run evals (IFEval + HumanEval via DeepEval)
+uv run python scripts/run_eval.py --model ~/models/zai-org/GLM-4.6V-FP8
+uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval  # IFEval only
 ```
 
 ## Architecture
@@ -46,7 +50,8 @@ uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/GLM-4.5
 ### Key Directories
 - `scripts/` - Benchmark runners and utilities
 - `config/models.yaml` - Model definitions with quantization variants, sources, special flags
-- `perf/` - JSON benchmark results with GPU info, timing stats, outputs
+- `perf/` - JSON benchmark results (unified schema across backends)
+- `evals/` - DeepEval results (IFEval, HumanEval)
 - `nightly/` - Separate pyproject.toml for bleeding-edge deps
 
 ### Benchmark Engines
@@ -55,9 +60,6 @@ uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/GLM-4.5
   - Auto-uses all GPUs (`--tensor-parallel 1` for single); pre-allocates 95% VRAM for KV cache (`--gpu-memory-utilization` to adjust)
 - **llama.cpp** (`run_bench_llama_server.py`): Native `/completion` endpoint (for detailed metrics), GGUF models, GPU sharding
 
-### Shared Utilities (`bench_utils.py`)
-- GPU detection via nvidia-smi
-- Model path resolution and config loading
-- Model format detection (GGUF vs safetensors)
-- Environment selection (stable vs nightly)
-- Result file naming and path utilities
+### Shared Utilities
+- **`bench_utils.py`**: GPU detection, model resolution, config loading, `TEXT_PROMPTS`/`VISION_PROMPTS`, `write_benchmark_result()`
+- **`server_manager.py`**: `ServerManager` (context manager for server lifecycle), readiness checks, `build_vllm_cmd()`/`build_llama_cmd()`
