@@ -1,0 +1,59 @@
+{
+  "timestamp": "2025-12-09T17:12:00.644637",
+  "repo_id": "mistralai/Devstral-Small-2-24B-Instruct-2512",
+  "model_ref": "~/models/mistralai/Devstral-Small-2-24B-Instruct-2512",
+  "engine": "vllm-server",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 89478
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 89478
+      }
+    ],
+    "memory_used_mib": 178956,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none"
+  },
+  "iterations": [
+    {
+      "wall_s": 0.5950505979999434,
+      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output."
+    },
+    {
+      "wall_s": 0.5934749399998509,
+      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output."
+    },
+    {
+      "wall_s": 0.5941251599997486,
+      "output_text": "Speculative decoding is a technique used in language models to generate multiple potential next tokens in parallel, then select the most likely one to continue the sequence, improving efficiency and speed. It reduces the computational cost of sequential token generation by exploring multiple possibilities simultaneously before finalizing the output."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.5941251599997486
+  },
+  "mode": "text-only",
+  "environment": "nightly"
+}
