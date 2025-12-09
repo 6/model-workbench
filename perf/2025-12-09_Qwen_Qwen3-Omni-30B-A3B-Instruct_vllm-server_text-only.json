@@ -1,10 +1,8 @@
 {
-  "timestamp": "2025-12-09T05:58:06.932656",
+  "timestamp": "2025-12-09T17:39:50.956602",
   "repo_id": "Qwen/Qwen3-Omni-30B-A3B-Instruct",
   "model_ref": "~/models/Qwen/Qwen3-Omni-30B-A3B-Instruct",
   "engine": "vllm-server",
-  "mode": "text-only",
-  "environment": "stable",
   "gpu_info": {
     "driver_version": "580.95.05",
     "gpus": [
@@ -29,30 +27,57 @@
     "memory_total_mib": 195774
   },
   "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
     "tensor_parallel_size": 2,
     "max_model_len": 65536,
     "gpu_memory_utilization": 0.95,
     "max_num_batched_tokens": null,
-    "image": "none",
-    "prompt": "Explain speculative decoding in 2 sentences.",
-    "max_tokens": 512,
-    "temperature": 0.0
+    "image": "none"
   },
-  "results": [
+  "iterations": [
     {
-      "wall_s": 0.3469077209956595,
-      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy."
+      "wall_s": 0.3466546279996692,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy.",
+      "prompt_tokens": 17,
+      "generated_tokens": 54,
+      "tok_per_s": 155.77464034333195,
+      "generation_tok_per_s": 161.42776279501524,
+      "ttft_ms": 7.41267204284668,
+      "prefill_ms": 6.613202000153251,
+      "generation_ms": 334.51495000008435
     },
     {
-      "wall_s": 0.34649975699721836,
-      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy."
+      "wall_s": 0.3455619209998986,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy.",
+      "prompt_tokens": 17,
+      "generated_tokens": 54,
+      "tok_per_s": 156.26721788022428,
+      "generation_tok_per_s": 161.32153984054005,
+      "ttft_ms": 6.910085678100586,
+      "prefill_ms": 6.475114000295434,
+      "generation_ms": 334.7352129999308
     },
     {
-      "wall_s": 0.3466941009974107,
-      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy."
+      "wall_s": 0.34546778499998254,
+      "output_text": "Speculative decoding is a technique used in large language models to speed up text generation by predicting multiple future tokens ahead of time and validating them against the actual model output. This allows the model to skip redundant computations when predictions are correct, improving inference efficiency without sacrificing accuracy.",
+      "prompt_tokens": 17,
+      "generated_tokens": 54,
+      "tok_per_s": 156.30979890064924,
+      "generation_tok_per_s": 161.33380512502208,
+      "ttft_ms": 6.86192512512207,
+      "prefill_ms": 6.4592939997965,
+      "generation_ms": 334.7097650002979
     }
   ],
   "summary": {
-    "median_wall_s": 0.3466941009974107
-  }
+    "median_wall_s": 0.3455619209998986,
+    "median_tok_per_s": 156.26721788022428,
+    "median_ttft_ms": 6.910085678100586,
+    "median_generation_tok_per_s": 161.33380512502208
+  },
+  "mode": "text-only",
+  "environment": "stable"
 }

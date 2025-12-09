@@ -32,10 +32,12 @@ Examples:
 
 import argparse
 import base64
+import re
 import statistics
 import time
 from pathlib import Path
 
+import requests
 from openai import OpenAI
 
 from bench_utils import (
@@ -61,6 +63,76 @@ BUILTIN_IMAGES = {
 }
 
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
+
+# Prometheus metrics we care about (vLLM exposes these as histograms)
+VLLM_METRICS = [
+    "vllm:time_to_first_token_seconds",
+    "vllm:request_prefill_time_seconds",
+    "vllm:request_decode_time_seconds",
+]
+
+
+def scrape_vllm_metrics(host: str, port: int) -> dict[str, float] | None:
+    """Scrape vLLM Prometheus /metrics endpoint and parse histogram sums/counts.
+
+    Returns dict with keys like:
+        "vllm:time_to_first_token_seconds_sum": 1.234
+        "vllm:time_to_first_token_seconds_count": 5
+    Or None if scraping fails.
+    """
+    try:
+        resp = requests.get(f"http://{host}:{port}/metrics", timeout=5)
+        resp.raise_for_status()
+    except Exception:
+        return None
+
+    metrics = {}
+    # Parse Prometheus text format: metric_name{labels} value
+    # We only care about _sum and _count lines for our histograms
+    pattern = re.compile(r'^(vllm:[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)', re.MULTILINE)
+
+    for match in pattern.finditer(resp.text):
+        name, value = match.groups()
+        try:
+            metrics[name] = float(value)
+        except ValueError:
+            pass
+
+    return metrics if metrics else None
+
+
+def compute_metrics_delta(before: dict[str, float] | None, after: dict[str, float] | None) -> dict[str, float]:
+    """Compute delta between two metrics snapshots.
+
+    Returns timing values in milliseconds for the single request that ran between snapshots.
+    """
+    result = {}
+    if not before or not after:
+        return result
+
+    for metric_base in VLLM_METRICS:
+        sum_key = f"{metric_base}_sum"
+        count_key = f"{metric_base}_count"
+
+        if sum_key in before and sum_key in after and count_key in before and count_key in after:
+            delta_sum = after[sum_key] - before[sum_key]
+            delta_count = after[count_key] - before[count_key]
+
+            # For single-request benchmark, delta_count should be 1
+            # delta_sum is the time in seconds for that request
+            if delta_count > 0:
+                # Convert to ms and store with a friendly name
+                time_ms = (delta_sum / delta_count) * 1000
+
+                # Map to friendly names
+                if "time_to_first_token" in metric_base:
+                    result["ttft_ms"] = time_ms
+                elif "prefill_time" in metric_base:
+                    result["prefill_ms"] = time_ms
+                elif "decode_time" in metric_base:
+                    result["generation_ms"] = time_ms
+
+    return result
 
 
 def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
@@ -97,8 +169,8 @@ def encode_image_base64(image_path: str) -> str:
 
 
 def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
-               max_tokens: int, temperature: float) -> dict:
-    """Run single inference via OpenAI-compatible API."""
+               max_tokens: int, temperature: float, host: str, port: int) -> dict:
+    """Run single inference via OpenAI-compatible API with Prometheus metrics scraping."""
 
     # Build message content
     if image_path is None:
@@ -121,6 +193,9 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
             ]
         }]
 
+    # Scrape metrics before request
+    metrics_before = scrape_vllm_metrics(host, port)
+
     t0 = time.perf_counter()
     response = client.chat.completions.create(
         model=model,
@@ -130,12 +205,52 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
     )
     t1 = time.perf_counter()
 
+    # Scrape metrics after request
+    metrics_after = scrape_vllm_metrics(host, port)
+
     output_text = response.choices[0].message.content or ""
     wall = t1 - t0
-    return {
+
+    # Extract token counts from response.usage
+    prompt_tokens = None
+    generated_tokens = None
+    if response.usage:
+        prompt_tokens = response.usage.prompt_tokens
+        generated_tokens = response.usage.completion_tokens
+
+    # Compute derived metrics
+    tok_per_s = None
+    generation_tok_per_s = None
+    if generated_tokens and wall > 0:
+        tok_per_s = generated_tokens / wall  # overall throughput including TTFT
+
+    # Get detailed timing from Prometheus delta
+    timing = compute_metrics_delta(metrics_before, metrics_after)
+
+    # Calculate generation tok/s from Prometheus timing if available
+    if generated_tokens and timing.get("generation_ms"):
+        gen_s = timing["generation_ms"] / 1000
+        if gen_s > 0:
+            generation_tok_per_s = generated_tokens / gen_s
+
+    result = {
         "wall_s": wall,
         "output_text": output_text,
+        "prompt_tokens": prompt_tokens,
+        "generated_tokens": generated_tokens,
+        "tok_per_s": tok_per_s,
+        "generation_tok_per_s": generation_tok_per_s,
     }
+    # Add Prometheus timing metrics if available
+    result.update(timing)
+
+    return result
+
+
+def med(results: list[dict], key: str) -> float | None:
+    """Compute median of a metric across results, ignoring None values."""
+    vals = [r.get(key) for r in results if r.get(key) is not None]
+    return statistics.median(vals) if vals else None
 
 
 def main():
@@ -253,19 +368,36 @@ def main():
         # Warmup
         log("Warmup request...")
         bench_once(client, api_model, prompt_text, image_source,
-                   min(64, args.max_tokens), args.temperature)
+                   min(64, args.max_tokens), args.temperature, args.host, args.port)
 
         # Benchmark
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
             r = bench_once(client, api_model, prompt_text, image_source,
-                          args.max_tokens, args.temperature)
-            log(f"  {r['wall_s']:.2f}s")
+                          args.max_tokens, args.temperature, args.host, args.port)
+            # Log with detailed metrics if available
+            ttft = r.get("ttft_ms")
+            gen_tok_s = r.get("generation_tok_per_s")
+            if ttft is not None and gen_tok_s is not None:
+                log(f"  {r['wall_s']:.2f}s | TTFT: {ttft:.1f}ms | gen: {gen_tok_s:.1f} tok/s")
+            else:
+                log(f"  {r['wall_s']:.2f}s")
             results.append(r)
 
-        med_wall = statistics.median([r["wall_s"] for r in results])
-        log(f"Median: {med_wall:.2f}s")
+        # Build summary with detailed metrics
+        summary = {
+            "median_wall_s": med(results, "wall_s"),
+            "median_tok_per_s": med(results, "tok_per_s"),
+            "median_ttft_ms": med(results, "ttft_ms"),
+            "median_generation_tok_per_s": med(results, "generation_tok_per_s"),
+        }
+
+        # Log summary
+        if summary["median_ttft_ms"] is not None and summary["median_generation_tok_per_s"] is not None:
+            log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
+        else:
+            log(f"Median: {summary['median_wall_s']:.2f}s")
 
         # Save results
         write_benchmark_result(
@@ -273,6 +405,7 @@ def main():
             repo_id=extract_repo_id(args.model),
             model_ref=compact_path(model_path),
             engine="vllm-server",
+            mode=mode,
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
@@ -286,8 +419,8 @@ def main():
                 "image": image_label,
             },
             iterations=results,
-            summary={"median_wall_s": med_wall},
-            extra={"mode": mode, "environment": env_label},
+            summary=summary,
+            extra={"environment": env_label},
         )
 
 

@@ -1,7 +1,8 @@
 model-workbench: personal local LLM workbench to download, serve, and benchmark models
 
 Quick start:
-    ./scripts/bootstrap.sh
+    ./scripts/bootstrap.sh                    # stable deps only
+    ./scripts/bootstrap.sh --update-nightly   # also sync nightly deps
 
 If you update the model list in `config/models.yaml`, re-run:
     uv run python scripts/fetch_models.py

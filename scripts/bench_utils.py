@@ -70,21 +70,33 @@ def compact_path(path: str) -> str:
 
 def extract_repo_id(path: str) -> str:
     """
-    Extract repo ID (org/repo) from a model path.
+    Extract repo ID from a model path.
+
+    For directories: returns up to org/repo/quant (3 parts)
+    For .gguf files: returns org/repo/filename (without .gguf extension)
 
     Examples:
-        ~/models/unsloth/Qwen3-GGUF/file.gguf -> unsloth/Qwen3-GGUF
-        /home/user/models/org/repo -> org/repo
+        ~/models/unsloth/GLM-GGUF/Q4_K_XL -> unsloth/GLM-GGUF/Q4_K_XL
+        ~/models/unsloth/Qwen-GGUF/Model-Q4.gguf -> unsloth/Qwen-GGUF/Model-Q4
+        ~/models/org/repo -> org/repo
     """
     p = Path(path).expanduser()
     try:
         rel = p.relative_to(MODELS_ROOT)
         parts = rel.parts
-        # Return org/repo (first two parts)
-        if len(parts) >= 2:
-            return f"{parts[0]}/{parts[1]}"
-        elif len(parts) == 1:
-            return parts[0]
+
+        if p.is_dir():
+            # Directory: include up to 3 parts (org/repo/quant)
+            n = min(len(parts), 3)
+            return "/".join(parts[:n])
+        else:
+            # File: include org/repo + filename without extension
+            if len(parts) >= 2:
+                repo_parts = parts[:2]  # org/repo
+                filename = p.stem  # filename without extension
+                return f"{repo_parts[0]}/{repo_parts[1]}/{filename}"
+            elif len(parts) == 1:
+                return p.stem
     except ValueError:
         pass
     # Fallback: return compacted path
@@ -302,6 +314,38 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
     return None
 
 
+def find_mmproj(gguf_path: Path) -> Path | None:
+    """
+    Find multimodal projector file (mmproj-*.gguf) for a vision GGUF model.
+
+    Searches in:
+      1. Same directory as the GGUF file
+      2. Parent directory (for quant subfolders like UD-Q4_K_XL/)
+      3. Up to MODELS_ROOT
+
+    Args:
+        gguf_path: Path to the main GGUF model file
+
+    Returns:
+        Path to mmproj file if found, None otherwise
+    """
+    # Start from the directory containing the GGUF
+    search_dir = gguf_path.parent if gguf_path.is_file() else gguf_path
+
+    # Search up to MODELS_ROOT
+    while search_dir != MODELS_ROOT.parent and search_dir != search_dir.parent:
+        mmproj_files = list(search_dir.glob("mmproj-*.gguf"))
+        if mmproj_files:
+            # If multiple, prefer F16 over lower precision
+            for f in mmproj_files:
+                if "F16" in f.name or "f16" in f.name:
+                    return f
+            return mmproj_files[0]
+        search_dir = search_dir.parent
+
+    return None
+
+
 # ----------------------------
 # Model config utilities
 # ----------------------------
@@ -382,6 +426,7 @@ def write_benchmark_result(
     repo_id: str,
     model_ref: str,
     engine: str,
+    mode: str,
     gpu_info: dict,
     config: dict,
     iterations: list[dict],
@@ -395,6 +440,7 @@ def write_benchmark_result(
         repo_id: Model repo ID (e.g., "org/repo")
         model_ref: Compacted model path for reference
         engine: Engine name (e.g., "vllm-server", "llama-server")
+        mode: Benchmark mode (e.g., "vision", "text-only")
         gpu_info: GPU info dict from get_gpu_info()
         config: Benchmark configuration (prompt, max_tokens, etc.)
         iterations: List of per-iteration results
@@ -411,6 +457,7 @@ def write_benchmark_result(
         "repo_id": repo_id,
         "model_ref": model_ref,
         "engine": engine,
+        "mode": mode,
         "gpu_info": gpu_info,
         "config": config,
         "iterations": iterations,
@@ -421,11 +468,12 @@ def write_benchmark_result(
     if extra:
         payload.update(extra)
 
-    # Generate filename: DATE_REPO-ID_ENGINE.json
+    # Generate filename: DATE_REPO-ID_ENGINE_MODE.json
     date_str = datetime.now().strftime("%Y-%m-%d")
     safe_repo = sanitize(repo_id)
     safe_engine = sanitize(engine)
-    filename = f"{date_str}_{safe_repo}_{safe_engine}.json"
+    safe_mode = sanitize(mode)
+    filename = f"{date_str}_{safe_repo}_{safe_engine}_{safe_mode}.json"
 
     out_path = results_dir / filename
     with open(out_path, "w") as f:

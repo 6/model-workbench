@@ -1,10 +1,9 @@
 {
-  "timestamp": "2025-12-09T06:00:51.189674",
+  "timestamp": "2025-12-09T17:56:38.437708",
   "repo_id": "zai-org/GLM-4.6V-FP8",
   "model_ref": "~/models/zai-org/GLM-4.6V-FP8",
   "engine": "vllm-server",
   "mode": "text-only",
-  "environment": "nightly",
   "gpu_info": {
     "driver_version": "580.95.05",
     "gpus": [
@@ -29,30 +28,56 @@
     "memory_total_mib": 195774
   },
   "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
     "tensor_parallel_size": 2,
     "max_model_len": 65536,
     "gpu_memory_utilization": 0.95,
     "max_num_batched_tokens": null,
-    "image": "none",
-    "prompt": "Explain speculative decoding in 2 sentences.",
-    "max_tokens": 512,
-    "temperature": 0.0
+    "image": "none"
   },
-  "results": [
+  "iterations": [
     {
-      "wall_s": 6.382031592002022,
-      "output_text": "<think>1.  **Deconstruct the User's Request:**\n    *   **Topic:** Speculative Decoding.\n    *   **Constraint:** Explain it in 2 sentences.\n    *   **Implicit Goal:** The explanation should be clear, accurate, and understandable to someone who might not be a deep learning expert. It needs to capture the core idea.\n\n2.  **Initial Brainstorming & Keyword Association:**\n    *   What is speculative decoding? It's a technique to speed up autoregressive models (like LLMs).\n    *   How does it work? It uses a \"draft model\" (smaller, faster) to predict the next few tokens.\n    *   What happens next? A \"verifier\" (the main, larger model) checks if those predictions are good.\n    *   What's the outcome? If they're good, you accept them and save time. If they're bad, you reject them and fall back to the slower, main model.\n    *   Key concepts: Speed, efficiency, draft model, verifier, parallelism, autoregressive generation, token-by-token generation.\n\n3.  **Drafting - Attempt 1 (Focus on the \"what\"):**\n    *   \"Speculative decoding is a method to make large language models faster. It uses a smaller, faster model to guess the next few words, and then a larger model checks if the guess is correct.\"\n    *   *Critique:* This is okay, but a bit simplistic. \"Guess the next few words\" is a good analogy, but \"check if the guess is correct\" isn't quite right. The verifier doesn't just check one guess; it checks a sequence of guesses. Also, \"words\" should be \"tokens\" for technical accuracy. It's two sentences, which meets the constraint.\n\n4.  **Drafting - Attempt 2 (Focus on the \"how\" and \"why\"):**\n    *   \"Speculative decoding speeds up autoregressive generation by using a smaller, faster 'draft model' to propose a sequence of future tokens in parallel. A larger 'verifier' model then evaluates this proposal, accepting it if valid to save computation, or rejecting it and falling back to the slower, standard generation process.\"\n    *   *Critique:* This is much more accurate. It uses the correct terminology (\"autoregressive generation,\" \"draft model,\" \"verifier,\" \"tokens\"). It explains the parallelism aspect (\"in parallel\"). It clearly states the"
+      "wall_s": 6.629571764000502,
+      "output_text": "1.  **Deconstruct the User's Request:**\n    *   **Topic:** Speculative Decoding.\n    *   **Constraint:** Explain it in 2 sentences.\n    *   **Implicit Goal:** The explanation should be clear, accurate, and understandable to someone who might not be a deep learning expert. It needs to capture the core idea.\n\n2.  **Initial Brainstorming & Keyword Association:**\n    *   What is speculative decoding? It's a technique to speed up autoregressive models (like LLMs).\n    *   How does it work? It uses a \"draft model\" (smaller, faster) to predict the next few tokens.\n    *   What happens next? A \"verifier\" (the main, larger model) checks if those predictions are good.\n    *   What's the outcome? If they're good, you accept them and save time. If they're bad, you reject them and fall back to the slower, main model.\n    *   Key concepts: Speed, efficiency, draft model, verifier, parallelism, autoregressive generation, token-by-token generation.\n\n3.  **Drafting - Attempt 1 (Focus on the \"what\"):**\n    *   \"Speculative decoding is a method to make large language models faster. It uses a smaller, faster model to guess the next few words, and then a larger model checks if the guess is correct.\"\n    *   *Critique:* This is okay, but a bit simplistic. \"Guess the next few words\" is a good analogy, but \"check if the guess is correct\" isn't quite right. The verifier doesn't just check one guess; it checks a sequence of guesses. Also, \"words\" should be \"tokens\" for technical accuracy. It's two sentences, which meets the constraint.\n\n4.  **Drafting - Attempt 2 (Focus on the \"how\" and \"why\"):**\n    *   \"Speculative decoding speeds up autoregressive generation by using a smaller, faster 'draft model' to propose a sequence of future tokens in parallel. A larger 'verifier' model then evaluates this proposal, accepting it if valid to save computation, or rejecting it and falling back to the slower, standard generation process.\"\n    *   *Critique:* This is much more accurate. It uses the correct terminology (\"autoregressive generation,\" \"draft model,\" \"verifier,\" \"tokens\"). It explains the parallelism aspect (\"in parallel\"). It clearly states the",
+      "prompt_tokens": 15,
+      "generated_tokens": 512,
+      "tok_per_s": 77.22972436624508,
+      "generation_tok_per_s": 77.7126921905541,
+      "ttft_ms": 36.45801544189453,
+      "prefill_ms": 35.780564000560844,
+      "generation_ms": 6588.37038799993
     },
     {
-      "wall_s": 6.365684600998065,
-      "output_text": "<think>1.  **Deconstruct the User's Request:**\n    *   **Topic:** Speculative Decoding.\n    *   **Constraint:** Explain it in 2 sentences.\n    *   **Implicit Goal:** The explanation should be clear, accurate, and understandable to someone who might not be a deep learning expert. It needs to capture the core idea.\n\n2.  **Initial Brainstorming & Keyword Association:**\n    *   What is speculative decoding? It's a technique to speed up autoregressive models (like LLMs).\n    *   How does it work? It uses a \"draft model\" (smaller, faster) to predict the next few tokens.\n    *   What happens next? A \"verifier\" (the main, larger model) checks if those predictions are good.\n    *   What's the outcome? If they're good, you accept them and save time. If they're bad, you reject them and fall back to the slower, main model.\n    *   Key concepts: Speed, efficiency, draft model, verifier, parallelism, autoregressive generation, token-by-token generation.\n\n3.  **Drafting - Attempt 1 (Focus on the \"what\"):**\n    *   \"Speculative decoding is a method to make large language models faster. It uses a smaller, faster model to guess the next few words, and then a larger model checks if the guess is correct.\"\n    *   *Critique:* This is okay, but a bit simplistic. \"Guess the next few words\" is a good analogy, but \"check if the guess is correct\" isn't quite right. The verifier doesn't just check one guess; it checks a sequence of guesses. Also, \"words\" should be \"tokens\" for technical accuracy. It's two sentences, which meets the constraint.\n\n4.  **Drafting - Attempt 2 (Focus on the \"how\" and \"why\"):**\n    *   \"Speculative decoding speeds up autoregressive generation by using a smaller, faster 'draft model' to propose a sequence of future tokens in parallel. A larger 'verifier' model then evaluates this proposal, accepting it if valid to save computation, or rejecting it and falling back to the slower, standard generation process.\"\n    *   *Critique:* This is much more accurate. It uses the correct terminology (\"autoregressive generation,\" \"draft model,\" \"verifier,\" \"tokens\"). It explains the parallelism aspect (\"in parallel\"). It clearly states the"
+      "wall_s": 6.628965732999859,
+      "output_text": "1.  **Deconstruct the User's Request:**\n    *   **Topic:** Speculative Decoding.\n    *   **Constraint:** Explain it in 2 sentences.\n    *   **Implicit Goal:** The explanation should be clear, accurate, and understandable to someone who might not be a deep learning expert. It needs to capture the core idea.\n\n2.  **Initial Brainstorming & Keyword Association:**\n    *   What is speculative decoding? It's a technique to speed up autoregressive models (like LLMs).\n    *   How does it work? It uses a \"draft model\" (smaller, faster) to predict the next few tokens.\n    *   What happens next? A \"verifier\" (the main, larger model) checks if those predictions are good.\n    *   What's the outcome? If they're good, you accept them and save time. If they're bad, you reject them and fall back to the slower, main model.\n    *   Key concepts: Speed, efficiency, draft model, verifier, parallelism, autoregressive generation, token-by-token generation.\n\n3.  **Drafting - Attempt 1 (Focus on the \"what\"):**\n    *   \"Speculative decoding is a method to make large language models faster. It uses a smaller, faster model to guess the next few words, and then a larger model checks if the guess is correct.\"\n    *   *Critique:* This is okay, but a bit simplistic. \"Guess the next few words\" is a good analogy, but \"check if the guess is correct\" isn't quite right. The verifier doesn't just check one guess; it checks a sequence of guesses. Also, \"words\" should be \"tokens\" for technical accuracy. It's two sentences, which meets the constraint.\n\n4.  **Drafting - Attempt 2 (Focus on the \"how\" and \"why\"):**\n    *   \"Speculative decoding speeds up autoregressive generation by using a smaller, faster 'draft model' to propose a sequence of future tokens in parallel. A larger 'verifier' model then evaluates this proposal, accepting it if valid to save computation, or rejecting it and falling back to the slower, standard generation process.\"\n    *   *Critique:* This is much more accurate. It uses the correct terminology (\"autoregressive generation,\" \"draft model,\" \"verifier,\" \"tokens\"). It explains the parallelism aspect (\"in parallel\"). It clearly states the",
+      "prompt_tokens": 15,
+      "generated_tokens": 512,
+      "tok_per_s": 77.23678483525673,
+      "generation_tok_per_s": 77.71064574833254,
+      "ttft_ms": 36.25679016113281,
+      "prefill_ms": 35.717226000087976,
+      "generation_ms": 6588.543887000014
     },
     {
-      "wall_s": 6.367728771998372,
-      "output_text": "<think>1.  **Deconstruct the User's Request:**\n    *   **Topic:** Speculative Decoding.\n    *   **Constraint:** Explain it in 2 sentences.\n    *   **Implicit Goal:** The explanation should be clear, accurate, and understandable to someone who might not be a deep learning expert. It needs to capture the core idea.\n\n2.  **Initial Brainstorming & Keyword Association:**\n    *   What is speculative decoding? It's a technique to speed up autoregressive models (like LLMs).\n    *   How does it work? It uses a \"draft model\" (smaller, faster) to predict the next few tokens.\n    *   What happens next? A \"verifier\" (the main, larger model) checks if those predictions are good.\n    *   What's the outcome? If they're good, you accept them and save time. If they're bad, you reject them and fall back to the slower, main model.\n    *   Key concepts: Speed, efficiency, draft model, verifier, parallelism, autoregressive generation, token-by-token generation.\n\n3.  **Drafting - Attempt 1 (Focus on the \"what\"):**\n    *   \"Speculative decoding is a method to make large language models faster. It uses a smaller, faster model to guess the next few words, and then a larger model checks if the guess is correct.\"\n    *   *Critique:* This is okay, but a bit simplistic. \"Guess the next few words\" is a good analogy, but \"check if the guess is correct\" isn't quite right. The verifier doesn't just check one guess; it checks a sequence of guesses. Also, \"words\" should be \"tokens\" for technical accuracy. It's two sentences, which meets the constraint.\n\n4.  **Drafting - Attempt 2 (Focus on the \"how\" and \"why\"):**\n    *   \"Speculative decoding speeds up autoregressive generation by using a smaller, faster 'draft model' to propose a sequence of future tokens in parallel. A larger 'verifier' model then evaluates this proposal, accepting it if valid to save computation, or rejecting it and falling back to the slower, standard generation process.\"\n    *   *Critique:* This is much more accurate. It uses the correct terminology (\"autoregressive generation,\" \"draft model,\" \"verifier,\" \"tokens\"). It explains the parallelism aspect (\"in parallel\"). It clearly states the"
+      "wall_s": 6.625397413999963,
+      "output_text": "1.  **Deconstruct the User's Request:**\n    *   **Topic:** Speculative Decoding.\n    *   **Constraint:** Explain it in 2 sentences.\n    *   **Implicit Goal:** The explanation should be clear, accurate, and understandable to someone who might not be a deep learning expert. It needs to capture the core idea.\n\n2.  **Initial Brainstorming & Keyword Association:**\n    *   What is speculative decoding? It's a technique to speed up autoregressive models (like LLMs).\n    *   How does it work? It uses a \"draft model\" (smaller, faster) to predict the next few tokens.\n    *   What happens next? A \"verifier\" (the main, larger model) checks if those predictions are good.\n    *   What's the outcome? If they're good, you accept them and save time. If they're bad, you reject them and fall back to the slower, main model.\n    *   Key concepts: Speed, efficiency, draft model, verifier, parallelism, autoregressive generation, token-by-token generation.\n\n3.  **Drafting - Attempt 1 (Focus on the \"what\"):**\n    *   \"Speculative decoding is a method to make large language models faster. It uses a smaller, faster model to guess the next few words, and then a larger model checks if the guess is correct.\"\n    *   *Critique:* This is okay, but a bit simplistic. \"Guess the next few words\" is a good analogy, but \"check if the guess is correct\" isn't quite right. The verifier doesn't just check one guess; it checks a sequence of guesses. Also, \"words\" should be \"tokens\" for technical accuracy. It's two sentences, which meets the constraint.\n\n4.  **Drafting - Attempt 2 (Focus on the \"how\" and \"why\"):**\n    *   \"Speculative decoding speeds up autoregressive generation by using a smaller, faster 'draft model' to propose a sequence of future tokens in parallel. A larger 'verifier' model then evaluates this proposal, accepting it if valid to save computation, or rejecting it and falling back to the slower, standard generation process.\"\n    *   *Critique:* This is much more accurate. It uses the correct terminology (\"autoregressive generation,\" \"draft model,\" \"verifier,\" \"tokens\"). It explains the parallelism aspect (\"in parallel\"). It clearly states the",
+      "prompt_tokens": 15,
+      "generated_tokens": 512,
+      "tok_per_s": 77.27838316809577,
+      "generation_tok_per_s": 77.74982964313767,
+      "ttft_ms": 36.15069389343262,
+      "prefill_ms": 35.61075699963112,
+      "generation_ms": 6585.223432000021
     }
   ],
   "summary": {
-    "median_wall_s": 6.367728771998372
-  }
+    "median_wall_s": 6.628965732999859,
+    "median_tok_per_s": 77.23678483525673,
+    "median_ttft_ms": 36.25679016113281,
+    "median_generation_tok_per_s": 77.7126921905541
+  },
+  "environment": "nightly"
 }

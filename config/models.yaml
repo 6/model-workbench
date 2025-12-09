@@ -1,5 +1,9 @@
 models:
   - source: hf
+    repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
+    nightly: true
+
+  - source: hf
     repo_id: zai-org/GLM-4.6V-FP8
     nightly: true  # Requires nightly transformers/tokenizers
 
@@ -40,6 +44,7 @@ models:
     repo_id: unsloth/Qwen3-VL-235B-A22B-Instruct-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
+      - "mmproj-F16.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF
@@ -149,34 +154,39 @@ models:
     repo_id: unsloth/Qwen3-VL-32B-Instruct-1M-GGUF
     include:
       - "Qwen3-VL-32B-Instruct-1M-UD-Q4_K_XL.gguf"
+      - "mmproj-F16.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF
     include:
       - "Qwen3-VL-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
+      - "mmproj-F16.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-VL-8B-Instruct-1M-GGUF
     include:
       - "Qwen3-VL-8B-Instruct-1M-UD-Q4_K_XL.gguf"
+      - "mmproj-F16.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-VL-2B-Instruct-1M-GGUF
     include:
       - "Qwen3-VL-2B-Instruct-1M-UD-Q4_K_XL.gguf"
+      - "mmproj-F16.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-VL-2B-Thinking-1M-GGUF
     include:
       - "Qwen3-VL-2B-Thinking-1M-UD-Q4_K_XL.gguf"
+      - "mmproj-F16.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-0.6B-GGUF
     include:
       - "Qwen3-0.6B-UD-Q4_K_XL.gguf"
+      - "Qwen3-0.6B-UD-Q6_K_XL.gguf"
 
   - source: hf
     repo_id: unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
     include:
       - "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
-

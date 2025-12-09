@@ -177,6 +177,7 @@ class ServerManager:
         n_gpu_layers: int | None = None,
         ctx: int | None = None,
         parallel: int | None = None,
+        mmproj_path: Path | None = None,
         extra_args: list[str] | None = None,
     ) -> Path:
         """Start llama-server for a GGUF model.
@@ -189,6 +190,7 @@ class ServerManager:
             n_gpu_layers: GPU layers to offload (optional)
             ctx: Context length (optional)
             parallel: Parallel sequences (optional)
+            mmproj_path: Path to multimodal projector for vision models (optional)
             extra_args: Extra raw args (optional)
 
         Returns:
@@ -213,6 +215,7 @@ class ServerManager:
             n_gpu_layers=n_gpu_layers,
             ctx=ctx,
             parallel=parallel,
+            mmproj_path=mmproj_path,
             extra_args=extra_args,
         )
 
@@ -239,6 +242,7 @@ class ServerManager:
         """Start vLLM server for a safetensors model.
 
         Builds command, starts server, and waits for readiness.
+        For Mistral models, automatically uses Docker if available (FP8 compatibility).
 
         Args:
             model_path: Path to model directory
@@ -251,6 +255,14 @@ class ServerManager:
         Raises:
             SystemExit if server fails to start
         """
+        # For Mistral models, prefer Docker if available (FP8 kernel issues on some GPUs)
+        if is_mistral_model(model_path) and docker_gpu_available():
+            log("Using Docker for Mistral model (FP8 compatibility)")
+            return self.start_vllm_docker(
+                model_path=model_path,
+                tensor_parallel=tensor_parallel,
+            )
+
         cmd = build_vllm_cmd(
             model_path=model_path,
             host=self.host,
@@ -266,6 +278,36 @@ class ServerManager:
             cmd,
             lambda: wait_for_vllm_ready(self.host, self.port),
             label="vLLM",
+        )
+
+    def start_vllm_docker(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        image: str = "vllm/vllm-openai:latest",
+    ) -> None:
+        """Start vLLM server via Docker.
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size
+            image: Docker image to use
+
+        Raises:
+            SystemExit if server fails to start
+        """
+        cmd = build_vllm_docker_cmd(
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            image=image,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_vllm_ready(self.host, self.port),
+            label="vLLM (Docker)",
         )
 
 
@@ -303,6 +345,63 @@ def is_glm_vision_model(model_path: str) -> bool:
     lower = model_path.lower()
     # Match patterns like glm-4.5v, glm-4.6v, glm4v, etc.
     return "glm" in lower and "v" in lower.split("glm")[-1]
+
+
+def is_mistral_model(model_path: str) -> bool:
+    """Check if model is a Mistral/Devstral model requiring mistral tokenizer mode."""
+    lower = model_path.lower()
+    return "mistral" in lower or "devstral" in lower or "ministral" in lower
+
+
+# ----------------------------
+# Docker support
+# ----------------------------
+
+def docker_gpu_available() -> bool:
+    """Check if Docker with GPU support is available."""
+    try:
+        result = subprocess.run(
+            ["docker", "run", "--rm", "--gpus", "all",
+             "nvidia/cuda:12.6.0-base-ubuntu24.04", "nvidia-smi"],
+            capture_output=True, timeout=60
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def build_vllm_docker_cmd(
+    model_path: str,
+    host: str,
+    port: int,
+    tensor_parallel: int,
+    image: str = "vllm/vllm-openai:latest",
+) -> list[str]:
+    """Build Docker command for vLLM server."""
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
+
+    cmd = [
+        "docker", "run", "--rm",
+        "--gpus", "all",
+        "--ipc", "host",
+        "-p", f"{port}:{port}",
+        "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
+        image,
+        "--model", model_path_resolved,
+        "--host", "0.0.0.0",
+        "--port", str(port),
+        "--tensor-parallel-size", str(tensor_parallel),
+    ]
+
+    # Mistral-specific flags
+    if is_mistral_model(model_path):
+        cmd += [
+            "--tokenizer_mode", "mistral",
+            "--config_format", "mistral",
+            "--load_format", "mistral",
+        ]
+
+    return cmd
 
 
 # ----------------------------
@@ -353,6 +452,14 @@ def build_vllm_cmd(
             "--mm_processor_cache_type", "shm",
         ]
 
+    # Mistral/Devstral models require native mistral tokenizer
+    if is_mistral_model(model_path):
+        cmd += [
+            "--tokenizer_mode", "mistral",
+            "--config_format", "mistral",
+            "--load_format", "mistral",
+        ]
+
     if max_model_len is not None:
         cmd += ["--max-model-len", str(max_model_len)]
 
@@ -372,6 +479,7 @@ def build_llama_cmd(
     n_gpu_layers: int | None = None,
     ctx: int | None = None,
     parallel: int | None = None,
+    mmproj_path: Path | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
     """Build llama-server command with appropriate flags.
@@ -383,6 +491,7 @@ def build_llama_cmd(
         n_gpu_layers: GPU layers to offload (optional)
         ctx: Context length (optional)
         parallel: Parallel sequences (optional)
+        mmproj_path: Path to multimodal projector for vision models (optional)
         extra_args: Extra raw args (optional)
 
     Returns:
@@ -404,6 +513,12 @@ def build_llama_cmd(
     # Parallel sequences
     if parallel is not None and parallel > 1:
         cmd += ["-np", str(parallel)]
+
+    # Multimodal projector for vision models
+    if mmproj_path is not None:
+        if not mmproj_path.exists():
+            raise SystemExit(f"mmproj not found: {mmproj_path}")
+        cmd += ["--mmproj", str(mmproj_path)]
 
     # Extra raw args
     if extra_args:

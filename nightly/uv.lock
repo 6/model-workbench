@@ -1437,6 +1437,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "huggingface-hub" },
+    { name = "mistral-common" },
     { name = "openai" },
     { name = "pillow" },
     { name = "pyyaml" },
@@ -1454,6 +1455,7 @@ requires-dist = [
     { name = "fastapi", specifier = "==0.123.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "huggingface-hub", extras = ["cli"], specifier = ">=0.36.0" },
+    { name = "mistral-common", specifier = ">=1.8.6" },
     { name = "openai", specifier = ">=1.0.0" },
     { name = "pillow", specifier = ">=10.0.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
@@ -3396,7 +3398,7 @@ wheels = [
 [[package]]
 name = "transformers"
 version = "5.0.0.dev0"
-source = { git = "https://github.com/huggingface/transformers.git#745ad8c7c4cd924739c4a524ae8689693ae616be" }
+source = { git = "https://github.com/huggingface/transformers.git#3f3cae74245cba80b5cc34c6c3e914940ac3f109" }
 dependencies = [
     { name = "filelock" },
     { name = "huggingface-hub" },
