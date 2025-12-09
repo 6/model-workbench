@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-12-09T14:44:32.371043",
+  "repo_id": "unsloth/Qwen3-0.6B-GGUF",
+  "model_path": "/home/peter/models/unsloth/Qwen3-0.6B-GGUF",
+  "model_format": "gguf",
+  "environment": "stable",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 1078
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 4,
+        "pcie_width": 8,
+        "memory_used_mib": 1414
+      }
+    ],
+    "memory_used_mib": 2492,
+    "memory_total_mib": 195774
+  },
+  "benchmarks": {
+    "ifeval": {
+      "benchmark": "ifeval",
+      "questions": 541,
+      "overall_score": 0.6894639556377079
+    },
+    "gsm8k": {
+      "benchmark": "gsm8k",
+      "questions": 1319,
+      "overall_score": 0.5193328278999242
+    }
+  }
+}
