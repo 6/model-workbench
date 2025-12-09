@@ -65,6 +65,7 @@ from bench_utils import (
     get_gpu_info,
     infer_tag,
     port_open,
+    log,
 )
 
 PROMPTS = {
@@ -238,7 +239,7 @@ def start_llama_server(args, gguf_path: Path):
     if args.extra_args:
         cmd += args.extra_args
 
-    print("+", " ".join(cmd))
+    log(f"+ {' '.join(cmd)}")
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -247,7 +248,7 @@ def start_llama_server(args, gguf_path: Path):
     )
 
     # Wait for server to be ready (with API verification)
-    print(f"Waiting for server to be ready (timeout: {timeout}s)...")
+    log(f"Waiting for server to be ready (timeout: {timeout}s)...")
     start_time = time.time()
     base_url = f"http://{host}:{port}"
 
@@ -270,7 +271,7 @@ def start_llama_server(args, gguf_path: Path):
                 r = requests.get(f"{base_url}/health", timeout=5)
                 if r.status_code == 200 and r.json().get("status") == "ok":
                     elapsed = time.time() - start_time
-                    print(f"Server ready in {elapsed:.1f}s")
+                    log(f"Server ready in {elapsed:.1f}s")
                     return proc
             except Exception:
                 pass  # Not ready yet
@@ -397,7 +398,7 @@ def write_payload(payload, tag: str, label: str):
     with open(out_path, "w") as f:
         json.dump(payload, f, indent=2)
 
-    print(f"Wrote: {out_path}")
+    log(f"Wrote: {out_path}")
 
 # ----------------------------
 # Main runner
@@ -408,10 +409,12 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
 
     proc = start_llama_server(args, gguf_path)
     try:
-        _ = bench_once(prompt, args)  # warmup
+        log("Warmup request...")
+        _ = bench_once(prompt, args)
 
         results = []
-        for _ in range(args.iterations):
+        for i in range(args.iterations):
+            log(f"Benchmark {i + 1} of {args.iterations}...")
             results.append(bench_once(prompt, args))
 
         summary = {

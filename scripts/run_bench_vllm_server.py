@@ -54,6 +54,7 @@ from bench_utils import (
     resolve_model_path,
     model_needs_nightly,
     get_venv_python,
+    log,
 )
 
 # Built-in test images
@@ -149,8 +150,8 @@ def start_vllm_server(args, model_path: str, use_nightly: bool) -> subprocess.Po
     if args.max_num_batched_tokens:
         cmd += ["--max-num-batched-tokens", str(args.max_num_batched_tokens)]
 
-    print(f"\n== Starting vLLM server ==")
-    print(f"+ {' '.join(cmd)}")
+    log("Starting vLLM server")
+    log(f"+ {' '.join(cmd)}")
 
     proc = subprocess.Popen(
         cmd,
@@ -175,8 +176,8 @@ def start_vllm_server(args, model_path: str, use_nightly: bool) -> subprocess.Po
                     break
 
     # Wait for server to be ready
-    print("Waiting for server to be ready (streaming logs)...")
     max_wait = args.server_timeout
+    log(f"Waiting for server to be ready (timeout: {max_wait}s)...")
     start_time = time.time()
 
     while time.time() - start_time < max_wait:
@@ -187,7 +188,7 @@ def start_vllm_server(args, model_path: str, use_nightly: bool) -> subprocess.Po
             try:
                 client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
                 client.models.list()
-                print(f"Server ready after {time.time() - start_time:.1f}s")
+                log(f"Server ready in {time.time() - start_time:.1f}s")
                 return proc
             except Exception:
                 pass
@@ -380,21 +381,21 @@ def main():
         api_model = model_path
 
         # Warmup
-        print("\n== Warmup ==")
+        log("Warmup request...")
         bench_once(client, api_model, prompt_text, image_source,
                    min(64, args.max_tokens), args.temperature)
 
         # Benchmark
-        print(f"\n== Running {args.iterations} iterations ==")
         results = []
         for i in range(args.iterations):
+            log(f"Benchmark {i + 1} of {args.iterations}...")
             r = bench_once(client, api_model, prompt_text, image_source,
                           args.max_tokens, args.temperature)
-            print(f"  iter {i+1}: {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
+            log(f"  {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
             results.append(r)
 
         med_tps = statistics.median([r["tok_per_s"] for r in results])
-        print(f"\n== Median: {med_tps:.1f} tok/s ==")
+        log(f"Median: {med_tps:.1f} tok/s")
 
         # Save results
         out_dir = RESULTS_ROOT / tag
@@ -425,7 +426,7 @@ def main():
 
         out_path = out_dir / fname
         out_path.write_text(json.dumps(payload, indent=2))
-        print(f"Wrote: {out_path}")
+        log(f"Wrote: {out_path}")
 
     finally:
         stop_vllm_server(proc)

@@ -5,9 +5,20 @@ Shared utilities for benchmark scripts.
 import re
 import socket
 import subprocess
+from datetime import datetime
 from pathlib import Path
 
 import yaml
+
+
+# ----------------------------
+# Logging
+# ----------------------------
+
+def log(msg: str):
+    """Print a timestamped log message."""
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}] {msg}")
 
 # ----------------------------
 # Path constants
