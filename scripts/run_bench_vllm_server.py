@@ -48,6 +48,7 @@ from bench_utils import (
     RESULTS_ROOT,
     sanitize,
     get_gpu_info,
+    get_gpu_memory_usage,
     get_gpu_count,
     infer_tag,
     port_open,
@@ -244,7 +245,7 @@ def encode_image_base64(image_path: str) -> str:
 
 def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
                max_tokens: int, temperature: float) -> dict:
-    """Run single inference via OpenAI-compatible API."""
+    """Run single inference via OpenAI-compatible API with streaming for TTFT measurement."""
 
     # Build message content
     if image_path is None:
@@ -267,27 +268,41 @@ def bench_once(client: OpenAI, model: str, prompt: str, image_path: str | None,
             ]
         }]
 
+    # Use streaming to measure TTFT
     t0 = time.perf_counter()
-    response = client.chat.completions.create(
+    stream = client.chat.completions.create(
         model=model,
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        stream=True,
     )
+
+    ttft_ms = None
+    output_text = ""
+    gen_tokens = 0
+
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            content = chunk.choices[0].delta.content
+            if ttft_ms is None:
+                ttft_ms = (time.perf_counter() - t0) * 1000  # ms
+            output_text += content
+            gen_tokens += 1  # Approximate: 1 chunk ≈ 1 token
+
     t1 = time.perf_counter()
-
-    output_text = response.choices[0].message.content or ""
-    usage = response.usage
-
-    prompt_tokens = usage.prompt_tokens if usage else 0
-    gen_tokens = usage.completion_tokens if usage else len(output_text.split())
-
     wall = t1 - t0
+
+    # Estimate prompt tokens from output (not available in streaming)
+    # We'll leave it as None since we can't get it from streaming
+    prompt_tokens = None
+
     return {
         "wall_s": wall,
+        "ttft_ms": ttft_ms,
         "prompt_tokens": prompt_tokens,
         "generated_tokens": gen_tokens,
-        "tok_per_s": gen_tokens / wall if wall > 0 else 0,
+        "generation_tok_per_s": gen_tokens / wall if wall > 0 else 0,
         "output_text": output_text,
     }
 
@@ -371,6 +386,10 @@ def main():
     proc = start_vllm_server(args, model_path, use_nightly)
 
     try:
+        # Capture GPU memory after model loads
+        gpu_memory = get_gpu_memory_usage()
+        log(f"GPU memory: {gpu_memory.get('used_mib', '?')} / {gpu_memory.get('total_mib', '?')} MiB")
+
         # Create OpenAI client
         client = OpenAI(
             base_url=f"http://{args.host}:{args.port}/v1",
@@ -391,11 +410,12 @@ def main():
             log(f"Benchmark {i + 1} of {args.iterations}...")
             r = bench_once(client, api_model, prompt_text, image_source,
                           args.max_tokens, args.temperature)
-            log(f"  {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['tok_per_s']:.1f} tok/s)")
+            log(f"  {r['generated_tokens']} tokens in {r['wall_s']:.2f}s ({r['generation_tok_per_s']:.1f} tok/s), TTFT: {r['ttft_ms']:.1f}ms")
             results.append(r)
 
-        med_tps = statistics.median([r["tok_per_s"] for r in results])
-        log(f"Median: {med_tps:.1f} tok/s")
+        med_tps = statistics.median([r["generation_tok_per_s"] for r in results])
+        med_ttft = statistics.median([r["ttft_ms"] for r in results if r["ttft_ms"] is not None])
+        log(f"Median: {med_tps:.1f} tok/s, TTFT: {med_ttft:.1f} ms")
 
         # Save results
         out_dir = RESULTS_ROOT / tag
@@ -409,6 +429,7 @@ def main():
             "mode": mode,
             "environment": env_label,
             "gpu_info": get_gpu_info(),
+            "gpu_memory": gpu_memory,
             "tag": tag,
             "config": {
                 "tensor_parallel_size": args.tensor_parallel,
@@ -421,7 +442,10 @@ def main():
                 "temperature": args.temperature,
             },
             "results": results,
-            "summary": {"median_tok_per_s": med_tps},
+            "summary": {
+                "median_generation_tok_per_s": med_tps,
+                "median_ttft_ms": med_ttft,
+            },
         }
 
         out_path = out_dir / fname

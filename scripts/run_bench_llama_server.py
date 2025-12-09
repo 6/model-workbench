@@ -63,6 +63,7 @@ from bench_utils import (
     RESULTS_ROOT,
     sanitize,
     get_gpu_info,
+    get_gpu_memory_usage,
     infer_tag,
     port_open,
     log,
@@ -304,16 +305,16 @@ def stop_llama_server(proc):
             pass
 
 def bench_once(prompt: str, args):
+    """Run a single benchmark using the native /completion endpoint for detailed timings."""
     if requests is None:
         raise SystemExit("Missing dependency: requests. Install with `pip install requests`.")
 
     base = f"http://{args.host}:{args.port}"
-    url = base.rstrip("/") + "/v1/completions"
+    url = base.rstrip("/") + "/completion"  # Native endpoint with timings
 
     payload = {
-        "model": "local",
         "prompt": prompt,
-        "max_tokens": args.max_tokens,
+        "n_predict": args.max_tokens,
         "temperature": args.temperature,
     }
 
@@ -323,29 +324,36 @@ def bench_once(prompt: str, args):
     t1 = time.perf_counter()
 
     data = r.json()
-
-    text = ""
-    try:
-        text = data["choices"][0].get("text", "")
-    except Exception:
-        pass
-
-    usage = data.get("usage") or {}
-    prompt_tokens = usage.get("prompt_tokens")
-    gen_tokens = usage.get("completion_tokens")
-
     wall = t1 - t0
-    tok_per_s = (gen_tokens / wall) if isinstance(gen_tokens, int) and wall > 0 else None
+
+    # Extract text
+    text = data.get("content", "")
+
+    # Extract detailed timings from native endpoint
+    timings = data.get("timings", {})
+    prompt_tokens = timings.get("prompt_n")
+    prompt_ms = timings.get("prompt_ms")
+    gen_tokens = timings.get("predicted_n")
+    gen_ms = timings.get("predicted_ms")
+    gen_tok_per_s = timings.get("predicted_per_second")
+    ms_per_token = timings.get("predicted_per_token_ms")
+
+    # Use prompt_ms as TTFT (time to first token = time to process prompt)
+    ttft_ms = prompt_ms
 
     return {
         "wall_s": wall,
-        "max_tokens": args.max_tokens,
+        "ttft_ms": ttft_ms,
         "prompt_tokens": prompt_tokens,
         "generated_tokens": gen_tokens,
-        "tok_per_s": tok_per_s,
-        "temperature": args.temperature,
-        "seed": args.seed,
+        "generation_tok_per_s": gen_tok_per_s,
         "output_text": text,
+        # Extra metrics specific to llama-server
+        "extra": {
+            "prompt_ms": prompt_ms,
+            "generation_ms": gen_ms,
+            "ms_per_token": ms_per_token,
+        },
     }
 
 # ----------------------------
@@ -409,6 +417,10 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
 
     proc = start_llama_server(args, gguf_path)
     try:
+        # Capture GPU memory after model loads
+        gpu_memory = get_gpu_memory_usage()
+        log(f"GPU memory: {gpu_memory.get('used_mib', '?')} / {gpu_memory.get('total_mib', '?')} MiB")
+
         log("Warmup request...")
         _ = bench_once(prompt, args)
 
@@ -420,9 +432,12 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
         summary = {
             "iterations": args.iterations,
             "median_wall_s": med(results, "wall_s"),
+            "median_ttft_ms": med(results, "ttft_ms"),
             "median_generated_tokens": med(results, "generated_tokens"),
-            "median_tok_per_s": med(results, "tok_per_s"),
+            "median_generation_tok_per_s": med(results, "generation_tok_per_s"),
         }
+
+        log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
 
         label = derive_label(model_id, gguf_path)
 
@@ -432,6 +447,7 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
             "model_ref": str(gguf_path),
             "engine": "llama-server",
             "gpu_info": get_gpu_info(),
+            "gpu_memory": gpu_memory,
             "tag": args.tag,
             "env": {
                 "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),

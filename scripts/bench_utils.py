@@ -77,6 +77,46 @@ def get_gpu_count() -> int:
     """Return number of available GPUs. Returns 1 if detection fails."""
     return max(1, len(get_gpu_info().get("gpus", [])))
 
+
+def get_gpu_memory_usage() -> dict:
+    """
+    Get current GPU memory usage via nvidia-smi.
+
+    Returns:
+        Dict with total and used memory across all GPUs:
+        {"used_mib": 18432, "total_mib": 49152, "gpus": [...]}
+    """
+    try:
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=index,memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            text=True
+        ).strip()
+
+        gpus = []
+        total_used = 0
+        total_mem = 0
+        for line in out.splitlines():
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) >= 3:
+                used = int(parts[1])
+                total = int(parts[2])
+                gpus.append({
+                    "index": int(parts[0]),
+                    "used_mib": used,
+                    "total_mib": total,
+                })
+                total_used += used
+                total_mem += total
+
+        return {
+            "used_mib": total_used,
+            "total_mib": total_mem,
+            "gpus": gpus,
+        }
+    except Exception as e:
+        return {"error": str(e), "used_mib": None, "total_mib": None, "gpus": []}
+
 def infer_tag(cli_tag: str | None, tensor_parallel: int | None = None) -> str:
     """
     Infer output tag from CLI arg or GPU count.
