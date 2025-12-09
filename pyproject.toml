@@ -21,5 +21,5 @@ dependencies = [
 ]
 
 # For models requiring nightly transformers/tokenizers (e.g., GLM-4.6V),
-# use: uv sync --config config/nightly.toml --python-venv .venv-nightly
+# use: uv sync --config pyproject.nightly.toml --python-venv .venv-nightly
 # Mark models with `nightly: true` in config/models.yaml

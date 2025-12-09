@@ -28,7 +28,7 @@ echo "[1/3] Syncing stable Python environment..."
 uv sync --all-extras
 
 echo "[2/3] Syncing nightly Python environment (for bleeding-edge models)..."
-uv sync --all-extras --config config/nightly.toml --python-venv .venv-nightly
+uv sync --all-extras --config pyproject.nightly.toml --python-venv .venv-nightly
 
 echo "[3/3] Downloading models listed in config/models.yaml..."
 uv run python scripts/fetch_models.py
