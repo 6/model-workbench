@@ -1,6 +1,7 @@
 models:
   - source: hf
     repo_id: zai-org/GLM-4.6V-FP8
+    nightly: true  # Requires nightly transformers/tokenizers
 
   - source: hf
     repo_id: unsloth/MiniMax-M2-GGUF

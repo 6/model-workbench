@@ -56,13 +56,48 @@ override-dependencies = [
 
 ### Status
 
-**Unresolved** - Likely a compatibility issue between:
-- transformers (git master)
-- tokenizers 0.22.2
-- vLLM's Qwen3-Omni support
+**Resolved** via dual-environment setup. The issue was a conflict between:
+- Nightly transformers/tokenizers (required for GLM-4.6V)
+- Stable transformers/tokenizers (required for Qwen3-Omni and most other models)
 
-May need to wait for upstream fixes in vLLM or transformers.
+### Solution
 
-### Workaround
+We now maintain two Python environments:
 
-Use the non-Omni variant: `Qwen3-30B-A3B-Instruct-2507-FP8` works correctly.
+| Environment | Location | Dependencies | Use case |
+|-------------|----------|--------------|----------|
+| Stable | `.venv` | PyPI releases | Most models (default) |
+| Nightly | `.venv-nightly` | Git master | GLM-4.6V, bleeding-edge models |
+
+**How it works:**
+
+1. Models with `nightly: true` in `config/models.yaml` automatically use `.venv-nightly`
+2. Other models use the stable `.venv`
+3. Override with `--force-stable` or `--force-nightly` flags
+
+**Setup:**
+
+```bash
+# Creates both environments
+./scripts/bootstrap.sh
+```
+
+**Manual environment sync:**
+
+```bash
+# Stable env (default)
+uv sync --all-extras
+
+# Nightly env
+uv sync --all-extras --config config/nightly.toml --python-venv .venv-nightly
+```
+
+**Mark a model as requiring nightly:**
+
+```yaml
+# config/models.yaml
+models:
+  - source: hf
+    repo_id: zai-org/GLM-4.6V-FP8
+    nightly: true  # Uses .venv-nightly
+```

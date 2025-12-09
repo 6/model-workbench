@@ -7,6 +7,8 @@ import socket
 import subprocess
 from pathlib import Path
 
+import yaml
+
 # ----------------------------
 # Path constants
 # ----------------------------
@@ -14,6 +16,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_ROOT = Path.home() / "models"
 RESULTS_ROOT = ROOT / "benchmarks"
+MODELS_CONFIG = ROOT / "config" / "models.yaml"
+VENV_STABLE = ROOT / ".venv"
+VENV_NIGHTLY = ROOT / ".venv-nightly"
 
 # ----------------------------
 # String utilities
@@ -142,3 +147,73 @@ def resolve_model_path(model_arg: str, require_local: bool = True) -> str:
 
     # Return as-is for HuggingFace download
     return model_arg
+
+# ----------------------------
+# Model config utilities
+# ----------------------------
+
+def load_models_config() -> list[dict]:
+    """Load models.yaml config."""
+    if not MODELS_CONFIG.exists():
+        return []
+    with open(MODELS_CONFIG) as f:
+        data = yaml.safe_load(f)
+    return data.get("models", [])
+
+
+def get_model_config(model_arg: str) -> dict | None:
+    """
+    Find model config entry matching the given model argument.
+
+    Args:
+        model_arg: Model path or repo_id (e.g., "zai-org/GLM-4.6V-FP8")
+
+    Returns:
+        Model config dict if found, None otherwise
+    """
+    models = load_models_config()
+    # Normalize model_arg for matching
+    model_lower = model_arg.lower()
+
+    for m in models:
+        repo_id = m.get("repo_id", "")
+        if repo_id.lower() in model_lower or model_lower in repo_id.lower():
+            return m
+    return None
+
+
+def model_needs_nightly(model_arg: str) -> bool:
+    """
+    Check if a model requires nightly transformers/tokenizers.
+
+    Args:
+        model_arg: Model path or repo_id
+
+    Returns:
+        True if model has nightly: true in config
+    """
+    config = get_model_config(model_arg)
+    if config:
+        return config.get("nightly", False)
+    return False
+
+
+def get_venv_python(nightly: bool = False) -> str:
+    """
+    Get path to Python executable for the appropriate venv.
+
+    Args:
+        nightly: If True, use nightly venv; otherwise stable
+
+    Returns:
+        Path to Python executable
+    """
+    venv = VENV_NIGHTLY if nightly else VENV_STABLE
+    python = venv / "bin" / "python"
+    if not python.exists():
+        env_name = "nightly" if nightly else "stable"
+        raise SystemExit(
+            f"Python not found in {env_name} venv: {python}\n"
+            f"Run bootstrap.sh to create both environments."
+        )
+    return str(python)

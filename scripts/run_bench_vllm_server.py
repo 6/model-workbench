@@ -52,6 +52,8 @@ from bench_utils import (
     infer_tag,
     port_open,
     resolve_model_path,
+    model_needs_nightly,
+    get_venv_python,
 )
 
 # Built-in test images
@@ -97,8 +99,14 @@ def is_glm_vision_model(model_path: str) -> bool:
     return "glm" in lower and "v" in lower.split("glm")[-1]
 
 
-def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
-    """Start vLLM server with appropriate flags for model type."""
+def start_vllm_server(args, model_path: str, use_nightly: bool) -> subprocess.Popen | None:
+    """Start vLLM server with appropriate flags for model type.
+
+    Args:
+        args: Parsed command-line arguments
+        model_path: Path to model
+        use_nightly: If True, use nightly venv; otherwise stable
+    """
     host = args.host
     port = args.port
 
@@ -111,9 +119,13 @@ def start_vllm_server(args, model_path: str) -> subprocess.Popen | None:
             f"vLLM server not detected on {host}:{port} and --no-autostart was set."
         )
 
-    # Build vLLM serve command
+    # Get Python from appropriate venv
+    python_path = get_venv_python(nightly=use_nightly)
+
+    # Build vLLM serve command using venv's Python
     cmd = [
-        "vllm", "serve", model_path,
+        python_path, "-m", "vllm.entrypoints.openai.api_server",
+        "--model", model_path,
         "--host", host,
         "--port", str(port),
         "--tensor-parallel-size", str(args.tensor_parallel),
@@ -308,6 +320,13 @@ def main():
     ap.add_argument("--max-num-batched-tokens", type=int, default=None,
                     help="Max batched tokens (affects throughput/latency tradeoff)")
 
+    # Environment selection
+    env_group = ap.add_mutually_exclusive_group()
+    env_group.add_argument("--force-stable", action="store_true",
+                           help="Force use of stable venv (ignore model config)")
+    env_group.add_argument("--force-nightly", action="store_true",
+                           help="Force use of nightly venv (ignore model config)")
+
     args = ap.parse_args()
 
     # Auto-detect GPU count for tensor parallelism
@@ -318,6 +337,16 @@ def main():
     model_path = resolve_model_path(args.model)
     image_source, image_label = resolve_image_source(args.image)
     is_vision = image_source is not None
+
+    # Determine which environment to use
+    if args.force_nightly:
+        use_nightly = True
+    elif args.force_stable:
+        use_nightly = False
+    else:
+        use_nightly = model_needs_nightly(args.model)
+
+    env_label = "nightly" if use_nightly else "stable"
 
     # Select prompt
     if args.prompt:
@@ -331,13 +360,14 @@ def main():
     print(f"\n== vLLM Server Benchmark ==")
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
+    print(f"environment:     {env_label}")
     print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
     print(f"max_model_len:   {args.max_model_len}")
 
     # Start server
-    proc = start_vllm_server(args, model_path)
+    proc = start_vllm_server(args, model_path, use_nightly)
 
     try:
         # Create OpenAI client
@@ -376,6 +406,7 @@ def main():
             "model_id": args.model,
             "engine": "vllm-server",
             "mode": mode,
+            "environment": env_label,
             "gpu_info": get_gpu_info(),
             "tag": tag,
             "config": {

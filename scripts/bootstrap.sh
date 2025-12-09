@@ -24,11 +24,20 @@ mkdir -p "$HOME/models"
 
 # Sync env from repo lockfile
 cd "$ROOT_DIR"
-echo "[1/2] Syncing Python environment from uv.lock..."
+echo "[1/3] Syncing stable Python environment..."
 uv sync --all-extras
 
-echo "[2/2] Downloading models listed in config/models.yaml..."
+echo "[2/3] Syncing nightly Python environment (for bleeding-edge models)..."
+uv sync --all-extras --config config/nightly.toml --python-venv .venv-nightly
+
+echo "[3/3] Downloading models listed in config/models.yaml..."
 uv run python scripts/fetch_models.py
 
 echo
 echo "Bootstrap complete."
+echo
+echo "Environments created:"
+echo "  - .venv         (stable transformers/tokenizers)"
+echo "  - .venv-nightly (git master transformers/tokenizers)"
+echo
+echo "Models with 'nightly: true' in config/models.yaml will auto-use .venv-nightly"
