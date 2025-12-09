@@ -68,6 +68,26 @@ def check_is_fp8_model(model_path: Path) -> bool:
     return quant_config.get("quant_method") == "fp8"
 
 
+def clean_config_for_json(obj):
+    """Recursively clean config objects for JSON serialization.
+
+    Converts torch.dtype and other non-serializable types to strings.
+    """
+    if isinstance(obj, torch.dtype):
+        return str(obj).replace("torch.", "")
+    elif isinstance(obj, dict):
+        return {k: clean_config_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [clean_config_for_json(item) for item in obj]
+    elif hasattr(obj, "__dict__"):
+        # For config objects, clean their __dict__
+        for key, value in list(vars(obj).items()):
+            setattr(obj, key, clean_config_for_json(value))
+        return obj
+    else:
+        return obj
+
+
 def dequantize_model(
     model_path: Path,
     output_path: Path,
@@ -116,8 +136,8 @@ def dequantize_model(
     log("This may take several minutes...")
 
     # Clean config to avoid JSON serialization issues with torch.dtype
-    if hasattr(model.config, "torch_dtype") and isinstance(model.config.torch_dtype, torch.dtype):
-        model.config.torch_dtype = str(model.config.torch_dtype).replace("torch.", "")
+    log("Cleaning config for JSON serialization...")
+    clean_config_for_json(model.config)
     if hasattr(model.config, "quantization_config"):
         model.config.quantization_config = None
 
