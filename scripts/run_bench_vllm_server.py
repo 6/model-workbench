@@ -47,10 +47,9 @@ from bench_utils import (
     MODELS_ROOT,
     RESULTS_ROOT,
     sanitize,
+    compact_path,
     get_gpu_info,
-    get_gpu_memory_usage,
     get_gpu_count,
-    infer_tag,
     port_open,
     resolve_model_path,
     model_needs_nightly,
@@ -304,7 +303,6 @@ def main():
     ap.add_argument("--max-tokens", type=int, default=512)
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--iterations", type=int, default=3)
-    ap.add_argument("--tag", default=None)
 
     # Server options
     ap.add_argument("--host", default="127.0.0.1")
@@ -335,7 +333,6 @@ def main():
     if args.tensor_parallel is None:
         args.tensor_parallel = get_gpu_count()
 
-    tag = infer_tag(args.tag, args.tensor_parallel)
     model_path = resolve_model_path(args.model)
     image_source, image_label = resolve_image_source(args.image)
     is_vision = image_source is not None
@@ -372,9 +369,10 @@ def main():
     proc = start_vllm_server(args, model_path, use_nightly)
 
     try:
-        # Capture GPU memory after model loads
-        gpu_memory = get_gpu_memory_usage()
-        log(f"GPU memory: {gpu_memory.get('used_mib', '?')} / {gpu_memory.get('total_mib', '?')} MiB")
+        # Capture GPU info with memory usage after model loads
+        gpu_info = get_gpu_info(include_memory=True)
+        mem = gpu_info.get("memory", {})
+        log(f"GPU memory: {mem.get('used_mib', '?')} / {mem.get('total_mib', '?')} MiB")
 
         # Create OpenAI client
         client = OpenAI(
@@ -403,19 +401,17 @@ def main():
         log(f"Median: {med_tps:.1f} tok/s")
 
         # Save results
-        out_dir = RESULTS_ROOT / tag
-        out_dir.mkdir(parents=True, exist_ok=True)
+        RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
         fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(args.model)}_vllm-server_{mode}.json"
 
         payload = {
             "timestamp": datetime.now().isoformat(),
             "model_id": args.model,
+            "model_ref": compact_path(model_path),
             "engine": "vllm-server",
             "mode": mode,
             "environment": env_label,
-            "gpu_info": get_gpu_info(),
-            "gpu_memory": gpu_memory,
-            "tag": tag,
+            "gpu_info": gpu_info,
             "config": {
                 "tensor_parallel_size": args.tensor_parallel,
                 "max_model_len": args.max_model_len,
@@ -432,7 +428,7 @@ def main():
             },
         }
 
-        out_path = out_dir / fname
+        out_path = RESULTS_ROOT / fname
         out_path.write_text(json.dumps(payload, indent=2))
         log(f"Wrote: {out_path}")
 

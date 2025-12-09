@@ -10,16 +10,13 @@ Auto resolution:
     * Directory containing GGUF files (auto-picks if unambiguous)
     * Path relative to ~/models (e.g., org/repo/quant-folder)
 
-Tag inference:
-  * Inferred from GPU count via nvidia-smi (single-gpu, dual-gpu, etc.)
-
 Result filenames:
   * For GGUF in quant folder: "<org>/<repo>/<quant>" as label
   * For root-level quant files: "<org>/<gguf-stem>" as label
   * Otherwise: gguf stem
 
 Output:
-  benchmarks/<tag>/<date>_<label>.json
+  benchmarks/<date>_<label>.json
 
 Examples:
 
@@ -62,9 +59,8 @@ from bench_utils import (
     MODELS_ROOT,
     RESULTS_ROOT,
     sanitize,
+    compact_path,
     get_gpu_info,
-    get_gpu_memory_usage,
-    infer_tag,
     port_open,
     log,
 )
@@ -401,13 +397,12 @@ def derive_label(model_id: str, gguf_path: Path) -> str:
 
         return gguf_path.stem
 
-def write_payload(payload, tag: str, label: str):
-    out_base = RESULTS_ROOT / tag
-    out_base.mkdir(parents=True, exist_ok=True)
+def write_payload(payload, label: str):
+    RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
 
     fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(label)}.json"
 
-    out_path = out_base / fname
+    out_path = RESULTS_ROOT / fname
     with open(out_path, "w") as f:
         json.dump(payload, f, indent=2)
 
@@ -422,9 +417,10 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
 
     proc = start_llama_server(args, gguf_path)
     try:
-        # Capture GPU memory after model loads
-        gpu_memory = get_gpu_memory_usage()
-        log(f"GPU memory: {gpu_memory.get('used_mib', '?')} / {gpu_memory.get('total_mib', '?')} MiB")
+        # Capture GPU info with memory usage after model loads
+        gpu_info = get_gpu_info(include_memory=True)
+        mem = gpu_info.get("memory", {})
+        log(f"GPU memory: {mem.get('used_mib', '?')} / {mem.get('total_mib', '?')} MiB")
 
         log("Warmup request...")
         _ = bench_once(prompt, args)
@@ -450,14 +446,12 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
         payload = {
             "timestamp": datetime.now().strftime("%Y-%m-%d_%H%M%S"),
             "model_id": model_id,
-            "model_ref": str(gguf_path),
+            "model_ref": compact_path(str(gguf_path)),
             "engine": "llama-server",
-            "gpu_info": get_gpu_info(),
-            "gpu_memory": gpu_memory,
-            "tag": args.tag,
+            "gpu_info": gpu_info,
             "env": {
                 "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES", ""),
-                "llama_server_bin": args.llama_server_bin,
+                "llama_server_bin": compact_path(args.llama_server_bin),
                 "host": args.host,
                 "port": args.port,
                 "ctx": args.ctx,
@@ -474,7 +468,7 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
             },
         }
 
-        write_payload(payload, args.tag, label)
+        write_payload(payload, label)
 
     finally:
         stop_llama_server(proc)
@@ -490,8 +484,6 @@ def main():
 
     ap.add_argument("--model", required=True, help="GGUF path or path under ~/models")
 
-    ap.add_argument("--tag", default=None,
-                    help="Optional output tag; inferred from GPU count if omitted")
 
     ap.add_argument("--iterations", type=int, default=3,
                     help="Number of timed iterations (median reported)")
@@ -529,9 +521,6 @@ def main():
                     help="Extra raw args appended to llama-server command")
 
     args = ap.parse_args()
-
-    # Tag inference from GPU count
-    args.tag = infer_tag(args.tag)
 
     model_id = args.model
 

@@ -43,10 +43,21 @@ def sanitize(s: str) -> str:
 # GPU info + tag inference
 # ----------------------------
 
-def get_gpu_info() -> dict:
+def compact_path(path: str) -> str:
+    """Replace home directory with ~ for cleaner paths."""
+    home = str(Path.home())
+    if path.startswith(home):
+        return "~" + path[len(home):]
+    return path
+
+
+def get_gpu_info(include_memory: bool = False) -> dict:
     """
-    Returns a dict with driver_version and a list of GPUs.
+    Returns a dict with driver_version and a list of GPUs with PCIe info.
     Uses nvidia-smi. Safe to fail quietly.
+
+    Args:
+        include_memory: If True, also query current memory usage per GPU
     """
     try:
         drv = subprocess.check_output(
@@ -55,21 +66,38 @@ def get_gpu_info() -> dict:
         ).strip().splitlines()
         driver_version = drv[0].strip() if drv else None
 
+        query_fields = "index,name,memory.total,pcie.link.gen.max,pcie.link.width.current"
+        if include_memory:
+            query_fields += ",memory.used"
+
         out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=index,name,memory.total", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", f"--query-gpu={query_fields}", "--format=csv,noheader,nounits"],
             text=True
         ).strip()
 
         gpus = []
+        total_mem = 0
+        total_used = 0
         for line in out.splitlines():
             parts = [p.strip() for p in line.split(",")]
-            if len(parts) >= 3:
-                gpus.append({
+            if len(parts) >= 5:
+                gpu = {
                     "index": int(parts[0]),
                     "name": parts[1],
                     "memory_total_mib": int(parts[2]),
-                })
-        return {"driver_version": driver_version, "gpus": gpus}
+                    "pcie_gen": int(parts[3]) if parts[3].isdigit() else None,
+                    "pcie_width": int(parts[4]) if parts[4].isdigit() else None,
+                }
+                total_mem += gpu["memory_total_mib"]
+                if include_memory and len(parts) >= 6:
+                    gpu["memory_used_mib"] = int(parts[5])
+                    total_used += gpu["memory_used_mib"]
+                gpus.append(gpu)
+
+        result = {"driver_version": driver_version, "gpus": gpus}
+        if include_memory:
+            result["memory"] = {"used_mib": total_used, "total_mib": total_mem}
+        return result
     except Exception as e:
         return {"error": str(e), "driver_version": None, "gpus": []}
 
@@ -78,73 +106,6 @@ def get_gpu_count() -> int:
     return max(1, len(get_gpu_info().get("gpus", [])))
 
 
-def get_gpu_memory_usage() -> dict:
-    """
-    Get current GPU memory usage via nvidia-smi.
-
-    Returns:
-        Dict with total and used memory across all GPUs:
-        {"used_mib": 18432, "total_mib": 49152, "gpus": [...]}
-    """
-    try:
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=index,memory.used,memory.total",
-             "--format=csv,noheader,nounits"],
-            text=True
-        ).strip()
-
-        gpus = []
-        total_used = 0
-        total_mem = 0
-        for line in out.splitlines():
-            parts = [p.strip() for p in line.split(",")]
-            if len(parts) >= 3:
-                used = int(parts[1])
-                total = int(parts[2])
-                gpus.append({
-                    "index": int(parts[0]),
-                    "used_mib": used,
-                    "total_mib": total,
-                })
-                total_used += used
-                total_mem += total
-
-        return {
-            "used_mib": total_used,
-            "total_mib": total_mem,
-            "gpus": gpus,
-        }
-    except Exception as e:
-        return {"error": str(e), "used_mib": None, "total_mib": None, "gpus": []}
-
-def infer_tag(cli_tag: str | None, tensor_parallel: int | None = None) -> str:
-    """
-    Infer output tag from CLI arg or GPU count.
-
-    Args:
-        cli_tag: User-provided tag (used if not None)
-        tensor_parallel: If provided, use this instead of GPU count
-    """
-    if cli_tag:
-        return cli_tag
-
-    if tensor_parallel is not None:
-        if tensor_parallel == 1:
-            return "single-gpu"
-        if tensor_parallel == 2:
-            return "dual-gpu"
-        return f"{tensor_parallel}-gpu"
-
-    gpus = get_gpu_info().get("gpus", [])
-    n = len(gpus)
-
-    if n == 0:
-        return "unknown-gpu"
-    if n == 1:
-        return "single-gpu"
-    if n == 2:
-        return "dual-gpu"
-    return f"{n}-gpu"
 
 # ----------------------------
 # Network utilities
