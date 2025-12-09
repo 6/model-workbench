@@ -89,7 +89,7 @@ We now maintain two Python environments:
 uv sync --all-extras
 
 # Nightly env
-uv sync --all-extras --config pyproject.nightly.toml --python-venv .venv-nightly
+uv sync --all-extras --config-file pyproject.nightly.toml --python-venv .venv-nightly
 ```
 
 **Mark a model as requiring nightly:**
