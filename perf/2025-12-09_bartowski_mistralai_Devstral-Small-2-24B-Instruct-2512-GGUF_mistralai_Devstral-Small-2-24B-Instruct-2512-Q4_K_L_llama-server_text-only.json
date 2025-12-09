@@ -1,0 +1,100 @@
+{
+  "timestamp": "2025-12-09T21:30:11.773910",
+  "repo_id": "bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF/mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L",
+  "model_ref": "~/models/bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF/mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 7952
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 8030
+      }
+    ],
+    "memory_used_mib": 15982,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 5.380792904001282,
+      "prompt_tokens": 17,
+      "generated_tokens": 455,
+      "ttft_ms": 12.15,
+      "tok_per_s": 84.56002825562223,
+      "generation_tok_per_s": 85.13554045818638,
+      "generation_ms": 5344.419,
+      "output_text": " Include a key points section and a conclusion.\n\n# Technical Overview of KV Cache and Its Importance for Long Context\n\n## Introduction\n\nKV cache, short for Key-Value cache, is a critical component in the operation of large language models (LLMs) like those in the Transformer architecture. It stores intermediate computations during the inference process, allowing the model to reuse these computations for subsequent tokens and significantly improving efficiency.\n\n## Key Points\n\n1. **Definition**: KV cache holds the keys (K) and values (V) from previous attention layers, enabling the model to compute attention scores for new tokens without reprocessing the entire input sequence.\n\n2. **Functionality**:\n   - **Keys (K)**: Represent the context of previous tokens.\n   - **Values (V)**: Store the actual embeddings of previous tokens.\n   - **Attention Mechanism**: For each new token, the model computes attention scores with the cached keys and retrieves relevant information from the cached values.\n\n3. **Importance for Long Context**:\n   - **Memory Efficiency**: Without KV cache, processing long sequences would require storing all previous tokens in memory, leading to excessive memory usage.\n   - **Speed**: KV cache allows the model to process new tokens in constant time relative to the sequence length, making long context inference feasible.\n   - **Scalability**: Enables models to handle increasingly long contexts without proportional increases in computational cost.\n\n4. **Implementation**:\n   - Typically implemented as a dictionary or hash map for quick access.\n   - Cached keys and values are stored per attention layer.\n   - For each new token, only the current token's computations are performed, while cached data is reused.\n\n5. **Limitations**:\n   - **Memory Constraints**: The cache size is limited by available memory, which can restrict the maximum context length.\n   - **Context Window**: Some models have fixed context windows, requiring techniques like sliding windows or compression to extend beyond them.\n\n## Conclusion\n\nKV cache is essential for efficient long context processing in LLMs. By storing and reusing intermediate computations, it reduces memory requirements and speeds up inference, making it possible to handle extended contexts. However, memory limitations and context window constraints remain challenges that are actively being addressed in the field."
+    },
+    {
+      "wall_s": 5.377950563000923,
+      "prompt_tokens": 17,
+      "generated_tokens": 455,
+      "ttft_ms": 12.012,
+      "tok_per_s": 84.60471971057089,
+      "generation_tok_per_s": 85.13012466979333,
+      "generation_ms": 5344.759,
+      "output_text": " Include a key points section and a conclusion.\n\n# Technical Overview of KV Cache and Its Importance for Long Context\n\n## Introduction\n\nKV cache, short for Key-Value cache, is a critical component in the operation of large language models (LLMs) like those in the Transformer architecture. It stores intermediate computations during the inference process, allowing the model to reuse these computations for subsequent tokens and significantly improving efficiency.\n\n## Key Points\n\n1. **Definition**: KV cache holds the keys (K) and values (V) from previous attention layers, enabling the model to compute attention scores for new tokens without reprocessing the entire input sequence.\n\n2. **Functionality**:\n   - **Keys (K)**: Represent the context of previous tokens.\n   - **Values (V)**: Store the actual embeddings of previous tokens.\n   - **Attention Mechanism**: For each new token, the model computes attention scores with the cached keys and retrieves relevant information from the cached values.\n\n3. **Importance for Long Context**:\n   - **Memory Efficiency**: Without KV cache, processing long sequences would require storing all previous tokens in memory, leading to excessive memory usage.\n   - **Speed**: KV cache allows the model to process new tokens in constant time relative to the sequence length, making long context inference feasible.\n   - **Scalability**: Enables models to handle increasingly long contexts without proportional increases in computational cost.\n\n4. **Implementation**:\n   - Typically implemented as a dictionary or hash map for quick access.\n   - Cached keys and values are stored per attention layer.\n   - For each new token, only the current token's computations are performed, while cached data is reused.\n\n5. **Limitations**:\n   - **Memory Constraints**: The cache size is limited by available memory, which can restrict the maximum context length.\n   - **Context Window**: Some models have fixed context windows, requiring techniques like sliding windows or compression to extend beyond them.\n\n## Conclusion\n\nKV cache is essential for efficient long context processing in LLMs. By storing and reusing intermediate computations, it reduces memory requirements and speeds up inference, making it possible to handle extended contexts. However, memory limitations and context window constraints remain challenges that are actively being addressed in the field."
+    },
+    {
+      "wall_s": 5.357230387002346,
+      "prompt_tokens": 17,
+      "generated_tokens": 455,
+      "ttft_ms": 11.902,
+      "tok_per_s": 84.93194563816334,
+      "generation_tok_per_s": 85.13735649443659,
+      "generation_ms": 5344.305,
+      "output_text": " Include a key points section and a conclusion.\n\n# Technical Overview of KV Cache and Its Importance for Long Context\n\n## Introduction\n\nKV cache, short for Key-Value cache, is a critical component in the operation of large language models (LLMs) like those in the Transformer architecture. It stores intermediate computations during the inference process, allowing the model to reuse these computations for subsequent tokens and significantly improving efficiency.\n\n## Key Points\n\n1. **Definition**: KV cache holds the keys (K) and values (V) from previous attention layers, enabling the model to compute attention scores for new tokens without reprocessing the entire input sequence.\n\n2. **Functionality**:\n   - **Keys (K)**: Represent the context of previous tokens.\n   - **Values (V)**: Store the actual embeddings of previous tokens.\n   - **Attention Mechanism**: For each new token, the model computes attention scores with the cached keys and retrieves relevant information from the cached values.\n\n3. **Importance for Long Context**:\n   - **Memory Efficiency**: Without KV cache, processing long sequences would require storing all previous tokens in memory, leading to excessive memory usage.\n   - **Speed**: KV cache allows the model to process new tokens in constant time relative to the sequence length, making long context inference feasible.\n   - **Scalability**: Enables models to handle increasingly long contexts without proportional increases in computational cost.\n\n4. **Implementation**:\n   - Typically implemented as a dictionary or hash map for quick access.\n   - Cached keys and values are stored per attention layer.\n   - For each new token, only the current token's computations are performed, while cached data is reused.\n\n5. **Limitations**:\n   - **Memory Constraints**: The cache size is limited by available memory, which can restrict the maximum context length.\n   - **Context Window**: Some models have fixed context windows, requiring techniques like sliding windows or compression to extend beyond them.\n\n## Conclusion\n\nKV cache is essential for efficient long context processing in LLMs. By storing and reusing intermediate computations, it reduces memory requirements and speeds up inference, making it possible to handle extended contexts. However, memory limitations and context window constraints remain challenges that are actively being addressed in the field."
+    },
+    {
+      "wall_s": 5.357123319998209,
+      "prompt_tokens": 17,
+      "generated_tokens": 455,
+      "ttft_ms": 11.92,
+      "tok_per_s": 84.9336430806958,
+      "generation_tok_per_s": 85.13974613386027,
+      "generation_ms": 5344.155,
+      "output_text": " Include a key points section and a conclusion.\n\n# Technical Overview of KV Cache and Its Importance for Long Context\n\n## Introduction\n\nKV cache, short for Key-Value cache, is a critical component in the operation of large language models (LLMs) like those in the Transformer architecture. It stores intermediate computations during the inference process, allowing the model to reuse these computations for subsequent tokens and significantly improving efficiency.\n\n## Key Points\n\n1. **Definition**: KV cache holds the keys (K) and values (V) from previous attention layers, enabling the model to compute attention scores for new tokens without reprocessing the entire input sequence.\n\n2. **Functionality**:\n   - **Keys (K)**: Represent the context of previous tokens.\n   - **Values (V)**: Store the actual embeddings of previous tokens.\n   - **Attention Mechanism**: For each new token, the model computes attention scores with the cached keys and retrieves relevant information from the cached values.\n\n3. **Importance for Long Context**:\n   - **Memory Efficiency**: Without KV cache, processing long sequences would require storing all previous tokens in memory, leading to excessive memory usage.\n   - **Speed**: KV cache allows the model to process new tokens in constant time relative to the sequence length, making long context inference feasible.\n   - **Scalability**: Enables models to handle increasingly long contexts without proportional increases in computational cost.\n\n4. **Implementation**:\n   - Typically implemented as a dictionary or hash map for quick access.\n   - Cached keys and values are stored per attention layer.\n   - For each new token, only the current token's computations are performed, while cached data is reused.\n\n5. **Limitations**:\n   - **Memory Constraints**: The cache size is limited by available memory, which can restrict the maximum context length.\n   - **Context Window**: Some models have fixed context windows, requiring techniques like sliding windows or compression to extend beyond them.\n\n## Conclusion\n\nKV cache is essential for efficient long context processing in LLMs. By storing and reusing intermediate computations, it reduces memory requirements and speeds up inference, making it possible to handle extended contexts. However, memory limitations and context window constraints remain challenges that are actively being addressed in the field."
+    },
+    {
+      "wall_s": 5.358497576999071,
+      "prompt_tokens": 17,
+      "generated_tokens": 455,
+      "ttft_ms": 11.916,
+      "tok_per_s": 84.9118607336974,
+      "generation_tok_per_s": 85.11725697199194,
+      "generation_ms": 5345.567,
+      "output_text": " Include a key points section and a conclusion.\n\n# Technical Overview of KV Cache and Its Importance for Long Context\n\n## Introduction\n\nKV cache, short for Key-Value cache, is a critical component in the operation of large language models (LLMs) like those in the Transformer architecture. It stores intermediate computations during the inference process, allowing the model to reuse these computations for subsequent tokens and significantly improving efficiency.\n\n## Key Points\n\n1. **Definition**: KV cache holds the keys (K) and values (V) from previous attention layers, enabling the model to compute attention scores for new tokens without reprocessing the entire input sequence.\n\n2. **Functionality**:\n   - **Keys (K)**: Represent the context of previous tokens.\n   - **Values (V)**: Store the actual embeddings of previous tokens.\n   - **Attention Mechanism**: For each new token, the model computes attention scores with the cached keys and retrieves relevant information from the cached values.\n\n3. **Importance for Long Context**:\n   - **Memory Efficiency**: Without KV cache, processing long sequences would require storing all previous tokens in memory, leading to excessive memory usage.\n   - **Speed**: KV cache allows the model to process new tokens in constant time relative to the sequence length, making long context inference feasible.\n   - **Scalability**: Enables models to handle increasingly long contexts without proportional increases in computational cost.\n\n4. **Implementation**:\n   - Typically implemented as a dictionary or hash map for quick access.\n   - Cached keys and values are stored per attention layer.\n   - For each new token, only the current token's computations are performed, while cached data is reused.\n\n5. **Limitations**:\n   - **Memory Constraints**: The cache size is limited by available memory, which can restrict the maximum context length.\n   - **Context Window**: Some models have fixed context windows, requiring techniques like sliding windows or compression to extend beyond them.\n\n## Conclusion\n\nKV cache is essential for efficient long context processing in LLMs. By storing and reusing intermediate computations, it reduces memory requirements and speeds up inference, making it possible to handle extended contexts. However, memory limitations and context window constraints remain challenges that are actively being addressed in the field."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 5.358497576999071,
+    "median_tok_per_s": 84.9118607336974,
+    "median_ttft_ms": 11.92,
+    "median_generation_tok_per_s": 85.13554045818638
+  }
+}
