@@ -1,8 +1,6 @@
 """Server lifecycle management for vLLM and llama.cpp servers."""
 
-import json
 import select
-import shutil
 import signal
 import subprocess
 import time
@@ -39,7 +37,6 @@ class ServerManager:
         self.proc: subprocess.Popen | None = None
         self._output_lines: list[str] = []
         self._we_started_it = False
-        self._mistral_model_path: str | None = None  # For config restore on stop
 
     def is_running(self) -> bool:
         """Check if server is already running on port."""
@@ -167,11 +164,6 @@ class ServerManager:
         self.proc = None
         self._we_started_it = False
 
-        # Restore Mistral config if we patched it
-        if self._mistral_model_path:
-            restore_mistral_config(self._mistral_model_path)
-            self._mistral_model_path = None
-
     def __enter__(self):
         return self
 
@@ -259,11 +251,6 @@ class ServerManager:
         Raises:
             SystemExit if server fails to start
         """
-        # Patch Mistral config to disable FP8 (workaround for vLLM FP8 kernel issues)
-        if is_mistral_model(model_path):
-            if patch_mistral_config(model_path):
-                self._mistral_model_path = model_path
-
         cmd = build_vllm_cmd(
             model_path=model_path,
             host=self.host,
@@ -322,51 +309,6 @@ def is_mistral_model(model_path: str) -> bool:
     """Check if model is a Mistral/Devstral model requiring mistral tokenizer mode."""
     lower = model_path.lower()
     return "mistral" in lower or "devstral" in lower or "ministral" in lower
-
-
-# ----------------------------
-# Config patching (FP8 workaround)
-# ----------------------------
-
-def patch_mistral_config(model_path: str) -> bool:
-    """Remove quantization_config from Mistral model config to avoid FP8 issues.
-
-    Backs up to config.original.json if not already backed up.
-    Returns True if config was patched.
-    """
-    config_path = Path(model_path).expanduser() / "config.json"
-    backup_path = config_path.with_name("config.original.json")
-
-    if not config_path.exists():
-        return False
-
-    # Backup original if not already done
-    if not backup_path.exists():
-        shutil.copy(config_path, backup_path)
-
-    # Load and patch
-    with open(config_path) as f:
-        config = json.load(f)
-
-    if "quantization_config" in config:
-        del config["quantization_config"]
-        with open(config_path, "w") as f:
-            json.dump(config, f, indent=2)
-        log(f"Patched {config_path} (removed quantization_config, backup at {backup_path.name})")
-        return True
-    return False
-
-
-def restore_mistral_config(model_path: str) -> bool:
-    """Restore original config.json from backup."""
-    config_path = Path(model_path).expanduser() / "config.json"
-    backup_path = config_path.with_name("config.original.json")
-
-    if backup_path.exists():
-        shutil.copy(backup_path, config_path)
-        log(f"Restored {config_path} from {backup_path.name}")
-        return True
-    return False
 
 
 # ----------------------------
