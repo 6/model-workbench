@@ -402,7 +402,7 @@ def main():
 
         # Save results
         RESULTS_ROOT.mkdir(parents=True, exist_ok=True)
-        fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(args.model)}_vllm-server_{mode}.json"
+        fname = f"{datetime.now().strftime('%Y-%m-%d')}_{sanitize(extract_repo_id(args.model))}_vllm-server_{mode}.json"
 
         payload = {
             "timestamp": datetime.now().isoformat(),
