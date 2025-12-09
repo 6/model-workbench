@@ -267,8 +267,8 @@ def start_llama_server(args, gguf_path: Path):
         # Check if server is ready via API
         if port_open(host, port):
             try:
-                r = requests.get(f"{base_url}/v1/models", timeout=5)
-                if r.status_code == 200:
+                r = requests.get(f"{base_url}/health", timeout=5)
+                if r.status_code == 200 and r.json().get("status") == "ok":
                     elapsed = time.time() - start_time
                     print(f"Server ready in {elapsed:.1f}s")
                     return proc
