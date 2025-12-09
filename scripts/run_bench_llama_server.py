@@ -31,9 +31,7 @@ import argparse
 import json
 import os
 import re
-import signal
 import statistics
-import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -44,15 +42,18 @@ except Exception:  # pragma: no cover
     requests = None
 
 from bench_utils import (
-    ROOT,
     MODELS_ROOT,
     RESULTS_ROOT,
     sanitize,
     compact_path,
     extract_repo_id,
     get_gpu_info,
-    port_open,
     log,
+)
+from server_manager import (
+    ServerManager,
+    wait_for_llama_ready,
+    build_llama_cmd,
 )
 
 PROMPTS = {
@@ -153,116 +154,6 @@ def resolve_local_gguf(model_arg: str) -> Path | None:
             return chosen
         raise_if_multiple_variants(p, model_arg)
     return None
-
-# ----------------------------
-# llama-server control + HTTP bench
-# ----------------------------
-
-def start_llama_server(args, gguf_path: Path):
-    """
-    Starts llama-server unless:
-      - --no-autostart is set, OR
-      - port is already open (assume user-managed server)
-
-    Waits up to --server-timeout seconds for the server to be ready,
-    verifying readiness via API call (not just port open).
-    """
-    host = args.host
-    port = args.port
-    timeout = args.server_timeout
-
-    if port_open(host, port):
-        return None  # already running
-
-    if args.no_autostart:
-        raise SystemExit(
-            f"llama-server not detected on {host}:{port} and --no-autostart was set."
-        )
-
-    if not gguf_path.exists():
-        raise SystemExit(f"GGUF not found: {gguf_path}")
-
-    cmd = [args.llama_server_bin, "-m", str(gguf_path), "--port", str(port)]
-
-    # GPU offload
-    if args.n_gpu_layers is not None:
-        cmd += ["-ngl", str(args.n_gpu_layers)]
-
-    # Context length
-    if args.ctx:
-        cmd += ["-c", str(args.ctx)]
-
-    # Parallel sequences
-    if args.parallel and args.parallel > 1:
-        cmd += ["-np", str(args.parallel)]
-
-    # Extra raw args
-    if args.extra_args:
-        cmd += args.extra_args
-
-    log(f"+ {' '.join(cmd)}")
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-
-    # Wait for server to be ready (with API verification)
-    log(f"Waiting for server to be ready (timeout: {timeout}s)...")
-    start_time = time.time()
-    base_url = f"http://{host}:{port}"
-
-    while time.time() - start_time < timeout:
-        # Check if process crashed
-        if proc.poll() is not None:
-            stderr_output = ""
-            try:
-                stderr_output = proc.stderr.read() if proc.stderr else ""
-            except Exception:
-                pass
-            raise SystemExit(
-                f"llama-server exited unexpectedly (exit code: {proc.returncode}).\n"
-                f"Last output:\n{stderr_output[-2000:] if stderr_output else '(no output)'}"
-            )
-
-        # Check if server is ready via API
-        if port_open(host, port):
-            try:
-                r = requests.get(f"{base_url}/health", timeout=5)
-                if r.status_code == 200 and r.json().get("status") == "ok":
-                    elapsed = time.time() - start_time
-                    log(f"Server ready in {elapsed:.1f}s")
-                    return proc
-            except Exception:
-                pass  # Not ready yet
-
-        time.sleep(1)
-
-    # Timeout reached
-    try:
-        proc.terminate()
-    except Exception:
-        pass
-    raise SystemExit(
-        f"llama-server failed to become ready within {timeout}s on {host}:{port}.\n"
-        f"Check your binary path, that it was built with CUDA, and that the model fits in GPU memory.\n"
-        f"Try increasing --server-timeout if the model is very large."
-    )
-
-    return proc
-
-def stop_llama_server(proc):
-    if not proc:
-        return
-    try:
-        proc.send_signal(signal.SIGINT)
-        proc.wait(timeout=2)
-    except Exception:
-        try:
-            proc.terminate()
-        except Exception:
-            pass
 
 def bench_once(prompt: str, args):
     """Run a single benchmark using the native /completion endpoint for detailed timings."""
@@ -370,8 +261,41 @@ def write_payload(payload, label: str):
 def run_benchmark(model_id: str, args, gguf_path: Path):
     prompt = PROMPTS[args.prompt_set]
 
-    proc = start_llama_server(args, gguf_path)
-    try:
+    # Server management
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
+    )
+
+    # Check if we need to start the server
+    if not server.is_running():
+        if args.no_autostart:
+            raise SystemExit(
+                f"llama-server not detected on {args.host}:{args.port} and --no-autostart was set."
+            )
+
+    with server:
+        # Start server if not already running
+        if not server.is_running():
+            cmd = build_llama_cmd(
+                gguf_path=gguf_path,
+                llama_server_bin=args.llama_server_bin,
+                port=args.port,
+                n_gpu_layers=args.n_gpu_layers,
+                ctx=args.ctx,
+                parallel=args.parallel,
+                extra_args=args.extra_args,
+            )
+            server.start(
+                cmd,
+                lambda: wait_for_llama_ready(args.host, args.port),
+                stream_stderr=True,  # llama-server outputs to stderr
+                label="llama-server",
+                sigint_wait=2,  # llama-server shuts down quickly
+                term_wait=2,
+            )
+
         # Capture GPU info with memory usage after model loads
         gpu_info = get_gpu_info(include_memory=True)
         log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
@@ -422,9 +346,6 @@ def run_benchmark(model_id: str, args, gguf_path: Path):
         }
 
         write_payload(payload, label)
-
-    finally:
-        stop_llama_server(proc)
 
 # ----------------------------
 # Main

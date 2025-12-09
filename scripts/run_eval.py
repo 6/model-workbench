@@ -5,7 +5,7 @@ Model Workbench Eval Runner
 Runs IFEval and HumanEval benchmarks against local model servers using DeepEval.
 
 Examples:
-  # Run both benchmarks (requires server already running)
+  # Run both benchmarks (auto-starts vLLM server)
   uv run python scripts/run_eval.py --model ~/models/org/model
 
   # Run IFEval only (541 instruction-following prompts)
@@ -14,8 +14,8 @@ Examples:
   # Run HumanEval only (164 coding problems)
   uv run python scripts/run_eval.py --model ~/models/org/model --benchmark humaneval
 
-  # Specify custom port
-  uv run python scripts/run_eval.py --model ~/models/org/model --port 8080
+  # Use an already running server
+  uv run python scripts/run_eval.py --model ~/models/org/model --no-autostart
 """
 
 import argparse
@@ -30,10 +30,16 @@ from bench_utils import (
     sanitize,
     extract_repo_id,
     get_gpu_info,
+    get_gpu_count,
     resolve_model_path,
     detect_model_format,
+    model_needs_nightly,
     log,
-    port_open,
+)
+from server_manager import (
+    ServerManager,
+    wait_for_vllm_ready,
+    build_vllm_cmd,
 )
 from eval_model_wrapper import LocalServerLLM
 
@@ -114,7 +120,7 @@ def main():
     parser.add_argument(
         "--model",
         required=True,
-        help="Path to model (used for result labeling)",
+        help="Path to model",
     )
     parser.add_argument(
         "--benchmark",
@@ -124,71 +130,159 @@ def main():
         help="Benchmark(s) to run (default: both)",
     )
     parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=512,
+        help="Max tokens for generation (default: 512)",
+    )
+
+    # Server options
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="Server host (default: 127.0.0.1)",
+    )
+    parser.add_argument(
         "--port",
         type=int,
         default=8000,
         help="Server port (default: 8000)",
     )
     parser.add_argument(
-        "--host",
-        default="localhost",
-        help="Server host (default: localhost)",
+        "--no-autostart",
+        action="store_true",
+        help="Don't start server; require it already running",
     )
     parser.add_argument(
-        "--max-tokens",
+        "--server-timeout",
         type=int,
-        default=512,
-        help="Max tokens for generation (default: 512)",
+        default=180,
+        help="Timeout in seconds waiting for server to start (default: 180)",
     )
+
+    # vLLM server options (used when auto-starting)
+    parser.add_argument(
+        "--tensor-parallel",
+        type=int,
+        default=None,
+        help="Tensor parallel size (default: auto-detect GPU count)",
+    )
+    parser.add_argument(
+        "--max-model-len",
+        type=int,
+        default=65536,
+        help="Max context length (default: 65536)",
+    )
+    parser.add_argument(
+        "--gpu-memory-utilization",
+        type=float,
+        default=0.95,
+        help="GPU memory fraction (default: 0.95)",
+    )
+
+    # Environment selection
+    env_group = parser.add_mutually_exclusive_group()
+    env_group.add_argument(
+        "--force-stable",
+        action="store_true",
+        help="Force use of stable venv (ignore model config)",
+    )
+    env_group.add_argument(
+        "--force-nightly",
+        action="store_true",
+        help="Force use of nightly venv (ignore model config)",
+    )
+
     args = parser.parse_args()
+
+    # Auto-detect GPU count for tensor parallelism
+    if args.tensor_parallel is None:
+        args.tensor_parallel = get_gpu_count()
 
     # Resolve and validate model path
     model_path = resolve_model_path(args.model)
     repo_id = extract_repo_id(model_path)
     model_format = detect_model_format(model_path)
 
+    # Determine which environment to use
+    if args.force_nightly:
+        use_nightly = True
+    elif args.force_stable:
+        use_nightly = False
+    else:
+        use_nightly = model_needs_nightly(args.model)
+
+    env_label = "nightly" if use_nightly else "stable"
+
     log(f"Model: {repo_id} ({model_format})")
+    log(f"Environment: {env_label}")
 
-    # Check server is running
-    if not port_open(args.host, args.port):
-        raise SystemExit(
-            f"Server not running on {args.host}:{args.port}\n"
-            f"Start the server first, e.g.:\n"
-            f"  uv run python scripts/run_bench_vllm_server.py --model {args.model} --no-bench"
-        )
-
-    base_url = f"http://{args.host}:{args.port}/v1"
-    model = LocalServerLLM(
-        base_url=base_url,
-        model_name=repo_id,
-        max_tokens=args.max_tokens,
+    # Server management
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
     )
 
-    log(f"Connected to server at {base_url}")
+    # Check if we need to start the server
+    if not server.is_running():
+        if args.no_autostart:
+            raise SystemExit(
+                f"Server not running on {args.host}:{args.port} and --no-autostart was set.\n"
+                f"Start the server first or remove --no-autostart to auto-start."
+            )
 
-    # Build results structure
-    all_results = {
-        "timestamp": datetime.now().isoformat(),
-        "repo_id": repo_id,
-        "model_path": str(model_path),
-        "model_format": model_format,
-        "gpu_info": get_gpu_info(include_memory=True),
-        "benchmarks": {},
-    }
+    with server:
+        # Start server if not already running
+        if not server.is_running():
+            cmd = build_vllm_cmd(
+                model_path=model_path,
+                host=args.host,
+                port=args.port,
+                tensor_parallel=args.tensor_parallel,
+                use_nightly=use_nightly,
+                max_model_len=args.max_model_len,
+                gpu_memory_utilization=args.gpu_memory_utilization,
+            )
+            server.start(
+                cmd,
+                lambda: wait_for_vllm_ready(args.host, args.port),
+                label="vLLM",
+            )
 
-    # Run requested benchmarks
-    for benchmark in args.benchmark:
-        if benchmark == "ifeval":
-            result = run_ifeval(model)
-        elif benchmark == "humaneval":
-            result = run_humaneval(model)
+        base_url = f"http://{args.host}:{args.port}/v1"
+        model = LocalServerLLM(
+            base_url=base_url,
+            model_name=model_path,  # vLLM registers model under full path
+            max_tokens=args.max_tokens,
+        )
 
-        all_results["benchmarks"][benchmark] = result
-        log(f"{benchmark.upper()} score: {result['overall_score']:.3f}")
+        log(f"Connected to server at {base_url}")
 
-    # Save combined results
-    benchmarks_str = "-".join(args.benchmark)
-    save_results(all_results, repo_id, benchmarks_str)
+        # Build results structure
+        all_results = {
+            "timestamp": datetime.now().isoformat(),
+            "repo_id": repo_id,
+            "model_path": str(model_path),
+            "model_format": model_format,
+            "environment": env_label,
+            "gpu_info": get_gpu_info(include_memory=True),
+            "benchmarks": {},
+        }
+
+        # Run requested benchmarks
+        for benchmark in args.benchmark:
+            if benchmark == "ifeval":
+                result = run_ifeval(model)
+            elif benchmark == "humaneval":
+                result = run_humaneval(model)
+
+            all_results["benchmarks"][benchmark] = result
+            log(f"{benchmark.upper()} score: {result['overall_score']:.3f}")
+
+        # Save combined results
+        benchmarks_str = "-".join(args.benchmark)
+        save_results(all_results, repo_id, benchmarks_str)
 
 
 if __name__ == "__main__":
