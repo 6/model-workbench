@@ -315,7 +315,9 @@ def run_benchmark(
 
         gen_tok_s = summary.get("median_generation_tok_per_s")
         ttft = summary.get("median_ttft_ms")
-        log(f"Median: {gen_tok_s:.1f if gen_tok_s else '?'} tok/s, TTFT: {ttft:.1f if ttft else '?'} ms")
+        gen_str = f"{gen_tok_s:.1f}" if gen_tok_s else "?"
+        ttft_str = f"{ttft:.1f}" if ttft else "?"
+        log(f"Median: {gen_str} tok/s, TTFT: {ttft_str} ms")
 
         # Build config
         config = {
