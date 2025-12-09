@@ -35,9 +35,10 @@ uv run python scripts/run_bench_vllm_server.py --model ~/models/org/model --imag
 # Benchmark with llama.cpp (GGUF models)
 uv run python scripts/run_bench_llama_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
-# Run evals (IFEval + HumanEval via DeepEval)
+# Run evals (IFEval + GSM8K via DeepEval)
 uv run python scripts/run_eval.py --model ~/models/zai-org/GLM-4.6V-FP8
 uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval  # IFEval only
+uv run python scripts/run_eval.py --model ~/models/org/model --benchmark gsm8k   # GSM8K only
 ```
 
 ## Architecture
@@ -51,7 +52,7 @@ uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval 
 - `scripts/` - Benchmark runners and utilities
 - `config/models.yaml` - Model definitions with quantization variants, sources, special flags
 - `perf/` - JSON benchmark results (unified schema across backends)
-- `evals/` - DeepEval results (IFEval, HumanEval)
+- `evals/` - DeepEval results (IFEval, GSM8K)
 - `nightly/` - Separate pyproject.toml for bleeding-edge deps
 
 ### Benchmark Engines

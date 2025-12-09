@@ -2,7 +2,7 @@
 """
 Model Workbench Eval Runner
 
-Runs IFEval and HumanEval benchmarks against local model servers using DeepEval.
+Runs IFEval and GSM8K benchmarks against local model servers using DeepEval.
 Auto-detects GGUF (llama.cpp) vs safetensors (vLLM) based on model format.
 
 Examples:
@@ -15,8 +15,8 @@ Examples:
   # Run IFEval only (541 instruction-following prompts)
   uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval
 
-  # Run HumanEval only (164 coding problems)
-  uv run python scripts/run_eval.py --model ~/models/org/model --benchmark humaneval
+  # Run GSM8K only (1319 math reasoning problems)
+  uv run python scripts/run_eval.py --model ~/models/org/model --benchmark gsm8k
 
   # Use an already running server
   uv run python scripts/run_eval.py --model ~/models/org/model --no-autostart
@@ -27,7 +27,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from deepeval.benchmarks import IFEval, HumanEval
+from deepeval.benchmarks import IFEval, GSM8K
 
 from bench_utils import (
     ROOT,
@@ -64,26 +64,22 @@ def run_ifeval(model: LocalServerLLM) -> dict:
     }
 
 
-def run_humaneval(model: LocalServerLLM, n_samples: int = 1) -> dict:
-    """Run HumanEval benchmark (164 coding problems).
+def run_gsm8k(model: LocalServerLLM) -> dict:
+    """Run GSM8K benchmark (1319 grade school math problems).
 
-    Args:
-        model: The model wrapper to evaluate.
-        n_samples: Number of code samples per problem. Default 1 (pass@1 with temp=0).
-                   Standard papers use n=200 for statistical pass@k, but that's 32,800 calls.
-                   For quick quantization comparison, n=1 with temp=0 is sufficient.
+    GSM8K tests multi-step mathematical reasoning with problems requiring 2-8 steps.
+    Uses 3-shot prompting with chain-of-thought enabled for best results.
 
     Returns:
-        Dict with benchmark name, question count, n_samples, and overall score.
+        Dict with benchmark name, question count, and overall score.
     """
-    log(f"Running HumanEval (164 problems, n={n_samples})...")
-    benchmark = HumanEval(n=n_samples)
-    benchmark.evaluate(model=model, k=1)  # pass@1
+    log("Running GSM8K (1319 problems)...")
+    benchmark = GSM8K(n_shots=3, enable_cot=True)
+    benchmark.evaluate(model=model)
 
     return {
-        "benchmark": "humaneval",
-        "questions": 164,
-        "n_samples": n_samples,
+        "benchmark": "gsm8k",
+        "questions": 1319,
         "overall_score": benchmark.overall_score,
     }
 
@@ -125,8 +121,8 @@ def main():
     parser.add_argument(
         "--benchmark",
         nargs="+",
-        choices=["ifeval", "humaneval"],
-        default=["ifeval", "humaneval"],
+        choices=["ifeval", "gsm8k"],
+        default=["ifeval", "gsm8k"],
         help="Benchmark(s) to run (default: both)",
     )
     parser.add_argument(
@@ -316,8 +312,8 @@ def main():
         for benchmark in args.benchmark:
             if benchmark == "ifeval":
                 result = run_ifeval(model)
-            elif benchmark == "humaneval":
-                result = run_humaneval(model)
+            elif benchmark == "gsm8k":
+                result = run_gsm8k(model)
 
             all_results["benchmarks"][benchmark] = result
             log(f"{benchmark.upper()} score: {result['overall_score']:.3f}")
