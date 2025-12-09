@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-09T18:15:38.473740",
+  "repo_id": "unsloth/GLM-4.6-GGUF/IQ4_XS",
+  "model_ref": "~/models/unsloth/GLM-4.6-GGUF/IQ4_XS/GLM-4.6-IQ4_XS-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 90232
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 92434
+      }
+    ],
+    "memory_used_mib": 182666,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 1.1792169300006208,
+      "prompt_tokens": 9,
+      "generated_tokens": 61,
+      "ttft_ms": 18.823,
+      "tok_per_s": 51.72924374480265,
+      "generation_tok_per_s": 52.95253803250939,
+      "generation_ms": 1151.975,
+      "output_text": " Speculative decoding is a technique where a smaller, faster \"draft\" model generates candidate tokens, which are then verified by a larger, more accurate \"target\" model. This approach speeds up inference by reducing the number of times the larger model needs to run, while maintaining the quality of its outputs."
+    },
+    {
+      "wall_s": 1.1485313640005188,
+      "prompt_tokens": 9,
+      "generated_tokens": 61,
+      "ttft_ms": 18.776,
+      "tok_per_s": 53.11130536960456,
+      "generation_tok_per_s": 54.396047815017766,
+      "generation_ms": 1121.405,
+      "output_text": " Speculative decoding is a technique where a smaller, faster \"draft\" model generates candidate tokens, which are then verified by a larger, more accurate \"target\" model. This approach speeds up inference by reducing the number of times the larger model needs to run, while maintaining the quality of its outputs."
+    },
+    {
+      "wall_s": 1.150865576999422,
+      "prompt_tokens": 9,
+      "generated_tokens": 61,
+      "ttft_ms": 18.761,
+      "tok_per_s": 53.00358375392666,
+      "generation_tok_per_s": 54.39056707070239,
+      "generation_ms": 1121.518,
+      "output_text": " Speculative decoding is a technique where a smaller, faster \"draft\" model generates candidate tokens, which are then verified by a larger, more accurate \"target\" model. This approach speeds up inference by reducing the number of times the larger model needs to run, while maintaining the quality of its outputs."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.150865576999422,
+    "median_tok_per_s": 53.00358375392666,
+    "median_ttft_ms": 18.776,
+    "median_generation_tok_per_s": 54.39056707070239
+  }
+}

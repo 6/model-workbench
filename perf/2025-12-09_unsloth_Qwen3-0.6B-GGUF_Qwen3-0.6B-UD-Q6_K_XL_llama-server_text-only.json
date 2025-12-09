@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-09T18:13:42.880845",
+  "repo_id": "unsloth/Qwen3-0.6B-GGUF/Qwen3-0.6B-UD-Q6_K_XL",
+  "model_ref": "~/models/unsloth/Qwen3-0.6B-GGUF/Qwen3-0.6B-UD-Q6_K_XL.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 1148
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 1506
+      }
+    ],
+    "memory_used_mib": 2654,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 0.8173855719996936,
+      "prompt_tokens": 9,
+      "generated_tokens": 512,
+      "ttft_ms": 2.408,
+      "tok_per_s": 626.3873715649485,
+      "generation_tok_per_s": 640.5180189478241,
+      "generation_ms": 799.353,
+      "output_text": " Also, explain the difference between speculative decoding and conventional decoding. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose"
+    },
+    {
+      "wall_s": 0.8015925760000755,
+      "prompt_tokens": 9,
+      "generated_tokens": 512,
+      "ttft_ms": 2.026,
+      "tok_per_s": 638.7284704592271,
+      "generation_tok_per_s": 641.3918202499424,
+      "generation_ms": 798.264,
+      "output_text": " Also, explain the difference between speculative decoding and conventional decoding. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose"
+    },
+    {
+      "wall_s": 0.8017702980005197,
+      "prompt_tokens": 9,
+      "generated_tokens": 512,
+      "ttft_ms": 2.002,
+      "tok_per_s": 638.5868886348645,
+      "generation_tok_per_s": 641.3082688684917,
+      "generation_ms": 798.368,
+      "output_text": " Also, explain the difference between speculative decoding and conventional decoding. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose of speculative decoding in the context of image compression. Also, explain what is the purpose of speculative decoding in the context of video compression. Also, explain what is the purpose of speculative decoding in the context of audio compression. Also, explain what is the purpose"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.8017702980005197,
+    "median_tok_per_s": 638.5868886348645,
+    "median_ttft_ms": 2.026,
+    "median_generation_tok_per_s": 641.3082688684917
+  }
+}
