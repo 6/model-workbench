@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-12-09T02:45:50.783550",
+  "model_id": "Qwen/Qwen3-VL-8B-Instruct-FP8",
+  "engine": "vllm-server",
+  "mode": "vision",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887
+      }
+    ]
+  },
+  "tag": "dual-gpu",
+  "config": {
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "config/example.jpg",
+    "prompt": "Describe this image in detail.",
+    "max_tokens": 512,
+    "temperature": 0.0
+  },
+  "results": [
+    {
+      "wall_s": 2.5329228099981265,
+      "prompt_tokens": 112,
+      "generated_tokens": 289,
+      "tok_per_s": 114.09743670799575,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky.\n\n**Foreground and Midground:**\nThe image is dominated by a dense field of sunflowers stretching toward the horizon. The flowers are in full bloom, displaying their characteristic bright yellow petals and dark brown, textured centers. They are arranged in a seemingly endless pattern, creating a sense of depth and abundance. The green leaves and stems of the sunflowers are visible beneath the blossoms, adding contrast to the yellow flowers.\n\n**Background:**\nThe field continues into the distance, gradually becoming smaller and less distinct due to perspective. The horizon line is visible, separating the field from the sky.\n\n**Sky:**\nAbove the field, the sky is a light blue, filled with scattered, fluffy white clouds, suggesting a pleasant, sunny day.\n\n**Text Overlay:**\nProminently displayed across the center of the image is the white text \u201cExample Image,\u201d which is superimposed over the sunflowers. The text is in a simple, sans-serif font and is clearly legible.\n\n**Overall Impression:**\nThe image conveys a feeling of warmth, natural beauty, and expansiveness. The composition, with the sunflowers filling the frame, creates a powerful visual impact. The lighting appears to be natural daylight, enhancing the vivid colors of the scene. The text overlay indicates that this is likely a placeholder or sample image."
+    },
+    {
+      "wall_s": 2.5256141149984614,
+      "prompt_tokens": 112,
+      "generated_tokens": 289,
+      "tok_per_s": 114.4276151624913,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky.\n\n**Foreground and Midground:**\nThe image is dominated by a dense field of sunflowers stretching toward the horizon. The flowers are in full bloom, displaying their characteristic bright yellow petals and dark brown, textured centers. They are arranged in a seemingly endless pattern, creating a sense of depth and abundance. The green leaves and stems of the sunflowers are visible beneath the blossoms, adding contrast to the yellow flowers.\n\n**Background:**\nThe field continues into the distance, gradually becoming smaller and less distinct due to perspective. The horizon line is visible, separating the field from the sky.\n\n**Sky:**\nAbove the field, the sky is a light blue, filled with scattered, fluffy white clouds, suggesting a pleasant, sunny day.\n\n**Text Overlay:**\nProminently displayed across the center of the image is the white text \u201cExample Image,\u201d which is superimposed over the sunflowers. The text is in a simple, sans-serif font and is clearly legible.\n\n**Overall Impression:**\nThe image conveys a feeling of warmth, natural beauty, and expansiveness. The composition, with the sunflowers filling the frame, creates a powerful visual impact. The lighting appears to be natural daylight, enhancing the vivid colors of the scene. The text overlay indicates that this is likely a placeholder or sample image."
+    },
+    {
+      "wall_s": 2.5246265749992745,
+      "prompt_tokens": 112,
+      "generated_tokens": 289,
+      "tok_per_s": 114.47237498879733,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky.\n\n**Foreground and Midground:**\nThe image is dominated by a dense field of sunflowers stretching toward the horizon. The flowers are in full bloom, displaying their characteristic bright yellow petals and dark brown, textured centers. They are arranged in a seemingly endless pattern, creating a sense of depth and abundance. The green leaves and stems of the sunflowers are visible beneath the blossoms, adding contrast to the yellow flowers.\n\n**Background:**\nThe field continues into the distance, gradually becoming smaller and less distinct due to perspective. The horizon line is visible, separating the field from the sky.\n\n**Sky:**\nAbove the field, the sky is a light blue, filled with scattered, fluffy white clouds, suggesting a pleasant, sunny day.\n\n**Text Overlay:**\nProminently displayed across the center of the image is the white text \u201cExample Image,\u201d which is superimposed over the sunflowers. The text is in a simple, sans-serif font and is clearly legible.\n\n**Overall Impression:**\nThe image conveys a feeling of warmth, natural beauty, and expansiveness. The composition, with the sunflowers filling the frame, creates a powerful visual impact. The lighting appears to be natural daylight, enhancing the vivid colors of the scene. The text overlay indicates that this is likely a placeholder or sample image."
+    }
+  ],
+  "summary": {
+    "median_tok_per_s": 114.4276151624913
+  }
+}
