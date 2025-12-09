@@ -450,13 +450,11 @@ def build_vllm_cmd(
         ]
 
     # Mistral/Devstral models require native mistral tokenizer
-    # FP8 models need explicit dtype override due to vLLM FP8 kernel issues
     if is_mistral_model(model_path):
         cmd += [
             "--tokenizer_mode", "mistral",
             "--config_format", "mistral",
             "--load_format", "mistral",
-            "--dtype", "bfloat16",
         ]
 
     if max_model_len is not None:
