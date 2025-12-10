@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-10T14:28:12.338803",
+  "repo_id": "unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q3_K_XL",
+  "model_ref": "~/models/unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q3_K_XL/Devstral-2-123B-Instruct-2512-UD-Q3_K_XL-00001-of-00002.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 30704
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 30814
+      }
+    ],
+    "memory_used_mib": 61518,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 15.715651784000102,
+      "prompt_tokens": 17,
+      "generated_tokens": 327,
+      "ttft_ms": 47.999,
+      "tok_per_s": 20.80728209649659,
+      "generation_tok_per_s": 20.9017634376766,
+      "generation_ms": 15644.613,
+      "output_text": " Include a link to a paper that explains it in more detail.\n\n**KV Cache (Key-Value Cache)** is an optimization technique used in transformer-based models (e.g., LLMs) to reduce memory and compute overhead during autoregressive decoding. During inference, transformers recompute the same key-value (KV) states for previously generated tokens in every forward pass. KV caching stores these states after the first computation, allowing subsequent steps to reuse them instead of recalculating, significantly improving efficiency\u2014especially for long sequences.\n\nFor long-context applications, KV cache is critical because:\n1. **Memory Efficiency**: Without caching, memory usage grows quadratically with sequence length (O(n\u00b2)), making long contexts impractical. Caching reduces this to linear growth (O(n)).\n2. **Speed**: Reusing cached KV states avoids redundant computations, speeding up token generation.\n3. **Scalability**: Enables models to handle longer contexts without prohibitive resource costs.\n\nHowever, KV cache still poses challenges for *extremely* long contexts (e.g., 1M+ tokens) due to memory constraints. Techniques like **memory-efficient attention** (e.g., streaming LLMs, H2O) or **cache compression** are active research areas to address this.\n\nFor a deeper dive, see the original *Attention Is All You Need* paper (introducing transformers) or later works like [Efficient Memory Management for Long-Context LLMs](https://arxiv.org/abs/2307.03170) (exploring cache optimizations)."
+    },
+    {
+      "wall_s": 15.79457612400006,
+      "prompt_tokens": 17,
+      "generated_tokens": 327,
+      "ttft_ms": 50.0,
+      "tok_per_s": 20.70330963191341,
+      "generation_tok_per_s": 20.81232873983386,
+      "generation_ms": 15711.841,
+      "output_text": " Include a link to a paper that explains it in more detail.\n\n**KV Cache (Key-Value Cache)** is an optimization technique used in transformer-based models (e.g., LLMs) to reduce memory and compute overhead during autoregressive decoding. During inference, transformers recompute the same key-value (KV) states for previously generated tokens in every forward pass. KV caching stores these states after the first computation, allowing subsequent steps to reuse them instead of recalculating, significantly improving efficiency\u2014especially for long sequences.\n\nFor long-context applications, KV cache is critical because:\n1. **Memory Efficiency**: Without caching, memory usage grows quadratically with sequence length (O(n\u00b2)), making long contexts impractical. Caching reduces this to linear growth (O(n)).\n2. **Speed**: Reusing cached KV states avoids redundant computations, speeding up token generation.\n3. **Scalability**: Enables models to handle longer contexts without prohibitive resource costs.\n\nHowever, KV cache still poses challenges for *extremely* long contexts (e.g., 1M+ tokens) due to memory constraints. Techniques like **memory-efficient attention** (e.g., streaming LLMs, H2O) or **cache compression** are active research areas to address this.\n\nFor a deeper dive, see the original *Attention Is All You Need* paper (introducing transformers) or later works like [Efficient Memory Management for Long-Context LLMs](https://arxiv.org/abs/2307.03170) (exploring cache optimizations)."
+    },
+    {
+      "wall_s": 15.823141694000014,
+      "prompt_tokens": 17,
+      "generated_tokens": 327,
+      "ttft_ms": 49.397,
+      "tok_per_s": 20.66593387860486,
+      "generation_tok_per_s": 20.732412083001925,
+      "generation_ms": 15772.405,
+      "output_text": " Include a link to a paper that explains it in more detail.\n\n**KV Cache (Key-Value Cache)** is an optimization technique used in transformer-based models (e.g., LLMs) to reduce memory and compute overhead during autoregressive decoding. During inference, transformers recompute the same key-value (KV) states for previously generated tokens in every forward pass. KV caching stores these states after the first computation, allowing subsequent steps to reuse them instead of recalculating, significantly improving efficiency\u2014especially for long sequences.\n\nFor long-context applications, KV cache is critical because:\n1. **Memory Efficiency**: Without caching, memory usage grows quadratically with sequence length (O(n\u00b2)), making long contexts impractical. Caching reduces this to linear growth (O(n)).\n2. **Speed**: Reusing cached KV states avoids redundant computations, speeding up token generation.\n3. **Scalability**: Enables models to handle longer contexts without prohibitive resource costs.\n\nHowever, KV cache still poses challenges for *extremely* long contexts (e.g., 1M+ tokens) due to memory constraints. Techniques like **memory-efficient attention** (e.g., streaming LLMs, H2O) or **cache compression** are active research areas to address this.\n\nFor a deeper dive, see the original *Attention Is All You Need* paper (introducing transformers) or later works like [Efficient Memory Management for Long-Context LLMs](https://arxiv.org/abs/2307.03170) (exploring cache optimizations)."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 15.79457612400006,
+    "median_tok_per_s": 20.70330963191341,
+    "median_ttft_ms": 49.397,
+    "median_generation_tok_per_s": 20.81232873983386
+  }
+}
