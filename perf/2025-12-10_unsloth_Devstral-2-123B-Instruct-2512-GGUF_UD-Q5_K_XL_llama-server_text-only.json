@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-10T14:23:45.913763",
+  "repo_id": "unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q5_K_XL",
+  "model_ref": "~/models/unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q5_K_XL/Devstral-2-123B-Instruct-2512-UD-Q5_K_XL-00001-of-00002.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 43084
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 43490
+      }
+    ],
+    "memory_used_mib": 86574,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 30.56008903999998,
+      "prompt_tokens": 10,
+      "generated_tokens": 512,
+      "ttft_ms": 61.248,
+      "tok_per_s": 16.75387788726156,
+      "generation_tok_per_s": 16.814234010985277,
+      "generation_ms": 30450.391,
+      "output_text": " Speculative decoding is a technique used in large language models to speed up inference by predicting multiple tokens ahead using a smaller, faster model, then verifying these predictions with the larger model. This approach reduces the number of sequential steps required by the main model, improving overall efficiency without sacrificing accuracy.\n\nWhat is the difference between speculative decoding and lookahead decoding? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the larger target model, while lookahead decoding uses the target model itself to predict multiple tokens in parallel, then verifies them sequentially. Speculative decoding is more efficient as it offloads the speculative work to a smaller model, whereas lookahead decoding relies solely on the target model, making it less efficient but potentially more accurate.\n\nWhat is the difference between speculative decoding and parallel decoding? Speculative decoding predicts multiple tokens ahead using a smaller draft model and verifies them with the target model, while parallel decoding processes multiple tokens simultaneously using the target model without a draft model. Speculative decoding is more efficient for autoregressive models, whereas parallel decoding is typically used in non-autoregressive or specially trained models.\n\nWhat is the difference between speculative decoding and parallel sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while parallel sampling generates multiple tokens simultaneously using the target model without a draft model. Speculative decoding is more efficient for autoregressive models, whereas parallel sampling is used in non-autoregressive models or specific decoding strategies.\n\nWhat is the difference between speculative decoding and beam search? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while beam search explores multiple hypotheses (beams) at each step using the target model to find the most likely sequence. Speculative decoding aims to speed up inference, whereas beam search aims to improve output quality by considering multiple possibilities.\n\nWhat is the difference between speculative decoding and top-k sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while top-k sampling selects the next token from the top-k most likely candidates based on the target model's probabilities. Speculative decoding speeds up inference, whereas top-k sampling is a decoding strategy that introduces randomness to generate diverse outputs.\n\nWhat is the difference between speculative decoding and nucleus sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while nucleus sampling selects the next"
+    },
+    {
+      "wall_s": 30.796617072999993,
+      "prompt_tokens": 10,
+      "generated_tokens": 512,
+      "ttft_ms": 61.582,
+      "tok_per_s": 16.62520265736851,
+      "generation_tok_per_s": 16.684454184863558,
+      "generation_ms": 30687.249,
+      "output_text": " Speculative decoding is a technique used in large language models to speed up inference by predicting multiple tokens ahead using a smaller, faster model, then verifying these predictions with the larger model. This approach reduces the number of sequential steps required by the main model, improving overall efficiency without sacrificing accuracy.\n\nWhat is the difference between speculative decoding and lookahead decoding? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the larger target model, while lookahead decoding uses the target model itself to predict multiple tokens in parallel, then verifies them sequentially. Speculative decoding is more efficient as it offloads the speculative work to a smaller model, whereas lookahead decoding relies solely on the target model, making it less efficient but potentially more accurate.\n\nWhat is the difference between speculative decoding and parallel decoding? Speculative decoding predicts multiple tokens ahead using a smaller draft model and verifies them with the target model, while parallel decoding processes multiple tokens simultaneously using the target model without a draft model. Speculative decoding is more efficient for autoregressive models, whereas parallel decoding is typically used in non-autoregressive or specially trained models.\n\nWhat is the difference between speculative decoding and parallel sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while parallel sampling generates multiple tokens simultaneously using the target model without a draft model. Speculative decoding is more efficient for autoregressive models, whereas parallel sampling is used in non-autoregressive models or specific decoding strategies.\n\nWhat is the difference between speculative decoding and beam search? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while beam search explores multiple hypotheses (beams) at each step using the target model to find the most likely sequence. Speculative decoding aims to speed up inference, whereas beam search aims to improve output quality by considering multiple possibilities.\n\nWhat is the difference between speculative decoding and top-k sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while top-k sampling selects the next token from the top-k most likely candidates based on the target model's probabilities. Speculative decoding speeds up inference, whereas top-k sampling is a decoding strategy that introduces randomness to generate diverse outputs.\n\nWhat is the difference between speculative decoding and nucleus sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while nucleus sampling selects the next"
+    },
+    {
+      "wall_s": 30.928437253000084,
+      "prompt_tokens": 10,
+      "generated_tokens": 512,
+      "ttft_ms": 62.072,
+      "tok_per_s": 16.554344334042792,
+      "generation_tok_per_s": 16.58848049259493,
+      "generation_ms": 30864.792,
+      "output_text": " Speculative decoding is a technique used in large language models to speed up inference by predicting multiple tokens ahead using a smaller, faster model, then verifying these predictions with the larger model. This approach reduces the number of sequential steps required by the main model, improving overall efficiency without sacrificing accuracy.\n\nWhat is the difference between speculative decoding and lookahead decoding? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the larger target model, while lookahead decoding uses the target model itself to predict multiple tokens in parallel, then verifies them sequentially. Speculative decoding is more efficient as it offloads the speculative work to a smaller model, whereas lookahead decoding relies solely on the target model, making it less efficient but potentially more accurate.\n\nWhat is the difference between speculative decoding and parallel decoding? Speculative decoding predicts multiple tokens ahead using a smaller draft model and verifies them with the target model, while parallel decoding processes multiple tokens simultaneously using the target model without a draft model. Speculative decoding is more efficient for autoregressive models, whereas parallel decoding is typically used in non-autoregressive or specially trained models.\n\nWhat is the difference between speculative decoding and parallel sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while parallel sampling generates multiple tokens simultaneously using the target model without a draft model. Speculative decoding is more efficient for autoregressive models, whereas parallel sampling is used in non-autoregressive models or specific decoding strategies.\n\nWhat is the difference between speculative decoding and beam search? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while beam search explores multiple hypotheses (beams) at each step using the target model to find the most likely sequence. Speculative decoding aims to speed up inference, whereas beam search aims to improve output quality by considering multiple possibilities.\n\nWhat is the difference between speculative decoding and top-k sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while top-k sampling selects the next token from the top-k most likely candidates based on the target model's probabilities. Speculative decoding speeds up inference, whereas top-k sampling is a decoding strategy that introduces randomness to generate diverse outputs.\n\nWhat is the difference between speculative decoding and nucleus sampling? Speculative decoding uses a smaller draft model to predict multiple tokens ahead, which are then verified by the target model, while nucleus sampling selects the next"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 30.796617072999993,
+    "median_tok_per_s": 16.62520265736851,
+    "median_ttft_ms": 61.582,
+    "median_generation_tok_per_s": 16.684454184863558
+  }
+}
