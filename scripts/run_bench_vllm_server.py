@@ -270,8 +270,8 @@ def main():
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--no-autostart", action="store_true",
                     help="Don't start server; require it already running")
-    ap.add_argument("--server-timeout", type=int, default=180,
-                    help="Timeout in seconds waiting for server to start (default: 180)")
+    ap.add_argument("--server-timeout", type=int, default=360,
+                    help="Timeout in seconds waiting for server to start (default: 360)")
 
     # vLLM server options
     ap.add_argument("--max-model-len", type=int, default=65536,

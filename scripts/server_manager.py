@@ -401,6 +401,7 @@ def build_vllm_docker_cmd(
             "--tokenizer_mode", "mistral",
             "--config_format", "mistral",
             "--load_format", "mistral",
+            "--max-model-len", "5000", # cap for now to avoid overloading kv
         ]
 
     return cmd

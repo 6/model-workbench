@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-09T23:20:17.319379",
+  "repo_id": "mistralai/Devstral-2-123B-Instruct-2512",
+  "model_ref": "~/models/mistralai/Devstral-2-123B-Instruct-2512",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 90668
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 90668
+      }
+    ],
+    "memory_used_mib": 181336,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 5000,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none"
+  },
+  "iterations": [
+    {
+      "wall_s": 31.945085348997964,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is an optimization in transformer-based language models (e.g., LLMs) that stores intermediate key and value states from previous tokens during inference, avoiding redundant recomputation. It significantly improves efficiency, especially for long contexts.\n\n#### **How It Works**\n1. **Self-Attention Recap**: In transformers, each token attends to all previous tokens via keys (K) and values (V). Naively recomputing K/V for every token in a sequence is O(n\u00b2) in memory and compute.\n2. **Caching Mechanism**: During inference, the model computes K/V for new tokens and appends them to a cache (stored in GPU memory). Subsequent tokens reuse this cache instead of recomputing past K/V states.\n3. **Efficiency Gain**: Reduces per-token compute from O(n) to O(1) for attention, enabling faster generation. Memory usage scales linearly with context length (O(n)).\n\n#### **Why It Matters for Long Context**\n1. **Memory Bottleneck**: Without KV caching, long contexts (e.g., 100K+ tokens) would require prohibitive memory (O(n\u00b2)) for attention, making them impractical.\n2. **Latency Reduction**: Caching eliminates redundant K/V recomputation, critical for real-time applications (e.g., chatbots, agents) with lengthy histories.\n3. **Scalability**: Enables models like Claude 3 or Gemini 1.5 to handle 1M+ token contexts by efficiently managing memory and compute trade-offs.\n4. **Trade-offs**:\n   - **Memory vs. Speed**: Larger caches consume more GPU memory but speed up inference.\n   - **Eviction Strategies**: For extremely long contexts, techniques like *sliding-window caching* or *compression* (e.g., H2O) may be needed to balance recency and memory.\n\n#### **Challenges**\n- **Memory Overhead**: Storing K/V for millions of tokens can exhaust GPU memory (e.g., 1M tokens \u2248 20GB for FP16).\n- **Stale Cache**: In interactive settings (e.g., editing early context), the cache may need invalidation or updates.\n\n#### **Key Innovations**\n- **Paged Attention** (e.g., vLLM): Dynamically manages KV cache blocks to optimize memory for batch processing",
+      "prompt_tokens": 19,
+      "generated_tokens": 512,
+      "tok_per_s": 16.027504525545435,
+      "generation_tok_per_s": 16.058792935641886,
+      "ttft_ms": 50.00734329223633,
+      "prefill_ms": 49.18277999968268,
+      "generation_ms": 31882.844622999983
+    },
+    {
+      "wall_s": 32.135231263000605,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is an optimization in transformer-based language models (e.g., LLMs) that stores intermediate key and value states from previous tokens during inference, avoiding redundant recomputation. It significantly improves efficiency, especially for long contexts.\n\n#### **How It Works**\n1. **Self-Attention Recap**: In transformers, each token attends to all previous tokens via keys (K) and values (V). Naively recomputing K/V for every token in a sequence is O(n\u00b2) in memory and compute.\n2. **Caching Mechanism**: During inference, the model computes K/V for new tokens and appends them to a cache (stored in GPU memory). Subsequent tokens reuse this cache instead of recomputing past K/V states.\n3. **Efficiency Gain**: Reduces per-token compute from O(n) to O(1) for attention, enabling faster generation. Memory usage scales linearly with context length (O(n)).\n\n#### **Why It Matters for Long Context**\n1. **Memory Bottleneck**: Without KV caching, long contexts (e.g., 100K+ tokens) would require prohibitive memory (O(n\u00b2)) for attention, making them impractical.\n2. **Latency Reduction**: Caching eliminates redundant K/V recomputation, critical for real-time applications (e.g., chatbots, agents) with lengthy histories.\n3. **Scalability**: Enables models like Claude 3 or Gemini 1.5 to handle 1M+ token contexts by efficiently managing memory and compute trade-offs.\n4. **Trade-offs**:\n   - **Memory vs. Speed**: Larger caches consume more GPU memory but speed up inference.\n   - **Eviction Strategies**: For extremely long contexts, techniques like *sliding-window caching* or *compression* (e.g., H2O) may be needed to balance recency and memory.\n\n#### **Challenges**\n- **Memory Overhead**: Storing K/V for millions of tokens can exhaust GPU memory (e.g., 1M tokens \u2248 20GB for FP16).\n- **Stale Cache**: In interactive settings (e.g., editing early context), the cache may need invalidation or updates.\n\n#### **Key Innovations**\n- **Paged Attention** (e.g., vLLM): Dynamically manages KV cache blocks to optimize memory for batch processing",
+      "prompt_tokens": 19,
+      "generated_tokens": 512,
+      "tok_per_s": 15.932668908143166,
+      "generation_tok_per_s": 15.958517726746859,
+      "ttft_ms": 49.86572265625,
+      "prefill_ms": 49.26424199948087,
+      "generation_ms": 32083.180203000666
+    },
+    {
+      "wall_s": 32.30469427799835,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is an optimization in transformer-based language models (e.g., LLMs) that stores intermediate key and value states from previous tokens during inference, avoiding redundant recomputation. It significantly improves efficiency, especially for long contexts.\n\n#### **How It Works**\n1. **Self-Attention Recap**: In transformers, each token attends to all previous tokens via keys (K) and values (V). Naively recomputing K/V for every token in a sequence is O(n\u00b2) in memory and compute.\n2. **Caching Mechanism**: During inference, the model computes K/V for new tokens and appends them to a cache (stored in GPU memory). Subsequent tokens reuse this cache instead of recomputing past K/V states.\n3. **Efficiency Gain**: Reduces per-token compute from O(n) to O(1) for attention, enabling faster generation. Memory usage scales linearly with context length (O(n)).\n\n#### **Why It Matters for Long Context**\n1. **Memory Bottleneck**: Without KV caching, long contexts (e.g., 100K+ tokens) would require prohibitive memory (O(n\u00b2)) for attention, making them impractical.\n2. **Latency Reduction**: Caching eliminates redundant K/V recomputation, critical for real-time applications (e.g., chatbots, agents) with lengthy histories.\n3. **Scalability**: Enables models like Claude 3 or Gemini 1.5 to handle 1M+ token contexts by efficiently managing memory and compute trade-offs.\n4. **Trade-offs**:\n   - **Memory vs. Speed**: Larger caches consume more GPU memory but speed up inference.\n   - **Eviction Strategies**: For extremely long contexts, techniques like *sliding-window caching* or *compression* (e.g., H2O) may be needed to balance recency and memory.\n\n#### **Challenges**\n- **Memory Overhead**: Storing K/V for millions of tokens can exhaust GPU memory (e.g., 1M tokens \u2248 20GB for FP16).\n- **Stale Cache**: In interactive settings (e.g., editing early context), the cache may need invalidation or updates.\n\n#### **Key Innovations**\n- **Paged Attention** (e.g., vLLM): Dynamically manages KV cache blocks to optimize memory for batch processing",
+      "prompt_tokens": 19,
+      "generated_tokens": 512,
+      "tok_per_s": 15.84908978224586,
+      "generation_tok_per_s": 15.874775573876265,
+      "ttft_ms": 50.01258850097656,
+      "prefill_ms": 49.371383000107016,
+      "generation_ms": 32252.424458998576
+    },
+    {
+      "wall_s": 32.39511119999952,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is an optimization in transformer-based language models (e.g., LLMs) that stores intermediate key and value states from previous tokens during inference, avoiding redundant recomputation. It significantly improves efficiency, especially for long contexts.\n\n#### **How It Works**\n1. **Self-Attention Recap**: In transformers, each token attends to all previous tokens via keys (K) and values (V). Naively recomputing K/V for every token in a sequence is O(n\u00b2) in memory and compute.\n2. **Caching Mechanism**: During inference, the model computes K/V for new tokens and appends them to a cache (stored in GPU memory). Subsequent tokens reuse this cache instead of recomputing past K/V states.\n3. **Efficiency Gain**: Reduces per-token compute from O(n) to O(1) for attention, enabling faster generation. Memory usage scales linearly with context length (O(n)).\n\n#### **Why It Matters for Long Context**\n1. **Memory Bottleneck**: Without KV caching, long contexts (e.g., 100K+ tokens) would require prohibitive memory (O(n\u00b2)) for attention, making them impractical.\n2. **Latency Reduction**: Caching eliminates redundant K/V recomputation, critical for real-time applications (e.g., chatbots, agents) with lengthy histories.\n3. **Scalability**: Enables models like Claude 3 or Gemini 1.5 to handle 1M+ token contexts by efficiently managing memory and compute trade-offs.\n4. **Trade-offs**:\n   - **Memory vs. Speed**: Larger caches consume more GPU memory but speed up inference.\n   - **Eviction Strategies**: For extremely long contexts, techniques like *sliding-window caching* or *compression* (e.g., H2O) may be needed to balance recency and memory.\n\n#### **Challenges**\n- **Memory Overhead**: Storing K/V for millions of tokens can exhaust GPU memory (e.g., 1M tokens \u2248 20GB for FP16).\n- **Stale Cache**: In interactive settings (e.g., editing early context), the cache may need invalidation or updates.\n\n#### **Key Innovations**\n- **Paged Attention** (e.g., vLLM): Dynamically manages KV cache blocks to optimize memory for batch processing",
+      "prompt_tokens": 19,
+      "generated_tokens": 512,
+      "tok_per_s": 15.804853912648634,
+      "generation_tok_per_s": 15.830936126281658,
+      "ttft_ms": 50.8265495300293,
+      "prefill_ms": 50.230921999173006,
+      "generation_ms": 32341.7387269983
+    },
+    {
+      "wall_s": 32.400713867999,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is an optimization in transformer-based language models (e.g., LLMs) that stores intermediate key and value states from previous tokens during inference, avoiding redundant recomputation. It significantly improves efficiency, especially for long contexts.\n\n#### **How It Works**\n1. **Self-Attention Recap**: In transformers, each token attends to all previous tokens via keys (K) and values (V). Naively recomputing K/V for every token in a sequence is O(n\u00b2) in memory and compute.\n2. **Caching Mechanism**: During inference, the model computes K/V for new tokens and appends them to a cache (stored in GPU memory). Subsequent tokens reuse this cache instead of recomputing past K/V states.\n3. **Efficiency Gain**: Reduces per-token compute from O(n) to O(1) for attention, enabling faster generation. Memory usage scales linearly with context length (O(n)).\n\n#### **Why It Matters for Long Context**\n1. **Memory Bottleneck**: Without KV caching, long contexts (e.g., 100K+ tokens) would require prohibitive memory (O(n\u00b2)) for attention, making them impractical.\n2. **Latency Reduction**: Caching eliminates redundant K/V recomputation, critical for real-time applications (e.g., chatbots, agents) with lengthy histories.\n3. **Scalability**: Enables models like Claude 3 or Gemini 1.5 to handle 1M+ token contexts by efficiently managing memory and compute trade-offs.\n4. **Trade-offs**:\n   - **Memory vs. Speed**: Larger caches consume more GPU memory but speed up inference.\n   - **Eviction Strategies**: For extremely long contexts, techniques like *sliding-window caching* or *compression* (e.g., H2O) may be needed to balance recency and memory.\n\n#### **Challenges**\n- **Memory Overhead**: Storing K/V for millions of tokens can exhaust GPU memory (e.g., 1M tokens \u2248 20GB for FP16).\n- **Stale Cache**: In interactive settings (e.g., editing early context), the cache may need invalidation or updates.\n\n#### **Key Innovations**\n- **Paged Attention** (e.g., vLLM): Dynamically manages KV cache blocks to optimize memory for batch processing",
+      "prompt_tokens": 19,
+      "generated_tokens": 512,
+      "tok_per_s": 15.802120968256926,
+      "generation_tok_per_s": 15.828189454163468,
+      "ttft_ms": 50.97675323486328,
+      "prefill_ms": 50.395730999298394,
+      "generation_ms": 32347.351002001233
+    }
+  ],
+  "summary": {
+    "median_wall_s": 32.30469427799835,
+    "median_tok_per_s": 15.84908978224586,
+    "median_ttft_ms": 50.01258850097656,
+    "median_generation_tok_per_s": 15.874775573876265
+  },
+  "environment": "nightly"
+}
