@@ -8,6 +8,12 @@ models:
   #    - "models-*.safetensors"
 
   - source: hf
+    repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
+      - "UD-Q5_K_XL/*.gguf"
+
+  - source: hf
     repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
     nightly: true
 

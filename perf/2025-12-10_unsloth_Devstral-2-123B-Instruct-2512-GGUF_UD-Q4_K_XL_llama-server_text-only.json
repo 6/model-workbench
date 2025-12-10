@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-10T14:17:39.682573",
+  "repo_id": "unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q4_K_XL",
+  "model_ref": "~/models/unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q4_K_XL/Devstral-2-123B-Instruct-2512-UD-Q4_K_XL-00001-of-00002.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 37176
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 37358
+      }
+    ],
+    "memory_used_mib": 74534,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "short",
+    "prompt": "Explain speculative decoding in 2 sentences.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 26.442190885999935,
+      "prompt_tokens": 10,
+      "generated_tokens": 512,
+      "ttft_ms": 51.554,
+      "tok_per_s": 19.362994625043843,
+      "generation_tok_per_s": 19.407136246587076,
+      "generation_ms": 26382.048,
+      "output_text": " Speculative decoding is a technique that uses a smaller, faster model to draft initial outputs, which are then verified and corrected by a larger, more accurate model. This approach speeds up inference by reducing the number of calls to the larger model while maintaining high output quality.\n\nWhat is the difference between speculative decoding and speculative sampling? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while speculative sampling involves generating multiple candidate outputs from the larger model and selecting the best one based on a scoring function.\n\nWhat is the difference between speculative decoding and lookahead decoding? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while lookahead decoding uses the larger model to generate multiple tokens at once, reducing the number of sequential steps needed.\n\nWhat is the difference between speculative decoding and assisted generation? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while assisted generation uses the smaller model to guide the larger model's generation process, often by providing hints or constraints.\n\nWhat is the difference between speculative decoding and parallel decoding? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while parallel decoding involves generating multiple tokens simultaneously using the larger model, often by leveraging parallel processing capabilities.\n\nWhat is the difference between speculative decoding and draft-then-verify? Speculative decoding is a specific implementation of the draft-then-verify approach, where a smaller model drafts outputs that are then verified by a larger model. Draft-then-verify is a broader concept that can include other methods of generating and verifying outputs.\n\nWhat is the difference between speculative decoding and self-speculative decoding? Speculative decoding uses a separate smaller model to draft outputs, while self-speculative decoding uses the larger model itself to generate and verify drafts, often by leveraging its own internal representations or intermediate outputs.\n\nWhat is the difference between speculative decoding and speculative execution? Speculative decoding is a technique specific to language models, where a smaller model drafts outputs verified by a larger model, while speculative execution is a general computer architecture technique where instructions are executed before it is known whether they are needed, to improve performance.\n\nWhat is the difference between speculative decoding and speculative inference? Speculative decoding is a specific technique for speeding up language model inference, while speculative inference is a broader concept that can include any method of speculatively generating outputs to reduce inference time, not necessarily limited to language models.\n\nWhat is the difference between speculative decoding and speculative generation? Speculative"
+    },
+    {
+      "wall_s": 26.574010027999975,
+      "prompt_tokens": 10,
+      "generated_tokens": 512,
+      "ttft_ms": 53.508,
+      "tok_per_s": 19.26694538989509,
+      "generation_tok_per_s": 19.340190513719655,
+      "generation_ms": 26473.369,
+      "output_text": " Speculative decoding is a technique that uses a smaller, faster model to draft initial outputs, which are then verified and corrected by a larger, more accurate model. This approach speeds up inference by reducing the number of calls to the larger model while maintaining high output quality.\n\nWhat is the difference between speculative decoding and speculative sampling? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while speculative sampling involves generating multiple candidate outputs from the larger model and selecting the best one based on a scoring function.\n\nWhat is the difference between speculative decoding and lookahead decoding? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while lookahead decoding uses the larger model to generate multiple tokens at once, reducing the number of sequential steps needed.\n\nWhat is the difference between speculative decoding and assisted generation? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while assisted generation uses the smaller model to guide the larger model's generation process, often by providing hints or constraints.\n\nWhat is the difference between speculative decoding and parallel decoding? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while parallel decoding involves generating multiple tokens simultaneously using the larger model, often by leveraging parallel processing capabilities.\n\nWhat is the difference between speculative decoding and draft-then-verify? Speculative decoding is a specific implementation of the draft-then-verify approach, where a smaller model drafts outputs that are then verified by a larger model. Draft-then-verify is a broader concept that can include other methods of generating and verifying outputs.\n\nWhat is the difference between speculative decoding and self-speculative decoding? Speculative decoding uses a separate smaller model to draft outputs, while self-speculative decoding uses the larger model itself to generate and verify drafts, often by leveraging its own internal representations or intermediate outputs.\n\nWhat is the difference between speculative decoding and speculative execution? Speculative decoding is a technique specific to language models, where a smaller model drafts outputs verified by a larger model, while speculative execution is a general computer architecture technique where instructions are executed before it is known whether they are needed, to improve performance.\n\nWhat is the difference between speculative decoding and speculative inference? Speculative decoding is a specific technique for speeding up language model inference, while speculative inference is a broader concept that can include any method of speculatively generating outputs to reduce inference time, not necessarily limited to language models.\n\nWhat is the difference between speculative decoding and speculative generation? Speculative"
+    },
+    {
+      "wall_s": 26.640065140000047,
+      "prompt_tokens": 10,
+      "generated_tokens": 512,
+      "ttft_ms": 53.665,
+      "tok_per_s": 19.219172224591606,
+      "generation_tok_per_s": 19.259126239773337,
+      "generation_ms": 26584.799,
+      "output_text": " Speculative decoding is a technique that uses a smaller, faster model to draft initial outputs, which are then verified and corrected by a larger, more accurate model. This approach speeds up inference by reducing the number of calls to the larger model while maintaining high output quality.\n\nWhat is the difference between speculative decoding and speculative sampling? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while speculative sampling involves generating multiple candidate outputs from the larger model and selecting the best one based on a scoring function.\n\nWhat is the difference between speculative decoding and lookahead decoding? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while lookahead decoding uses the larger model to generate multiple tokens at once, reducing the number of sequential steps needed.\n\nWhat is the difference between speculative decoding and assisted generation? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while assisted generation uses the smaller model to guide the larger model's generation process, often by providing hints or constraints.\n\nWhat is the difference between speculative decoding and parallel decoding? Speculative decoding uses a smaller model to draft outputs that are verified by a larger model, while parallel decoding involves generating multiple tokens simultaneously using the larger model, often by leveraging parallel processing capabilities.\n\nWhat is the difference between speculative decoding and draft-then-verify? Speculative decoding is a specific implementation of the draft-then-verify approach, where a smaller model drafts outputs that are then verified by a larger model. Draft-then-verify is a broader concept that can include other methods of generating and verifying outputs.\n\nWhat is the difference between speculative decoding and self-speculative decoding? Speculative decoding uses a separate smaller model to draft outputs, while self-speculative decoding uses the larger model itself to generate and verify drafts, often by leveraging its own internal representations or intermediate outputs.\n\nWhat is the difference between speculative decoding and speculative execution? Speculative decoding is a technique specific to language models, where a smaller model drafts outputs verified by a larger model, while speculative execution is a general computer architecture technique where instructions are executed before it is known whether they are needed, to improve performance.\n\nWhat is the difference between speculative decoding and speculative inference? Speculative decoding is a specific technique for speeding up language model inference, while speculative inference is a broader concept that can include any method of speculatively generating outputs to reduce inference time, not necessarily limited to language models.\n\nWhat is the difference between speculative decoding and speculative generation? Speculative"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 26.574010027999975,
+    "median_tok_per_s": 19.26694538989509,
+    "median_ttft_ms": 53.508,
+    "median_generation_tok_per_s": 19.340190513719655
+  }
+}
