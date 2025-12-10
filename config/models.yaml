@@ -59,11 +59,11 @@ models:
       - "UD-Q4_K_XL/*.gguf"
       - "mmproj-F16.gguf"
 
-  - source: hf
-    repo_id: unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF
-    include:
-      - "UD-Q2_K_XL/*.gguf"
-      #- "UD-Q4_K_XL/*.gguf"
+  #- source: hf
+  #  repo_id: unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF
+  #  include:
+  #    - "UD-Q2_K_XL/*.gguf"
+  #    #- "UD-Q4_K_XL/*.gguf"
 
   - source: hf
     repo_id: unsloth/gpt-oss-20b-GGUF
@@ -84,8 +84,8 @@ models:
   - source: hf
     repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
 
-  - source: hf
-    repo_id: Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8
+  #- source: hf
+  #  repo_id: Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8
 
   #- source: hf
   #  repo_id: Qwen/Qwen3-Next-80B-A3B-Thinking-FP8
