@@ -603,8 +603,8 @@ def main():
                     help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)")
     ap.add_argument("--no-autostart", action="store_true",
                     help="Don't start server; require it already running")
-    ap.add_argument("--server-timeout", type=int, default=180,
-                    help="Timeout waiting for server to start (default: 180s)")
+    ap.add_argument("--server-timeout", type=int, default=360,
+                    help="Timeout waiting for server to start (default: 360s)")
 
     # Backend version (Docker-based execution)
     ap.add_argument("--backend-version", default=None,

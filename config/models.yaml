@@ -5,6 +5,15 @@ defaults:
   llama_version: b4521        # Default llama.cpp version for GGUF models
 
 models:
+  # Devstral 123B GGUF (from main)
+  - source: hf
+    repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
+    include:
+      - "UD-Q3_K_XL/*.gguf"
+      - "UD-Q4_K_XL/*.gguf"
+      - "UD-Q5_K_XL/*.gguf"
+      - "UD-Q6_K_XL/*.gguf"
+
   # vLLM models (safetensors) - use default vllm_version unless overridden
   - source: hf
     repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
@@ -59,11 +68,11 @@ models:
       - "UD-Q4_K_XL/*.gguf"
       - "mmproj-F16.gguf"
 
-  - source: hf
-    repo_id: unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF
-    include:
-      - "UD-Q2_K_XL/*.gguf"
-      #- "UD-Q4_K_XL/*.gguf"
+  #- source: hf
+  #  repo_id: unsloth/Qwen3-Coder-480B-A35B-Instruct-GGUF
+  #  include:
+  #    - "UD-Q2_K_XL/*.gguf"
+  #    #- "UD-Q4_K_XL/*.gguf"
 
   - source: hf
     repo_id: unsloth/gpt-oss-20b-GGUF
@@ -84,8 +93,8 @@ models:
   - source: hf
     repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
 
-  - source: hf
-    repo_id: Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8
+  #- source: hf
+  #  repo_id: Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8
 
   #- source: hf
   #  repo_id: Qwen/Qwen3-Next-80B-A3B-Thinking-FP8

@@ -164,8 +164,9 @@ def build_vllm_docker_cmd(
         "--tensor-parallel-size", str(tensor_parallel),
     ]
 
-    if max_model_len is not None:
-        cmd += ["--max-model-len", str(max_model_len)]
+    # Default max-model-len to 10000 to avoid KV cache overload on large models
+    effective_max_model_len = max_model_len if max_model_len is not None else 10000
+    cmd += ["--max-model-len", str(effective_max_model_len)]
 
     if gpu_memory_utilization is not None:
         cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]
