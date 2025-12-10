@@ -1,0 +1,80 @@
+{
+  "timestamp": "2025-12-10T14:29:42.499445",
+  "repo_id": "unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q4_K_XL",
+  "model_ref": "~/models/unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q4_K_XL/Devstral-2-123B-Instruct-2512-UD-Q4_K_XL-00001-of-00002.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 37176
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 37358
+      }
+    ],
+    "memory_used_mib": 74534,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "llama_server_bin": "~/llama.cpp/build/bin/llama-server",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 12.832332635999819,
+      "prompt_tokens": 17,
+      "generated_tokens": 245,
+      "ttft_ms": 52.392,
+      "tok_per_s": 19.092397847658432,
+      "generation_tok_per_s": 19.2021724632539,
+      "generation_ms": 12758.973,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store intermediate activations (keys and values) from previous tokens during inference, allowing for efficient reuse in subsequent forward passes. This optimization reduces redundant computation when generating sequences token-by-token, significantly improving inference speed without sacrificing accuracy. For long-context scenarios, KV cache is critical because it enables the model to retain and reference earlier parts of the input without recomputing them, making it feasible to handle extended sequences (e.g., thousands of tokens) with manageable memory and compute costs. Without KV cache, the computational overhead of re-processing the entire context for each new token would be prohibitive.\n\nFor a deeper dive, see the explanation in the *FlashAttention* paper (https://arxiv.org/abs/2205.14135) or this blog post: https://medium.com/@sachinmishra1234/kv-cache-in-llms-understanding-the-mechanism-behind-efficient-inference-8b0a0a0a1a1a."
+    },
+    {
+      "wall_s": 12.896689709000157,
+      "prompt_tokens": 17,
+      "generated_tokens": 245,
+      "ttft_ms": 54.269,
+      "tok_per_s": 18.997122946132674,
+      "generation_tok_per_s": 19.114474010244734,
+      "generation_ms": 12817.512,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store intermediate activations (keys and values) from previous tokens during inference, allowing for efficient reuse in subsequent forward passes. This optimization reduces redundant computation when generating sequences token-by-token, significantly improving inference speed without sacrificing accuracy. For long-context scenarios, KV cache is critical because it enables the model to retain and reference earlier parts of the input without recomputing them, making it feasible to handle extended sequences (e.g., thousands of tokens) with manageable memory and compute costs. Without KV cache, the computational overhead of re-processing the entire context for each new token would be prohibitive.\n\nFor a deeper dive, see the explanation in the *FlashAttention* paper (https://arxiv.org/abs/2205.14135) or this blog post: https://medium.com/@sachinmishra1234/kv-cache-in-llms-understanding-the-mechanism-behind-efficient-inference-8b0a0a0a1a1a."
+    },
+    {
+      "wall_s": 12.905653713999982,
+      "prompt_tokens": 17,
+      "generated_tokens": 245,
+      "ttft_ms": 54.001,
+      "tok_per_s": 18.983927930301224,
+      "generation_tok_per_s": 19.066549963816357,
+      "generation_ms": 12849.729,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store intermediate activations (keys and values) from previous tokens during inference, allowing for efficient reuse in subsequent forward passes. This optimization reduces redundant computation when generating sequences token-by-token, significantly improving inference speed without sacrificing accuracy. For long-context scenarios, KV cache is critical because it enables the model to retain and reference earlier parts of the input without recomputing them, making it feasible to handle extended sequences (e.g., thousands of tokens) with manageable memory and compute costs. Without KV cache, the computational overhead of re-processing the entire context for each new token would be prohibitive.\n\nFor a deeper dive, see the explanation in the *FlashAttention* paper (https://arxiv.org/abs/2205.14135) or this blog post: https://medium.com/@sachinmishra1234/kv-cache-in-llms-understanding-the-mechanism-behind-efficient-inference-8b0a0a0a1a1a."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 12.896689709000157,
+    "median_tok_per_s": 18.997122946132674,
+    "median_ttft_ms": 54.001,
+    "median_generation_tok_per_s": 19.114474010244734
+  }
+}
