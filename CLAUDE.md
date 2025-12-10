@@ -39,6 +39,10 @@ uv run python scripts/run_bench.py --model ~/models/... --build-only
 uv run python scripts/run_eval.py --model ~/models/zai-org/GLM-4.6V-FP8
 uv run python scripts/run_eval.py --model ~/models/org/model --benchmark ifeval
 uv run python scripts/run_eval.py --model ~/models/org/model --benchmark gsm8k
+
+# Start standalone server for inference (keeps running until Ctrl+C)
+uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8
+uv run python scripts/run_server.py --model ~/models/org/model --test  # starts + verifies endpoint
 ```
 
 ## Architecture
@@ -76,3 +80,4 @@ All benchmarks run via Docker for reproducibility with version pinning.
 - **`bench_utils.py`**: GPU detection, model resolution, config loading, prompts, version resolution
 - **`server_manager.py`**: Server lifecycle, `start_vllm()`/`start_llama()` for Docker
 - **`docker_manager.py`**: Image building, GPU Docker validation, command builders
+- **`run_server.py`**: Standalone server runner for general inference (not tied to benchmarking)
