@@ -759,7 +759,8 @@ def warmup_model(
     api_model: str,
     prompt: str = "Hello",
     max_tokens: int = 16,
-) -> None:
+    timeout: int = 300,
+) -> bool:
     """
     Make a small inference request to preload model into GPU memory.
 
@@ -773,36 +774,43 @@ def warmup_model(
         api_model: Model name for API requests
         prompt: Warmup prompt text (default: "Hello")
         max_tokens: Max tokens to generate (default: 16)
-    """
-    if backend in ("vllm", "trtllm"):
-        # Use OpenAI-compatible API
-        client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
-        messages = build_chat_messages(prompt, image_path=None)
+        timeout: Request timeout in seconds (default: 300)
 
-        try:
+    Returns:
+        True if warmup succeeded, False if it failed
+    """
+    try:
+        if backend in ("vllm", "trtllm"):
+            # Use OpenAI-compatible API
+            client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
+            messages = build_chat_messages(prompt, image_path=None)
+
             client.chat.completions.create(
                 model=api_model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=0.0,
             )
-        except Exception as e:
-            log(f"Warmup request failed (non-fatal): {e}")
+            return True
 
-    elif backend in ("llama", "ik_llama"):
-        # Use llama.cpp native /completion endpoint
-        url = f"http://{host}:{port}/completion"
-        payload = {
-            "prompt": prompt,
-            "n_predict": max_tokens,
-            "temperature": 0.0,
-        }
+        elif backend in ("llama", "ik_llama"):
+            # Use llama.cpp native /completion endpoint
+            url = f"http://{host}:{port}/completion"
+            payload = {
+                "prompt": prompt,
+                "n_predict": max_tokens,
+                "temperature": 0.0,
+            }
 
-        try:
-            r = requests.post(url, json=payload, timeout=300)
+            r = requests.post(url, json=payload, timeout=timeout)
             r.raise_for_status()
-        except Exception as e:
-            log(f"Warmup request failed (non-fatal): {e}")
+            return True
 
-    else:
-        log(f"Unknown backend '{backend}' - skipping warmup")
+        else:
+            log(f"Unknown backend '{backend}' - skipping warmup")
+            return False
+
+    except Exception as e:
+        # Log error clearly (not as "non-fatal")
+        log(f"ERROR: Warmup request failed: {e}")
+        return False

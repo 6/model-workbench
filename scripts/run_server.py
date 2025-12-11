@@ -269,14 +269,22 @@ def main():
     should_warmup = args.model and not args.no_warmup
 
     if should_warmup:
-        log("Preloading model into GPU memory...")
-        warmup_model(
-            backend=backend,
-            host=args.host,
-            port=args.port,
-            api_model=api_model,
-        )
-        log("Model preloaded successfully")
+        # Extra verification: ensure server is truly ready
+        if not server.is_running():
+            log("ERROR: Server not running, skipping warmup")
+        else:
+            log("Preloading model into GPU memory...")
+            success = warmup_model(
+                backend=backend,
+                host=args.host,
+                port=args.port,
+                api_model=api_model,
+            )
+            if success:
+                log("Model preloaded successfully")
+            else:
+                log("WARNING: Model preload failed - first request may be slow")
+                log("Check server logs for errors")
 
     # Run test if requested
     if args.test:
