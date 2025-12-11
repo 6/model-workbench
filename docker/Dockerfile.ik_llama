@@ -47,8 +47,10 @@ RUN cmake -B build \
 
 # Use CUDA stubs for build-time linking (real libcuda.so.1 injected at runtime by nvidia-container-toolkit)
 # Create libcuda.so.1 symlink that linker expects
-RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 && \
-    ldconfig
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
+
+# Set library path for build-time linking against stubs
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH}
 
 RUN cmake --build build --config Release -j$(nproc)
 
