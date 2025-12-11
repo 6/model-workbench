@@ -129,6 +129,71 @@ def compute_metrics_delta(before: dict[str, float] | None, after: dict[str, floa
 
 
 # ----------------------------
+# TensorRT-LLM Prometheus metrics scraping
+# ----------------------------
+
+TRTLLM_METRICS = [
+    "trtllm_e2e_latency_seconds",
+    "trtllm_time_to_first_token_seconds",
+    "trtllm_time_per_output_token_seconds",
+]
+
+
+def scrape_trtllm_metrics(host: str, port: int) -> dict[str, float] | None:
+    """Scrape TensorRT-LLM Prometheus /prometheus/metrics endpoint and parse histogram sums/counts.
+
+    Note: TensorRT-LLM exposes metrics at /prometheus/metrics (not /metrics like vLLM)
+    and uses trtllm_ prefix (not vllm:).
+    """
+    try:
+        resp = requests.get(f"http://{host}:{port}/prometheus/metrics", timeout=5)
+        resp.raise_for_status()
+    except Exception:
+        return None
+
+    metrics = {}
+    # Match trtllm_* histogram metrics with _sum and _count suffixes
+    pattern = re.compile(r'^(trtllm_[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)', re.MULTILINE)
+
+    for match in pattern.finditer(resp.text):
+        name, value = match.groups()
+        try:
+            metrics[name] = float(value)
+        except ValueError:
+            pass
+
+    return metrics if metrics else None
+
+
+def compute_trtllm_metrics_delta(before: dict[str, float] | None, after: dict[str, float] | None) -> dict[str, float]:
+    """Compute delta between two TensorRT-LLM metrics snapshots. Returns timing in milliseconds."""
+    result = {}
+    if not before or not after:
+        return result
+
+    for metric_base in TRTLLM_METRICS:
+        sum_key = f"{metric_base}_sum"
+        count_key = f"{metric_base}_count"
+
+        if sum_key in before and sum_key in after and count_key in before and count_key in after:
+            delta_sum = after[sum_key] - before[sum_key]
+            delta_count = after[count_key] - before[count_key]
+
+            if delta_count > 0:
+                time_ms = (delta_sum / delta_count) * 1000
+
+                if "time_to_first_token" in metric_base:
+                    result["ttft_ms"] = time_ms
+                elif "e2e_latency" in metric_base:
+                    result["e2e_latency_ms"] = time_ms
+                elif "time_per_output_token" in metric_base:
+                    # TPOT is per-token time in seconds, convert to ms
+                    result["tpot_ms"] = time_ms
+
+    return result
+
+
+# ----------------------------
 # Backend-specific benchmark functions
 # ----------------------------
 
@@ -322,6 +387,91 @@ def bench_once_llama(
         }
 
 
+def bench_once_trtllm(
+    client: OpenAI,
+    model: str,
+    prompt: str,
+    image_path: str | None,
+    max_tokens: int,
+    temperature: float,
+    host: str,
+    port: int,
+) -> dict:
+    """Run single inference via TensorRT-LLM OpenAI-compatible API.
+
+    TensorRT-LLM exposes Prometheus metrics at /prometheus/metrics (not /metrics like vLLM)
+    when started with --return-perf-metrics flag.
+    """
+    # Build message content
+    if image_path is None:
+        messages = [{"role": "user", "content": prompt}]
+    else:
+        if image_path.startswith("http"):
+            image_content = {"type": "image_url", "image_url": {"url": image_path}}
+        else:
+            data_url = encode_image_base64(image_path)
+            image_content = {"type": "image_url", "image_url": {"url": data_url}}
+
+        messages = [{
+            "role": "user",
+            "content": [
+                image_content,
+                {"type": "text", "text": prompt},
+            ]
+        }]
+
+    # Scrape TensorRT-LLM metrics before request
+    metrics_before = scrape_trtllm_metrics(host, port)
+
+    t0 = time.perf_counter()
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature if temperature > 0 else 0.0,
+    )
+    t1 = time.perf_counter()
+
+    # Scrape metrics after request
+    metrics_after = scrape_trtllm_metrics(host, port)
+
+    output_text = response.choices[0].message.content or ""
+    wall = t1 - t0
+
+    prompt_tokens = None
+    generated_tokens = None
+    if response.usage:
+        prompt_tokens = response.usage.prompt_tokens
+        generated_tokens = response.usage.completion_tokens
+
+    tok_per_s = None
+    generation_tok_per_s = None
+    if generated_tokens and wall > 0:
+        tok_per_s = generated_tokens / wall
+
+    timing = compute_trtllm_metrics_delta(metrics_before, metrics_after)
+
+    # Calculate generation_tok_per_s from TPOT if available
+    if generated_tokens and timing.get("tpot_ms"):
+        tpot_s = timing["tpot_ms"] / 1000
+        if tpot_s > 0:
+            generation_tok_per_s = 1 / tpot_s
+
+    result = {
+        "wall_s": wall,
+        "output_text": output_text,
+        "prompt_tokens": prompt_tokens,
+        "generated_tokens": generated_tokens,
+        "tok_per_s": tok_per_s,
+        "generation_tok_per_s": generation_tok_per_s,
+        "ttft_ms": timing.get("ttft_ms"),
+        "tpot_ms": timing.get("tpot_ms"),
+        "e2e_latency_ms": timing.get("e2e_latency_ms"),
+    }
+
+    return result
+
+
 # ----------------------------
 # Unified benchmark runner
 # ----------------------------
@@ -508,21 +658,21 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
 
         # Warmup
         log("Warmup request...")
-        bench_once_vllm(client, api_model, prompt_text, image_path,
-                        min(64, args.max_tokens), args.temperature, args.host, args.port)
+        bench_once_trtllm(client, api_model, prompt_text, image_path,
+                          min(64, args.max_tokens), args.temperature, args.host, args.port)
 
         # Benchmark
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_vllm(client, api_model, prompt_text, image_path,
-                                args.max_tokens, args.temperature, args.host, args.port)
+            r = bench_once_trtllm(client, api_model, prompt_text, image_path,
+                                  args.max_tokens, args.temperature, args.host, args.port)
             ttft = r.get("ttft_ms")
             gen_tok_s = r.get("generation_tok_per_s")
             if ttft is not None and gen_tok_s is not None:
                 log(f"  {r['wall_s']:.2f}s | TTFT: {ttft:.1f}ms | gen: {gen_tok_s:.1f} tok/s")
             else:
-                log(f"  {r['wall_s']:.2f}s")
+                log(f"  {r['wall_s']:.2f}s | {r.get('tok_per_s', 0):.1f} tok/s (wall)")
             results.append(r)
 
         summary = {
@@ -530,10 +680,13 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             "median_tok_per_s": med(results, "tok_per_s"),
             "median_ttft_ms": med(results, "ttft_ms"),
             "median_generation_tok_per_s": med(results, "generation_tok_per_s"),
+            "median_tpot_ms": med(results, "tpot_ms"),
         }
 
         if summary["median_ttft_ms"] is not None and summary["median_generation_tok_per_s"] is not None:
             log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
+        elif summary["median_tok_per_s"] is not None:
+            log(f"Median: {summary['median_tok_per_s']:.1f} tok/s (wall clock)")
         else:
             log(f"Median: {summary['median_wall_s']:.2f}s")
 

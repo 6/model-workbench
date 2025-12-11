@@ -396,6 +396,7 @@ def build_trtllm_docker_cmd(
         "--host", "0.0.0.0",
         "--port", str(port),
         "--tp_size", str(tensor_parallel),
+        "--return-perf-metrics",  # Enable Prometheus metrics at /prometheus/metrics
     ]
 
     if max_batch_size is not None:
