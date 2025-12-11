@@ -48,20 +48,27 @@ defaults:
 models:
   - repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:
-      - "UD-Q3_K_XL/*.gguf"
+      #- "UD-Q3_K_XL/*.gguf"
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
       - "UD-Q6_K_XL/*.gguf"
 
+  - repo_id: unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF
+    include:
+      - "Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL.gguf"
+      - "Devstral-Small-2-24B-Instruct-2512-UD-Q6_K_XL.gguf"
+
   - repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
+    exclude:
+      - "model-*.safetensors" # use consolidated
 
   - repo_id: mistralai/Devstral-2-123B-Instruct-2512
     exclude:
-      - "model-*.safetensors"
+      - "model-*.safetensors" # use consolidated
 
-  - repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
-    include:
-      - "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L.gguf"
+  #- repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
+  #  include:
+  #    - "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L.gguf"
 
   - repo_id: zai-org/GLM-4.6V-FP8
 
@@ -114,7 +121,7 @@ models:
 
   - repo_id: Qwen/Qwen-Image-Edit-2509
 
-  - repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
+  #- repo_id: Qwen/Qwen3-30B-A3B-Instruct-2507-FP8
 
   #- repo_id: Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8
 
@@ -133,7 +140,7 @@ models:
     include:
       - "Olmo-3-32B-Think-UD-Q4_K_XL.gguf"
 
-  - repo_id: allenai/Olmo-3-7B-Think
+  #- repo_id: allenai/Olmo-3-7B-Think
 
   #- repo_id: mistralai/Ministral-3-14B-Instruct-2512
 
@@ -145,9 +152,9 @@ models:
 
   - repo_id: openai/gpt-oss-120b
 
-  - repo_id: unsloth/GLM-4.5-Air-GGUF
-    include:
-      - "UD-Q4_K_XL/*.gguf"
+  #- repo_id: unsloth/GLM-4.5-Air-GGUF
+  #  include:
+  #    - "UD-Q4_K_XL/*.gguf"
 
   #- repo_id: zai-org/GLM-4.5-Air-FP8
 
@@ -155,21 +162,21 @@ models:
     include:
       - "UD-Q3_K_XL/*.gguf"
       - "IQ4_XS/*.gguf"
-      - "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
+      #- "UD-Q4_K_XL/*.gguf"
+      #- "UD-Q5_K_XL/*.gguf"
 
   - repo_id: unsloth/GLM-4.6-REAP-268B-A32B-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
 
-  - repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
-    include:
-      - "Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf"
+  #- repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
+  #  include:
+  #    - "Ministral-3-14B-Instruct-2512-UD-Q4_K_XL.gguf"
 
-  - repo_id: unsloth/Ministral-3-14B-Reasoning-2512-GGUF
-    include:
-      - "Ministral-3-14B-Reasoning-2512-UD-Q4_K_XL.gguf"
+  #- repo_id: unsloth/Ministral-3-14B-Reasoning-2512-GGUF
+  #  include:
+  #    - "Ministral-3-14B-Reasoning-2512-UD-Q4_K_XL.gguf"
 
   - repo_id: unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF
     include:
@@ -180,10 +187,10 @@ models:
       - "Qwen3-VL-32B-Instruct-1M-UD-Q4_K_XL.gguf"
       - "mmproj-F16.gguf"
 
-  - repo_id: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF
-    include:
-      - "Qwen3-VL-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
-      - "mmproj-F16.gguf"
+  #- repo_id: unsloth/Qwen3-VL-30B-A3B-Instruct-GGUF
+  #  include:
+  #    - "Qwen3-VL-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
+  #    - "mmproj-F16.gguf"
 
   - repo_id: unsloth/Qwen3-VL-8B-Instruct-1M-GGUF
     include:
@@ -205,6 +212,6 @@ models:
       - "Qwen3-0.6B-UD-Q4_K_XL.gguf"
       - "Qwen3-0.6B-UD-Q6_K_XL.gguf"
 
-  - repo_id: unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
-    include:
-      - "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
+  #- repo_id: unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
+  #  include:
+  #    - "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
