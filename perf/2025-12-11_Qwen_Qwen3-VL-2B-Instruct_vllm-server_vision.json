@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-11T05:24:05.508030",
+  "repo_id": "Qwen/Qwen3-VL-2B-Instruct",
+  "model_ref": "~/models/Qwen/Qwen3-VL-2B-Instruct",
+  "engine": "vllm-server",
+  "mode": "vision",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 91458
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 91458
+      }
+    ],
+    "memory_used_mib": 182916,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Describe this image in detail.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "config/example.jpg",
+    "backend_version": "v0.12.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 0.43942712699936237,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky. The image is dominated by the golden-yellow petals of the sunflowers, which fill the frame from the foreground to the distant horizon. The flowers are in full bloom, with their large, circular, yellow petals and dark brown, textured centers. The sunflowers are arranged in a dense, natural pattern, creating a sense of depth and abundance. The green leaves of the sunflowers are visible between the blooms, providing a contrast to the yellow. The sky above is a pale blue with scattered white clouds. The overall impression is one of a bright, sunny day in a natural, open field.",
+      "prompt_tokens": 112,
+      "generated_tokens": 142,
+      "tok_per_s": 323.1480062909408,
+      "generation_tok_per_s": 332.8920762900357,
+      "ttft_ms": 6.890058517456055,
+      "prefill_ms": 5.608212999504758,
+      "generation_ms": 426.56467400047404
+    },
+    {
+      "wall_s": 0.4383564199997636,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky. The image is dominated by the golden-yellow petals of the sunflowers, which fill the frame from the foreground to the distant horizon. The flowers are in full bloom, with their large, circular, yellow petals and dark brown, textured centers. The sunflowers are arranged in a dense, natural pattern, creating a sense of depth and abundance. The green leaves of the sunflowers are visible between the blooms, providing a contrast to the yellow. The sky above is a pale blue with scattered white clouds. The overall impression is one of a bright, sunny day in a natural, open field.",
+      "prompt_tokens": 112,
+      "generated_tokens": 142,
+      "tok_per_s": 323.93731110423016,
+      "generation_tok_per_s": 332.9934915885409,
+      "ttft_ms": 6.332874298095703,
+      "prefill_ms": 5.216980000113836,
+      "generation_ms": 426.4347609996548
+    },
+    {
+      "wall_s": 0.4385886259997278,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky. The image is dominated by the golden-yellow petals of the sunflowers, which fill the frame from the foreground to the distant horizon. The flowers are in full bloom, with their large, circular, yellow petals and dark brown, textured centers. The sunflowers are arranged in a dense, natural pattern, creating a sense of depth and abundance. The green leaves of the sunflowers are visible between the blooms, providing a contrast to the yellow. The sky above is a pale blue with scattered white clouds. The overall impression is one of a bright, sunny day in a natural, open field.",
+      "prompt_tokens": 112,
+      "generated_tokens": 142,
+      "tok_per_s": 323.76580600174555,
+      "generation_tok_per_s": 332.73964223630696,
+      "ttft_ms": 5.958795547485352,
+      "prefill_ms": 4.904854999949748,
+      "generation_ms": 426.7600909997782
+    },
+    {
+      "wall_s": 0.4400908719999279,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky. The image is dominated by the golden-yellow petals of the sunflowers, which fill the frame from the foreground to the distant horizon. The flowers are in full bloom, with their large, circular, yellow petals and dark brown, textured centers. The sunflowers are arranged in a dense, natural pattern, creating a sense of depth and abundance. The green leaves of the sunflowers are visible between the blooms, providing a contrast to the yellow. The sky above is a pale blue with scattered white clouds. The overall impression is one of a bright, sunny day in a natural, open field.",
+      "prompt_tokens": 112,
+      "generated_tokens": 142,
+      "tok_per_s": 322.66063450646453,
+      "generation_tok_per_s": 332.0293830192305,
+      "ttft_ms": 5.976200103759766,
+      "prefill_ms": 4.883153999799106,
+      "generation_ms": 427.6729930006695
+    },
+    {
+      "wall_s": 0.43939337499978137,
+      "output_text": "This is a vibrant, wide-angle photograph of a vast field of sunflowers under a bright, partly cloudy sky. The image is dominated by the golden-yellow petals of the sunflowers, which fill the frame from the foreground to the distant horizon. The flowers are in full bloom, with their large, circular, yellow petals and dark brown, textured centers. The sunflowers are arranged in a dense, natural pattern, creating a sense of depth and abundance. The green leaves of the sunflowers are visible between the blooms, providing a contrast to the yellow. The sky above is a pale blue with scattered white clouds. The overall impression is one of a bright, sunny day in a natural, open field.",
+      "prompt_tokens": 112,
+      "generated_tokens": 142,
+      "tok_per_s": 323.17282890319103,
+      "generation_tok_per_s": 332.00784578520495,
+      "ttft_ms": 5.928516387939453,
+      "prefill_ms": 4.881711000052746,
+      "generation_ms": 427.7007359996787
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.43939337499978137,
+    "median_tok_per_s": 323.17282890319103,
+    "median_ttft_ms": 5.976200103759766,
+    "median_generation_tok_per_s": 332.73964223630696
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "timestamp": "2025-12-11T05:59:48.440891",
+  "repo_id": "unsloth/MiniMax-M2-GGUF/UD-Q4_K_XL",
+  "model_ref": "~/models/unsloth/MiniMax-M2-GGUF/UD-Q4_K_XL/MiniMax-M2-UD-Q4_K_XL-00001-of-00003.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 65260
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 62778
+      }
+    ],
+    "memory_used_mib": 128038,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7349",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 4.3716653999999835,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 0.338,
+      "tok_per_s": 117.11783797543195,
+      "generation_tok_per_s": 117.58826469118381,
+      "generation_ms": 4354.176,
+      "output_text": " \nFocus on: \n- What is KV cache? \n- Why is it needed? \n- How does it work? \n- Why does it matter for long context? \n- What are the limitations?\n\nFocus on clarity and technical accuracy. Avoid marketing language. Avoid fluff. \nKeep it under 300 words.\n\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\nKV cache is needed because transformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^2) to O(n) for the new token's attention with past tokens. \n\nKV cache matters for long context because it enables efficient processing of long sequences. Without it, generation becomes prohibitively expensive as context length grows. With KV cache, the model can maintain and attend to long contexts without quadratic scaling. \n\nLimitations include: memory usage grows linearly with context length; cache invalidation is needed for certain operations like sliding windows or retrieval; and it doesn't reduce the memory footprint of the model itself. Also, some architectures like Mamba or state space models don't use KV cache.\n\n**KV Cache: Technical Overview**\n\n**What is KV Cache?**\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\n**Why is it needed?**\nTransformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\n**How does it work?**\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^"
+    },
+    {
+      "wall_s": 4.361422881999715,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 3.43,
+      "tok_per_s": 117.39288160134743,
+      "generation_tok_per_s": 118.73388859978425,
+      "generation_ms": 4312.164,
+      "output_text": " \nFocus on: \n- What is KV cache? \n- Why is it needed? \n- How does it work? \n- Why does it matter for long context? \n- What are the limitations?\n\nFocus on clarity and technical accuracy. Avoid marketing language. Avoid fluff. \nKeep it under 300 words.\n\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\nKV cache is needed because transformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^2) to O(n) for the new token's attention with past tokens. \n\nKV cache matters for long context because it enables efficient processing of long sequences. Without it, generation becomes prohibitively expensive as context length grows. With KV cache, the model can maintain and attend to long contexts without quadratic scaling. \n\nLimitations include: memory usage grows linearly with context length; cache invalidation is needed for certain operations like sliding windows or retrieval; and it doesn't reduce the memory footprint of the model itself. Also, some architectures like Mamba or state space models don't use KV cache.\n\n**KV Cache: Technical Overview**\n\n**What is KV Cache?**\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\n**Why is it needed?**\nTransformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\n**How does it work?**\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^"
+    },
+    {
+      "wall_s": 4.325662548000764,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 3.106,
+      "tok_per_s": 118.363370771175,
+      "generation_tok_per_s": 118.74663850763307,
+      "generation_ms": 4311.701,
+      "output_text": " \nFocus on: \n- What is KV cache? \n- Why is it needed? \n- How does it work? \n- Why does it matter for long context? \n- What are the limitations?\n\nFocus on clarity and technical accuracy. Avoid marketing language. Avoid fluff. \nKeep it under 300 words.\n\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\nKV cache is needed because transformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^2) to O(n) for the new token's attention with past tokens. \n\nKV cache matters for long context because it enables efficient processing of long sequences. Without it, generation becomes prohibitively expensive as context length grows. With KV cache, the model can maintain and attend to long contexts without quadratic scaling. \n\nLimitations include: memory usage grows linearly with context length; cache invalidation is needed for certain operations like sliding windows or retrieval; and it doesn't reduce the memory footprint of the model itself. Also, some architectures like Mamba or state space models don't use KV cache.\n\n**KV Cache: Technical Overview**\n\n**What is KV Cache?**\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\n**Why is it needed?**\nTransformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\n**How does it work?**\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^"
+    },
+    {
+      "wall_s": 4.324126819999947,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 2.81,
+      "tok_per_s": 118.40540791539651,
+      "generation_tok_per_s": 118.764762958755,
+      "generation_ms": 4311.043,
+      "output_text": " \nFocus on: \n- What is KV cache? \n- Why is it needed? \n- How does it work? \n- Why does it matter for long context? \n- What are the limitations?\n\nFocus on clarity and technical accuracy. Avoid marketing language. Avoid fluff. \nKeep it under 300 words.\n\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\nKV cache is needed because transformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^2) to O(n) for the new token's attention with past tokens. \n\nKV cache matters for long context because it enables efficient processing of long sequences. Without it, generation becomes prohibitively expensive as context length grows. With KV cache, the model can maintain and attend to long contexts without quadratic scaling. \n\nLimitations include: memory usage grows linearly with context length; cache invalidation is needed for certain operations like sliding windows or retrieval; and it doesn't reduce the memory footprint of the model itself. Also, some architectures like Mamba or state space models don't use KV cache.\n\n**KV Cache: Technical Overview**\n\n**What is KV Cache?**\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\n**Why is it needed?**\nTransformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\n**How does it work?**\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^"
+    },
+    {
+      "wall_s": 4.324225868999747,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 3.233,
+      "tok_per_s": 118.40269576816362,
+      "generation_tok_per_s": 118.7820662279618,
+      "generation_ms": 4310.415,
+      "output_text": " \nFocus on: \n- What is KV cache? \n- Why is it needed? \n- How does it work? \n- Why does it matter for long context? \n- What are the limitations?\n\nFocus on clarity and technical accuracy. Avoid marketing language. Avoid fluff. \nKeep it under 300 words.\n\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\nKV cache is needed because transformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^2) to O(n) for the new token's attention with past tokens. \n\nKV cache matters for long context because it enables efficient processing of long sequences. Without it, generation becomes prohibitively expensive as context length grows. With KV cache, the model can maintain and attend to long contexts without quadratic scaling. \n\nLimitations include: memory usage grows linearly with context length; cache invalidation is needed for certain operations like sliding windows or retrieval; and it doesn't reduce the memory footprint of the model itself. Also, some architectures like Mamba or state space models don't use KV cache.\n\n**KV Cache: Technical Overview**\n\n**What is KV Cache?**\nKV cache is a memory structure that stores key-value pairs from previous tokens in a transformer model. It is used to avoid recomputing attention for past tokens during autoregressive generation. \n\n**Why is it needed?**\nTransformer attention has quadratic complexity in sequence length. Without caching, each new token requires recomputing attention for all previous tokens, making generation O(n^2) per token. KV cache stores the computed keys and values from previous layers, allowing the model to attend to them without recomputation. \n\n**How does it work?**\nKV cache works by storing the keys and values from each attention head for all previous tokens. When generating a new token, the model uses the cached keys/values for past tokens and only computes attention for the new token. This reduces per-token computation from O(n^"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.325662548000764,
+    "median_tok_per_s": 118.363370771175,
+    "median_ttft_ms": 3.106,
+    "median_generation_tok_per_s": 118.74663850763307
+  }
+}

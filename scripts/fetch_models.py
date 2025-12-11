@@ -2,22 +2,24 @@
 import os
 import subprocess
 from pathlib import Path
-import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "config" / "models.yaml"
-MODELS_ROOT = Path.home() / "models"
+import yaml
+from common import CONFIG_PATH, MODELS_ROOT
+
 
 def run(cmd):
     print("+", " ".join(cmd))
     subprocess.check_call(cmd)
 
+
 def expand(p: str) -> Path:
     return Path(os.path.expandvars(os.path.expanduser(p))).resolve()
+
 
 def local_dir_for_repo(repo_id: str) -> Path:
     # Mirror HF structure under ~/models/<org>/<repo>
     return MODELS_ROOT / repo_id
+
 
 def normalize_to_list(val):
     if val is None:
@@ -26,13 +28,14 @@ def normalize_to_list(val):
         return val
     return [val]
 
+
 def main():
-    if not CONFIG.exists():
-        raise SystemExit(f"Missing config: {CONFIG}")
+    if not CONFIG_PATH.exists():
+        raise SystemExit(f"Missing config: {CONFIG_PATH}")
 
     MODELS_ROOT.mkdir(parents=True, exist_ok=True)
 
-    data = yaml.safe_load(CONFIG.read_text()) or {}
+    data = yaml.safe_load(CONFIG_PATH.read_text()) or {}
     items = data.get("models") or []
     if not isinstance(items, list):
         raise SystemExit("config/models.yaml: 'models' must be a list")
@@ -40,8 +43,6 @@ def main():
     hf_models = []
     for item in items:
         if not isinstance(item, dict):
-            continue
-        if item.get("source") != "hf":
             continue
         repo_id = item.get("repo_id")
         if not repo_id or "REPLACE_ME" in repo_id:
@@ -65,7 +66,7 @@ def main():
         revision = item.get("revision")
         repo_type = item.get("repo_type")  # optional: "model", "dataset", "space"
 
-        print(f"\nDownloading:")
+        print("\nDownloading:")
         print(f"  repo_id:   {repo_id}")
         print(f"  local_dir: {out_path}")
         if files:
@@ -87,6 +88,9 @@ def main():
             cmd.extend(files)
 
         # Pattern-based filtering for partial repo downloads.
+        # IMPORTANT: Use single flag with multiple patterns, NOT a for-loop with
+        # separate flags per pattern. The hf CLI overwrites (not appends) when
+        # the same flag is repeated, so `--include a --include b` only downloads b.
         if include:
             cmd.append("--include")
             cmd.extend(include)
@@ -104,6 +108,7 @@ def main():
         run(cmd)
 
     print("\nModel fetch complete.")
+
 
 if __name__ == "__main__":
     main()

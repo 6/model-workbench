@@ -50,9 +50,7 @@ class LocalServerLLM(DeepEvalBaseLLM):
         """Async generation (falls back to sync)."""
         return self.generate(prompt)
 
-    def generate_samples(
-        self, prompt: str, n: int, temperature: float
-    ) -> list[str]:
+    def generate_samples(self, prompt: str, n: int, temperature: float) -> list[str]:
         """Generate multiple samples for HumanEval pass@k calculation.
 
         Args:
