@@ -1,15 +1,22 @@
-"""Docker image management for vLLM and llama.cpp backends."""
+"""Docker image management for vLLM, llama.cpp, and TensorRT-LLM backends."""
 
+import os
 import subprocess
 from pathlib import Path
 
 from bench_utils import ROOT, log
 
 
-# Image naming convention
+# Image naming convention for build-from-source images
 VLLM_IMAGE_PREFIX = "model-bench-vllm"
 LLAMA_IMAGE_PREFIX = "model-bench-llama"
 IK_LLAMA_IMAGE_PREFIX = "model-bench-ik-llama"
+
+# Prebuilt image registries
+PREBUILT_IMAGES = {
+    "vllm": "vllm/vllm-openai",  # tag = version (e.g., v0.8.0)
+    "trtllm": "nvcr.io/nvidia/tensorrt-llm/release",  # tag = version (e.g., 0.18.0)
+}
 
 # Dockerfile locations
 DOCKERFILE_VLLM = ROOT / "docker" / "Dockerfile.vllm"
@@ -18,7 +25,7 @@ DOCKERFILE_IK_LLAMA = ROOT / "docker" / "Dockerfile.ik_llama"
 
 
 def get_image_name(engine: str, version: str) -> str:
-    """Get Docker image name for engine and version.
+    """Get Docker image name for build-from-source images.
 
     Args:
         engine: 'vllm', 'llama', or 'ik_llama'
@@ -34,6 +41,73 @@ def get_image_name(engine: str, version: str) -> str:
     }
     prefix = prefixes.get(engine, LLAMA_IMAGE_PREFIX)
     return f"{prefix}:{version}"
+
+
+def get_prebuilt_image_name(engine: str, version: str) -> str:
+    """Get prebuilt Docker image name from official registry.
+
+    Args:
+        engine: 'vllm' or 'trtllm'
+        version: Version tag (e.g., 'v0.8.0' for vllm, '0.18.0' for trtllm)
+
+    Returns:
+        Full image name (e.g., 'vllm/vllm-openai:v0.8.0')
+
+    Raises:
+        SystemExit if engine doesn't have prebuilt images
+    """
+    if engine not in PREBUILT_IMAGES:
+        raise SystemExit(
+            f"No prebuilt images available for '{engine}'.\n"
+            f"Engines with prebuilt images: {', '.join(PREBUILT_IMAGES.keys())}"
+        )
+    return f"{PREBUILT_IMAGES[engine]}:{version}"
+
+
+def pull_image(image_name: str) -> bool:
+    """Pull a Docker image from registry.
+
+    Args:
+        image_name: Full image name with tag
+
+    Returns:
+        True if pull succeeded, False otherwise
+    """
+    log(f"Pulling {image_name}...")
+    try:
+        result = subprocess.run(
+            ["docker", "pull", image_name],
+            check=True,
+            timeout=1800,  # 30 min timeout for large images
+        )
+        log(f"Successfully pulled {image_name}")
+        return True
+    except subprocess.CalledProcessError as e:
+        log(f"Failed to pull {image_name}: exit code {e.returncode}")
+        return False
+    except subprocess.TimeoutExpired:
+        log(f"Timeout pulling {image_name}")
+        return False
+
+
+def image_exists_local(image_name: str) -> bool:
+    """Check if Docker image exists locally.
+
+    Args:
+        image_name: Full image name with tag
+
+    Returns:
+        True if image exists locally
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "image", "inspect", image_name],
+            capture_output=True,
+            timeout=10,
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
 
 
 def image_exists(engine: str, version: str) -> bool:
@@ -280,19 +354,86 @@ def build_llama_docker_cmd(
     return cmd
 
 
-def ensure_image(engine: str, version: str, rebuild: bool = False) -> str:
-    """Ensure Docker image exists, building if necessary.
+def build_trtllm_docker_cmd(
+    image_name: str,
+    model_path: str,
+    port: int,
+    tensor_parallel: int,
+    max_batch_size: int | None = None,
+    max_num_tokens: int | None = None,
+    max_seq_len: int | None = None,
+    extra_args: list[str] | None = None,
+) -> list[str]:
+    """Build Docker run command for TensorRT-LLM trtllm-serve.
 
     Args:
-        engine: 'vllm' or 'llama'
+        image_name: Docker image to use (NGC TensorRT-LLM image)
+        model_path: Path to model directory (will be bind-mounted)
+        port: Server port
+        tensor_parallel: Tensor parallel size (tp_size)
+        max_batch_size: Maximum batch size (optional)
+        max_num_tokens: Maximum number of tokens (optional)
+        max_seq_len: Maximum sequence length (optional)
+        extra_args: Additional trtllm-serve arguments (optional)
+
+    Returns:
+        Docker run command list
+    """
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
+    cache_dir = os.path.expanduser("~/.cache")
+
+    cmd = [
+        "docker", "run", "--rm",
+        "--gpus", "all",
+        "--ipc", "host",
+        "--ulimit", "memlock=-1",
+        "--ulimit", "stack=67108864",
+        "-p", f"{port}:{port}",
+        "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
+        "-v", f"{cache_dir}:/root/.cache:rw",
+        image_name,
+        "trtllm-serve", model_path_resolved,
+        "--host", "0.0.0.0",
+        "--port", str(port),
+        "--tp_size", str(tensor_parallel),
+    ]
+
+    if max_batch_size is not None:
+        cmd += ["--max_batch_size", str(max_batch_size)]
+
+    if max_num_tokens is not None:
+        cmd += ["--max_num_tokens", str(max_num_tokens)]
+
+    if max_seq_len is not None:
+        cmd += ["--max_seq_len", str(max_seq_len)]
+
+    if extra_args:
+        cmd += extra_args
+
+    return cmd
+
+
+def ensure_image(
+    engine: str,
+    version: str,
+    rebuild: bool = False,
+    image_type: str = "build",
+    image_override: str | None = None,
+) -> str:
+    """Ensure Docker image exists, building or pulling as needed.
+
+    Args:
+        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
         version: Version tag or commit SHA
-        rebuild: Force rebuild even if exists
+        rebuild: Force rebuild/repull even if exists
+        image_type: 'prebuilt' to use official images, 'build' to build from source
+        image_override: Direct image name to use (highest priority, skips build/prebuilt logic)
 
     Returns:
         Image name
 
     Raises:
-        SystemExit if GPU Docker not available or build fails
+        SystemExit if GPU Docker not available or build/pull fails
     """
     if not docker_gpu_available():
         raise SystemExit(
@@ -301,4 +442,24 @@ def ensure_image(engine: str, version: str, rebuild: bool = False) -> str:
             "  docker run --rm --gpus all nvidia/cuda:12.4.0-base-ubuntu22.04 nvidia-smi"
         )
 
+    # Direct image override (highest priority)
+    if image_override:
+        if not image_exists_local(image_override) or rebuild:
+            if not pull_image(image_override):
+                raise SystemExit(f"Failed to pull image: {image_override}")
+        else:
+            log(f"Using existing image: {image_override}")
+        return image_override
+
+    # Prebuilt images (vLLM or TensorRT-LLM)
+    if image_type == "prebuilt" or engine == "trtllm":
+        image_name = get_prebuilt_image_name(engine, version)
+        if not image_exists_local(image_name) or rebuild:
+            if not pull_image(image_name):
+                raise SystemExit(f"Failed to pull prebuilt image: {image_name}")
+        else:
+            log(f"Using existing prebuilt image: {image_name}")
+        return image_name
+
+    # Build from source (default for llama/ik_llama, optional for vllm)
     return build_image(engine, version, force=rebuild)

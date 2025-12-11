@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Standalone Server Runner - Start vLLM, llama.cpp, or ik_llama.cpp server for inference.
+Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, or TensorRT-LLM server.
 
 Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
 Use --backend to explicitly select a backend.
@@ -9,6 +9,15 @@ Server keeps running until Ctrl+C.
 Examples:
   # Start vLLM server (safetensors model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8
+
+  # Start vLLM with prebuilt official image
+  uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --image-type prebuilt
+
+  # Start vLLM with specific image (e.g., nightly)
+  uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --image vllm/vllm-openai:nightly
+
+  # Start TensorRT-LLM server
+  uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
 
   # Start llama.cpp server (GGUF model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
@@ -32,6 +41,7 @@ from pathlib import Path
 from bench_utils import (
     BACKENDS,
     get_gpu_count,
+    get_image_type,
     get_model_backend_version,
     log,
     resolve_backend,
@@ -62,7 +72,7 @@ def test_chat_completion(host: str, port: int, model_name: str) -> bool:
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Start a standalone vLLM, llama.cpp, or ik_llama.cpp server",
+        description="Start a standalone vLLM, llama.cpp, ik_llama.cpp, or TensorRT-LLM server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -77,7 +87,7 @@ def main():
     # Server options
     ap.add_argument("--host", default="127.0.0.1", help="Server host")
     ap.add_argument("--port", type=int, default=None,
-                    help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)")
+                    help="Server port (default: 8000 for vLLM/trtllm, 8080 for llama.cpp)")
     ap.add_argument("--server-timeout", type=int, default=360,
                     help="Timeout waiting for server to start (default: 360s)")
 
@@ -87,11 +97,15 @@ def main():
     ap.add_argument("--test-only", action="store_true",
                     help="Only test existing server, don't start a new one")
 
-    # Backend version
+    # Backend version and image options
     ap.add_argument("--backend-version", default=None,
-                    help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp)")
+                    help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)")
     ap.add_argument("--rebuild", action="store_true",
-                    help="Force rebuild Docker image even if cached")
+                    help="Force rebuild/repull Docker image even if cached")
+    ap.add_argument("--image-type", choices=["prebuilt", "build"], default=None,
+                    help="Image type: 'prebuilt' uses official images, 'build' compiles from source")
+    ap.add_argument("--image", default=None,
+                    help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)")
 
     # vLLM-specific options
     vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
@@ -124,12 +138,12 @@ def main():
     if args.port is None:
         args.port = backend_info["default_port"]
 
-    # Auto-detect tensor parallel for vLLM
-    if backend == "vllm" and args.tensor_parallel is None:
+    # Auto-detect tensor parallel for vLLM and trtllm
+    if backend in ("vllm", "trtllm") and args.tensor_parallel is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path
-    model_path = resolve_model_path(args.model) if backend == "vllm" else args.model
+    model_path = resolve_model_path(args.model) if backend in ("vllm", "trtllm") else args.model
 
     # Resolve backend version
     backend_version = args.backend_version or get_model_backend_version(args.model, backend)
@@ -141,6 +155,9 @@ def main():
             f"  2. Pass --backend-version"
         )
 
+    # Resolve image type (from CLI or config)
+    image_type = args.image_type or get_image_type(backend)
+
     # Create server manager
     server = ServerManager(
         host=args.host,
@@ -148,8 +165,8 @@ def main():
         timeout=args.server_timeout,
     )
 
-    # Model name for API (vLLM uses full path, llama.cpp uses gpt-3.5-turbo)
-    api_model = model_path if backend == "vllm" else "gpt-3.5-turbo"
+    # Model name for API (vLLM/trtllm use full path, llama.cpp uses gpt-3.5-turbo)
+    api_model = model_path if backend in ("vllm", "trtllm") else "gpt-3.5-turbo"
 
     # Test-only mode
     if args.test_only:
@@ -169,12 +186,15 @@ def main():
         return
 
     # Start server
-    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp"}
+    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp", "trtllm": "TensorRT-LLM"}
     backend_label = backend_labels.get(backend, backend)
     log(f"Starting {backend_label} server...")
     log(f"  Model: {model_path}")
     log(f"  Backend: {backend}")
     log(f"  Backend version: {backend_version}")
+    log(f"  Image type: {image_type}")
+    if args.image:
+        log(f"  Image override: {args.image}")
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
     if backend == "vllm":
@@ -185,6 +205,15 @@ def main():
             max_model_len=args.max_model_len,
             gpu_memory_utilization=args.gpu_memory_utilization,
             max_num_batched_tokens=args.max_num_batched_tokens,
+            rebuild=args.rebuild,
+            image_type=image_type,
+            image_override=args.image,
+        )
+    elif backend == "trtllm":
+        server.start_trtllm(
+            model_path=model_path,
+            tensor_parallel=args.tensor_parallel,
+            version=backend_version,
             rebuild=args.rebuild,
         )
     elif backend in ("llama", "ik_llama"):

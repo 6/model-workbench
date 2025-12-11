@@ -25,70 +25,64 @@ run_server.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 
 ---
 
-## 2. Pre-Built Image Support
+## 2. Pre-Built Image Support ✅ DONE
 
 **Goal**: Use official Docker images alongside build-from-source.
 
-### Current State
-- All images built from source via `docker/Dockerfile.vllm` and `docker/Dockerfile.llama`
-- Version pinning via git checkout
+### Implemented
+- Support for pre-built images like `vllm/vllm-openai:v0.8.0`
+- `--image-type` CLI flag: `prebuilt` (official images) vs `build` (from source)
+- `--image` CLI flag for direct image specification (e.g., `--image vllm/vllm-openai:nightly`)
+- Config defaults: `vllm_image_type: prebuilt` in `config/models.yaml`
+- `docker_manager.py`: `pull_image()`, `get_prebuilt_image_name()`, updated `ensure_image()`
 
-### Proposed Changes
-- Support pre-built images like `vllm/vllm-openai:nightly`, `vllm/vllm-openai:v0.8.0`
-- Add `image_type` config: `build` (current) vs `prebuilt`
-
-### Config Schema Extension
-```yaml
-defaults:
-  vllm_version: v0.8.0
-  vllm_image_type: prebuilt  # or 'build'
-  # When prebuilt: uses vllm/vllm-openai:v0.8.0
-  # When build: uses docker/Dockerfile.vllm with VERSION=v0.8.0
-```
-
-### CLI Override
+### Usage
 ```bash
-# Use official image directly
-run_server.py --model ... --image vllm/vllm-openai:nightly
+# Use prebuilt (default if configured)
+run_server.py --model ~/models/GLM-FP8
 
-# Force build from source even if prebuilt available
-run_server.py --model ... --build-from-source
+# Force build from source
+run_server.py --model ~/models/GLM-FP8 --image-type build
+
+# Direct image specification (highest priority)
+run_server.py --model ~/models/GLM-FP8 --image vllm/vllm-openai:nightly
+run_bench.py --model ~/models/GLM-FP8 --image vllm/vllm-openai:nightly
 ```
-
-### Implementation
-1. Add `--image` CLI flag for direct image specification
-2. Update `docker_manager.py` to handle prebuilt images (skip build, just pull)
-3. Add `--build-from-source` to force build behavior
-4. Update config schema parsing in `bench_utils.py`
 
 ---
 
-## 3. TensorRT-LLM Backend Integration
+## 3. TensorRT-LLM Backend Integration ✅ DONE
 
 **Goal**: Add TensorRT-LLM as a third backend option.
 
-### Key Considerations
-- TensorRT-LLM requires model compilation step (engine building)
-- Different from vLLM/llama.cpp which load models directly
-- Need to handle engine caching
+### Implemented
+- `--backend trtllm` flag for all scripts (run_server.py, run_bench.py, run_eval.py)
+- Uses NGC prebuilt images: `nvcr.io/nvidia/tensorrt-llm/release:{version}`
+- `trtllm-serve` command with OpenAI-compatible API
+- `start_trtllm()` method in `ServerManager`
+- `build_trtllm_docker_cmd()` in `docker_manager.py`
+- `run_benchmark_trtllm()` in `run_bench.py`
+- Engine caching via `~/.cache` mount to container
+- Config default: `trtllm_version: "0.18.0"`
 
-### Implementation Steps
-1. Create `docker/Dockerfile.trtllm` with TensorRT-LLM
-2. Add `start_trtllm()` method to `ServerManager`
-3. Add `build_trtllm_docker_cmd()` to `docker_manager.py`
-4. Handle engine compilation caching (store in `~/.cache/trtllm-engines/`)
-5. Add `--backend trtllm` flag
-6. Add readiness check for TensorRT-LLM server
+### Usage
+```bash
+# Run benchmark with TensorRT-LLM
+run_bench.py --model ~/models/GLM-FP8 --backend trtllm
 
-### Config Addition
-```yaml
-defaults:
-  trtllm_version: v0.16.0
+# Start server
+run_server.py --model ~/models/GLM-FP8 --backend trtllm
+
+# Run evals
+run_eval.py --model ~/models/GLM-FP8 --backend trtllm
+
+# Specific version
+run_bench.py --model ~/models/GLM-FP8 --backend trtllm --backend-version 0.18.0
 ```
 
 ### References
-- https://nvidia.github.io/TensorRT-LLM/
-- TensorRT-LLM uses Triton Inference Server for serving
+- https://nvidia.github.io/TensorRT-LLM/commands/trtllm-serve/trtllm-serve.html
+- NGC Container: https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
 
 ---
 
@@ -190,25 +184,25 @@ models:
 ### Multi-Backend Support ✅
 - [x] Add `--backend` flag to `run_bench.py`
 - [x] Add `--backend` flag to `run_server.py`
-- [ ] Add `--backend` flag to `run_eval.py`
+- [x] Add `--backend` flag to `run_eval.py`
 - [x] Validate backend vs model format compatibility
 - [x] Update help text and examples
 - [x] Add ik_llama.cpp backend support
 
-### Pre-Built Images
-- [ ] Add `--image` flag for direct image specification
-- [ ] Update `docker_manager.ensure_image()` to skip build for prebuilt
-- [ ] Add `docker pull` for prebuilt images
-- [ ] Add `image_type` to config schema
-- [ ] Update `get_model_backend_version()` to return image info
+### Pre-Built Images ✅
+- [x] Add `--image` flag for direct image specification
+- [x] Update `docker_manager.ensure_image()` to skip build for prebuilt
+- [x] Add `docker pull` for prebuilt images
+- [x] Add `image_type` to config schema
+- [x] Add `get_image_type()` to bench_utils.py
 
-### TensorRT-LLM
-- [ ] Create `docker/Dockerfile.trtllm`
-- [ ] Add `start_trtllm()` to `ServerManager`
-- [ ] Add `build_trtllm_docker_cmd()` to `docker_manager.py`
-- [ ] Implement engine caching strategy
-- [ ] Add `run_benchmark_trtllm()` to `run_bench.py`
-- [ ] Test with sample model
+### TensorRT-LLM ✅
+- [x] Use NGC prebuilt images (no Dockerfile needed)
+- [x] Add `start_trtllm()` to `ServerManager`
+- [x] Add `build_trtllm_docker_cmd()` to `docker_manager.py`
+- [x] Implement engine caching (via ~/.cache mount)
+- [x] Add `run_benchmark_trtllm()` to `run_bench.py`
+- [x] Add trtllm support to `run_eval.py`
 
 ### LiteLLM
 - [ ] Add `--use-litellm` flag to `run_server.py`

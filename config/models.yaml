@@ -2,8 +2,10 @@
 # Models without explicit backend_version use these
 defaults:
   vllm_version: v0.8.0        # Default vLLM version for safetensors models
+  vllm_image_type: prebuilt   # Image type: "prebuilt" (official Docker Hub) or "build" (from source)
   llama_version: b4521        # Default llama.cpp version for GGUF models
   # ik_llama_version: null    # Optional: ik_llama.cpp version (falls back to llama_version if not set)
+  trtllm_version: "0.18.0"    # Default TensorRT-LLM version (NGC image tag)
 
 models:
   # Devstral 123B GGUF (from main)

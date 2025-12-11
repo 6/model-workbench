@@ -53,6 +53,11 @@ BACKENDS = {
         "default_port": 8080,
         "config_key": "ik_llama_version",  # Falls back to llama_version
     },
+    "trtllm": {
+        "formats": ["safetensors"],
+        "default_port": 8000,
+        "config_key": "trtllm_version",
+    },
 }
 
 
@@ -532,7 +537,7 @@ def get_default_backend_version(engine: str) -> str | None:
     Get default backend version for engine from config.
 
     Args:
-        engine: 'vllm', 'llama', or 'ik_llama'
+        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
 
     Returns:
         Default version string or None if not configured
@@ -550,7 +555,39 @@ def get_default_backend_version(engine: str) -> str | None:
     elif engine == "ik_llama":
         # ik_llama falls back to llama_version if not explicitly set
         return defaults.get("ik_llama_version") or defaults.get("llama_version")
+    elif engine == "trtllm":
+        return defaults.get("trtllm_version")
     return None
+
+
+def get_image_type(engine: str) -> str:
+    """
+    Get image type (prebuilt or build) for engine from config.
+
+    Args:
+        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
+
+    Returns:
+        'prebuilt' or 'build'. trtllm always returns 'prebuilt'.
+        Other backends default to 'build' unless configured.
+    """
+    # trtllm always uses prebuilt NGC images
+    if engine == "trtllm":
+        return "prebuilt"
+
+    if not MODELS_CONFIG.exists():
+        return "build"
+
+    with open(MODELS_CONFIG) as f:
+        data = yaml.safe_load(f)
+    defaults = data.get("defaults", {})
+
+    # Only vllm supports prebuilt option for now
+    if engine == "vllm":
+        return defaults.get("vllm_image_type", "build")
+
+    # llama/ik_llama default to build (no official prebuilt images)
+    return "build"
 
 
 def get_model_backend_version(model_arg: str, engine: str) -> str | None:

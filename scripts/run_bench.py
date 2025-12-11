@@ -11,6 +11,12 @@ Examples:
   # Safetensors model -> vLLM (auto-detected)
   uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8
 
+  # Use vLLM with prebuilt official image
+  uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8 --image-type prebuilt
+
+  # Use TensorRT-LLM backend
+  uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
+
   # GGUF model -> llama.cpp (auto-detected)
   uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
@@ -49,6 +55,7 @@ from bench_utils import (
     find_mmproj,
     get_gpu_count,
     get_gpu_info,
+    get_image_type,
     get_model_backend_version,
     log,
     med,
@@ -318,7 +325,7 @@ def bench_once_llama(
 # Unified benchmark runner
 # ----------------------------
 
-def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_label: str):
+def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_label: str, image_type: str = "build"):
     """Run benchmarks using vLLM backend (Docker-only)."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
@@ -345,6 +352,7 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
+    print(f"image_type:      {image_type}")
     print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
@@ -369,6 +377,8 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
                 gpu_memory_utilization=args.gpu_memory_utilization,
                 max_num_batched_tokens=args.max_num_batched_tokens,
                 rebuild=args.rebuild,
+                image_type=image_type,
+                image_override=args.docker_image,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -428,6 +438,117 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
                 "max_model_len": args.max_model_len,
                 "gpu_memory_utilization": args.gpu_memory_utilization,
                 "max_num_batched_tokens": args.max_num_batched_tokens,
+                "image": image_label,
+                "backend_version": backend_version,
+            },
+            iterations=results,
+            summary=summary,
+        )
+
+
+def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_label: str):
+    """Run benchmarks using TensorRT-LLM backend (NGC prebuilt images)."""
+    is_vision = image_path is not None
+    mode = "vision" if is_vision else "text-only"
+
+    # Resolve backend version from config or CLI
+    backend_version = args.backend_version or get_model_backend_version(args.model, "trtllm")
+    if not backend_version:
+        raise SystemExit(
+            "No backend version specified and none found in config.\n"
+            "Either:\n"
+            "  1. Set defaults.trtllm_version in config/models.yaml\n"
+            "  2. Pass --backend-version 0.18.0"
+        )
+
+    # Select prompt
+    if args.prompt:
+        prompt_text = args.prompt
+    elif is_vision:
+        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
+    else:
+        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+
+    print(f"\n== TensorRT-LLM Benchmark ==")
+    print(f"model:           {model_path}")
+    print(f"mode:            {mode}")
+    print(f"backend_version: {backend_version}")
+    print(f"tensor_parallel: {args.tensor_parallel}")
+    print(f"image:           {image_label}")
+    print(f"prompt:          {prompt_text[:50]}...")
+
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
+    )
+
+    if not server.is_running() and args.no_autostart:
+        raise SystemExit(f"TensorRT-LLM server not detected on {args.host}:{args.port} and --no-autostart was set.")
+
+    with server:
+        if not server.is_running():
+            server.start_trtllm(
+                model_path=model_path,
+                tensor_parallel=args.tensor_parallel,
+                version=backend_version,
+                rebuild=args.rebuild,
+            )
+
+        gpu_info = get_gpu_info(include_memory=True)
+        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
+
+        client = OpenAI(
+            base_url=f"http://{args.host}:{args.port}/v1",
+            api_key="dummy",
+        )
+
+        api_model = model_path
+
+        # Warmup
+        log("Warmup request...")
+        bench_once_vllm(client, api_model, prompt_text, image_path,
+                        min(64, args.max_tokens), args.temperature, args.host, args.port)
+
+        # Benchmark
+        results = []
+        for i in range(args.iterations):
+            log(f"Benchmark {i + 1} of {args.iterations}...")
+            r = bench_once_vllm(client, api_model, prompt_text, image_path,
+                                args.max_tokens, args.temperature, args.host, args.port)
+            ttft = r.get("ttft_ms")
+            gen_tok_s = r.get("generation_tok_per_s")
+            if ttft is not None and gen_tok_s is not None:
+                log(f"  {r['wall_s']:.2f}s | TTFT: {ttft:.1f}ms | gen: {gen_tok_s:.1f} tok/s")
+            else:
+                log(f"  {r['wall_s']:.2f}s")
+            results.append(r)
+
+        summary = {
+            "median_wall_s": med(results, "wall_s"),
+            "median_tok_per_s": med(results, "tok_per_s"),
+            "median_ttft_ms": med(results, "ttft_ms"),
+            "median_generation_tok_per_s": med(results, "generation_tok_per_s"),
+        }
+
+        if summary["median_ttft_ms"] is not None and summary["median_generation_tok_per_s"] is not None:
+            log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
+        else:
+            log(f"Median: {summary['median_wall_s']:.2f}s")
+
+        write_benchmark_result(
+            results_dir=RESULTS_ROOT,
+            repo_id=extract_repo_id(args.model),
+            model_ref=compact_path(model_path),
+            engine="trtllm-server",
+            mode=mode,
+            gpu_info=gpu_info,
+            config={
+                "prompt_set": args.prompt_set,
+                "prompt": prompt_text,
+                "max_tokens": args.max_tokens,
+                "temperature": args.temperature,
+                "tensor_parallel_size": args.tensor_parallel,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -623,13 +744,17 @@ def main():
     ap.add_argument("--server-timeout", type=int, default=360,
                     help="Timeout waiting for server to start (default: 360s)")
 
-    # Backend version (Docker-based execution)
+    # Backend version and image options (Docker-based execution)
     ap.add_argument("--backend-version", default=None,
-                    help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp)")
+                    help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)")
     ap.add_argument("--rebuild", action="store_true",
-                    help="Force rebuild Docker image even if cached")
+                    help="Force rebuild/repull Docker image even if cached")
     ap.add_argument("--build-only", action="store_true",
-                    help="Only build Docker image, don't run benchmark")
+                    help="Only build/pull Docker image, don't run benchmark")
+    ap.add_argument("--image-type", choices=["prebuilt", "build"], default=None,
+                    help="Image type: 'prebuilt' uses official images, 'build' compiles from source")
+    ap.add_argument("--image", default=None, dest="docker_image",
+                    help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)")
 
     # vLLM-specific options
     vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
@@ -666,17 +791,20 @@ def main():
     if args.port is None:
         args.port = backend_info["default_port"]
 
-    # Auto-detect tensor parallel for vLLM
-    if backend == "vllm" and args.tensor_parallel is None:
+    # Auto-detect tensor parallel for vLLM and trtllm
+    if backend in ("vllm", "trtllm") and args.tensor_parallel is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path
-    if backend == "vllm":
+    if backend in ("vllm", "trtllm"):
         model_path = resolve_model_path(args.model)
     else:
         model_path = args.model  # GGUF backends resolve internally
 
-    # Resolve image
+    # Resolve image type (from CLI or config)
+    image_type = args.image_type or get_image_type(backend)
+
+    # Resolve image (for vision benchmark, not Docker image)
     image_path, image_label = resolve_image_source(args.image)
 
     # Handle --build-only flag
@@ -689,13 +817,18 @@ def main():
                 f"No backend version specified. Pass --backend-version or set defaults.{backend}_version in config."
             )
 
-        log(f"Building {backend} image for version {version}...")
-        image_name = ensure_image(backend, version, rebuild=args.rebuild)
+        log(f"Preparing {backend} image for version {version}...")
+        image_name = ensure_image(
+            backend, version,
+            rebuild=args.rebuild,
+            image_type=image_type,
+            image_override=args.docker_image,
+        )
         log(f"Image ready: {image_name}")
         return
 
     # Log backend selection and run benchmark
-    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp"}
+    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp", "trtllm": "TensorRT-LLM"}
     backend_label = backend_labels.get(backend, backend)
 
     if args.backend:
@@ -704,7 +837,9 @@ def main():
         log(f"Auto-detected model format -> {backend_label} backend")
 
     if backend == "vllm":
-        run_benchmark_vllm(args, model_path, image_path, image_label)
+        run_benchmark_vllm(args, model_path, image_path, image_label, image_type)
+    elif backend == "trtllm":
+        run_benchmark_trtllm(args, model_path, image_path, image_label)
     else:
         run_benchmark_gguf(args, model_path, image_path, image_label, backend)
 

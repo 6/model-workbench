@@ -181,6 +181,8 @@ class ServerManager:
         gpu_memory_utilization: float | None = None,
         max_num_batched_tokens: int | None = None,
         rebuild: bool = False,
+        image_type: str = "build",
+        image_override: str | None = None,
     ) -> None:
         """Start vLLM server via Docker with version pinning.
 
@@ -192,14 +194,21 @@ class ServerManager:
             gpu_memory_utilization: GPU memory fraction (optional)
             max_num_batched_tokens: Max batched tokens (optional)
             rebuild: Force rebuild image even if cached
+            image_type: 'prebuilt' to use official images, 'build' to build from source
+            image_override: Direct image name to use (highest priority)
         """
         from docker_manager import (
             ensure_image,
             build_vllm_docker_cmd as build_versioned_vllm_cmd,
         )
 
-        # Ensure image exists (builds if needed)
-        image_name = ensure_image("vllm", version, rebuild=rebuild)
+        # Ensure image exists (builds or pulls as needed)
+        image_name = ensure_image(
+            "vllm", version,
+            rebuild=rebuild,
+            image_type=image_type,
+            image_override=image_override,
+        )
 
         cmd = build_versioned_vllm_cmd(
             image_name=image_name,
@@ -212,10 +221,18 @@ class ServerManager:
             max_num_batched_tokens=max_num_batched_tokens,
         )
 
+        # Label based on image source
+        if image_override:
+            label = f"vLLM ({image_override})"
+        elif image_type == "prebuilt":
+            label = f"vLLM (prebuilt {version})"
+        else:
+            label = f"vLLM (Docker {version})"
+
         self.start(
             cmd,
             lambda: wait_for_vllm_ready(self.host, self.port),
-            label=f"vLLM (Docker {version})",
+            label=label,
         )
 
     def start_llama(
@@ -360,6 +377,58 @@ class ServerManager:
         )
 
         return gguf_path
+
+    def start_trtllm(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        version: str,
+        max_batch_size: int | None = None,
+        max_num_tokens: int | None = None,
+        max_seq_len: int | None = None,
+        rebuild: bool = False,
+        extra_args: list[str] | None = None,
+    ) -> None:
+        """Start TensorRT-LLM server via Docker with NGC prebuilt image.
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size (tp_size)
+            version: TensorRT-LLM version (NGC release tag like '0.18.0')
+            max_batch_size: Maximum batch size (optional)
+            max_num_tokens: Maximum number of tokens (optional)
+            max_seq_len: Maximum sequence length (optional)
+            rebuild: Force re-pull image even if cached
+            extra_args: Additional trtllm-serve arguments (optional)
+        """
+        from docker_manager import (
+            ensure_image,
+            build_trtllm_docker_cmd,
+        )
+
+        # TensorRT-LLM always uses prebuilt NGC images
+        image_name = ensure_image(
+            "trtllm", version,
+            rebuild=rebuild,
+            image_type="prebuilt",
+        )
+
+        cmd = build_trtllm_docker_cmd(
+            image_name=image_name,
+            model_path=model_path,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            max_batch_size=max_batch_size,
+            max_num_tokens=max_num_tokens,
+            max_seq_len=max_seq_len,
+            extra_args=extra_args,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_vllm_ready(self.host, self.port),  # Uses OpenAI API like vLLM
+            label=f"TensorRT-LLM ({version})",
+        )
 
 
 # ----------------------------

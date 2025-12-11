@@ -4,10 +4,14 @@ Model Workbench Eval Runner
 
 Runs IFEval and GSM8K benchmarks against local model servers using DeepEval.
 Auto-detects GGUF (llama.cpp) vs safetensors (vLLM) based on model format.
+Use --backend to explicitly select a backend.
 
 Examples:
-  # Safetensors model -> vLLM backend
+  # Safetensors model -> vLLM backend (auto-detected)
   uv run python scripts/run_eval.py --model ~/models/zai-org/GLM-4.6V-FP8
+
+  # Use TensorRT-LLM backend
+  uv run python scripts/run_eval.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
 
   # GGUF model -> llama.cpp backend
   uv run python scripts/run_eval.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
@@ -30,14 +34,15 @@ from pathlib import Path
 from deepeval.benchmarks import IFEval, GSM8K
 
 from bench_utils import (
+    BACKENDS,
     ROOT,
     sanitize,
     extract_repo_id,
     get_gpu_info,
     get_gpu_count,
     get_model_backend_version,
+    resolve_backend,
     resolve_model_path,
-    detect_model_format,
     log,
 )
 from server_manager import ServerManager
@@ -123,7 +128,7 @@ def save_results(results: dict, repo_id: str, benchmark_name: str) -> Path:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run evals (IFEval, HumanEval) on local model servers"
+        description="Run evals (IFEval, GSM8K) on local model servers"
     )
     parser.add_argument(
         "--model",
@@ -144,6 +149,14 @@ def main():
         help="Max tokens for generation (default: 512)",
     )
 
+    # Backend selection
+    parser.add_argument(
+        "--backend",
+        choices=list(BACKENDS.keys()),
+        default=None,
+        help="Backend to use (default: auto-detect from model format)",
+    )
+
     # Server options
     parser.add_argument(
         "--host",
@@ -154,7 +167,7 @@ def main():
         "--port",
         type=int,
         default=None,
-        help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)",
+        help="Server port (default: 8000 for vLLM/trtllm, 8080 for llama.cpp)",
     )
     parser.add_argument(
         "--no-autostart",
@@ -168,7 +181,7 @@ def main():
         help="Timeout in seconds waiting for server to start (default: 180)",
     )
 
-    # vLLM server options (used when auto-starting safetensors models)
+    # vLLM/trtllm server options (used when auto-starting safetensors models)
     parser.add_argument(
         "--tensor-parallel",
         type=int,
@@ -212,10 +225,18 @@ def main():
     parser.add_argument(
         "--backend-version",
         default=None,
-        help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp)",
+        help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)",
     )
 
     args = parser.parse_args()
+
+    # Resolve backend (auto-detect or explicit)
+    backend = resolve_backend(args.model, args.backend)
+    backend_info = BACKENDS[backend]
+
+    # Set default port based on backend
+    if args.port is None:
+        args.port = backend_info["default_port"]
 
     # Auto-detect GPU count for tensor parallelism
     if args.tensor_parallel is None:
@@ -224,26 +245,21 @@ def main():
     # Resolve and validate model path
     model_path = resolve_model_path(args.model)
     repo_id = extract_repo_id(model_path)
-    model_format = detect_model_format(model_path)
-
-    # Set default port based on backend
-    if args.port is None:
-        args.port = 8080 if model_format == "gguf" else 8000
 
     # Resolve backend version
-    engine = "llama" if model_format == "gguf" else "vllm"
-    backend_version = args.backend_version or get_model_backend_version(args.model, engine)
+    backend_version = args.backend_version or get_model_backend_version(args.model, backend)
     if not backend_version:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.{engine}_version in config/models.yaml\n"
+            f"  1. Set defaults.{backend}_version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 
-    backend_label = "llama-server" if model_format == "gguf" else "vLLM"
+    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp", "trtllm": "TensorRT-LLM"}
+    backend_label = backend_labels.get(backend, backend)
 
-    log(f"Model: {repo_id} ({model_format})")
+    log(f"Model: {repo_id}")
     log(f"Backend: {backend_label}")
     log(f"Backend version: {backend_version}")
 
@@ -265,14 +281,22 @@ def main():
     with server:
         # Start server if not already running
         if not server.is_running():
-            if model_format == "gguf":
-                # llama.cpp backend for GGUF models
-                server.start_llama(
+            if backend in ("llama", "ik_llama"):
+                # llama.cpp or ik_llama.cpp backend for GGUF models
+                server.start_gguf_backend(
+                    engine=backend,
                     model_path=model_path,
                     version=backend_version,
                     n_gpu_layers=args.n_gpu_layers,
                     ctx=args.ctx,
                     parallel=args.parallel,
+                )
+            elif backend == "trtllm":
+                # TensorRT-LLM backend
+                server.start_trtllm(
+                    model_path=model_path,
+                    tensor_parallel=args.tensor_parallel,
+                    version=backend_version,
                 )
             else:
                 # vLLM backend for safetensors models
@@ -285,9 +309,9 @@ def main():
                 )
 
         # Model name differs by backend:
-        # - vLLM: registers model under full path
+        # - vLLM/trtllm: registers model under full path
         # - llama.cpp: uses "gpt-3.5-turbo" as default model name
-        model_name = "gpt-3.5-turbo" if model_format == "gguf" else model_path
+        model_name = "gpt-3.5-turbo" if backend in ("llama", "ik_llama") else model_path
 
         base_url = f"http://{args.host}:{args.port}/v1"
         model = LocalServerLLM(
@@ -303,7 +327,7 @@ def main():
             "timestamp": datetime.now().isoformat(),
             "repo_id": repo_id,
             "model_path": str(model_path),
-            "model_format": model_format,
+            "backend": backend,
             "backend_version": backend_version,
             "gpu_info": get_gpu_info(include_memory=True),
             "benchmarks": {},
