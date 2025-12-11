@@ -400,7 +400,7 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
     else:
         prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
-    print(f"\n== vLLM Benchmark ==")
+    print("\n== vLLM Benchmark ==")
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
@@ -521,7 +521,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     else:
         prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
-    print(f"\n== TensorRT-LLM Benchmark ==")
+    print("\n== TensorRT-LLM Benchmark ==")
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
