@@ -43,6 +43,7 @@ RUN cmake -B build \
     -DGGML_CUDA=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLAMA_CURL=OFF \
+    -DCMAKE_CUDA_ARCHITECTURES="89;90" \
     -G Ninja
 
 # Use CUDA stubs for build-time linking (real libcuda.so.1 injected at runtime by nvidia-container-toolkit)
@@ -53,6 +54,9 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH}
 
 RUN cmake --build build --config Release -j$(nproc)
+
+# Unset stub path so runtime uses real CUDA driver from nvidia-container-toolkit
+ENV LD_LIBRARY_PATH=
 
 # Verify llama-server was built
 RUN test -f /opt/ik_llama.cpp/build/bin/llama-server || \
