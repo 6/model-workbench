@@ -37,6 +37,7 @@ import argparse
 import os
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -65,6 +66,53 @@ from server_manager import ServerManager
 # ----------------------------
 # Cleanup helpers (ensure idempotency)
 # ----------------------------
+
+
+def get_containers_on_port(port: int) -> list[str]:
+    """Get list of container IDs running on the target port.
+
+    Args:
+        port: Port number to check
+
+    Returns:
+        List of container IDs (may be empty)
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--filter", f"publish={port}", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        container_ids = [cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()]
+        return container_ids
+    except Exception:
+        return []
+
+
+def prompt_cleanup_confirmation(port: int, container_ids: list[str]) -> bool:
+    """Ask user if they want to stop existing containers.
+
+    Args:
+        port: Port number
+        container_ids: List of container IDs to stop
+
+    Returns:
+        True if user confirms, False otherwise
+    """
+    count = len(container_ids)
+    plural = "container" if count == 1 else "containers"
+
+    print(f"\n{count} {plural} already running on port {port}:")
+    for cid in container_ids:
+        print(f"  - {cid[:12]}")
+
+    try:
+        response = input(f"\nStop {'it' if count == 1 else 'them'} and start new server? [y/n]: ")
+        return response.lower() in ["y", "yes"]
+    except (KeyboardInterrupt, EOFError):
+        print("\nAborted.")
+        return False
 
 
 def cleanup_existing_containers(port: int):
@@ -459,11 +507,28 @@ def run_benchmark_vllm(
             f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
 
-    # Clean up any existing containers on this port (make benchmark idempotent)
-    if not args.no_autostart:
-        cleanup_existing_containers(args.port)
-
     with server:
+        # Check for existing containers and prompt user
+        if not args.no_autostart and not args.force_cleanup:
+            existing = get_containers_on_port(args.port)
+
+            if existing:
+                # Non-interactive environment check
+                if not sys.stdin.isatty():
+                    log("Error: Container running on port and stdin is not interactive")
+                    log("Use --force-cleanup to automatically stop containers in CI/CD")
+                    sys.exit(1)
+
+                # Interactive prompt
+                if not prompt_cleanup_confirmation(args.port, existing):
+                    log("Use --no-autostart to benchmark against existing server")
+                    sys.exit(0)
+
+                cleanup_existing_containers(args.port)
+        elif not args.no_autostart and args.force_cleanup:
+            # Force cleanup without prompt (for automation)
+            cleanup_existing_containers(args.port)
+
         if not server.is_running():
             server.start_vllm(
                 model_path=model_path,
@@ -608,8 +673,25 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         )
 
     with server:
-        # Clean up any existing containers on this port (make benchmark idempotent)
-        if not args.no_autostart:
+        # Check for existing containers and prompt user
+        if not args.no_autostart and not args.force_cleanup:
+            existing = get_containers_on_port(args.port)
+
+            if existing:
+                # Non-interactive environment check
+                if not sys.stdin.isatty():
+                    log("Error: Container running on port and stdin is not interactive")
+                    log("Use --force-cleanup to automatically stop containers in CI/CD")
+                    sys.exit(1)
+
+                # Interactive prompt
+                if not prompt_cleanup_confirmation(args.port, existing):
+                    log("Use --no-autostart to benchmark against existing server")
+                    sys.exit(0)
+
+                cleanup_existing_containers(args.port)
+        elif not args.no_autostart and args.force_cleanup:
+            # Force cleanup without prompt (for automation)
             cleanup_existing_containers(args.port)
 
         if not server.is_running():
@@ -783,8 +865,25 @@ def run_benchmark_gguf(
         )
 
     with server:
-        # Clean up any existing containers on this port (make benchmark idempotent)
-        if not args.no_autostart:
+        # Check for existing containers and prompt user
+        if not args.no_autostart and not args.force_cleanup:
+            existing = get_containers_on_port(args.port)
+
+            if existing:
+                # Non-interactive environment check
+                if not sys.stdin.isatty():
+                    log("Error: Container running on port and stdin is not interactive")
+                    log("Use --force-cleanup to automatically stop containers in CI/CD")
+                    sys.exit(1)
+
+                # Interactive prompt
+                if not prompt_cleanup_confirmation(args.port, existing):
+                    log("Use --no-autostart to benchmark against existing server")
+                    sys.exit(0)
+
+                cleanup_existing_containers(args.port)
+        elif not args.no_autostart and args.force_cleanup:
+            # Force cleanup without prompt (for automation)
             cleanup_existing_containers(args.port)
 
         if not server.is_running():
@@ -922,6 +1021,11 @@ def main():
     )
     ap.add_argument(
         "--no-autostart", action="store_true", help="Don't start server; require it already running"
+    )
+    ap.add_argument(
+        "--force-cleanup",
+        action="store_true",
+        help="Automatically stop existing containers without prompting (for automation)",
     )
     ap.add_argument(
         "--server-timeout",

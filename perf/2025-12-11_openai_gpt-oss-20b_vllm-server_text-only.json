@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-11T05:08:23.289953",
+  "timestamp": "2025-12-11T05:19:42.640153",
   "repo_id": "openai/gpt-oss-20b",
   "model_ref": "~/models/openai/gpt-oss-20b",
   "engine": "vllm-server",
@@ -30,7 +30,7 @@
   "config": {
     "prompt_set": "long",
     "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
-    "max_tokens": 10,
+    "max_tokens": 512,
     "temperature": 0.0,
     "tensor_parallel_size": 2,
     "max_model_len": 65536,
@@ -41,21 +41,65 @@
   },
   "iterations": [
     {
-      "wall_s": 0.038283541000055266,
-      "output_text": "",
+      "wall_s": 1.6061336860002484,
+      "output_text": "**KV Cache in Transformer Models**\n\nIn a transformer decoder, each layer computes a self\u2011attention matrix from the query (Q), key (K), and value (V) projections of the input tokens. For a sequence of length *L*, the cost of a single forward pass is *O(L\u00b2\u00b7d)*, where *d* is the hidden dimension. During autoregressive inference, the model generates tokens one at a time; recomputing K and V for all previously generated tokens at every step would be prohibitively expensive.\n\nA **KV cache** stores the K and V tensors for every token that has already been processed. When a new token arrives, only its Q, K, and V are computed; the new K and V are appended to the cache, and the attention scores are computed against the cached K and V. This reduces the per\u2011step cost to *O(L\u00b7d)* (linear in the current context length) instead of *O(L\u00b2\u00b7d)*, enabling real\u2011time decoding even for very long contexts.\n\n**Why It Matters for Long Context**\n\n1. **Computational Efficiency** \u2013 Without caching, each new token would trigger a full quadratic recomputation, making inference for 10k+ token contexts infeasible. KV caching turns this into a linear\u2011time operation, drastically cutting GPU memory bandwidth and compute time.\n\n2. **Memory Footprint** \u2013 The cache holds only the K and V tensors (typically 2\u00d7 *L\u00b7d* floats). Modern GPUs can store caches for tens of thousands of tokens, whereas recomputing would require storing intermediate activations for every layer, far exceeding memory limits.\n\n3. **Latency\u2011Sensitive Applications** \u2013 In chatbots, code completion, or real\u2011time translation, the ability to generate the next token in milliseconds hinges on the cache. Long\u2011context models (e.g., 32k\u2011token GPT\u20114) rely on KV caching to keep latency within acceptable bounds.\n\n4. **Model Scaling** \u2013 As models grow deeper and wider, the cost of recomputing K and",
       "prompt_tokens": 85,
-      "generated_tokens": 10,
-      "tok_per_s": 261.2088573516636,
-      "generation_tok_per_s": 353.3691897062329,
-      "ttft_ms": 7.054567337036133,
-      "prefill_ms": 6.2809959999867715,
-      "generation_ms": 28.299014999902283
+      "generated_tokens": 512,
+      "tok_per_s": 318.7779476034978,
+      "generation_tok_per_s": 321.0206933199853,
+      "ttft_ms": 7.021903991699219,
+      "prefill_ms": 6.2838650001140195,
+      "generation_ms": 1594.9127599997155
+    },
+    {
+      "wall_s": 1.6009192249994157,
+      "output_text": "**KV Cache in Transformer Models**\n\nIn a transformer decoder, each layer computes a set of *keys* (K) and *values* (V) from the input tokens. During self\u2011attention, the query (Q) of a new token is compared against all previous keys to weight the corresponding values. In a na\u00efve implementation, every forward pass recomputes K and V for *all* tokens seen so far, which is O(n\u00b2) in time and memory for a sequence of length *n*.\n\nA **KV cache** stores the K and V tensors produced for tokens that have already been processed. When a new token arrives, the model only needs to compute its Q, K, and V once and then re\u2011use the cached K/V for all earlier positions. This reduces the per\u2011token cost to O(1) for the attention computation, turning inference from quadratic to linear in sequence length.\n\n**Why KV Cache Matters for Long Context**\n\n1. **Speed** \u2013 Without caching, each new token requires recomputing attention over the entire context, making inference prohibitively slow for long sequences. KV caching eliminates this redundancy, enabling real\u2011time or near\u2011real\u2011time decoding even with thousands of tokens.\n\n2. **Memory Efficiency** \u2013 The cache holds only the K/V tensors (typically 2\u00d7 the hidden\u2011size per token). For a 4\u202fk\u2011token context, this is a few megabytes, far less than storing full activations for every layer. It also allows the model to keep the full context in memory without recomputing intermediate activations.\n\n3. **Scalability** \u2013 Models that support *long\u2011context* (e.g., 8\u202fk\u201332\u202fk tokens) rely on KV caching to keep inference tractable. Without it, the quadratic blow\u2011up would make such contexts infeasible on commodity GPUs.\n\n4. **Incremental Generation** \u2013 In chat or streaming scenarios, the model must generate tokens one at a time. KV caching ensures that each new token is produced with minimal latency, preserving",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 319.8162605612952,
+      "generation_tok_per_s": 321.78608148896706,
+      "ttft_ms": 6.627321243286133,
+      "prefill_ms": 6.037533999915468,
+      "generation_ms": 1591.1191609993693
+    },
+    {
+      "wall_s": 1.5990094570006477,
+      "output_text": "**KV Cache in Transformer Models**\n\nIn a transformer decoder, each layer computes a set of *keys* (K) and *values* (V) from the input tokens. During self\u2011attention, the query (Q) of a new token is compared against all previous keys to weight the corresponding values. In a na\u00efve implementation, every forward pass recomputes K and V for *all* tokens seen so far, which is O(n\u00b2) in time and memory for a sequence of length *n*.\n\nA **KV cache** stores the K and V tensors produced for tokens that have already been processed. When a new token arrives, the model only needs to compute its Q, K, and V once and then re\u2011use the cached K/V for all earlier positions. This reduces the per\u2011token cost to O(1) for the attention computation, turning inference from quadratic to linear in sequence length.\n\n**Why KV Cache Matters for Long Context**\n\n1. **Speed** \u2013 Without caching, generating a long context (e.g., 8\u202fk tokens) would require recomputing the entire attention matrix for each new token, leading to prohibitive latency. KV caching eliminates this redundancy, enabling real\u2011time or near\u2011real\u2011time decoding even for very long contexts.\n\n2. **Memory Efficiency** \u2013 The cache holds only the K/V tensors for past tokens, which are typically smaller than the full attention matrix. This allows models to process longer sequences without exceeding GPU memory limits.\n\n3. **Model Accuracy** \u2013 By re\u2011using exact past K/V values, the cache preserves the exact attention patterns the model learned during training. Any approximation (e.g., truncating or recomputing) can degrade performance, especially for tasks that rely on long\u2011range dependencies.\n\n4. **Scalability** \u2013 KV caching is essential for scaling transformer inference to multi\u2011kilobyte contexts (e.g., document\u2011level summarization, code generation, or conversational agents). It enables efficient batching and parallelism across multiple tokens or prompts.\n\nIn short, the KV cache",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 320.1982313227761,
+      "generation_tok_per_s": 322.1411828469682,
+      "ttft_ms": 6.326913833618164,
+      "prefill_ms": 5.814235000798362,
+      "generation_ms": 1589.3652449994988
+    },
+    {
+      "wall_s": 1.5997580890007157,
+      "output_text": "**KV Cache in Transformer Models**\n\nIn a transformer decoder, each layer computes a self\u2011attention matrix from the query (Q), key (K), and value (V) projections of the input tokens. For a sequence of length *L*, the cost of a single forward pass is *O(L\u00b2\u00b7d)*, where *d* is the hidden dimension. During autoregressive inference, the model generates tokens one at a time; recomputing K and V for all previously generated tokens at every step would be prohibitively expensive.\n\nA **KV cache** stores the K and V tensors for every token that has already been processed. When a new token arrives, only its Q, K, and V are computed; the new K and V are appended to the cache, and the attention scores are computed using the cached K/V and the new Q. This reduces the per\u2011step cost to *O(L\u00b7d)* instead of *O(L\u00b2\u00b7d)*, yielding a linear\u2011time incremental decoding algorithm.\n\n**Why KV Cache Matters for Long Context**\n\n1. **Computational Efficiency**  \n   - Without caching, generating a sequence of length *N* would require *O(N\u00b2\u00b7d)* operations. With a KV cache, the total cost becomes *O(N\u00b7d)*, making it feasible to process hundreds or thousands of tokens on commodity GPUs.\n\n2. **Memory Footprint**  \n   - The cache stores only the K and V tensors (typically 2\u00d7 *L*\u00d7*d* floats). For long contexts, this is still far smaller than storing full intermediate activations for every layer, and it can be offloaded to fast memory (e.g., GPU shared memory or tensor cores).\n\n3. **Latency\u2011Sensitive Applications**  \n   - Real\u2011time dialogue or code completion systems need sub\u2011second response times. KV caching eliminates the quadratic bottleneck, allowing the model to maintain a long conversational history without sacrificing speed.\n\n4. **Model Scaling**  \n   - As models grow (e.g., 10B+ parameters) and context windows",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 320.04838951607945,
+      "generation_tok_per_s": 321.94074573931846,
+      "ttft_ms": 6.409406661987305,
+      "prefill_ms": 5.968413999653421,
+      "generation_ms": 1590.3547679999974
+    },
+    {
+      "wall_s": 1.600209344999712,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | What it is | Why it matters for long\u2011context models |\n|--------|------------|----------------------------------------|\n| **Definition** | In a transformer, each layer computes a *key* (K) and *value* (V) tensor from the input token embeddings. The KV cache stores these tensors for every token that has already been processed. | Long\u2011context models (e.g., GPT\u20114, Llama\u20112\u201170B) generate thousands of tokens. Re\u2011computing K/V for every new token would be quadratic in sequence length. The cache turns this into a linear\u2011time incremental operation. |\n| **Mechanism** | 1. **Forward pass**: For token *t*, compute K\u209c, V\u209c and append to the cache.  <br>2. **Attention**: When computing attention for token *t+1*, use the cached K\u2080\u2026K\u209c and V\u2080\u2026V\u209c instead of recomputing them. | The cache eliminates the need to recompute the entire attention matrix for every new token, saving both compute and memory bandwidth. |\n| **Memory layout** | Typically a contiguous buffer of shape `(batch, seq_len, head_dim)` for keys and a similar buffer for values. The cache is usually stored on the same device (GPU/TPU) as the model. | For very",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 319.9581364775071,
+      "generation_tok_per_s": 321.92181610088755,
+      "ttft_ms": 6.50334358215332,
+      "prefill_ms": 6.041400999492907,
+      "generation_ms": 1590.4482840005585
     }
   ],
   "summary": {
-    "median_wall_s": 0.038283541000055266,
-    "median_tok_per_s": 261.2088573516636,
-    "median_ttft_ms": 7.054567337036133,
-    "median_generation_tok_per_s": 353.3691897062329
+    "median_wall_s": 1.600209344999712,
+    "median_tok_per_s": 319.9581364775071,
+    "median_ttft_ms": 6.50334358215332,
+    "median_generation_tok_per_s": 321.92181610088755
   }
 }
