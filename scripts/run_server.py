@@ -74,52 +74,94 @@ def main():
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
 
     # Backend selection
-    ap.add_argument("--backend", choices=list(BACKEND_REGISTRY.keys()), default=None,
-                    help="Backend to use (default: auto-detect from model format)")
+    ap.add_argument(
+        "--backend",
+        choices=list(BACKEND_REGISTRY.keys()),
+        default=None,
+        help="Backend to use (default: auto-detect from model format)",
+    )
 
     # Server options
     ap.add_argument("--host", default="127.0.0.1", help="Server host")
-    ap.add_argument("--port", type=int, default=None,
-                    help="Server port (default: 8000 for vLLM/trtllm, 8080 for llama.cpp)")
-    ap.add_argument("--server-timeout", type=int, default=360,
-                    help="Timeout waiting for server to start (default: 360s)")
+    ap.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Server port (default: 8000 for vLLM/trtllm, 8080 for llama.cpp)",
+    )
+    ap.add_argument(
+        "--server-timeout",
+        type=int,
+        default=360,
+        help="Timeout waiting for server to start (default: 360s)",
+    )
 
     # Test options
-    ap.add_argument("--test", action="store_true",
-                    help="Send a test chat completion after server starts")
-    ap.add_argument("--test-only", action="store_true",
-                    help="Only test existing server, don't start a new one")
+    ap.add_argument(
+        "--test", action="store_true", help="Send a test chat completion after server starts"
+    )
+    ap.add_argument(
+        "--test-only", action="store_true", help="Only test existing server, don't start a new one"
+    )
 
     # Backend version and image options
-    ap.add_argument("--backend-version", default=None,
-                    help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)")
-    ap.add_argument("--rebuild", action="store_true",
-                    help="Force rebuild/repull Docker image even if cached")
-    ap.add_argument("--image-type", choices=["prebuilt", "build"], default=None,
-                    help="Image type: 'prebuilt' uses official images, 'build' compiles from source")
-    ap.add_argument("--image", default=None,
-                    help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)")
+    ap.add_argument(
+        "--backend-version",
+        default=None,
+        help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)",
+    )
+    ap.add_argument(
+        "--rebuild", action="store_true", help="Force rebuild/repull Docker image even if cached"
+    )
+    ap.add_argument(
+        "--image-type",
+        choices=["prebuilt", "build"],
+        default=None,
+        help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
+    )
+    ap.add_argument(
+        "--image", default=None, help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)"
+    )
 
     # vLLM-specific options (defaults from config, CLI overrides)
     vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
-    vllm_group.add_argument("--tensor-parallel", type=int, default=None,
-                            help="Tensor parallel size (default: auto-detect GPU count)")
-    vllm_group.add_argument("--max-model-len", type=int, default=None,
-                            help="Max context length (default: from config or 65536)")
-    vllm_group.add_argument("--gpu-memory-utilization", type=float, default=None,
-                            help="GPU memory fraction (default: from config or 0.95)")
-    vllm_group.add_argument("--max-num-batched-tokens", type=int, default=None,
-                            help="Max batched tokens")
+    vllm_group.add_argument(
+        "--tensor-parallel",
+        type=int,
+        default=None,
+        help="Tensor parallel size (default: auto-detect GPU count)",
+    )
+    vllm_group.add_argument(
+        "--max-model-len",
+        type=int,
+        default=None,
+        help="Max context length (default: from config or 65536)",
+    )
+    vllm_group.add_argument(
+        "--gpu-memory-utilization",
+        type=float,
+        default=None,
+        help="GPU memory fraction (default: from config or 0.95)",
+    )
+    vllm_group.add_argument(
+        "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
+    )
 
     # llama.cpp-specific options (defaults from config, CLI overrides)
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
     llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
-    llama_group.add_argument("--n-gpu-layers", type=int, default=None,
-                             help="GPU layers to offload (-ngl, default: from config or 999)")
-    llama_group.add_argument("--parallel", type=int, default=1,
-                             help="Parallel sequences (-np, default: 1)")
-    llama_group.add_argument("--mmproj", default=None,
-                             help="Multimodal projector path (auto-detected if not specified)")
+    llama_group.add_argument(
+        "--n-gpu-layers",
+        type=int,
+        default=None,
+        help="GPU layers to offload (-ngl, default: from config or 999)",
+    )
+    llama_group.add_argument(
+        "--parallel", type=int, default=1, help="Parallel sequences (-np, default: 1)"
+    )
+    llama_group.add_argument(
+        "--mmproj", default=None, help="Multimodal projector path (auto-detected if not specified)"
+    )
 
     args = ap.parse_args()
 

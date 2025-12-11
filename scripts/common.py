@@ -18,6 +18,7 @@ CONFIG_PATH = ROOT / "config" / "models.yaml"
 # Logging
 # ----------------------------
 
+
 def log(msg: str):
     """Print a timestamped log message."""
     ts = datetime.now().strftime("%H:%M:%S")
@@ -64,8 +65,14 @@ BACKEND_REGISTRY = {
         "prebuilt_image": "nvcr.io/nvidia/tensorrt-llm/release",
         "dockerfile": None,
         "docker_base": [
-            "--gpus", "all", "--ipc", "host",
-            "--ulimit", "memlock=-1", "--ulimit", "stack=67108864",
+            "--gpus",
+            "all",
+            "--ipc",
+            "host",
+            "--ulimit",
+            "memlock=-1",
+            "--ulimit",
+            "stack=67108864",
         ],
     },
 }

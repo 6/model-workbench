@@ -116,10 +116,14 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
     log("This may take several minutes for first build...")
 
     cmd = [
-        "docker", "build",
-        "-f", str(dockerfile),
-        "--build-arg", f"VERSION={version}",
-        "-t", image_name,
+        "docker",
+        "build",
+        "-f",
+        str(dockerfile),
+        "--build-arg",
+        f"VERSION={version}",
+        "-t",
+        image_name,
         str(ROOT),
     ]
 
@@ -148,8 +152,15 @@ def _docker_gpu_available() -> bool:
     """
     try:
         result = subprocess.run(
-            ["docker", "run", "--rm", "--gpus", "all",
-             "nvidia/cuda:12.4.0-base-ubuntu22.04", "nvidia-smi"],
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--gpus",
+                "all",
+                "nvidia/cuda:12.4.0-base-ubuntu22.04",
+                "nvidia-smi",
+            ],
             capture_output=True,
             timeout=60,
         )
@@ -222,15 +233,22 @@ def build_vllm_docker_cmd(
     model_path_resolved = str(Path(model_path).expanduser().resolve())
 
     cmd = _docker_run_base(
-        "vllm", image_name, port,
+        "vllm",
+        image_name,
+        port,
         [(model_path_resolved, model_path_resolved, "ro")],
     )
     cmd += [
-        "--model", model_path_resolved,
-        "--host", "0.0.0.0",
-        "--port", str(port),
-        "--tensor-parallel-size", str(tensor_parallel),
-        "--max-model-len", str(max_model_len if max_model_len is not None else 10000),
+        "--model",
+        model_path_resolved,
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port),
+        "--tensor-parallel-size",
+        str(tensor_parallel),
+        "--max-model-len",
+        str(max_model_len if max_model_len is not None else 10000),
     ]
 
     if gpu_memory_utilization is not None:
@@ -298,15 +316,20 @@ def build_trtllm_docker_cmd(
     cache_dir = os.path.expanduser("~/.cache")
 
     cmd = _docker_run_base(
-        "trtllm", image_name, port,
-        [(model_path_resolved, model_path_resolved, "ro"),
-         (cache_dir, "/root/.cache", "rw")],
+        "trtllm",
+        image_name,
+        port,
+        [(model_path_resolved, model_path_resolved, "ro"), (cache_dir, "/root/.cache", "rw")],
     )
     cmd += [
-        "trtllm-serve", model_path_resolved,
-        "--host", "0.0.0.0",
-        "--port", str(port),
-        "--tp_size", str(tensor_parallel),
+        "trtllm-serve",
+        model_path_resolved,
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port),
+        "--tp_size",
+        str(tensor_parallel),
         "--return-perf-metrics",
     ]
 

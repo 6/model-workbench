@@ -113,9 +113,7 @@ def save_results(results: dict, repo_id: str, benchmark_name: str) -> Path:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run evals (IFEval, GSM8K) on local model servers"
-    )
+    parser = argparse.ArgumentParser(description="Run evals (IFEval, GSM8K) on local model servers")
     parser.add_argument(
         "--model",
         required=True,

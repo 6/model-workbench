@@ -11,12 +11,15 @@ def run(cmd):
     print("+", " ".join(cmd))
     subprocess.check_call(cmd)
 
+
 def expand(p: str) -> Path:
     return Path(os.path.expandvars(os.path.expanduser(p))).resolve()
+
 
 def local_dir_for_repo(repo_id: str) -> Path:
     # Mirror HF structure under ~/models/<org>/<repo>
     return MODELS_ROOT / repo_id
+
 
 def normalize_to_list(val):
     if val is None:
@@ -24,6 +27,7 @@ def normalize_to_list(val):
     if isinstance(val, list):
         return val
     return [val]
+
 
 def main():
     if not CONFIG_PATH.exists():
@@ -104,6 +108,7 @@ def main():
         run(cmd)
 
     print("\nModel fetch complete.")
+
 
 if __name__ == "__main__":
     main()

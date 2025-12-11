@@ -69,7 +69,7 @@ from server_manager import ServerManager
 PROMETHEUS_METRICS = {
     "vllm": {
         "path": "/metrics",
-        "pattern": r'^(vllm:[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)',
+        "pattern": r"^(vllm:[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)",
         "mappings": {
             "vllm:time_to_first_token_seconds": "ttft_ms",
             "vllm:request_prefill_time_seconds": "prefill_ms",
@@ -78,7 +78,7 @@ PROMETHEUS_METRICS = {
     },
     "trtllm": {
         "path": "/prometheus/metrics",
-        "pattern": r'^(trtllm_[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)',
+        "pattern": r"^(trtllm_[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)",
         "mappings": {
             "trtllm_time_to_first_token_seconds": "ttft_ms",
             "trtllm_e2e_latency_seconds": "e2e_latency_ms",
@@ -144,6 +144,7 @@ def compute_metrics_delta(
 # ----------------------------
 # Backend-specific benchmark functions
 # ----------------------------
+
 
 def bench_once_vllm(
     client: OpenAI,
@@ -375,7 +376,10 @@ def bench_once_trtllm(
 # Unified benchmark runner
 # ----------------------------
 
-def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_label: str, image_type: str = "build"):
+
+def run_benchmark_vllm(
+    args, model_path: str, image_path: str | None, image_label: str, image_type: str = "build"
+):
     """Run benchmarks using vLLM backend (Docker-only)."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
@@ -415,7 +419,9 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
     )
 
     if not server.is_running() and args.no_autostart:
-        raise SystemExit(f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set.")
+        raise SystemExit(
+            f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
+        )
 
     with server:
         if not server.is_running():
@@ -432,7 +438,9 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
             )
 
         gpu_info = get_gpu_info(include_memory=True)
-        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
+        log(
+            f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB"
+        )
 
         client = OpenAI(
             base_url=f"http://{args.host}:{args.port}/v1",
@@ -443,15 +451,31 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
 
         # Warmup
         log("Warmup request...")
-        bench_once_vllm(client, api_model, prompt_text, image_path,
-                        min(64, args.max_tokens), args.temperature, args.host, args.port)
+        bench_once_vllm(
+            client,
+            api_model,
+            prompt_text,
+            image_path,
+            min(64, args.max_tokens),
+            args.temperature,
+            args.host,
+            args.port,
+        )
 
         # Benchmark
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_vllm(client, api_model, prompt_text, image_path,
-                                args.max_tokens, args.temperature, args.host, args.port)
+            r = bench_once_vllm(
+                client,
+                api_model,
+                prompt_text,
+                image_path,
+                args.max_tokens,
+                args.temperature,
+                args.host,
+                args.port,
+            )
             ttft = r.get("ttft_ms")
             gen_tok_s = r.get("generation_tok_per_s")
             if ttft is not None and gen_tok_s is not None:
@@ -467,8 +491,13 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
             "median_generation_tok_per_s": med(results, "generation_tok_per_s"),
         }
 
-        if summary["median_ttft_ms"] is not None and summary["median_generation_tok_per_s"] is not None:
-            log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
+        if (
+            summary["median_ttft_ms"] is not None
+            and summary["median_generation_tok_per_s"] is not None
+        ):
+            log(
+                f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms"
+            )
         else:
             log(f"Median: {summary['median_wall_s']:.2f}s")
 
@@ -534,7 +563,9 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     )
 
     if not server.is_running() and args.no_autostart:
-        raise SystemExit(f"TensorRT-LLM server not detected on {args.host}:{args.port} and --no-autostart was set.")
+        raise SystemExit(
+            f"TensorRT-LLM server not detected on {args.host}:{args.port} and --no-autostart was set."
+        )
 
     with server:
         if not server.is_running():
@@ -546,7 +577,9 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             )
 
         gpu_info = get_gpu_info(include_memory=True)
-        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
+        log(
+            f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB"
+        )
 
         client = OpenAI(
             base_url=f"http://{args.host}:{args.port}/v1",
@@ -557,15 +590,31 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
 
         # Warmup
         log("Warmup request...")
-        bench_once_trtllm(client, api_model, prompt_text, image_path,
-                          min(64, args.max_tokens), args.temperature, args.host, args.port)
+        bench_once_trtllm(
+            client,
+            api_model,
+            prompt_text,
+            image_path,
+            min(64, args.max_tokens),
+            args.temperature,
+            args.host,
+            args.port,
+        )
 
         # Benchmark
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_trtllm(client, api_model, prompt_text, image_path,
-                                  args.max_tokens, args.temperature, args.host, args.port)
+            r = bench_once_trtllm(
+                client,
+                api_model,
+                prompt_text,
+                image_path,
+                args.max_tokens,
+                args.temperature,
+                args.host,
+                args.port,
+            )
             ttft = r.get("ttft_ms")
             gen_tok_s = r.get("generation_tok_per_s")
             if ttft is not None and gen_tok_s is not None:
@@ -582,8 +631,13 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             "median_tpot_ms": med(results, "tpot_ms"),
         }
 
-        if summary["median_ttft_ms"] is not None and summary["median_generation_tok_per_s"] is not None:
-            log(f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms")
+        if (
+            summary["median_ttft_ms"] is not None
+            and summary["median_generation_tok_per_s"] is not None
+        ):
+            log(
+                f"Median: {summary['median_generation_tok_per_s']:.1f} tok/s, TTFT: {summary['median_ttft_ms']:.1f} ms"
+            )
         elif summary["median_tok_per_s"] is not None:
             log(f"Median: {summary['median_tok_per_s']:.1f} tok/s (wall clock)")
         else:
@@ -610,7 +664,9 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         )
 
 
-def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_label: str, backend: str):
+def run_benchmark_gguf(
+    args, model_path: str, image_path: str | None, image_label: str, backend: str
+):
     """Run benchmarks using GGUF backend (llama.cpp or ik_llama.cpp) via Docker."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
@@ -678,7 +734,9 @@ def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_labe
     )
 
     if not server.is_running() and args.no_autostart:
-        raise SystemExit(f"{backend_label} server not detected on {args.host}:{args.port} and --no-autostart was set.")
+        raise SystemExit(
+            f"{backend_label} server not detected on {args.host}:{args.port} and --no-autostart was set."
+        )
 
     with server:
         if not server.is_running():
@@ -695,17 +753,26 @@ def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_labe
             )
 
         gpu_info = get_gpu_info(include_memory=True)
-        log(f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB")
+        log(
+            f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB"
+        )
 
         log("Warmup request...")
-        _ = bench_once_llama(prompt_text, image_path, min(64, args.max_tokens),
-                             args.temperature, args.host, args.port)
+        _ = bench_once_llama(
+            prompt_text,
+            image_path,
+            min(64, args.max_tokens),
+            args.temperature,
+            args.host,
+            args.port,
+        )
 
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_llama(prompt_text, image_path, args.max_tokens,
-                                 args.temperature, args.host, args.port)
+            r = bench_once_llama(
+                prompt_text, image_path, args.max_tokens, args.temperature, args.host, args.port
+            )
             ttft = r.get("ttft_ms")
             gen_tok_s = r.get("generation_tok_per_s")
             if ttft is not None and gen_tok_s is not None:
@@ -764,6 +831,7 @@ def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_labe
 # Main
 # ----------------------------
 
+
 def main():
     ap = argparse.ArgumentParser(
         description="Unified benchmark runner - auto-detects backend from model format",
@@ -774,64 +842,116 @@ def main():
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
 
     # Backend selection
-    ap.add_argument("--backend", choices=list(BACKEND_REGISTRY.keys()), default=None,
-                    help="Backend to use (default: auto-detect from model format)")
+    ap.add_argument(
+        "--backend",
+        choices=list(BACKEND_REGISTRY.keys()),
+        default=None,
+        help="Backend to use (default: auto-detect from model format)",
+    )
 
     # Common benchmark options
     ap.add_argument("--prompt", default=None, help="Custom prompt (overrides --prompt-set)")
-    ap.add_argument("--prompt-set", default="long", choices=list(ALL_PROMPTS.keys()),
-                    help="Prompt set to use (default: long)")
+    ap.add_argument(
+        "--prompt-set",
+        default="long",
+        choices=list(ALL_PROMPTS.keys()),
+        help="Prompt set to use (default: long)",
+    )
     ap.add_argument("--max-tokens", type=int, default=512, help="Max tokens to generate")
     ap.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
     ap.add_argument("--iterations", type=int, default=5, help="Number of benchmark iterations")
-    ap.add_argument("--image", default=None,
-                    help="Image for vision benchmark: path, URL, 'example', or 'none'")
+    ap.add_argument(
+        "--image", default=None, help="Image for vision benchmark: path, URL, 'example', or 'none'"
+    )
 
     # Server options
     ap.add_argument("--host", default="127.0.0.1", help="Server host")
-    ap.add_argument("--port", type=int, default=None,
-                    help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)")
-    ap.add_argument("--no-autostart", action="store_true",
-                    help="Don't start server; require it already running")
-    ap.add_argument("--server-timeout", type=int, default=360,
-                    help="Timeout waiting for server to start (default: 360s)")
+    ap.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)",
+    )
+    ap.add_argument(
+        "--no-autostart", action="store_true", help="Don't start server; require it already running"
+    )
+    ap.add_argument(
+        "--server-timeout",
+        type=int,
+        default=360,
+        help="Timeout waiting for server to start (default: 360s)",
+    )
 
     # Backend version and image options (Docker-based execution)
-    ap.add_argument("--backend-version", default=None,
-                    help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)")
-    ap.add_argument("--rebuild", action="store_true",
-                    help="Force rebuild/repull Docker image even if cached")
-    ap.add_argument("--build-only", action="store_true",
-                    help="Only build/pull Docker image, don't run benchmark")
-    ap.add_argument("--image-type", choices=["prebuilt", "build"], default=None,
-                    help="Image type: 'prebuilt' uses official images, 'build' compiles from source")
-    ap.add_argument("--image", default=None, dest="docker_image",
-                    help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)")
+    ap.add_argument(
+        "--backend-version",
+        default=None,
+        help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)",
+    )
+    ap.add_argument(
+        "--rebuild", action="store_true", help="Force rebuild/repull Docker image even if cached"
+    )
+    ap.add_argument(
+        "--build-only",
+        action="store_true",
+        help="Only build/pull Docker image, don't run benchmark",
+    )
+    ap.add_argument(
+        "--image-type",
+        choices=["prebuilt", "build"],
+        default=None,
+        help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
+    )
+    ap.add_argument(
+        "--image",
+        default=None,
+        dest="docker_image",
+        help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
+    )
 
     # vLLM-specific options (defaults from config, CLI overrides)
     vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
-    vllm_group.add_argument("--tensor-parallel", type=int, default=None,
-                            help="Tensor parallel size (default: auto-detect GPU count)")
-    vllm_group.add_argument("--max-model-len", type=int, default=None,
-                            help="Max context length (default: from config or 65536)")
-    vllm_group.add_argument("--gpu-memory-utilization", type=float, default=None,
-                            help="GPU memory fraction (default: from config or 0.95)")
-    vllm_group.add_argument("--max-num-batched-tokens", type=int, default=None,
-                            help="Max batched tokens")
+    vllm_group.add_argument(
+        "--tensor-parallel",
+        type=int,
+        default=None,
+        help="Tensor parallel size (default: auto-detect GPU count)",
+    )
+    vllm_group.add_argument(
+        "--max-model-len",
+        type=int,
+        default=None,
+        help="Max context length (default: from config or 65536)",
+    )
+    vllm_group.add_argument(
+        "--gpu-memory-utilization",
+        type=float,
+        default=None,
+        help="GPU memory fraction (default: from config or 0.95)",
+    )
+    vllm_group.add_argument(
+        "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
+    )
 
     # llama.cpp-specific options (defaults from config, CLI overrides)
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
-    llama_group.add_argument("--ctx", type=int, default=None,
-                             help="Context length (-c)")
-    llama_group.add_argument("--n-gpu-layers", type=int, default=None,
-                             help="GPU layers to offload (-ngl, default: from config or 999)")
-    llama_group.add_argument("--parallel", type=int, default=1,
-                             help="Parallel sequences (-np, default: 1)")
-    llama_group.add_argument("--mmproj", default=None,
-                             help="Multimodal projector path (auto-detected if not specified)")
+    llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
+    llama_group.add_argument(
+        "--n-gpu-layers",
+        type=int,
+        default=None,
+        help="GPU layers to offload (-ngl, default: from config or 999)",
+    )
+    llama_group.add_argument(
+        "--parallel", type=int, default=1, help="Parallel sequences (-np, default: 1)"
+    )
+    llama_group.add_argument(
+        "--mmproj", default=None, help="Multimodal projector path (auto-detected if not specified)"
+    )
     llama_group.add_argument("--seed", type=int, default=0, help="Sampling seed")
-    llama_group.add_argument("--extra-args", nargs=argparse.REMAINDER,
-                             help="Extra args passed to llama-server")
+    llama_group.add_argument(
+        "--extra-args", nargs=argparse.REMAINDER, help="Extra args passed to llama-server"
+    )
 
     args = ap.parse_args()
 
@@ -856,7 +976,8 @@ def main():
 
         log(f"Preparing {backend} image for version {version}...")
         image_name = ensure_image(
-            backend, version,
+            backend,
+            version,
             rebuild=args.rebuild,
             image_type=image_type,
             image_override=args.docker_image,

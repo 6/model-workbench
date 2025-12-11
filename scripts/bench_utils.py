@@ -77,6 +77,7 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
 
     return get_default_backend(fmt)
 
+
 # Built-in test images
 BUILTIN_IMAGES = {
     "example": ROOT / "config" / "example.jpg",
@@ -87,6 +88,7 @@ BUILTIN_IMAGES = {
 # String utilities
 # ----------------------------
 
+
 def sanitize(s: str) -> str:
     """Sanitize a string for use in filenames."""
     return re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
@@ -95,6 +97,7 @@ def sanitize(s: str) -> str:
 # ----------------------------
 # Image utilities
 # ----------------------------
+
 
 def resolve_image_source(image_arg: str | None) -> tuple[str | None, str]:
     """Resolve image argument to path and label.
@@ -164,15 +167,13 @@ def build_chat_messages(prompt: str, image_path: str | None = None) -> list[dict
         data_url = encode_image_base64(image_path)
         image_content = {"type": "image_url", "image_url": {"url": data_url}}
 
-    return [{
-        "role": "user",
-        "content": [image_content, {"type": "text", "text": prompt}]
-    }]
+    return [{"role": "user", "content": [image_content, {"type": "text", "text": prompt}]}]
 
 
 # ----------------------------
 # Statistics utilities
 # ----------------------------
+
 
 def med(results: list[dict], key: str) -> float | None:
     """Compute median of a metric across results, ignoring None values.
@@ -192,11 +193,12 @@ def med(results: list[dict], key: str) -> float | None:
 # GPU info + tag inference
 # ----------------------------
 
+
 def compact_path(path: str) -> str:
     """Replace home directory with ~ for cleaner paths."""
     home = str(Path.home())
     if path.startswith(home):
-        return "~" + path[len(home):]
+        return "~" + path[len(home) :]
     return path
 
 
@@ -244,10 +246,13 @@ def get_gpu_info(include_memory: bool = False) -> dict:
         include_memory: If True, also query current memory usage per GPU
     """
     try:
-        drv = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-            text=True
-        ).strip().splitlines()
+        drv = (
+            subprocess.check_output(
+                ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"], text=True
+            )
+            .strip()
+            .splitlines()
+        )
         driver_version = drv[0].strip() if drv else None
 
         query_fields = "index,name,memory.total,pcie.link.gen.max,pcie.link.width.current"
@@ -256,7 +261,7 @@ def get_gpu_info(include_memory: bool = False) -> dict:
 
         out = subprocess.check_output(
             ["nvidia-smi", f"--query-gpu={query_fields}", "--format=csv,noheader,nounits"],
-            text=True
+            text=True,
         ).strip()
 
         gpus = []
@@ -286,15 +291,16 @@ def get_gpu_info(include_memory: bool = False) -> dict:
     except Exception as e:
         return {"error": str(e), "driver_version": None, "gpus": []}
 
+
 def get_gpu_count() -> int:
     """Return number of available GPUs. Returns 1 if detection fails."""
     return max(1, len(get_gpu_info().get("gpus", [])))
 
 
-
 # ----------------------------
 # Network utilities
 # ----------------------------
+
 
 def port_open(host: str, port: int, timeout: float = 0.5) -> bool:
     """Check if a port is open on the given host."""
@@ -304,9 +310,11 @@ def port_open(host: str, port: int, timeout: float = 0.5) -> bool:
     except OSError:
         return False
 
+
 # ----------------------------
 # Model resolution
 # ----------------------------
+
 
 def resolve_model_path(model_arg: str) -> str:
     """
@@ -643,7 +651,7 @@ def resolve_run_config(args):
     from common import BACKEND_REGISTRY
 
     # Resolve backend (auto-detect or explicit)
-    backend = resolve_backend(args.model, getattr(args, 'backend', None))
+    backend = resolve_backend(args.model, getattr(args, "backend", None))
     backend_info = BACKEND_REGISTRY[backend]
 
     # Get merged config for this model + backend
@@ -651,11 +659,11 @@ def resolve_run_config(args):
     backend_args = backend_cfg.get("args", {})
 
     # Set default port based on backend
-    if getattr(args, 'port', None) is None:
+    if getattr(args, "port", None) is None:
         args.port = backend_info["default_port"]
 
     # Auto-detect tensor parallel for vLLM and trtllm
-    if backend in ("vllm", "trtllm") and getattr(args, 'tensor_parallel', None) is None:
+    if backend in ("vllm", "trtllm") and getattr(args, "tensor_parallel", None) is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
@@ -665,11 +673,11 @@ def resolve_run_config(args):
         model_path = args.model
 
     # Apply config defaults for args not specified on CLI
-    if getattr(args, 'max_model_len', None) is None:
+    if getattr(args, "max_model_len", None) is None:
         args.max_model_len = backend_args.get("max_model_len", 65536)
-    if getattr(args, 'gpu_memory_utilization', None) is None:
+    if getattr(args, "gpu_memory_utilization", None) is None:
         args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
-    if getattr(args, 'n_gpu_layers', None) is None:
+    if getattr(args, "n_gpu_layers", None) is None:
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
 
     return backend, model_path, backend_cfg
@@ -678,6 +686,7 @@ def resolve_run_config(args):
 # ----------------------------
 # Result writing
 # ----------------------------
+
 
 def write_benchmark_result(
     results_dir: Path,

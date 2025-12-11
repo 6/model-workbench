@@ -14,6 +14,7 @@ from common import log
 # Server Manager
 # ----------------------------
 
+
 class ServerManager:
     """Manages local model server lifecycle with context manager support.
 
@@ -81,7 +82,7 @@ class ServerManager:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                errors='replace',  # Handle non-UTF-8 bytes gracefully
+                errors="replace",  # Handle non-UTF-8 bytes gracefully
             )
             stream = self.proc.stderr
         else:
@@ -90,7 +91,7 @@ class ServerManager:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                errors='replace',  # Handle non-UTF-8 bytes gracefully
+                errors="replace",  # Handle non-UTF-8 bytes gracefully
             )
             stream = self.proc.stdout
 
@@ -132,18 +133,13 @@ class ServerManager:
             if self.proc.poll() is not None:
                 read_output()
                 output = "".join(self._output_lines[-50:])
-                raise SystemExit(
-                    f"{label} exited unexpectedly. Last output:\n{output}"
-                )
+                raise SystemExit(f"{label} exited unexpectedly. Last output:\n{output}")
 
         # Timeout - show recent logs and cleanup
         read_output()
         self.stop()
         output = "".join(self._output_lines[-50:])
-        raise SystemExit(
-            f"{label} failed to start within {self.timeout}s.\n"
-            f"Last output:\n{output}"
-        )
+        raise SystemExit(f"{label} failed to start within {self.timeout}s.\nLast output:\n{output}")
 
     def stop(self):
         """Graceful shutdown: SIGINT → wait → terminate → wait → kill."""
@@ -206,7 +202,8 @@ class ServerManager:
 
         # Ensure image exists (builds or pulls as needed)
         image_name = ensure_image(
-            "vllm", version,
+            "vllm",
+            version,
             rebuild=rebuild,
             image_type=image_type,
             image_override=image_override,
@@ -332,7 +329,8 @@ class ServerManager:
 
         # TensorRT-LLM always uses prebuilt NGC images
         image_name = ensure_image(
-            "trtllm", version,
+            "trtllm",
+            version,
             rebuild=rebuild,
             image_type="prebuilt",
         )
@@ -359,10 +357,12 @@ class ServerManager:
 # Readiness checks
 # ----------------------------
 
+
 def wait_for_openai_ready(host: str, port: int) -> bool:
     """Readiness check for OpenAI-compatible API (used by vLLM and TensorRT-LLM)."""
     try:
         from openai import OpenAI
+
         client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
         client.models.list()
         return True
@@ -374,6 +374,7 @@ def wait_for_llama_ready(host: str, port: int) -> bool:
     """Readiness check for llama.cpp server via /health endpoint."""
     try:
         import requests
+
         r = requests.get(f"http://{host}:{port}/health", timeout=5)
         return r.status_code == 200 and r.json().get("status") == "ok"
     except Exception:
