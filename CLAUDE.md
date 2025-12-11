@@ -72,16 +72,55 @@ All benchmarks run via Docker for reproducibility with version pinning.
 - **Build from source**: llama.cpp and ik_llama.cpp build from Dockerfiles
 - **Config-driven**: `config/models.yaml` specifies default versions and image types
 
-### Image Resolution
-1. CLI override via `--image` (e.g., `--image vllm/vllm-openai:nightly`)
-2. CLI override via `--image-type` (`prebuilt` or `build`)
-3. Config `defaults.vllm_image_type` (default: `prebuilt` for vLLM)
-4. TensorRT-LLM always uses prebuilt NGC images
+### Configuration Schema
 
-### Version Resolution
-1. CLI override via `--backend-version`
-2. Model's `backend_version` in config (if specified)
-3. Global `defaults.vllm_version`, `defaults.llama_version`, or `defaults.trtllm_version`
+Backend defaults are configured in `config/models.yaml`:
+
+```yaml
+defaults:
+  backends:
+    vllm:
+      version: v0.8.0
+      image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
+      args:
+        gpu_memory_utilization: 0.95
+        max_model_len: 65536
+    llama:
+      version: b4521
+      image_type: build
+      args:
+        n_gpu_layers: 999
+    ik_llama:
+      version: b4521          # Explicit version (no fallback to llama)
+      image_type: build
+      args:
+        n_gpu_layers: 999
+    trtllm:
+      version: "0.18.0"
+      image_type: prebuilt
+
+models:
+  - repo_id: org/model
+    backend: vllm              # Optional: explicit backend selection
+    backends:                  # Optional: per-backend overrides
+      vllm:
+        version: v0.8.1
+        args:
+          max_model_len: 32768
+```
+
+### Resolution Priority (highest to lowest)
+
+**Version/Image Type**:
+1. CLI override (`--backend-version`, `--image-type`, `--image`)
+2. Model-specific config (`model.backends.{engine}.version`)
+3. Global defaults (`defaults.backends.{engine}.version`)
+
+**Backend Args** (gpu_memory_utilization, max_model_len, n_gpu_layers):
+1. CLI override (`--gpu-memory-utilization 0.9`)
+2. Model-specific config (`model.backends.{engine}.args.gpu_memory_utilization`)
+3. Global defaults (`defaults.backends.{engine}.args.gpu_memory_utilization`)
+4. Hardcoded fallback in script
 
 ### Key Directories
 - `scripts/` - Benchmark runners and utilities

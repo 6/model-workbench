@@ -38,26 +38,10 @@ ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
 # ----------------------------
 
 BACKENDS = {
-    "vllm": {
-        "formats": ["safetensors"],
-        "default_port": 8000,
-        "config_key": "vllm_version",
-    },
-    "llama": {
-        "formats": ["gguf"],
-        "default_port": 8080,
-        "config_key": "llama_version",
-    },
-    "ik_llama": {
-        "formats": ["gguf"],
-        "default_port": 8080,
-        "config_key": "ik_llama_version",  # Falls back to llama_version
-    },
-    "trtllm": {
-        "formats": ["safetensors"],
-        "default_port": 8000,
-        "config_key": "trtllm_version",
-    },
+    "vllm": {"formats": ["safetensors"], "default_port": 8000},
+    "llama": {"formats": ["gguf"], "default_port": 8080},
+    "ik_llama": {"formats": ["gguf"], "default_port": 8080},
+    "trtllm": {"formats": ["safetensors"], "default_port": 8000},
 }
 
 
@@ -502,13 +486,29 @@ def find_mmproj(gguf_path: Path) -> Path | None:
 # Model config utilities
 # ----------------------------
 
+# Config cache to avoid repeated file reads
+_CONFIG_CACHE: dict | None = None
+
+
+def _load_config() -> dict:
+    """Load and cache config file.
+
+    Returns:
+        Full config dict with 'defaults' and 'models' keys
+    """
+    global _CONFIG_CACHE
+    if _CONFIG_CACHE is None:
+        if MODELS_CONFIG.exists():
+            with open(MODELS_CONFIG) as f:
+                _CONFIG_CACHE = yaml.safe_load(f) or {}
+        else:
+            _CONFIG_CACHE = {}
+    return _CONFIG_CACHE
+
+
 def load_models_config() -> list[dict]:
     """Load models.yaml config."""
-    if not MODELS_CONFIG.exists():
-        return []
-    with open(MODELS_CONFIG) as f:
-        data = yaml.safe_load(f)
-    return data.get("models", [])
+    return _load_config().get("models", [])
 
 
 def get_model_config(model_arg: str) -> dict | None:
@@ -532,6 +532,106 @@ def get_model_config(model_arg: str) -> dict | None:
     return None
 
 
+def get_backend_config(engine: str) -> dict:
+    """
+    Get full config dict for a backend from defaults.
+
+    Supports both new nested schema (defaults.backends.{engine}) and
+    old flat schema (defaults.{engine}_version, etc.) for backward compatibility.
+
+    Args:
+        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
+
+    Returns:
+        Backend config dict with keys: version, image_type, args
+    """
+    config = _load_config()
+    defaults = config.get("defaults", {})
+
+    # Try new nested schema first
+    backends = defaults.get("backends", {})
+    if engine in backends:
+        backend_cfg = backends[engine]
+        return {
+            "version": backend_cfg.get("version"),
+            "image_type": backend_cfg.get("image_type", "build"),
+            "args": backend_cfg.get("args", {}),
+        }
+
+    # Fall back to old flat schema
+    version = None
+    image_type = "build"
+
+    if engine == "vllm":
+        version = defaults.get("vllm_version")
+        image_type = defaults.get("vllm_image_type", "build")
+    elif engine == "llama":
+        version = defaults.get("llama_version")
+    elif engine == "ik_llama":
+        # Old behavior: fall back to llama_version (but new schema requires explicit)
+        version = defaults.get("ik_llama_version") or defaults.get("llama_version")
+    elif engine == "trtllm":
+        version = defaults.get("trtllm_version")
+        image_type = "prebuilt"  # trtllm always prebuilt in old schema
+
+    return {"version": version, "image_type": image_type, "args": {}}
+
+
+def get_backend_default_args(engine: str) -> dict:
+    """
+    Get default args for a backend.
+
+    Args:
+        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
+
+    Returns:
+        Dict of default args for the backend (e.g., gpu_memory_utilization, n_gpu_layers)
+    """
+    return get_backend_config(engine).get("args", {})
+
+
+def get_model_backend_config(model_arg: str, engine: str) -> dict:
+    """
+    Get merged config for a model + backend.
+
+    Resolution order (later overrides earlier):
+    1. Global backend defaults (defaults.backends.{engine})
+    2. Model-specific overrides (model.backends.{engine})
+
+    Args:
+        model_arg: Model path or repo_id
+        engine: Backend name
+
+    Returns:
+        Merged config dict with keys: version, image_type, args
+    """
+    # Start with backend defaults
+    result = get_backend_config(engine)
+
+    # Check for model-specific overrides
+    model_cfg = get_model_config(model_arg)
+    if not model_cfg:
+        return result
+
+    # New schema: model.backends.{engine}
+    model_backends = model_cfg.get("backends", {})
+    if engine in model_backends:
+        model_backend_cfg = model_backends[engine]
+        if model_backend_cfg.get("version"):
+            result["version"] = model_backend_cfg["version"]
+        if model_backend_cfg.get("image_type"):
+            result["image_type"] = model_backend_cfg["image_type"]
+        if model_backend_cfg.get("args"):
+            # Merge args (model-specific overrides defaults)
+            result["args"] = {**result["args"], **model_backend_cfg["args"]}
+
+    # Old schema: model.backend_version (applies to any backend)
+    elif model_cfg.get("backend_version"):
+        result["version"] = model_cfg["backend_version"]
+
+    return result
+
+
 def get_default_backend_version(engine: str) -> str | None:
     """
     Get default backend version for engine from config.
@@ -542,22 +642,7 @@ def get_default_backend_version(engine: str) -> str | None:
     Returns:
         Default version string or None if not configured
     """
-    if not MODELS_CONFIG.exists():
-        return None
-    with open(MODELS_CONFIG) as f:
-        data = yaml.safe_load(f)
-    defaults = data.get("defaults", {})
-
-    if engine == "vllm":
-        return defaults.get("vllm_version")
-    elif engine == "llama":
-        return defaults.get("llama_version")
-    elif engine == "ik_llama":
-        # ik_llama falls back to llama_version if not explicitly set
-        return defaults.get("ik_llama_version") or defaults.get("llama_version")
-    elif engine == "trtllm":
-        return defaults.get("trtllm_version")
-    return None
+    return get_backend_config(engine).get("version")
 
 
 def get_image_type(engine: str) -> str:
@@ -568,26 +653,9 @@ def get_image_type(engine: str) -> str:
         engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
 
     Returns:
-        'prebuilt' or 'build'. trtllm always returns 'prebuilt'.
-        Other backends default to 'build' unless configured.
+        'prebuilt' or 'build'
     """
-    # trtllm always uses prebuilt NGC images
-    if engine == "trtllm":
-        return "prebuilt"
-
-    if not MODELS_CONFIG.exists():
-        return "build"
-
-    with open(MODELS_CONFIG) as f:
-        data = yaml.safe_load(f)
-    defaults = data.get("defaults", {})
-
-    # Only vllm supports prebuilt option for now
-    if engine == "vllm":
-        return defaults.get("vllm_image_type", "build")
-
-    # llama/ik_llama default to build (no official prebuilt images)
-    return "build"
+    return get_backend_config(engine).get("image_type", "build")
 
 
 def get_model_backend_version(model_arg: str, engine: str) -> str | None:
@@ -595,23 +663,18 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
     Get backend version for a specific model.
 
     Resolution order:
-    1. Model's backend_version if specified
-    2. Global defaults.vllm_version or defaults.llama_version
+    1. Model's backends.{engine}.version if specified
+    2. Model's backend_version if specified (old schema)
+    3. Global defaults.backends.{engine}.version
 
     Args:
         model_arg: Model path or repo_id
-        engine: 'vllm' or 'llama'
+        engine: Backend name
 
     Returns:
         Version string or None if not configured
     """
-    # First check model-specific config
-    config = get_model_config(model_arg)
-    if config and config.get("backend_version"):
-        return config["backend_version"]
-
-    # Fall back to global default
-    return get_default_backend_version(engine)
+    return get_model_backend_config(model_arg, engine).get("version")
 
 
 # ----------------------------

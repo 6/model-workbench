@@ -121,7 +121,7 @@ litellm:
 
 ---
 
-## 5. Configuration Refactor
+## 5. Configuration Refactor ✅ DONE
 
 **Goal**: More explicit configuration with sensible defaults.
 
@@ -211,8 +211,8 @@ models:
 - [ ] Test response normalization
 - [ ] Document model aliasing
 
-### Configuration
-- [ ] Define new config schema
-- [ ] Update `bench_utils.py` parsing
-- [ ] Migrate existing config
-- [ ] Update CLAUDE.md documentation
+### Configuration ✅
+- [x] Define new config schema
+- [x] Update `bench_utils.py` parsing
+- [x] Migrate existing config
+- [x] Update CLAUDE.md documentation

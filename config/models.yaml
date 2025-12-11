@@ -1,11 +1,26 @@
-# Backend version defaults
-# Models without explicit backend_version use these
+# Backend configuration
+# Models without explicit overrides use these defaults
 defaults:
-  vllm_version: v0.8.0        # Default vLLM version for safetensors models
-  vllm_image_type: prebuilt   # Image type: "prebuilt" (official Docker Hub) or "build" (from source)
-  llama_version: b4521        # Default llama.cpp version for GGUF models
-  # ik_llama_version: null    # Optional: ik_llama.cpp version (falls back to llama_version if not set)
-  trtllm_version: "0.18.0"    # Default TensorRT-LLM version (NGC image tag)
+  backends:
+    vllm:
+      version: v0.8.0
+      image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
+      args:
+        gpu_memory_utilization: 0.95
+        max_model_len: 65536
+    llama:
+      version: b4521
+      image_type: build
+      args:
+        n_gpu_layers: 999
+    ik_llama:
+      version: b4521          # Explicit version (no fallback to llama)
+      image_type: build
+      args:
+        n_gpu_layers: 999
+    trtllm:
+      version: "0.18.0"
+      image_type: prebuilt    # Uses NGC images
 
 models:
   # Devstral 123B GGUF (from main)

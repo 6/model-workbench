@@ -42,6 +42,7 @@ from bench_utils import (
     BACKENDS,
     get_gpu_count,
     get_image_type,
+    get_model_backend_config,
     get_model_backend_version,
     log,
     resolve_backend,
@@ -107,22 +108,22 @@ def main():
     ap.add_argument("--image", default=None,
                     help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)")
 
-    # vLLM-specific options
+    # vLLM-specific options (defaults from config, CLI overrides)
     vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
     vllm_group.add_argument("--tensor-parallel", type=int, default=None,
                             help="Tensor parallel size (default: auto-detect GPU count)")
-    vllm_group.add_argument("--max-model-len", type=int, default=65536,
-                            help="Max context length (default: 65536)")
-    vllm_group.add_argument("--gpu-memory-utilization", type=float, default=0.95,
-                            help="GPU memory fraction (default: 0.95)")
+    vllm_group.add_argument("--max-model-len", type=int, default=None,
+                            help="Max context length (default: from config or 65536)")
+    vllm_group.add_argument("--gpu-memory-utilization", type=float, default=None,
+                            help="GPU memory fraction (default: from config or 0.95)")
     vllm_group.add_argument("--max-num-batched-tokens", type=int, default=None,
                             help="Max batched tokens")
 
-    # llama.cpp-specific options
+    # llama.cpp-specific options (defaults from config, CLI overrides)
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
     llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
-    llama_group.add_argument("--n-gpu-layers", type=int, default=999,
-                             help="GPU layers to offload (-ngl, default: 999)")
+    llama_group.add_argument("--n-gpu-layers", type=int, default=None,
+                             help="GPU layers to offload (-ngl, default: from config or 999)")
     llama_group.add_argument("--parallel", type=int, default=1,
                              help="Parallel sequences (-np, default: 1)")
     llama_group.add_argument("--mmproj", default=None,
@@ -133,6 +134,10 @@ def main():
     # Resolve backend (auto-detect or explicit)
     backend = resolve_backend(args.model, args.backend)
     backend_info = BACKENDS[backend]
+
+    # Get merged config for this model + backend (defaults + model overrides)
+    backend_cfg = get_model_backend_config(args.model, backend)
+    backend_args = backend_cfg.get("args", {})
 
     # Set default port based on backend
     if args.port is None:
@@ -146,17 +151,28 @@ def main():
     model_path = resolve_model_path(args.model) if backend in ("vllm", "trtllm") else args.model
 
     # Resolve backend version
-    backend_version = args.backend_version or get_model_backend_version(args.model, backend)
+    backend_version = args.backend_version or backend_cfg.get("version")
     if not backend_version and not args.test_only:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.{backend}_version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 
-    # Resolve image type (from CLI or config)
-    image_type = args.image_type or get_image_type(backend)
+    # Resolve image type (from CLI, model config, or backend defaults)
+    image_type = args.image_type or backend_cfg.get("image_type", "build")
+
+    # Resolve backend-specific args from config if not provided via CLI
+    # vLLM args
+    if args.max_model_len is None:
+        args.max_model_len = backend_args.get("max_model_len", 65536)
+    if args.gpu_memory_utilization is None:
+        args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
+
+    # llama.cpp / ik_llama args
+    if args.n_gpu_layers is None:
+        args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
 
     # Create server manager
     server = ServerManager(
