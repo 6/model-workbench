@@ -28,6 +28,62 @@ This allows any local model to be used as a drop-in replacement for OpenAI or An
 | Vision/multimodal | Yes | Yes | Image inputs (base64 or URL) |
 | System prompts | Yes | Yes | Via system message/parameter |
 
+## Backend Feature Support
+
+LiteLLM handles API translation, but **feature availability depends on the underlying backend and model**. Not all features work with all backends.
+
+### Feature Matrix
+
+| Feature | vLLM | llama.cpp / ik_llama | TensorRT-LLM |
+|---------|------|----------------------|--------------|
+| **Chat completions** | Yes | Yes | Yes |
+| **Streaming** | Yes | Yes | Yes |
+| **Tool/function calling** | Yes | Partial | Limited |
+| **Vision/multimodal** | Yes | Yes | Limited |
+
+### Feature Details
+
+#### Streaming
+All backends support streaming via Server-Sent Events (SSE). No special configuration needed.
+
+#### Tool/Function Calling
+Tool calling support varies significantly:
+
+- **vLLM**: Native support for models trained with tool-calling capabilities (Llama 3.1+, Qwen 2.5, Mistral, etc.). Works out of the box with `--enable-auto-tool-choice`.
+- **llama.cpp / ik_llama**: Uses grammar-constrained generation to force JSON output. Works but may be less reliable than native support. Requires models fine-tuned for tool use.
+- **TensorRT-LLM**: Limited support, depends on model and TRT-LLM version. Not all tool-calling models are supported.
+
+**Recommendation**: Use vLLM for agentic workloads requiring tool calling.
+
+#### Vision/Multimodal
+Vision support requires both a vision-capable model AND backend support:
+
+- **vLLM**: Best VLM support. Works with LLaVA, Qwen-VL, Pixtral, InternVL, GLM-4V, and other vision models. Pass images as base64 or URLs in the `content` array.
+- **llama.cpp / ik_llama**: Supports LLaVA and other GGUF vision models via `--mmproj` flag for the multimodal projector. Requires separate projector file.
+- **TensorRT-LLM**: Limited vision model support. Check TRT-LLM docs for supported VLMs.
+
+**Recommendation**: Use vLLM for vision workloads. For GGUF vision models, use llama.cpp with the appropriate `--mmproj` projector.
+
+### Model Requirements
+
+The features above require appropriate models:
+
+| Feature | Model Requirements |
+|---------|-------------------|
+| Tool calling | Models trained for tool use: Llama 3.1+, Qwen 2.5, Mistral v0.3+, Hermes 2 Pro |
+| Vision | Vision-language models: LLaVA, Qwen-VL, GLM-4V, Pixtral, InternVL |
+| Streaming | Any model (universal support) |
+
+### Anthropic API Translation Notes
+
+When using the Anthropic Messages API (`/v1/messages`), LiteLLM translates requests to OpenAI format internally:
+
+- `tool_use` blocks → OpenAI `tool_calls`
+- `tool_result` blocks → OpenAI tool response messages
+- Image content blocks → OpenAI image_url format
+
+Most translations work transparently, but edge cases may behave differently than the real Anthropic API.
+
 ## Current Pain Points
 
 | Backend | Model Name | API Endpoint | OpenAI SDK | Anthropic SDK |
