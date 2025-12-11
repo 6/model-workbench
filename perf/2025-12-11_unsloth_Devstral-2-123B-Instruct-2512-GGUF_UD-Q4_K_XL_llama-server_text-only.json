@@ -1,0 +1,100 @@
+{
+  "timestamp": "2025-12-11T06:05:40.961158",
+  "repo_id": "unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q4_K_XL",
+  "model_ref": "~/models/unsloth/Devstral-2-123B-Instruct-2512-GGUF/UD-Q4_K_XL/Devstral-2-123B-Instruct-2512-UD-Q4_K_XL-00001-of-00002.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 37106
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 37460
+      }
+    ],
+    "memory_used_mib": 74566,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7349",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 9.482597155999429,
+      "prompt_tokens": 17,
+      "generated_tokens": 182,
+      "ttft_ms": 0.322,
+      "tok_per_s": 19.193054076419628,
+      "generation_tok_per_s": 19.319275764934517,
+      "generation_ms": 9420.643,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store and reuse intermediate computations (key and value states) during inference, significantly improving efficiency for long sequences. By caching these states, the model avoids recomputing them for each new token, reducing memory and compute overhead. This is especially critical for long-context tasks, as it enables faster generation without retracing the entire sequence history.\n\nFor a deeper dive, see this [blog post](https://medium.com/@jayeshbahire/kv-cache-in-llms-understanding-the-mechanism-and-its-importance-5b2f1a370f7c) or the original [Transformer paper](https://arxiv.org/abs/1706.03762)."
+    },
+    {
+      "wall_s": 9.515712208999503,
+      "prompt_tokens": 17,
+      "generated_tokens": 182,
+      "ttft_ms": 0.362,
+      "tok_per_s": 19.12626149284687,
+      "generation_tok_per_s": 19.274207477947712,
+      "generation_ms": 9442.671,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store and reuse intermediate computations (key and value states) during inference, significantly improving efficiency for long sequences. By caching these states, the model avoids recomputing them for each new token, reducing memory and compute overhead. This is especially critical for long-context tasks, as it enables faster generation without retracing the entire sequence history.\n\nFor a deeper dive, see this [blog post](https://medium.com/@jayeshbahire/kv-cache-in-llms-understanding-the-mechanism-and-its-importance-5b2f1a370f7c) or the original [Transformer paper](https://arxiv.org/abs/1706.03762)."
+    },
+    {
+      "wall_s": 9.521681259000616,
+      "prompt_tokens": 17,
+      "generated_tokens": 182,
+      "ttft_ms": 0.267,
+      "tok_per_s": 19.114271424278122,
+      "generation_tok_per_s": 19.224065995584805,
+      "generation_ms": 9467.3,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store and reuse intermediate computations (key and value states) during inference, significantly improving efficiency for long sequences. By caching these states, the model avoids recomputing them for each new token, reducing memory and compute overhead. This is especially critical for long-context tasks, as it enables faster generation without retracing the entire sequence history.\n\nFor a deeper dive, see this [blog post](https://medium.com/@jayeshbahire/kv-cache-in-llms-understanding-the-mechanism-and-its-importance-5b2f1a370f7c) or the original [Transformer paper](https://arxiv.org/abs/1706.03762)."
+    },
+    {
+      "wall_s": 9.549119678999887,
+      "prompt_tokens": 17,
+      "generated_tokens": 182,
+      "ttft_ms": 0.271,
+      "tok_per_s": 19.05934851777473,
+      "generation_tok_per_s": 19.168322304175575,
+      "generation_ms": 9494.832,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store and reuse intermediate computations (key and value states) during inference, significantly improving efficiency for long sequences. By caching these states, the model avoids recomputing them for each new token, reducing memory and compute overhead. This is especially critical for long-context tasks, as it enables faster generation without retracing the entire sequence history.\n\nFor a deeper dive, see this [blog post](https://medium.com/@jayeshbahire/kv-cache-in-llms-understanding-the-mechanism-and-its-importance-5b2f1a370f7c) or the original [Transformer paper](https://arxiv.org/abs/1706.03762)."
+    },
+    {
+      "wall_s": 9.569976648999727,
+      "prompt_tokens": 17,
+      "generated_tokens": 182,
+      "ttft_ms": 0.268,
+      "tok_per_s": 19.01781024920505,
+      "generation_tok_per_s": 19.126277992674005,
+      "generation_ms": 9515.704,
+      "output_text": " Include a link to a paper or blog post that explains it in more detail.\n\nKV cache (Key-Value cache) is a mechanism used in transformer-based models to store and reuse intermediate computations (key and value states) during inference, significantly improving efficiency for long sequences. By caching these states, the model avoids recomputing them for each new token, reducing memory and compute overhead. This is especially critical for long-context tasks, as it enables faster generation without retracing the entire sequence history.\n\nFor a deeper dive, see this [blog post](https://medium.com/@jayeshbahire/kv-cache-in-llms-understanding-the-mechanism-and-its-importance-5b2f1a370f7c) or the original [Transformer paper](https://arxiv.org/abs/1706.03762)."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 9.521681259000616,
+    "median_tok_per_s": 19.114271424278122,
+    "median_ttft_ms": 0.271,
+    "median_generation_tok_per_s": 19.224065995584805
+  }
+}

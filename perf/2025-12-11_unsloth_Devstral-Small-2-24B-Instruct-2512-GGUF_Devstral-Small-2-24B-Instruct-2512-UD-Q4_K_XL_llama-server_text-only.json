@@ -1,0 +1,100 @@
+{
+  "timestamp": "2025-12-11T06:03:36.894678",
+  "repo_id": "unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF/Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL",
+  "model_ref": "~/models/unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF/Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 8032
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 7958
+      }
+    ],
+    "memory_used_mib": 15990,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7349",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 5.040060770999844,
+      "prompt_tokens": 17,
+      "generated_tokens": 422,
+      "ttft_ms": 1.641,
+      "tok_per_s": 83.72914914600999,
+      "generation_tok_per_s": 83.98412739795083,
+      "generation_ms": 5024.759,
+      "output_text": " Include a few key points and a brief explanation of how it works.\n\n### KV Cache Overview\n\nA **Key-Value (KV) cache** is a memory storage system used in large language models (LLMs) to retain previously processed tokens, enabling efficient handling of long contexts. It is a critical component for maintaining performance and reducing computational costs when dealing with extensive input sequences.\n\n#### Key Points:\n1. **Purpose**: The KV cache stores the keys and values of attention layers, allowing the model to reuse them for subsequent tokens without recomputing.\n2. **Efficiency**: By avoiding recomputation, the KV cache significantly speeds up inference, especially for long contexts.\n3. **Memory Usage**: It requires additional memory to store the keys and values, which can be substantial for large models.\n4. **Attention Mechanism**: The cache is used in the **self-attention** mechanism of transformers, where each token attends to all previous tokens.\n\n#### How It Works:\n- During inference, the model processes tokens sequentially.\n- For each new token, the model computes its **query**, **key**, and **value** vectors.\n- The **query** vector interacts with the **key** vectors of all previous tokens (stored in the cache) to determine attention weights.\n- The **value** vectors of previous tokens (also stored in the cache) are then used to compute the output for the current token.\n- This process avoids recomputing keys and values for every token, reducing redundant calculations.\n\n#### Why It Matters for Long Context:\n- **Scalability**: Without a KV cache, processing long contexts would require recomputing keys and values for every token, making it infeasible for very long sequences.\n- **Performance**: The cache enables the model to handle long contexts efficiently, maintaining high throughput and low latency.\n- **Cost Reduction**: By minimizing recomputation, the KV cache reduces the computational resources needed for inference.\n\nIn summary, the KV cache is essential for managing long contexts in LLMs by optimizing the attention mechanism, improving efficiency, and reducing costs."
+    },
+    {
+      "wall_s": 5.056047150999802,
+      "prompt_tokens": 17,
+      "generated_tokens": 422,
+      "ttft_ms": 1.942,
+      "tok_per_s": 83.46441150505332,
+      "generation_tok_per_s": 83.98486282306558,
+      "generation_ms": 5024.715,
+      "output_text": " Include a few key points and a brief explanation of how it works.\n\n### KV Cache Overview\n\nA **Key-Value (KV) cache** is a memory storage system used in large language models (LLMs) to retain previously processed tokens, enabling efficient handling of long contexts. It is a critical component for maintaining performance and reducing computational costs when dealing with extensive input sequences.\n\n#### Key Points:\n1. **Purpose**: The KV cache stores the keys and values of attention layers, allowing the model to reuse them for subsequent tokens without recomputing.\n2. **Efficiency**: By avoiding recomputation, the KV cache significantly speeds up inference, especially for long contexts.\n3. **Memory Usage**: It requires additional memory to store the keys and values, which can be substantial for large models.\n4. **Attention Mechanism**: The cache is used in the **self-attention** mechanism of transformers, where each token attends to all previous tokens.\n\n#### How It Works:\n- During inference, the model processes tokens sequentially.\n- For each new token, the model computes its **query**, **key**, and **value** vectors.\n- The **query** vector interacts with the **key** vectors of all previous tokens (stored in the cache) to determine attention weights.\n- The **value** vectors of previous tokens (also stored in the cache) are then used to compute the output for the current token.\n- This process avoids recomputing keys and values for every token, reducing redundant calculations.\n\n#### Why It Matters for Long Context:\n- **Scalability**: Without a KV cache, processing long contexts would require recomputing keys and values for every token, making it infeasible for very long sequences.\n- **Performance**: The cache enables the model to handle long contexts efficiently, maintaining high throughput and low latency.\n- **Cost Reduction**: By minimizing recomputation, the KV cache reduces the computational resources needed for inference.\n\nIn summary, the KV cache is essential for managing long contexts in LLMs by optimizing the attention mechanism, improving efficiency, and reducing costs."
+    },
+    {
+      "wall_s": 5.038618868999947,
+      "prompt_tokens": 17,
+      "generated_tokens": 422,
+      "ttft_ms": 2.031,
+      "tok_per_s": 83.75310992390213,
+      "generation_tok_per_s": 83.98130281667717,
+      "generation_ms": 5024.928,
+      "output_text": " Include a few key points and a brief explanation of how it works.\n\n### KV Cache Overview\n\nA **Key-Value (KV) cache** is a memory storage system used in large language models (LLMs) to retain previously processed tokens, enabling efficient handling of long contexts. It is a critical component for maintaining performance and reducing computational costs when dealing with extensive input sequences.\n\n#### Key Points:\n1. **Purpose**: The KV cache stores the keys and values of attention layers, allowing the model to reuse them for subsequent tokens without recomputing.\n2. **Efficiency**: By avoiding recomputation, the KV cache significantly speeds up inference, especially for long contexts.\n3. **Memory Usage**: It requires additional memory to store the keys and values, which can be substantial for large models.\n4. **Attention Mechanism**: The cache is used in the **self-attention** mechanism of transformers, where each token attends to all previous tokens.\n\n#### How It Works:\n- During inference, the model processes tokens sequentially.\n- For each new token, the model computes its **query**, **key**, and **value** vectors.\n- The **query** vector interacts with the **key** vectors of all previous tokens (stored in the cache) to determine attention weights.\n- The **value** vectors of previous tokens (also stored in the cache) are then used to compute the output for the current token.\n- This process avoids recomputing keys and values for every token, reducing redundant calculations.\n\n#### Why It Matters for Long Context:\n- **Scalability**: Without a KV cache, processing long contexts would require recomputing keys and values for every token, making it infeasible for very long sequences.\n- **Performance**: The cache enables the model to handle long contexts efficiently, maintaining high throughput and low latency.\n- **Cost Reduction**: By minimizing recomputation, the KV cache reduces the computational resources needed for inference.\n\nIn summary, the KV cache is essential for managing long contexts in LLMs by optimizing the attention mechanism, improving efficiency, and reducing costs."
+    },
+    {
+      "wall_s": 5.041475274000732,
+      "prompt_tokens": 17,
+      "generated_tokens": 422,
+      "ttft_ms": 1.697,
+      "tok_per_s": 83.70565698820063,
+      "generation_tok_per_s": 83.92842297697696,
+      "generation_ms": 5028.094,
+      "output_text": " Include a few key points and a brief explanation of how it works.\n\n### KV Cache Overview\n\nA **Key-Value (KV) cache** is a memory storage system used in large language models (LLMs) to retain previously processed tokens, enabling efficient handling of long contexts. It is a critical component for maintaining performance and reducing computational costs when dealing with extensive input sequences.\n\n#### Key Points:\n1. **Purpose**: The KV cache stores the keys and values of attention layers, allowing the model to reuse them for subsequent tokens without recomputing.\n2. **Efficiency**: By avoiding recomputation, the KV cache significantly speeds up inference, especially for long contexts.\n3. **Memory Usage**: It requires additional memory to store the keys and values, which can be substantial for large models.\n4. **Attention Mechanism**: The cache is used in the **self-attention** mechanism of transformers, where each token attends to all previous tokens.\n\n#### How It Works:\n- During inference, the model processes tokens sequentially.\n- For each new token, the model computes its **query**, **key**, and **value** vectors.\n- The **query** vector interacts with the **key** vectors of all previous tokens (stored in the cache) to determine attention weights.\n- The **value** vectors of previous tokens (also stored in the cache) are then used to compute the output for the current token.\n- This process avoids recomputing keys and values for every token, reducing redundant calculations.\n\n#### Why It Matters for Long Context:\n- **Scalability**: Without a KV cache, processing long contexts would require recomputing keys and values for every token, making it infeasible for very long sequences.\n- **Performance**: The cache enables the model to handle long contexts efficiently, maintaining high throughput and low latency.\n- **Cost Reduction**: By minimizing recomputation, the KV cache reduces the computational resources needed for inference.\n\nIn summary, the KV cache is essential for managing long contexts in LLMs by optimizing the attention mechanism, improving efficiency, and reducing costs."
+    },
+    {
+      "wall_s": 5.041753516000426,
+      "prompt_tokens": 17,
+      "generated_tokens": 422,
+      "ttft_ms": 1.714,
+      "tok_per_s": 83.70103747847801,
+      "generation_tok_per_s": 83.92363267620333,
+      "generation_ms": 5028.381,
+      "output_text": " Include a few key points and a brief explanation of how it works.\n\n### KV Cache Overview\n\nA **Key-Value (KV) cache** is a memory storage system used in large language models (LLMs) to retain previously processed tokens, enabling efficient handling of long contexts. It is a critical component for maintaining performance and reducing computational costs when dealing with extensive input sequences.\n\n#### Key Points:\n1. **Purpose**: The KV cache stores the keys and values of attention layers, allowing the model to reuse them for subsequent tokens without recomputing.\n2. **Efficiency**: By avoiding recomputation, the KV cache significantly speeds up inference, especially for long contexts.\n3. **Memory Usage**: It requires additional memory to store the keys and values, which can be substantial for large models.\n4. **Attention Mechanism**: The cache is used in the **self-attention** mechanism of transformers, where each token attends to all previous tokens.\n\n#### How It Works:\n- During inference, the model processes tokens sequentially.\n- For each new token, the model computes its **query**, **key**, and **value** vectors.\n- The **query** vector interacts with the **key** vectors of all previous tokens (stored in the cache) to determine attention weights.\n- The **value** vectors of previous tokens (also stored in the cache) are then used to compute the output for the current token.\n- This process avoids recomputing keys and values for every token, reducing redundant calculations.\n\n#### Why It Matters for Long Context:\n- **Scalability**: Without a KV cache, processing long contexts would require recomputing keys and values for every token, making it infeasible for very long sequences.\n- **Performance**: The cache enables the model to handle long contexts efficiently, maintaining high throughput and low latency.\n- **Cost Reduction**: By minimizing recomputation, the KV cache reduces the computational resources needed for inference.\n\nIn summary, the KV cache is essential for managing long contexts in LLMs by optimizing the attention mechanism, improving efficiency, and reducing costs."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 5.041475274000732,
+    "median_tok_per_s": 83.70565698820063,
+    "median_ttft_ms": 1.714,
+    "median_generation_tok_per_s": 83.98130281667717
+  }
+}
