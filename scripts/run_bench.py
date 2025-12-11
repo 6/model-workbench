@@ -487,7 +487,7 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.vllm_version in config/models.yaml\n"
+            "  1. Set defaults.backends.vllm.version in config/models.yaml\n"
             "  2. Pass --backend-version v0.8.0"
         )
 
@@ -608,7 +608,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.trtllm_version in config/models.yaml\n"
+            "  1. Set defaults.backends.trtllm.version in config/models.yaml\n"
             "  2. Pass --backend-version 0.18.0"
         )
 
@@ -722,7 +722,7 @@ def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_labe
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.{backend}_version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
             f"  2. Pass --backend-version b4521"
         )
 
@@ -983,7 +983,7 @@ def main():
         version = args.backend_version or get_model_backend_version(args.model, backend)
         if not version:
             raise SystemExit(
-                f"No backend version specified. Pass --backend-version or set defaults.{backend}_version in config."
+                f"No backend version specified. Pass --backend-version or set defaults.backends.{backend}.version in config."
             )
 
         log(f"Preparing {backend} image for version {version}...")
