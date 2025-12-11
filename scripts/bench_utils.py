@@ -11,8 +11,10 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
+import requests
 import yaml
-from common import BACKEND_REGISTRY, CONFIG_PATH, MODELS_ROOT, RESULTS_ROOT, ROOT, log
+from common import BACKEND_REGISTRY, CONFIG_PATH, MODELS_ROOT, ROOT, log
+from openai import OpenAI
 
 # ----------------------------
 # Benchmark prompts
@@ -748,3 +750,59 @@ def write_benchmark_result(
 
     log(f"Wrote: {out_path}")
     return out_path
+
+
+def warmup_model(
+    backend: str,
+    host: str,
+    port: int,
+    api_model: str,
+    prompt: str = "Hello",
+    max_tokens: int = 16,
+) -> None:
+    """
+    Make a small inference request to preload model into GPU memory.
+
+    This prevents lazy loading on the first user request by warming up
+    the model during server startup.
+
+    Args:
+        backend: Backend type ("vllm", "trtllm", "llama", "ik_llama")
+        host: Server host
+        port: Server port
+        api_model: Model name for API requests
+        prompt: Warmup prompt text (default: "Hello")
+        max_tokens: Max tokens to generate (default: 16)
+    """
+    if backend in ("vllm", "trtllm"):
+        # Use OpenAI-compatible API
+        client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
+        messages = build_chat_messages(prompt, image_path=None)
+
+        try:
+            client.chat.completions.create(
+                model=api_model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=0.0,
+            )
+        except Exception as e:
+            log(f"Warmup request failed (non-fatal): {e}")
+
+    elif backend in ("llama", "ik_llama"):
+        # Use llama.cpp native /completion endpoint
+        url = f"http://{host}:{port}/completion"
+        payload = {
+            "prompt": prompt,
+            "n_predict": max_tokens,
+            "temperature": 0.0,
+        }
+
+        try:
+            r = requests.post(url, json=payload, timeout=300)
+            r.raise_for_status()
+        except Exception as e:
+            log(f"Warmup request failed (non-fatal): {e}")
+
+    else:
+        log(f"Unknown backend '{backend}' - skipping warmup")

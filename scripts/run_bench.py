@@ -57,6 +57,7 @@ from bench_utils import (
     resolve_image_source,
     resolve_local_gguf,
     resolve_run_config,
+    warmup_model,
     write_benchmark_result,
 )
 from common import BACKEND_REGISTRY, log
@@ -131,7 +132,7 @@ def cleanup_existing_containers(port: int):
             text=True,
             timeout=5,
         )
-        container_ids = [cid.strip() for cid in result.stdout.strip().split('\n') if cid.strip()]
+        container_ids = [cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()]
 
         if container_ids:
             log(f"Found {len(container_ids)} existing container(s) on port {port}, cleaning up...")
@@ -556,15 +557,12 @@ def run_benchmark_vllm(
 
         # Warmup
         log("Warmup request...")
-        bench_once_vllm(
-            client,
-            api_model,
-            prompt_text,
-            image_path,
-            min(64, args.max_tokens),
-            args.temperature,
-            args.host,
-            args.port,
+        warmup_model(
+            backend="vllm",
+            host=args.host,
+            port=args.port,
+            api_model=api_model,
+            max_tokens=min(64, args.max_tokens),
         )
 
         # Benchmark
@@ -716,15 +714,12 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
 
         # Warmup
         log("Warmup request...")
-        bench_once_trtllm(
-            client,
-            api_model,
-            prompt_text,
-            image_path,
-            min(64, args.max_tokens),
-            args.temperature,
-            args.host,
-            args.port,
+        warmup_model(
+            backend="trtllm",
+            host=args.host,
+            port=args.port,
+            api_model=api_model,
+            max_tokens=min(64, args.max_tokens),
         )
 
         # Benchmark
@@ -905,13 +900,12 @@ def run_benchmark_gguf(
         )
 
         log("Warmup request...")
-        _ = bench_once_llama(
-            prompt_text,
-            image_path,
-            min(64, args.max_tokens),
-            args.temperature,
-            args.host,
-            args.port,
+        warmup_model(
+            backend=backend,
+            host=args.host,
+            port=args.port,
+            api_model="gpt-3.5-turbo",  # llama.cpp uses this default model name
+            max_tokens=min(64, args.max_tokens),
         )
 
         results = []

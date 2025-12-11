@@ -38,7 +38,7 @@ import sys
 import time
 from pathlib import Path
 
-from bench_utils import resolve_run_config
+from bench_utils import resolve_run_config, warmup_model
 from common import BACKEND_REGISTRY, log
 from server_manager import ServerManager
 
@@ -166,6 +166,13 @@ def main():
         "--mmproj", default=None, help="Multimodal projector path (auto-detected if not specified)"
     )
 
+    # Warmup options
+    ap.add_argument(
+        "--no-warmup",
+        action="store_true",
+        help="Skip model preloading (warmup request). By default, models are preloaded into GPU memory on startup.",
+    )
+
     args = ap.parse_args()
 
     # Resolve backend config and apply defaults
@@ -256,6 +263,20 @@ def main():
             mmproj_path=mmproj_path,
             rebuild=args.rebuild,
         )
+
+    # Warmup model (preload into GPU memory by default)
+    # Note: In the future, --model may be optional for dynamic loading
+    should_warmup = args.model and not args.no_warmup
+
+    if should_warmup:
+        log("Preloading model into GPU memory...")
+        warmup_model(
+            backend=backend,
+            host=args.host,
+            port=args.port,
+            api_model=api_model,
+        )
+        log("Model preloaded successfully")
 
     # Run test if requested
     if args.test:

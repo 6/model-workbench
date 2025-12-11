@@ -56,7 +56,9 @@ class ServerManager:
                 text=True,
                 timeout=5,
             )
-            container_ids = [cid.strip() for cid in result.stdout.strip().split('\n') if cid.strip()]
+            container_ids = [
+                cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()
+            ]
             if container_ids:
                 return container_ids[0]  # Return first match
         except Exception:
