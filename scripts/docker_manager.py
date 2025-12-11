@@ -48,7 +48,7 @@ def _pull_image(image_name: str) -> bool:
     """
     log(f"Pulling {image_name}...")
     try:
-        result = subprocess.run(
+        subprocess.run(
             ["docker", "pull", image_name],
             check=True,
             timeout=1800,  # 30 min timeout for large images
@@ -126,7 +126,7 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
     log(f"+ {' '.join(cmd)}")
 
     try:
-        result = subprocess.run(
+        subprocess.run(
             cmd,
             check=True,
             timeout=3600,  # 1 hour timeout for builds
