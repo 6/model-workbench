@@ -120,7 +120,10 @@ def main():
         help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
     )
     ap.add_argument(
-        "--docker-image", default=None, help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)"
+        "--docker-image",
+        default=None,
+        dest="docker_image",
+        help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
     # vLLM-specific options (defaults from config, CLI overrides)
@@ -215,8 +218,8 @@ def main():
     log(f"  Backend: {backend}")
     log(f"  Backend version: {backend_version}")
     log(f"  Image type: {image_type}")
-    if args.image:
-        log(f"  Image override: {args.image}")
+    if args.docker_image:
+        log(f"  Image override: {args.docker_image}")
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
     if backend == "vllm":
@@ -229,7 +232,7 @@ def main():
             max_num_batched_tokens=args.max_num_batched_tokens,
             rebuild=args.rebuild,
             image_type=image_type,
-            image_override=args.image,
+            image_override=args.docker_image,
         )
     elif backend == "trtllm":
         server.start_trtllm(
