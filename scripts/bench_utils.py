@@ -12,9 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
-
 from common import BACKEND_REGISTRY, CONFIG_PATH, MODELS_ROOT, ROOT, log
-
 
 # ----------------------------
 # Benchmark prompts

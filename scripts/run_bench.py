@@ -40,8 +40,6 @@ import time
 from pathlib import Path
 
 import requests
-from openai import OpenAI
-
 from bench_utils import (
     ALL_PROMPTS,
     RESULTS_ROOT,
@@ -60,8 +58,8 @@ from bench_utils import (
     write_benchmark_result,
 )
 from common import BACKEND_REGISTRY, log
+from openai import OpenAI
 from server_manager import ServerManager
-
 
 # ----------------------------
 # Prometheus metrics scraping (shared for vLLM and TensorRT-LLM)

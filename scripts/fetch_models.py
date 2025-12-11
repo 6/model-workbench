@@ -4,8 +4,8 @@ import subprocess
 from pathlib import Path
 
 import yaml
-
 from common import CONFIG_PATH, MODELS_ROOT
+
 
 def run(cmd):
     print("+", " ".join(cmd))
@@ -62,7 +62,7 @@ def main():
         revision = item.get("revision")
         repo_type = item.get("repo_type")  # optional: "model", "dataset", "space"
 
-        print(f"\nDownloading:")
+        print("\nDownloading:")
         print(f"  repo_id:   {repo_id}")
         print(f"  local_dir: {out_path}")
         if files:

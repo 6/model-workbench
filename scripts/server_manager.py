@@ -10,7 +10,6 @@ from pathlib import Path
 from bench_utils import port_open, resolve_local_gguf
 from common import log
 
-
 # ----------------------------
 # Server Manager
 # ----------------------------
@@ -200,6 +199,8 @@ class ServerManager:
         """
         from docker_manager import (
             build_vllm_docker_cmd as build_versioned_vllm_cmd,
+        )
+        from docker_manager import (
             ensure_image,
         )
 

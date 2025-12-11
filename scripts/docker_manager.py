@@ -113,7 +113,7 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
         raise SystemExit(f"Dockerfile not found: {dockerfile}")
 
     log(f"Building {image_name} from {dockerfile}...")
-    log(f"This may take several minutes for first build...")
+    log("This may take several minutes for first build...")
 
     cmd = [
         "docker", "build",
