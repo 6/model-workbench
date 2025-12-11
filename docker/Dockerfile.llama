@@ -1,12 +1,12 @@
 # llama.cpp Server Docker Image
-# Build with: docker build -f docker/Dockerfile.llama --build-arg VERSION=b4521 -t model-bench-llama:b4521 .
+# Build with: docker build -f docker/Dockerfile.llama --build-arg VERSION=b7349 -t model-bench-llama:b7349 .
 #
 # VERSION can be:
-#   - Release tag: b4521, b4500
+#   - Release tag: b7349, b4521, b4500
 #   - Commit SHA: abc123def (7+ hex chars)
 
-ARG CUDA_VERSION=12.4.0
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04
+ARG CUDA_VERSION=12.8.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
 
 # Required: version to checkout (release tag or commit SHA)
 ARG VERSION
@@ -40,6 +40,10 @@ RUN cmake -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLAMA_CURL=OFF \
     -G Ninja
+
+# Use CUDA stubs for build-time linking (real libcuda.so.1 injected at runtime by nvidia-container-toolkit)
+ENV LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH}
 
 RUN cmake --build build --config Release -j$(nproc)
 

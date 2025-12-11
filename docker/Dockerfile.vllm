@@ -1,12 +1,12 @@
 # vLLM Server Docker Image
-# Build with: docker build -f docker/Dockerfile.vllm --build-arg VERSION=v0.8.0 -t model-bench-vllm:v0.8.0 .
+# Build with: docker build -f docker/Dockerfile.vllm --build-arg VERSION=v0.12.0 -t model-bench-vllm:v0.12.0 .
 #
 # VERSION can be:
-#   - Release tag: v0.8.0, v0.7.3
+#   - Release tag: v0.12.0, v0.11.0, v0.8.0
 #   - Commit SHA: abc123def (7+ hex chars)
 
-ARG CUDA_VERSION=12.4.0
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04
+ARG CUDA_VERSION=12.8.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
 
 # Required: version to checkout (release tag or commit SHA)
 ARG VERSION
@@ -30,10 +30,10 @@ RUN ln -sf /usr/bin/python3 /usr/bin/python
 # Upgrade pip
 RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
 
-# Install PyTorch (CUDA 12.4)
+# Install PyTorch (CUDA 12.8)
 RUN pip3 install --no-cache-dir \
     torch==2.5.1 \
-    --index-url https://download.pytorch.org/whl/cu124
+    --index-url https://download.pytorch.org/whl/cu128
 
 # Clone vLLM repository
 WORKDIR /opt

@@ -1,15 +1,16 @@
 # ik_llama.cpp Server Docker Image (ikawrakow's optimized fork)
-# Build with: docker build -f docker/Dockerfile.ik_llama --build-arg VERSION=b4521 -t model-bench-ik-llama:b4521 .
+# Build with: docker build -f docker/Dockerfile.ik_llama --build-arg VERSION=main -t model-bench-ik-llama:main .
 #
 # VERSION can be:
-#   - Release tag: b4521, b4500
+#   - Branch: main
+#   - Release tag: b7349, b4521
 #   - Commit SHA: abc123def (7+ hex chars)
 #
 # Note: ik_llama.cpp is a performance-optimized fork of llama.cpp
 # https://github.com/ikawrakow/ik_llama.cpp
 
-ARG CUDA_VERSION=12.4.0
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04
+ARG CUDA_VERSION=12.8.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
 
 # Required: version to checkout (release tag or commit SHA)
 ARG VERSION
@@ -43,6 +44,10 @@ RUN cmake -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLAMA_CURL=OFF \
     -G Ninja
+
+# Use CUDA stubs for build-time linking (real libcuda.so.1 injected at runtime by nvidia-container-toolkit)
+ENV LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs:${LD_LIBRARY_PATH}
 
 RUN cmake --build build --config Release -j$(nproc)
 
