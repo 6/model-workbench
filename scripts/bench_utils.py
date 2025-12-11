@@ -534,10 +534,7 @@ def get_model_config(model_arg: str) -> dict | None:
 
 def get_backend_config(engine: str) -> dict:
     """
-    Get full config dict for a backend from defaults.
-
-    Supports both new nested schema (defaults.backends.{engine}) and
-    old flat schema (defaults.{engine}_version, etc.) for backward compatibility.
+    Get full config dict for a backend from defaults.backends.{engine}.
 
     Args:
         engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
@@ -547,9 +544,8 @@ def get_backend_config(engine: str) -> dict:
     """
     config = _load_config()
     defaults = config.get("defaults", {})
-
-    # Try new nested schema first
     backends = defaults.get("backends", {})
+
     if engine in backends:
         backend_cfg = backends[engine]
         return {
@@ -558,23 +554,7 @@ def get_backend_config(engine: str) -> dict:
             "args": backend_cfg.get("args", {}),
         }
 
-    # Fall back to old flat schema
-    version = None
-    image_type = "build"
-
-    if engine == "vllm":
-        version = defaults.get("vllm_version")
-        image_type = defaults.get("vllm_image_type", "build")
-    elif engine == "llama":
-        version = defaults.get("llama_version")
-    elif engine == "ik_llama":
-        # Old behavior: fall back to llama_version (but new schema requires explicit)
-        version = defaults.get("ik_llama_version") or defaults.get("llama_version")
-    elif engine == "trtllm":
-        version = defaults.get("trtllm_version")
-        image_type = "prebuilt"  # trtllm always prebuilt in old schema
-
-    return {"version": version, "image_type": image_type, "args": {}}
+    return {"version": None, "image_type": "build", "args": {}}
 
 
 def get_backend_default_args(engine: str) -> dict:
@@ -613,7 +593,7 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
     if not model_cfg:
         return result
 
-    # New schema: model.backends.{engine}
+    # Model-specific overrides: model.backends.{engine}
     model_backends = model_cfg.get("backends", {})
     if engine in model_backends:
         model_backend_cfg = model_backends[engine]
@@ -624,10 +604,6 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
         if model_backend_cfg.get("args"):
             # Merge args (model-specific overrides defaults)
             result["args"] = {**result["args"], **model_backend_cfg["args"]}
-
-    # Old schema: model.backend_version (applies to any backend)
-    elif model_cfg.get("backend_version"):
-        result["version"] = model_cfg["backend_version"]
 
     return result
 
@@ -664,8 +640,7 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
 
     Resolution order:
     1. Model's backends.{engine}.version if specified
-    2. Model's backend_version if specified (old schema)
-    3. Global defaults.backends.{engine}.version
+    2. Global defaults.backends.{engine}.version
 
     Args:
         model_arg: Model path or repo_id

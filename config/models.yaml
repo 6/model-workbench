@@ -27,7 +27,6 @@ defaults:
       image_type: prebuilt    # Uses NGC images
 
 models:
-  # Devstral 123B GGUF (from main)
   - source: hf
     repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:
@@ -36,12 +35,9 @@ models:
       - "UD-Q5_K_XL/*.gguf"
       - "UD-Q6_K_XL/*.gguf"
 
-  # vLLM models (safetensors) - use default vllm_version unless overridden
   - source: hf
     repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
-    # backend_version: abc123def  # Uncomment to pin to specific commit
 
-  # GGUF models - use default llama_version unless overridden
   - source: hf
     repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
     include:
@@ -49,7 +45,6 @@ models:
 
   - source: hf
     repo_id: zai-org/GLM-4.6V-FP8
-    # backend_version: v0.8.1  # Can override to specific version if needed
 
   - source: hf
     repo_id: unsloth/MiniMax-M2-GGUF
