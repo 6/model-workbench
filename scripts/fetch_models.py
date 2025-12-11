@@ -4,9 +4,7 @@ import subprocess
 from pathlib import Path
 import yaml
 
-ROOT = Path(__file__).resolve().parents[1]
-CONFIG = ROOT / "config" / "models.yaml"
-MODELS_ROOT = Path.home() / "models"
+from common import CONFIG_PATH, MODELS_ROOT
 
 def run(cmd):
     print("+", " ".join(cmd))
@@ -27,12 +25,12 @@ def normalize_to_list(val):
     return [val]
 
 def main():
-    if not CONFIG.exists():
-        raise SystemExit(f"Missing config: {CONFIG}")
+    if not CONFIG_PATH.exists():
+        raise SystemExit(f"Missing config: {CONFIG_PATH}")
 
     MODELS_ROOT.mkdir(parents=True, exist_ok=True)
 
-    data = yaml.safe_load(CONFIG.read_text()) or {}
+    data = yaml.safe_load(CONFIG_PATH.read_text()) or {}
     items = data.get("models") or []
     if not isinstance(items, list):
         raise SystemExit("config/models.yaml: 'models' must be a list")

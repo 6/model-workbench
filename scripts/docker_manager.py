@@ -5,39 +5,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from bench_utils import ROOT, log
-
-
-# Unified backend registry - single source of truth for Docker config
-BACKEND_REGISTRY = {
-    "vllm": {
-        "image_prefix": "model-bench-vllm",
-        "prebuilt_image": "vllm/vllm-openai",
-        "dockerfile": ROOT / "docker" / "Dockerfile.vllm",
-        "docker_base": ["--gpus", "all", "--ipc", "host"],
-    },
-    "llama": {
-        "image_prefix": "model-bench-llama",
-        "prebuilt_image": None,
-        "dockerfile": ROOT / "docker" / "Dockerfile.llama",
-        "docker_base": ["--gpus", "all"],
-    },
-    "ik_llama": {
-        "image_prefix": "model-bench-ik-llama",
-        "prebuilt_image": None,
-        "dockerfile": ROOT / "docker" / "Dockerfile.ik_llama",
-        "docker_base": ["--gpus", "all"],
-    },
-    "trtllm": {
-        "image_prefix": None,  # prebuilt only
-        "prebuilt_image": "nvcr.io/nvidia/tensorrt-llm/release",
-        "dockerfile": None,
-        "docker_base": [
-            "--gpus", "all", "--ipc", "host",
-            "--ulimit", "memlock=-1", "--ulimit", "stack=67108864",
-        ],
-    },
-}
+from common import BACKEND_REGISTRY, ROOT, log
 
 
 def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:

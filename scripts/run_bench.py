@@ -44,11 +44,10 @@ from openai import OpenAI
 
 from bench_utils import (
     ALL_PROMPTS,
-    BACKENDS,
-    ROOT,
     RESULTS_ROOT,
     TEXT_PROMPTS,
     VISION_PROMPTS,
+    build_chat_messages,
     compact_path,
     encode_image_base64,
     extract_repo_id,
@@ -58,7 +57,6 @@ from bench_utils import (
     get_image_type,
     get_model_backend_config,
     get_model_backend_version,
-    log,
     med,
     resolve_backend,
     resolve_image_source,
@@ -66,6 +64,7 @@ from bench_utils import (
     resolve_model_path,
     write_benchmark_result,
 )
+from common import BACKEND_REGISTRY, ROOT, log
 from server_manager import ServerManager
 
 
@@ -208,23 +207,7 @@ def bench_once_vllm(
     port: int,
 ) -> dict:
     """Run single inference via vLLM OpenAI-compatible API."""
-    # Build message content
-    if image_path is None:
-        messages = [{"role": "user", "content": prompt}]
-    else:
-        if image_path.startswith("http"):
-            image_content = {"type": "image_url", "image_url": {"url": image_path}}
-        else:
-            data_url = encode_image_base64(image_path)
-            image_content = {"type": "image_url", "image_url": {"url": data_url}}
-
-        messages = [{
-            "role": "user",
-            "content": [
-                image_content,
-                {"type": "text", "text": prompt},
-            ]
-        }]
+    messages = build_chat_messages(prompt, image_path)
 
     # Scrape metrics before request
     metrics_before = scrape_vllm_metrics(host, port)
@@ -327,20 +310,7 @@ def bench_once_llama(
     else:
         # Vision: use /v1/chat/completions with multimodal messages
         url = base.rstrip("/") + "/v1/chat/completions"
-
-        if image_path.startswith("http"):
-            image_content = {"type": "image_url", "image_url": {"url": image_path}}
-        else:
-            data_url = encode_image_base64(image_path)
-            image_content = {"type": "image_url", "image_url": {"url": data_url}}
-
-        messages = [{
-            "role": "user",
-            "content": [
-                image_content,
-                {"type": "text", "text": prompt},
-            ]
-        }]
+        messages = build_chat_messages(prompt, image_path)
 
         payload = {
             "messages": messages,
@@ -402,23 +372,7 @@ def bench_once_trtllm(
     TensorRT-LLM exposes Prometheus metrics at /prometheus/metrics (not /metrics like vLLM)
     when started with --return-perf-metrics flag.
     """
-    # Build message content
-    if image_path is None:
-        messages = [{"role": "user", "content": prompt}]
-    else:
-        if image_path.startswith("http"):
-            image_content = {"type": "image_url", "image_url": {"url": image_path}}
-        else:
-            data_url = encode_image_base64(image_path)
-            image_content = {"type": "image_url", "image_url": {"url": data_url}}
-
-        messages = [{
-            "role": "user",
-            "content": [
-                image_content,
-                {"type": "text", "text": prompt},
-            ]
-        }]
+    messages = build_chat_messages(prompt, image_path)
 
     # Scrape TensorRT-LLM metrics before request
     metrics_before = scrape_trtllm_metrics(host, port)
@@ -876,7 +830,7 @@ def main():
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
 
     # Backend selection
-    ap.add_argument("--backend", choices=list(BACKENDS.keys()), default=None,
+    ap.add_argument("--backend", choices=list(BACKEND_REGISTRY.keys()), default=None,
                     help="Backend to use (default: auto-detect from model format)")
 
     # Common benchmark options
@@ -939,7 +893,7 @@ def main():
 
     # Resolve backend (auto-detect or explicit)
     backend = resolve_backend(args.model, args.backend)
-    backend_info = BACKENDS[backend]
+    backend_info = BACKEND_REGISTRY[backend]
 
     # Get merged config for this model + backend (defaults + model overrides)
     backend_cfg = get_model_backend_config(args.model, backend)

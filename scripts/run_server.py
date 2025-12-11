@@ -39,15 +39,14 @@ import time
 from pathlib import Path
 
 from bench_utils import (
-    BACKENDS,
     get_gpu_count,
     get_image_type,
     get_model_backend_config,
     get_model_backend_version,
-    log,
     resolve_backend,
     resolve_model_path,
 )
+from common import BACKEND_REGISTRY, log
 from server_manager import ServerManager
 
 
@@ -82,7 +81,7 @@ def main():
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
 
     # Backend selection
-    ap.add_argument("--backend", choices=list(BACKENDS.keys()), default=None,
+    ap.add_argument("--backend", choices=list(BACKEND_REGISTRY.keys()), default=None,
                     help="Backend to use (default: auto-detect from model format)")
 
     # Server options
@@ -133,7 +132,7 @@ def main():
 
     # Resolve backend (auto-detect or explicit)
     backend = resolve_backend(args.model, args.backend)
-    backend_info = BACKENDS[backend]
+    backend_info = BACKEND_REGISTRY[backend]
 
     # Get merged config for this model + backend (defaults + model overrides)
     backend_cfg = get_model_backend_config(args.model, backend)

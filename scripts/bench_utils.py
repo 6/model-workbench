@@ -8,10 +8,18 @@ import re
 import socket
 import statistics
 import subprocess
-from datetime import datetime
 from pathlib import Path
 
 import yaml
+
+from common import (
+    BACKEND_REGISTRY,
+    CONFIG_PATH,
+    MODELS_ROOT,
+    RESULTS_ROOT,
+    ROOT,
+    log,
+)
 
 
 # ----------------------------
@@ -33,21 +41,10 @@ VISION_PROMPTS = {
 # Combined prompts for CLI choices
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
 
-# ----------------------------
-# Backend registry
-# ----------------------------
-
-BACKENDS = {
-    "vllm": {"formats": ["safetensors"], "default_port": 8000},
-    "llama": {"formats": ["gguf"], "default_port": 8080},
-    "ik_llama": {"formats": ["gguf"], "default_port": 8080},
-    "trtllm": {"formats": ["safetensors"], "default_port": 8000},
-}
-
 
 def get_compatible_backends(model_format: str) -> list[str]:
     """Return backends that support the given format."""
-    return [name for name, info in BACKENDS.items() if model_format in info["formats"]]
+    return [name for name, cfg in BACKEND_REGISTRY.items() if model_format in cfg["formats"]]
 
 
 def get_default_backend(model_format: str) -> str:
@@ -74,10 +71,10 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
     compatible = get_compatible_backends(fmt)
 
     if backend_override:
-        if backend_override not in BACKENDS:
+        if backend_override not in BACKEND_REGISTRY:
             raise SystemExit(
                 f"Unknown backend '{backend_override}'.\n"
-                f"Available: {', '.join(BACKENDS.keys())}"
+                f"Available: {', '.join(BACKEND_REGISTRY.keys())}"
             )
         if backend_override not in compatible:
             raise SystemExit(
@@ -87,24 +84,6 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
         return backend_override
 
     return get_default_backend(fmt)
-
-# ----------------------------
-# Logging
-# ----------------------------
-
-def log(msg: str):
-    """Print a timestamped log message."""
-    ts = datetime.now().strftime("%H:%M:%S")
-    print(f"[{ts}] {msg}")
-
-# ----------------------------
-# Path constants
-# ----------------------------
-
-ROOT = Path(__file__).resolve().parents[1]
-MODELS_ROOT = Path.home() / "models"
-RESULTS_ROOT = ROOT / "perf"
-MODELS_CONFIG = ROOT / "config" / "models.yaml"
 
 # Built-in test images
 BUILTIN_IMAGES = {
@@ -172,6 +151,31 @@ def encode_image_base64(image_path: str) -> str:
     }
     mime = mime_types.get(suffix, "image/jpeg")
     return f"data:{mime};base64,{data}"
+
+
+def build_chat_messages(prompt: str, image_path: str | None = None) -> list[dict]:
+    """Build OpenAI-compatible chat messages with optional image.
+
+    Args:
+        prompt: Text prompt
+        image_path: Optional image path (local file or URL)
+
+    Returns:
+        List of message dicts for chat completions API
+    """
+    if image_path is None:
+        return [{"role": "user", "content": prompt}]
+
+    if image_path.startswith("http"):
+        image_content = {"type": "image_url", "image_url": {"url": image_path}}
+    else:
+        data_url = encode_image_base64(image_path)
+        image_content = {"type": "image_url", "image_url": {"url": data_url}}
+
+    return [{
+        "role": "user",
+        "content": [image_content, {"type": "text", "text": prompt}]
+    }]
 
 
 # ----------------------------
@@ -498,8 +502,8 @@ def _load_config() -> dict:
     """
     global _CONFIG_CACHE
     if _CONFIG_CACHE is None:
-        if MODELS_CONFIG.exists():
-            with open(MODELS_CONFIG) as f:
+        if CONFIG_PATH.exists():
+            with open(CONFIG_PATH) as f:
                 _CONFIG_CACHE = yaml.safe_load(f) or {}
         else:
             _CONFIG_CACHE = {}
@@ -557,19 +561,6 @@ def get_backend_config(engine: str) -> dict:
     return {"version": None, "image_type": "build", "args": {}}
 
 
-def get_backend_default_args(engine: str) -> dict:
-    """
-    Get default args for a backend.
-
-    Args:
-        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
-
-    Returns:
-        Dict of default args for the backend (e.g., gpu_memory_utilization, n_gpu_layers)
-    """
-    return get_backend_config(engine).get("args", {})
-
-
 def get_model_backend_config(model_arg: str, engine: str) -> dict:
     """
     Get merged config for a model + backend.
@@ -606,19 +597,6 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
             result["args"] = {**result["args"], **model_backend_cfg["args"]}
 
     return result
-
-
-def get_default_backend_version(engine: str) -> str | None:
-    """
-    Get default backend version for engine from config.
-
-    Args:
-        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
-
-    Returns:
-        Default version string or None if not configured
-    """
-    return get_backend_config(engine).get("version")
 
 
 def get_image_type(engine: str) -> str:

@@ -7,7 +7,8 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from bench_utils import log, port_open, resolve_local_gguf
+from bench_utils import port_open, resolve_local_gguf
+from common import log
 
 
 # ----------------------------
@@ -231,86 +232,8 @@ class ServerManager:
 
         self.start(
             cmd,
-            lambda: wait_for_vllm_ready(self.host, self.port),
+            lambda: wait_for_openai_ready(self.host, self.port),
             label=label,
-        )
-
-    def start_llama(
-        self,
-        model_path: str,
-        version: str,
-        n_gpu_layers: int | None = None,
-        ctx: int | None = None,
-        parallel: int | None = None,
-        mmproj_path: Path | None = None,
-        extra_args: list[str] | None = None,
-        rebuild: bool = False,
-    ) -> Path:
-        """Start llama-server via Docker with version pinning.
-
-        Args:
-            model_path: Path to .gguf file or directory containing GGUF files
-            version: llama.cpp version (release tag like 'b4521' or commit SHA)
-            n_gpu_layers: GPU layers to offload (optional)
-            ctx: Context length (optional)
-            parallel: Parallel sequences (optional)
-            mmproj_path: Path to multimodal projector (optional)
-            extra_args: Extra raw args (optional)
-            rebuild: Force rebuild image even if cached
-
-        Returns:
-            Path to resolved GGUF file
-        """
-        return self.start_gguf_backend(
-            engine="llama",
-            model_path=model_path,
-            version=version,
-            n_gpu_layers=n_gpu_layers,
-            ctx=ctx,
-            parallel=parallel,
-            mmproj_path=mmproj_path,
-            extra_args=extra_args,
-            rebuild=rebuild,
-        )
-
-    def start_ik_llama(
-        self,
-        model_path: str,
-        version: str,
-        n_gpu_layers: int | None = None,
-        ctx: int | None = None,
-        parallel: int | None = None,
-        mmproj_path: Path | None = None,
-        extra_args: list[str] | None = None,
-        rebuild: bool = False,
-    ) -> Path:
-        """Start ik_llama-server via Docker with version pinning.
-
-        ik_llama.cpp is ikawrakow's performance-optimized fork of llama.cpp.
-
-        Args:
-            model_path: Path to .gguf file or directory containing GGUF files
-            version: ik_llama.cpp version (release tag or commit SHA)
-            n_gpu_layers: GPU layers to offload (optional)
-            ctx: Context length (optional)
-            parallel: Parallel sequences (optional)
-            mmproj_path: Path to multimodal projector (optional)
-            extra_args: Extra raw args (optional)
-            rebuild: Force rebuild image even if cached
-
-        Returns:
-            Path to resolved GGUF file
-        """
-        return self.start_gguf_backend(
-            engine="ik_llama",
-            model_path=model_path,
-            version=version,
-            n_gpu_layers=n_gpu_layers,
-            ctx=ctx,
-            parallel=parallel,
-            mmproj_path=mmproj_path,
-            extra_args=extra_args,
-            rebuild=rebuild,
         )
 
     def start_gguf_backend(
@@ -426,7 +349,7 @@ class ServerManager:
 
         self.start(
             cmd,
-            lambda: wait_for_vllm_ready(self.host, self.port),  # Uses OpenAI API like vLLM
+            lambda: wait_for_openai_ready(self.host, self.port),  # Uses OpenAI API like vLLM
             label=f"TensorRT-LLM ({version})",
         )
 
@@ -435,8 +358,8 @@ class ServerManager:
 # Readiness checks
 # ----------------------------
 
-def wait_for_vllm_ready(host: str, port: int) -> bool:
-    """Readiness check for vLLM server via OpenAI API."""
+def wait_for_openai_ready(host: str, port: int) -> bool:
+    """Readiness check for OpenAI-compatible API (used by vLLM and TensorRT-LLM)."""
     try:
         from openai import OpenAI
         client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")

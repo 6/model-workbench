@@ -34,8 +34,6 @@ from pathlib import Path
 from deepeval.benchmarks import IFEval, GSM8K
 
 from bench_utils import (
-    BACKENDS,
-    ROOT,
     sanitize,
     extract_repo_id,
     get_gpu_info,
@@ -44,13 +42,10 @@ from bench_utils import (
     get_model_backend_version,
     resolve_backend,
     resolve_model_path,
-    log,
 )
+from common import BACKEND_REGISTRY, EVAL_RESULTS_ROOT, log
 from server_manager import ServerManager
 from eval_model_wrapper import LocalServerLLM
-
-
-EVAL_RESULTS_ROOT = ROOT / "evals"
 
 
 def run_ifeval(model: LocalServerLLM) -> dict:
@@ -153,7 +148,7 @@ def main():
     # Backend selection
     parser.add_argument(
         "--backend",
-        choices=list(BACKENDS.keys()),
+        choices=list(BACKEND_REGISTRY.keys()),
         default=None,
         help="Backend to use (default: auto-detect from model format)",
     )
@@ -233,7 +228,7 @@ def main():
 
     # Resolve backend (auto-detect or explicit)
     backend = resolve_backend(args.model, args.backend)
-    backend_info = BACKENDS[backend]
+    backend_info = BACKEND_REGISTRY[backend]
 
     # Get merged config for this model + backend (defaults + model overrides)
     backend_cfg = get_model_backend_config(args.model, backend)
