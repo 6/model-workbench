@@ -2,24 +2,28 @@
 # Models without explicit overrides use these defaults
 defaults:
   backends:
+    # https://github.com/vllm-project/vllm/releases
     vllm:
-      version: v0.8.0
+      version: v0.12.0
       image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
       args:
         gpu_memory_utilization: 0.95
         max_model_len: 65536
+    # https://github.com/ggerganov/llama.cpp/releases
     llama:
-      version: b4521
+      version: b7349
       image_type: build
       args:
         n_gpu_layers: 999
+    # https://github.com/ikawrakow/ik_llama.cpp (no releases; use main branch)
     ik_llama:
-      version: b4521          # Explicit version (no fallback to llama)
+      version: main
       image_type: build
       args:
         n_gpu_layers: 999
+    # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: "0.18.0"
+      version: v1.0.0
       image_type: prebuilt    # Uses NGC images
 
 models:
