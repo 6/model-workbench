@@ -44,7 +44,6 @@ from pathlib import Path
 import requests
 from bench_utils import (
     ALL_PROMPTS,
-    RESULTS_ROOT,
     TEXT_PROMPTS,
     VISION_PROMPTS,
     build_chat_messages,
@@ -60,7 +59,7 @@ from bench_utils import (
     warmup_model,
     write_benchmark_result,
 )
-from common import BACKEND_REGISTRY, log
+from common import BACKEND_REGISTRY, RESULTS_ROOT, log
 from openai import OpenAI
 from server_manager import ServerManager
 
