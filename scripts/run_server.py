@@ -38,10 +38,7 @@ import sys
 import time
 from pathlib import Path
 
-from bench_utils import (
-    get_model_backend_version,
-    resolve_run_config,
-)
+from bench_utils import resolve_run_config
 from common import BACKEND_REGISTRY, log
 from server_manager import ServerManager
 

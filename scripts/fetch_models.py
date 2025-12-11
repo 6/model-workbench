@@ -2,6 +2,7 @@
 import os
 import subprocess
 from pathlib import Path
+
 import yaml
 
 from common import CONFIG_PATH, MODELS_ROOT

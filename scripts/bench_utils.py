@@ -12,14 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from common import (
-    BACKEND_REGISTRY,
-    CONFIG_PATH,
-    MODELS_ROOT,
-    RESULTS_ROOT,
-    ROOT,
-    log,
-)
+from common import BACKEND_REGISTRY, CONFIG_PATH, MODELS_ROOT, ROOT, log
 
 
 # ----------------------------

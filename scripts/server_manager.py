@@ -199,8 +199,8 @@ class ServerManager:
             image_override: Direct image name to use (highest priority)
         """
         from docker_manager import (
-            ensure_image,
             build_vllm_docker_cmd as build_versioned_vllm_cmd,
+            ensure_image,
         )
 
         # Ensure image exists (builds or pulls as needed)
@@ -265,8 +265,8 @@ class ServerManager:
             Path to resolved GGUF file
         """
         from docker_manager import (
-            ensure_image,
             build_llama_docker_cmd,
+            ensure_image,
         )
 
         # Resolve GGUF path
@@ -325,8 +325,8 @@ class ServerManager:
             extra_args: Additional trtllm-serve arguments (optional)
         """
         from docker_manager import (
-            ensure_image,
             build_trtllm_docker_cmd,
+            ensure_image,
         )
 
         # TensorRT-LLM always uses prebuilt NGC images

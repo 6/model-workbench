@@ -31,17 +31,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from deepeval.benchmarks import IFEval, GSM8K
+from deepeval.benchmarks import GSM8K, IFEval
 
-from bench_utils import (
-    sanitize,
-    extract_repo_id,
-    get_gpu_info,
-    resolve_run_config,
-)
+from bench_utils import extract_repo_id, get_gpu_info, resolve_run_config, sanitize
 from common import BACKEND_REGISTRY, EVAL_RESULTS_ROOT, log
-from server_manager import ServerManager
 from eval_model_wrapper import LocalServerLLM
+from server_manager import ServerManager
 
 
 def run_ifeval(model: LocalServerLLM) -> dict:

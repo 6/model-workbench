@@ -49,7 +49,6 @@ from bench_utils import (
     VISION_PROMPTS,
     build_chat_messages,
     compact_path,
-    encode_image_base64,
     extract_repo_id,
     find_mmproj,
     get_gpu_info,
@@ -60,7 +59,7 @@ from bench_utils import (
     resolve_run_config,
     write_benchmark_result,
 )
-from common import BACKEND_REGISTRY, ROOT, log
+from common import BACKEND_REGISTRY, log
 from server_manager import ServerManager
 
 
