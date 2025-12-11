@@ -6,9 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Model Workbench is a local LLM benchmarking suite for downloading, serving, and benchmarking models. It supports:
 - Multi-GPU setups with tensor parallelism
-- Both safetensors (vLLM) and GGUF (llama.cpp) formats
+- Both safetensors (vLLM) and GGUF (llama.cpp, ik_llama.cpp) formats
 - Vision and text-only benchmarks
 - Docker-based execution for reproducible benchmarks with version pinning
+- Multiple backends for GGUF: `--backend llama` (default) or `--backend ik_llama` (ikawrakow's optimized fork)
 
 ## Common Commands
 
@@ -25,6 +26,9 @@ uv run python scripts/fetch_models.py
 # Run benchmarks (uses version from config/models.yaml)
 uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8
 uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+# Use ik_llama.cpp backend for GGUF (ikawrakow's optimized fork)
+uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 
 # Override backend version for a specific run
 uv run python scripts/run_bench.py --model ~/models/... --backend-version v0.8.0
@@ -43,6 +47,7 @@ uv run python scripts/run_eval.py --model ~/models/org/model --benchmark gsm8k
 # Start standalone server for inference (keeps running until Ctrl+C)
 uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8
 uv run python scripts/run_server.py --model ~/models/org/model --test  # starts + verifies endpoint
+uv run python scripts/run_server.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 ```
 
 ## Architecture
@@ -69,11 +74,13 @@ All benchmarks run via Docker for reproducibility with version pinning.
 ### Benchmark Engine
 - **Unified** (`run_bench.py`): Single entry point for all benchmarks
   - Auto-detects model format (GGUF -> llama.cpp, safetensors -> vLLM)
+  - Use `--backend` to explicitly select backend (e.g., `--backend ik_llama`)
   - Runs backends via Docker for reproducible results
 - **vLLM backend**: OpenAI-compatible API, tensor parallelism, FP8, vision models
   - Auto-uses all GPUs (`--tensor-parallel 1` for single)
   - Scrapes Prometheus `/metrics` for detailed timing
 - **llama.cpp backend**: Native `/completion` endpoint, GGUF models, GPU sharding
+- **ik_llama.cpp backend**: ikawrakow's optimized fork of llama.cpp (same API, faster inference)
 - **Shared metrics**: `wall_s`, `ttft_ms`, `generation_tok_per_s`, `prompt_tokens`, `generated_tokens`
 
 ### Key Modules

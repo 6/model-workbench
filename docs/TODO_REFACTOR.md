@@ -1,24 +1,27 @@
 # Model Workbench Refactor Roadmap
 
-Future enhancements beyond the current single-backend architecture.
+Future enhancements beyond the current architecture.
 
-## 1. Multi-Backend Support
+## 1. Multi-Backend Support ✅ DONE
 
 **Goal**: Run the same model on different backends for comparison.
 
-### Current State
-- Backend is auto-detected from model format (GGUF -> llama.cpp, safetensors -> vLLM)
-- No way to explicitly choose backend
+### Implemented
+- Added `--backend` CLI flag: `--backend vllm|llama|ik_llama`
+- Auto-detection remains default (GGUF -> llama.cpp, safetensors -> vLLM)
+- ik_llama.cpp support (ikawrakow's optimized fork)
+- Backend registry in `bench_utils.py` for extensibility
+- `docker/Dockerfile.ik_llama` for building ik_llama.cpp images
 
-### Proposed Changes
-- Add `--backend` CLI flag: `--backend vllm|llama|trtllm`
-- For models available in multiple formats, allow explicit backend selection
-- Example: `run_bench.py --model ~/models/qwen --backend llama`
+### Usage
+```bash
+# Auto-detect (default)
+run_bench.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL
 
-### Implementation
-1. Add `--backend` argument to `run_bench.py`, `run_server.py`, `run_eval.py`
-2. When `--backend` is specified, skip auto-detection
-3. Validate backend is compatible with model format
+# Explicit backend
+run_bench.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
+run_server.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
+```
 
 ---
 
@@ -184,12 +187,13 @@ models:
 
 ## Implementation Checklist
 
-### Multi-Backend Support
-- [ ] Add `--backend` flag to `run_bench.py`
-- [ ] Add `--backend` flag to `run_server.py`
+### Multi-Backend Support ✅
+- [x] Add `--backend` flag to `run_bench.py`
+- [x] Add `--backend` flag to `run_server.py`
 - [ ] Add `--backend` flag to `run_eval.py`
-- [ ] Validate backend vs model format compatibility
-- [ ] Update help text and examples
+- [x] Validate backend vs model format compatibility
+- [x] Update help text and examples
+- [x] Add ik_llama.cpp backend support
 
 ### Pre-Built Images
 - [ ] Add `--image` flag for direct image specification

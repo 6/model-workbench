@@ -9,23 +9,30 @@ from bench_utils import ROOT, log
 # Image naming convention
 VLLM_IMAGE_PREFIX = "model-bench-vllm"
 LLAMA_IMAGE_PREFIX = "model-bench-llama"
+IK_LLAMA_IMAGE_PREFIX = "model-bench-ik-llama"
 
 # Dockerfile locations
 DOCKERFILE_VLLM = ROOT / "docker" / "Dockerfile.vllm"
 DOCKERFILE_LLAMA = ROOT / "docker" / "Dockerfile.llama"
+DOCKERFILE_IK_LLAMA = ROOT / "docker" / "Dockerfile.ik_llama"
 
 
 def get_image_name(engine: str, version: str) -> str:
     """Get Docker image name for engine and version.
 
     Args:
-        engine: 'vllm' or 'llama'
+        engine: 'vllm', 'llama', or 'ik_llama'
         version: Version tag or commit SHA
 
     Returns:
         Full image name (e.g., 'model-bench-vllm:v0.8.0')
     """
-    prefix = VLLM_IMAGE_PREFIX if engine == "vllm" else LLAMA_IMAGE_PREFIX
+    prefixes = {
+        "vllm": VLLM_IMAGE_PREFIX,
+        "llama": LLAMA_IMAGE_PREFIX,
+        "ik_llama": IK_LLAMA_IMAGE_PREFIX,
+    }
+    prefix = prefixes.get(engine, LLAMA_IMAGE_PREFIX)
     return f"{prefix}:{version}"
 
 
@@ -71,7 +78,12 @@ def build_image(engine: str, version: str, force: bool = False) -> str:
         log(f"Image {image_name} already exists (use --rebuild to force)")
         return image_name
 
-    dockerfile = DOCKERFILE_VLLM if engine == "vllm" else DOCKERFILE_LLAMA
+    dockerfiles = {
+        "vllm": DOCKERFILE_VLLM,
+        "llama": DOCKERFILE_LLAMA,
+        "ik_llama": DOCKERFILE_IK_LLAMA,
+    }
+    dockerfile = dockerfiles.get(engine, DOCKERFILE_LLAMA)
 
     if not dockerfile.exists():
         raise SystemExit(f"Dockerfile not found: {dockerfile}")

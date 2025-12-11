@@ -1,0 +1,66 @@
+# ik_llama.cpp Server Docker Image (ikawrakow's optimized fork)
+# Build with: docker build -f docker/Dockerfile.ik_llama --build-arg VERSION=b4521 -t model-bench-ik-llama:b4521 .
+#
+# VERSION can be:
+#   - Release tag: b4521, b4500
+#   - Commit SHA: abc123def (7+ hex chars)
+#
+# Note: ik_llama.cpp is a performance-optimized fork of llama.cpp
+# https://github.com/ikawrakow/ik_llama.cpp
+
+ARG CUDA_VERSION=12.4.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04
+
+# Required: version to checkout (release tag or commit SHA)
+ARG VERSION
+RUN test -n "$VERSION" || (echo "ERROR: VERSION build-arg is required" && exit 1)
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    cmake \
+    ninja-build \
+    ccache \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone ik_llama.cpp repository (ikawrakow's optimized fork)
+WORKDIR /opt
+RUN git clone https://github.com/ikawrakow/ik_llama.cpp.git
+
+# Checkout specific version
+WORKDIR /opt/ik_llama.cpp
+RUN git checkout ${VERSION}
+
+# Build ik_llama.cpp with CUDA support
+# Using Release build for optimal performance
+RUN cmake -B build \
+    -DGGML_CUDA=ON \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DLLAMA_CURL=OFF \
+    -G Ninja
+
+RUN cmake --build build --config Release -j$(nproc)
+
+# Verify llama-server was built
+RUN test -f /opt/ik_llama.cpp/build/bin/llama-server || \
+    (echo "ERROR: llama-server not found after build" && exit 1)
+
+# Create symlink for easier access
+RUN ln -sf /opt/ik_llama.cpp/build/bin/llama-server /usr/local/bin/llama-server
+
+# Expose default port
+EXPOSE 8080
+
+# Set working directory
+WORKDIR /workspace
+
+# Default entrypoint: llama-server
+ENTRYPOINT ["/opt/ik_llama.cpp/build/bin/llama-server"]
+
+# Default arguments (can be overridden)
+CMD ["--host", "0.0.0.0", "--port", "8080"]

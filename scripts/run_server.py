@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-Standalone Server Runner - Start vLLM or llama.cpp server for inference.
+Standalone Server Runner - Start vLLM, llama.cpp, or ik_llama.cpp server for inference.
 
-Auto-detects GGUF (llama.cpp) vs safetensors (vLLM) based on model format.
+Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
+Use --backend to explicitly select a backend.
 Server keeps running until Ctrl+C.
 
 Examples:
-  # Start vLLM server (safetensors model)
+  # Start vLLM server (safetensors model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8
 
-  # Start llama.cpp server (GGUF model)
+  # Start llama.cpp server (GGUF model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+  # Explicitly use ik_llama.cpp for GGUF (ikawrakow's optimized fork)
+  uv run python scripts/run_server.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 
   # Start and test the endpoint
   uv run python scripts/run_server.py --model ~/models/org/model --test
@@ -26,11 +30,11 @@ import time
 from pathlib import Path
 
 from bench_utils import (
-    detect_model_format,
-    find_mmproj,
+    BACKENDS,
     get_gpu_count,
     get_model_backend_version,
     log,
+    resolve_backend,
     resolve_model_path,
 )
 from server_manager import ServerManager
@@ -58,13 +62,17 @@ def test_chat_completion(host: str, port: int, model_name: str) -> bool:
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Start a standalone vLLM or llama.cpp server",
+        description="Start a standalone vLLM, llama.cpp, or ik_llama.cpp server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
+
+    # Backend selection
+    ap.add_argument("--backend", choices=list(BACKENDS.keys()), default=None,
+                    help="Backend to use (default: auto-detect from model format)")
 
     # Server options
     ap.add_argument("--host", default="127.0.0.1", help="Server host")
@@ -108,29 +116,28 @@ def main():
 
     args = ap.parse_args()
 
-    # Auto-detect model format
-    fmt = detect_model_format(args.model)
-    is_vllm = fmt != "gguf"
-    engine = "vllm" if is_vllm else "llama"
+    # Resolve backend (auto-detect or explicit)
+    backend = resolve_backend(args.model, args.backend)
+    backend_info = BACKENDS[backend]
 
     # Set default port based on backend
     if args.port is None:
-        args.port = 8000 if is_vllm else 8080
+        args.port = backend_info["default_port"]
 
     # Auto-detect tensor parallel for vLLM
-    if is_vllm and args.tensor_parallel is None:
+    if backend == "vllm" and args.tensor_parallel is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path
-    model_path = resolve_model_path(args.model) if is_vllm else args.model
+    model_path = resolve_model_path(args.model) if backend == "vllm" else args.model
 
     # Resolve backend version
-    backend_version = args.backend_version or get_model_backend_version(args.model, engine)
+    backend_version = args.backend_version or get_model_backend_version(args.model, backend)
     if not backend_version and not args.test_only:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.{engine}_version in config/models.yaml\n"
+            f"  1. Set defaults.{backend}_version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 
@@ -142,7 +149,7 @@ def main():
     )
 
     # Model name for API (vLLM uses full path, llama.cpp uses gpt-3.5-turbo)
-    api_model = model_path if is_vllm else "gpt-3.5-turbo"
+    api_model = model_path if backend == "vllm" else "gpt-3.5-turbo"
 
     # Test-only mode
     if args.test_only:
@@ -162,13 +169,15 @@ def main():
         return
 
     # Start server
-    backend_label = "vLLM" if is_vllm else "llama.cpp"
+    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp"}
+    backend_label = backend_labels.get(backend, backend)
     log(f"Starting {backend_label} server...")
     log(f"  Model: {model_path}")
+    log(f"  Backend: {backend}")
     log(f"  Backend version: {backend_version}")
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
-    if is_vllm:
+    if backend == "vllm":
         server.start_vllm(
             model_path=model_path,
             tensor_parallel=args.tensor_parallel,
@@ -178,12 +187,13 @@ def main():
             max_num_batched_tokens=args.max_num_batched_tokens,
             rebuild=args.rebuild,
         )
-    else:
+    elif backend in ("llama", "ik_llama"):
         mmproj_path = None
         if args.mmproj:
             mmproj_path = Path(args.mmproj).expanduser()
 
-        server.start_llama(
+        server.start_gguf_backend(
+            engine=backend,
             model_path=model_path,
             version=backend_version,
             n_gpu_layers=args.n_gpu_layers,

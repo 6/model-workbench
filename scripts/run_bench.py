@@ -2,16 +2,20 @@
 """
 Model Workbench Unified Benchmark Runner
 
-Auto-detects GGUF (llama.cpp) vs safetensors (vLLM) based on file extension.
+Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
+Use --backend to explicitly select a backend.
 Runs backends via Docker for reproducible results with version pinning.
 
 Examples:
 
-  # Safetensors model -> vLLM (uses version from config/models.yaml)
+  # Safetensors model -> vLLM (auto-detected)
   uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8
 
-  # GGUF model -> llama.cpp
+  # GGUF model -> llama.cpp (auto-detected)
   uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
+
+  # Explicitly use ik_llama.cpp for GGUF (ikawrakow's optimized fork)
+  uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 
   # Override backend version
   uv run python scripts/run_bench.py --model ~/models/org/model --backend-version v0.8.0
@@ -34,12 +38,12 @@ from openai import OpenAI
 
 from bench_utils import (
     ALL_PROMPTS,
+    BACKENDS,
     ROOT,
     RESULTS_ROOT,
     TEXT_PROMPTS,
     VISION_PROMPTS,
     compact_path,
-    detect_model_format,
     encode_image_base64,
     extract_repo_id,
     find_mmproj,
@@ -48,6 +52,7 @@ from bench_utils import (
     get_model_backend_version,
     log,
     med,
+    resolve_backend,
     resolve_image_source,
     resolve_local_gguf,
     resolve_model_path,
@@ -431,19 +436,19 @@ def run_benchmark_vllm(args, model_path: str, image_path: str | None, image_labe
         )
 
 
-def run_benchmark_llama(args, model_path: str, image_path: str | None, image_label: str):
-    """Run benchmarks using llama.cpp backend (Docker-only)."""
+def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_label: str, backend: str):
+    """Run benchmarks using GGUF backend (llama.cpp or ik_llama.cpp) via Docker."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
     # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, "llama")
+    backend_version = args.backend_version or get_model_backend_version(args.model, backend)
     if not backend_version:
         raise SystemExit(
-            "No backend version specified and none found in config.\n"
-            "Either:\n"
-            "  1. Set defaults.llama_version in config/models.yaml\n"
-            "  2. Pass --backend-version b4521"
+            f"No backend version specified and none found in config.\n"
+            f"Either:\n"
+            f"  1. Set defaults.{backend}_version in config/models.yaml\n"
+            f"  2. Pass --backend-version b4521"
         )
 
     # Resolve GGUF path
@@ -480,9 +485,13 @@ def run_benchmark_llama(args, model_path: str, image_path: str | None, image_lab
     else:
         prompt_text = TEXT_PROMPTS[args.prompt_set]
 
-    print(f"\n== llama.cpp Benchmark ==")
+    backend_labels = {"llama": "llama.cpp", "ik_llama": "ik_llama.cpp"}
+    backend_label = backend_labels.get(backend, backend)
+
+    print(f"\n== {backend_label} Benchmark ==")
     print(f"model_id:        {model_path}")
     print(f"model_ref:       {gguf_path}")
+    print(f"backend:         {backend}")
     print(f"backend_version: {backend_version}")
     print(f"mode:            {mode}")
     if is_vision:
@@ -496,11 +505,12 @@ def run_benchmark_llama(args, model_path: str, image_path: str | None, image_lab
     )
 
     if not server.is_running() and args.no_autostart:
-        raise SystemExit(f"llama-server not detected on {args.host}:{args.port} and --no-autostart was set.")
+        raise SystemExit(f"{backend_label} server not detected on {args.host}:{args.port} and --no-autostart was set.")
 
     with server:
         if not server.is_running():
-            gguf_path = server.start_llama(
+            gguf_path = server.start_gguf_backend(
+                engine=backend,
                 model_path=model_path,
                 version=backend_version,
                 n_gpu_layers=args.n_gpu_layers,
@@ -561,11 +571,14 @@ def run_benchmark_llama(args, model_path: str, image_path: str | None, image_lab
             if mmproj_path:
                 config["mmproj"] = compact_path(str(mmproj_path))
 
+        # Use backend-specific engine name for results
+        engine_name = "ik_llama-server" if backend == "ik_llama" else "llama-server"
+
         write_benchmark_result(
             results_dir=RESULTS_ROOT,
             repo_id=extract_repo_id(model_path),
             model_ref=compact_path(str(gguf_path)),
-            engine="llama-server",
+            engine=engine_name,
             mode=mode,
             gpu_info=gpu_info,
             config=config,
@@ -580,12 +593,16 @@ def run_benchmark_llama(args, model_path: str, image_path: str | None, image_lab
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Unified benchmark runner - auto-detects vLLM or llama.cpp backend",
+        description="Unified benchmark runner - auto-detects backend from model format",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
+
+    # Backend selection
+    ap.add_argument("--backend", choices=list(BACKENDS.keys()), default=None,
+                    help="Backend to use (default: auto-detect from model format)")
 
     # Common benchmark options
     ap.add_argument("--prompt", default=None, help="Custom prompt (overrides --prompt-set)")
@@ -641,23 +658,23 @@ def main():
 
     args = ap.parse_args()
 
-    # Auto-detect model format
-    fmt = detect_model_format(args.model)
-    is_vllm = fmt != "gguf"
+    # Resolve backend (auto-detect or explicit)
+    backend = resolve_backend(args.model, args.backend)
+    backend_info = BACKENDS[backend]
 
     # Set default port based on backend
     if args.port is None:
-        args.port = 8000 if is_vllm else 8080
+        args.port = backend_info["default_port"]
 
     # Auto-detect tensor parallel for vLLM
-    if is_vllm and args.tensor_parallel is None:
+    if backend == "vllm" and args.tensor_parallel is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path
-    if is_vllm:
+    if backend == "vllm":
         model_path = resolve_model_path(args.model)
     else:
-        model_path = args.model  # llama backend resolves GGUF internally
+        model_path = args.model  # GGUF backends resolve internally
 
     # Resolve image
     image_path, image_label = resolve_image_source(args.image)
@@ -666,25 +683,30 @@ def main():
     if args.build_only:
         from docker_manager import ensure_image
 
-        engine = "vllm" if is_vllm else "llama"
-        version = args.backend_version or get_model_backend_version(args.model, engine)
+        version = args.backend_version or get_model_backend_version(args.model, backend)
         if not version:
             raise SystemExit(
-                f"No backend version specified. Pass --backend-version or set defaults.{engine}_version in config."
+                f"No backend version specified. Pass --backend-version or set defaults.{backend}_version in config."
             )
 
-        log(f"Building {engine} image for version {version}...")
-        image_name = ensure_image(engine, version, rebuild=args.rebuild)
+        log(f"Building {backend} image for version {version}...")
+        image_name = ensure_image(backend, version, rebuild=args.rebuild)
         log(f"Image ready: {image_name}")
         return
 
-    # Log backend selection
-    if is_vllm:
-        log("Auto-detected safetensors model -> vLLM backend")
+    # Log backend selection and run benchmark
+    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp"}
+    backend_label = backend_labels.get(backend, backend)
+
+    if args.backend:
+        log(f"Using explicit backend: {backend_label}")
+    else:
+        log(f"Auto-detected model format -> {backend_label} backend")
+
+    if backend == "vllm":
         run_benchmark_vllm(args, model_path, image_path, image_label)
     else:
-        log("Auto-detected GGUF model -> llama.cpp backend")
-        run_benchmark_llama(args, model_path, image_path, image_label)
+        run_benchmark_gguf(args, model_path, image_path, image_label, backend)
 
 
 if __name__ == "__main__":

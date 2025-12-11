@@ -244,9 +244,89 @@ class ServerManager:
         Returns:
             Path to resolved GGUF file
         """
+        return self.start_gguf_backend(
+            engine="llama",
+            model_path=model_path,
+            version=version,
+            n_gpu_layers=n_gpu_layers,
+            ctx=ctx,
+            parallel=parallel,
+            mmproj_path=mmproj_path,
+            extra_args=extra_args,
+            rebuild=rebuild,
+        )
+
+    def start_ik_llama(
+        self,
+        model_path: str,
+        version: str,
+        n_gpu_layers: int | None = None,
+        ctx: int | None = None,
+        parallel: int | None = None,
+        mmproj_path: Path | None = None,
+        extra_args: list[str] | None = None,
+        rebuild: bool = False,
+    ) -> Path:
+        """Start ik_llama-server via Docker with version pinning.
+
+        ik_llama.cpp is ikawrakow's performance-optimized fork of llama.cpp.
+
+        Args:
+            model_path: Path to .gguf file or directory containing GGUF files
+            version: ik_llama.cpp version (release tag or commit SHA)
+            n_gpu_layers: GPU layers to offload (optional)
+            ctx: Context length (optional)
+            parallel: Parallel sequences (optional)
+            mmproj_path: Path to multimodal projector (optional)
+            extra_args: Extra raw args (optional)
+            rebuild: Force rebuild image even if cached
+
+        Returns:
+            Path to resolved GGUF file
+        """
+        return self.start_gguf_backend(
+            engine="ik_llama",
+            model_path=model_path,
+            version=version,
+            n_gpu_layers=n_gpu_layers,
+            ctx=ctx,
+            parallel=parallel,
+            mmproj_path=mmproj_path,
+            extra_args=extra_args,
+            rebuild=rebuild,
+        )
+
+    def start_gguf_backend(
+        self,
+        engine: str,
+        model_path: str,
+        version: str,
+        n_gpu_layers: int | None = None,
+        ctx: int | None = None,
+        parallel: int | None = None,
+        mmproj_path: Path | None = None,
+        extra_args: list[str] | None = None,
+        rebuild: bool = False,
+    ) -> Path:
+        """Start a GGUF backend (llama.cpp or ik_llama.cpp) via Docker.
+
+        Args:
+            engine: 'llama' or 'ik_llama'
+            model_path: Path to .gguf file or directory containing GGUF files
+            version: Backend version (release tag or commit SHA)
+            n_gpu_layers: GPU layers to offload (optional)
+            ctx: Context length (optional)
+            parallel: Parallel sequences (optional)
+            mmproj_path: Path to multimodal projector (optional)
+            extra_args: Extra raw args (optional)
+            rebuild: Force rebuild image even if cached
+
+        Returns:
+            Path to resolved GGUF file
+        """
         from docker_manager import (
             ensure_image,
-            build_llama_docker_cmd as build_versioned_llama_cmd,
+            build_llama_docker_cmd,
         )
 
         # Resolve GGUF path
@@ -258,9 +338,9 @@ class ServerManager:
             )
 
         # Ensure image exists (builds if needed)
-        image_name = ensure_image("llama", version, rebuild=rebuild)
+        image_name = ensure_image(engine, version, rebuild=rebuild)
 
-        cmd = build_versioned_llama_cmd(
+        cmd = build_llama_docker_cmd(
             image_name=image_name,
             gguf_path=str(gguf_path),
             port=self.port,
@@ -271,10 +351,12 @@ class ServerManager:
             extra_args=extra_args,
         )
 
+        # Label based on engine
+        label = "ik_llama.cpp" if engine == "ik_llama" else "llama.cpp"
         self.start(
             cmd,
             lambda: wait_for_llama_ready(self.host, self.port),
-            label=f"llama.cpp (Docker {version})",
+            label=f"{label} (Docker {version})",
         )
 
         return gguf_path

@@ -34,6 +34,72 @@ VISION_PROMPTS = {
 ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
 
 # ----------------------------
+# Backend registry
+# ----------------------------
+
+BACKENDS = {
+    "vllm": {
+        "formats": ["safetensors"],
+        "default_port": 8000,
+        "config_key": "vllm_version",
+    },
+    "llama": {
+        "formats": ["gguf"],
+        "default_port": 8080,
+        "config_key": "llama_version",
+    },
+    "ik_llama": {
+        "formats": ["gguf"],
+        "default_port": 8080,
+        "config_key": "ik_llama_version",  # Falls back to llama_version
+    },
+}
+
+
+def get_compatible_backends(model_format: str) -> list[str]:
+    """Return backends that support the given format."""
+    return [name for name, info in BACKENDS.items() if model_format in info["formats"]]
+
+
+def get_default_backend(model_format: str) -> str:
+    """Return default backend for format."""
+    if model_format == "gguf":
+        return "llama"
+    return "vllm"
+
+
+def resolve_backend(model_arg: str, backend_override: str | None) -> str:
+    """Resolve backend from explicit choice or auto-detect from format.
+
+    Args:
+        model_arg: Path to model
+        backend_override: Explicit backend choice (or None for auto-detect)
+
+    Returns:
+        Backend name ('vllm', 'llama', 'ik_llama')
+
+    Raises:
+        SystemExit if backend incompatible with model format
+    """
+    fmt = detect_model_format(model_arg)
+    compatible = get_compatible_backends(fmt)
+
+    if backend_override:
+        if backend_override not in BACKENDS:
+            raise SystemExit(
+                f"Unknown backend '{backend_override}'.\n"
+                f"Available: {', '.join(BACKENDS.keys())}"
+            )
+        if backend_override not in compatible:
+            raise SystemExit(
+                f"Backend '{backend_override}' does not support {fmt} models.\n"
+                f"Compatible backends: {', '.join(compatible)}"
+            )
+        return backend_override
+
+    return get_default_backend(fmt)
+
+# ----------------------------
 # Logging
 # ----------------------------
 
@@ -466,7 +532,7 @@ def get_default_backend_version(engine: str) -> str | None:
     Get default backend version for engine from config.
 
     Args:
-        engine: 'vllm' or 'llama'
+        engine: 'vllm', 'llama', or 'ik_llama'
 
     Returns:
         Default version string or None if not configured
@@ -476,10 +542,14 @@ def get_default_backend_version(engine: str) -> str | None:
     with open(MODELS_CONFIG) as f:
         data = yaml.safe_load(f)
     defaults = data.get("defaults", {})
+
     if engine == "vllm":
         return defaults.get("vllm_version")
     elif engine == "llama":
         return defaults.get("llama_version")
+    elif engine == "ik_llama":
+        # ik_llama falls back to llama_version if not explicitly set
+        return defaults.get("ik_llama_version") or defaults.get("llama_version")
     return None
 
 
