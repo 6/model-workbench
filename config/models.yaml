@@ -55,6 +55,10 @@ models:
 
   - repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
 
+  - repo_id: mistralai/Devstral-2-123B-Instruct-2512
+    exclude:
+      - "model-*.safetensors"
+
   - repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
     include:
       - "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L.gguf"

@@ -83,6 +83,9 @@ def main():
             cmd.extend(files)
 
         # Pattern-based filtering for partial repo downloads.
+        # IMPORTANT: Use single flag with multiple patterns, NOT a for-loop with
+        # separate flags per pattern. The hf CLI overwrites (not appends) when
+        # the same flag is repeated, so `--include a --include b` only downloads b.
         if include:
             cmd.append("--include")
             cmd.extend(include)
