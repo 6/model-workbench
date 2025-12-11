@@ -41,8 +41,6 @@ def main():
     for item in items:
         if not isinstance(item, dict):
             continue
-        if item.get("source") != "hf":
-            continue
         repo_id = item.get("repo_id")
         if not repo_id or "REPLACE_ME" in repo_id:
             continue
