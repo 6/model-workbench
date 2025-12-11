@@ -903,7 +903,7 @@ def main():
         help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
     )
     ap.add_argument(
-        "--image",
+        "--docker-image",
         default=None,
         dest="docker_image",
         help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",

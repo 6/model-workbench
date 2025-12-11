@@ -38,7 +38,7 @@ uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8 --backe
 uv run python scripts/run_bench.py --model ~/models/... --backend-version v0.8.0
 
 # Use specific Docker image (e.g., nightly vLLM)
-uv run python scripts/run_bench.py --model ~/models/... --image vllm/vllm-openai:nightly
+uv run python scripts/run_bench.py --model ~/models/... --docker-image vllm/vllm-openai:nightly
 
 # Force build from source instead of prebuilt
 uv run python scripts/run_bench.py --model ~/models/... --image-type build
@@ -59,7 +59,7 @@ uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8
 uv run python scripts/run_server.py --model ~/models/org/model --test  # starts + verifies endpoint
 uv run python scripts/run_server.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 uv run python scripts/run_server.py --model ~/models/GLM-FP8 --backend trtllm  # TensorRT-LLM
-uv run python scripts/run_server.py --model ~/models/GLM-FP8 --image vllm/vllm-openai:nightly  # nightly vLLM
+uv run python scripts/run_server.py --model ~/models/GLM-FP8 --docker-image vllm/vllm-openai:nightly  # nightly vLLM
 ```
 
 ## Architecture
@@ -112,7 +112,7 @@ models:
 ### Resolution Priority (highest to lowest)
 
 **Version/Image Type**:
-1. CLI override (`--backend-version`, `--image-type`, `--image`)
+1. CLI override (`--backend-version`, `--image-type`, `--docker-image`)
 2. Model-specific config (`model.backends.{engine}.version`)
 3. Global defaults (`defaults.backends.{engine}.version`)
 

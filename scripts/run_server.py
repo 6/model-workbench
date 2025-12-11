@@ -14,7 +14,7 @@ Examples:
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --image-type prebuilt
 
   # Start vLLM with specific image (e.g., nightly)
-  uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --image vllm/vllm-openai:nightly
+  uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --docker-image vllm/vllm-openai:nightly
 
   # Start TensorRT-LLM server
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
@@ -120,7 +120,7 @@ def main():
         help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
     )
     ap.add_argument(
-        "--image", default=None, help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)"
+        "--docker-image", default=None, help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)"
     )
 
     # vLLM-specific options (defaults from config, CLI overrides)
