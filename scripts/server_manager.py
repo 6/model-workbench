@@ -38,10 +38,30 @@ class ServerManager:
         self.proc: subprocess.Popen | None = None
         self._output_lines: list[str] = []
         self._we_started_it = False
+        self.container_id: str | None = None  # Track Docker container ID for robust cleanup
 
     def is_running(self) -> bool:
         """Check if server is already running on port."""
         return port_open(self.host, self.port)
+
+    def _get_container_id(self) -> str | None:
+        """Extract Docker container ID for the port we're using.
+
+        Returns container ID if found, None otherwise.
+        """
+        try:
+            result = subprocess.run(
+                ["docker", "ps", "--filter", f"publish={self.port}", "-q", "--no-trunc"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            container_ids = [cid.strip() for cid in result.stdout.strip().split('\n') if cid.strip()]
+            if container_ids:
+                return container_ids[0]  # Return first match
+        except Exception:
+            pass
+        return None
 
     def start(
         self,
@@ -123,6 +143,8 @@ class ServerManager:
                 try:
                     if readiness_check():
                         log(f"{label} ready in {time.time() - start_time:.1f}s")
+                        # Capture container ID for robust cleanup
+                        self.container_id = self._get_container_id()
                         return True
                 except Exception:
                     pass
@@ -142,25 +164,41 @@ class ServerManager:
         raise SystemExit(f"{label} failed to start within {self.timeout}s.\nLast output:\n{output}")
 
     def stop(self):
-        """Graceful shutdown: SIGINT → wait → terminate → wait → kill."""
-        if not self.proc or not self._we_started_it:
-            return
+        """Graceful shutdown: SIGINT → wait → terminate → wait → kill.
 
-        sigint_wait = getattr(self, "_sigint_wait", 10)
-        term_wait = getattr(self, "_term_wait", 5)
+        Also ensures Docker container is stopped via container ID as fallback.
+        """
+        # First: try to stop via subprocess (original logic)
+        if self.proc and self._we_started_it:
+            sigint_wait = getattr(self, "_sigint_wait", 10)
+            term_wait = getattr(self, "_term_wait", 5)
 
-        try:
-            self.proc.send_signal(signal.SIGINT)
-            self.proc.wait(timeout=sigint_wait)
-        except Exception:
             try:
-                self.proc.terminate()
-                self.proc.wait(timeout=term_wait)
+                self.proc.send_signal(signal.SIGINT)
+                self.proc.wait(timeout=sigint_wait)
             except Exception:
-                self.proc.kill()
+                try:
+                    self.proc.terminate()
+                    self.proc.wait(timeout=term_wait)
+                except Exception:
+                    self.proc.kill()
 
-        self.proc = None
-        self._we_started_it = False
+            self.proc = None
+            self._we_started_it = False
+
+        # Fallback: stop Docker container directly if we have container ID
+        if self.container_id:
+            try:
+                log(f"Stopping Docker container {self.container_id[:12]}...")
+                subprocess.run(
+                    ["docker", "stop", self.container_id],
+                    timeout=30,
+                    capture_output=True,
+                )
+            except Exception as e:
+                log(f"Warning: Failed to stop container: {e}")
+            finally:
+                self.container_id = None
 
     def __enter__(self):
         return self

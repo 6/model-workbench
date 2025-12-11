@@ -36,6 +36,7 @@ Examples:
 import argparse
 import os
 import re
+import subprocess
 import time
 from pathlib import Path
 
@@ -60,6 +61,41 @@ from bench_utils import (
 from common import BACKEND_REGISTRY, log
 from openai import OpenAI
 from server_manager import ServerManager
+
+# ----------------------------
+# Cleanup helpers (ensure idempotency)
+# ----------------------------
+
+
+def cleanup_existing_containers(port: int):
+    """Stop any Docker containers using the target port.
+
+    This ensures benchmark is idempotent - can be run multiple times
+    without manual cleanup of orphaned containers.
+
+    Args:
+        port: Port number to check for containers
+    """
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--filter", f"publish={port}", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        container_ids = [cid.strip() for cid in result.stdout.strip().split('\n') if cid.strip()]
+
+        if container_ids:
+            log(f"Found {len(container_ids)} existing container(s) on port {port}, cleaning up...")
+            for cid in container_ids:
+                try:
+                    subprocess.run(["docker", "stop", cid], timeout=30, capture_output=True)
+                    log(f"Stopped container {cid[:12]}")
+                except Exception as e:
+                    log(f"Warning: Failed to stop container {cid[:12]}: {e}")
+    except Exception as e:
+        log(f"Warning: Could not check for existing containers: {e}")
+
 
 # ----------------------------
 # Prometheus metrics scraping (shared for vLLM and TensorRT-LLM)
@@ -423,6 +459,10 @@ def run_benchmark_vllm(
             f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
 
+    # Clean up any existing containers on this port (make benchmark idempotent)
+    if not args.no_autostart:
+        cleanup_existing_containers(args.port)
+
     with server:
         if not server.is_running():
             server.start_vllm(
@@ -568,6 +608,10 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         )
 
     with server:
+        # Clean up any existing containers on this port (make benchmark idempotent)
+        if not args.no_autostart:
+            cleanup_existing_containers(args.port)
+
         if not server.is_running():
             server.start_trtllm(
                 model_path=model_path,
@@ -739,6 +783,10 @@ def run_benchmark_gguf(
         )
 
     with server:
+        # Clean up any existing containers on this port (make benchmark idempotent)
+        if not args.no_autostart:
+            cleanup_existing_containers(args.port)
+
         if not server.is_running():
             gguf_path = server.start_gguf_backend(
                 engine=backend,

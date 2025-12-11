@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-12-11T05:08:23.289953",
+  "repo_id": "openai/gpt-oss-20b",
+  "model_ref": "~/models/openai/gpt-oss-20b",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94708
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94708
+      }
+    ],
+    "memory_used_mib": 189416,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 10,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.12.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 0.038283541000055266,
+      "output_text": "",
+      "prompt_tokens": 85,
+      "generated_tokens": 10,
+      "tok_per_s": 261.2088573516636,
+      "generation_tok_per_s": 353.3691897062329,
+      "ttft_ms": 7.054567337036133,
+      "prefill_ms": 6.2809959999867715,
+      "generation_ms": 28.299014999902283
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.038283541000055266,
+    "median_tok_per_s": 261.2088573516636,
+    "median_ttft_ms": 7.054567337036133,
+    "median_generation_tok_per_s": 353.3691897062329
+  }
+}
