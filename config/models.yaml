@@ -9,6 +9,25 @@ defaults:
       args:
         gpu_memory_utilization: 0.95
         max_model_len: 65536
+      # Model-specific CLI args (pattern is regex matched against model path)
+      model_patterns:
+        - pattern: "glm.*v"  # GLM vision models
+          args:
+            - "--enable-expert-parallel"
+            - "--allowed-local-media-path"
+            - "/"
+            - "--mm-encoder-tp-mode"
+            - "data"
+            - "--mm_processor_cache_type"
+            - "shm"
+        - pattern: "mistral|devstral|ministral"
+          args:
+            - "--tokenizer_mode"
+            - "mistral"
+            - "--config_format"
+            - "mistral"
+            - "--load_format"
+            - "mistral"
     # https://github.com/ggerganov/llama.cpp/releases
     llama:
       version: b7349

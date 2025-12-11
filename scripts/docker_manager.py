@@ -1,70 +1,75 @@
 """Docker image management for vLLM, llama.cpp, and TensorRT-LLM backends."""
 
 import os
+import re
 import subprocess
 from pathlib import Path
 
 from bench_utils import ROOT, log
 
 
-# Image naming convention for build-from-source images
-VLLM_IMAGE_PREFIX = "model-bench-vllm"
-LLAMA_IMAGE_PREFIX = "model-bench-llama"
-IK_LLAMA_IMAGE_PREFIX = "model-bench-ik-llama"
-
-# Prebuilt image registries
-PREBUILT_IMAGES = {
-    "vllm": "vllm/vllm-openai",  # tag = version (e.g., v0.8.0)
-    "trtllm": "nvcr.io/nvidia/tensorrt-llm/release",  # tag = version (e.g., 0.18.0)
+# Unified backend registry - single source of truth for Docker config
+BACKEND_REGISTRY = {
+    "vllm": {
+        "image_prefix": "model-bench-vllm",
+        "prebuilt_image": "vllm/vllm-openai",
+        "dockerfile": ROOT / "docker" / "Dockerfile.vllm",
+        "docker_base": ["--gpus", "all", "--ipc", "host"],
+    },
+    "llama": {
+        "image_prefix": "model-bench-llama",
+        "prebuilt_image": None,
+        "dockerfile": ROOT / "docker" / "Dockerfile.llama",
+        "docker_base": ["--gpus", "all"],
+    },
+    "ik_llama": {
+        "image_prefix": "model-bench-ik-llama",
+        "prebuilt_image": None,
+        "dockerfile": ROOT / "docker" / "Dockerfile.ik_llama",
+        "docker_base": ["--gpus", "all"],
+    },
+    "trtllm": {
+        "image_prefix": None,  # prebuilt only
+        "prebuilt_image": "nvcr.io/nvidia/tensorrt-llm/release",
+        "dockerfile": None,
+        "docker_base": [
+            "--gpus", "all", "--ipc", "host",
+            "--ulimit", "memlock=-1", "--ulimit", "stack=67108864",
+        ],
+    },
 }
 
-# Dockerfile locations
-DOCKERFILE_VLLM = ROOT / "docker" / "Dockerfile.vllm"
-DOCKERFILE_LLAMA = ROOT / "docker" / "Dockerfile.llama"
-DOCKERFILE_IK_LLAMA = ROOT / "docker" / "Dockerfile.ik_llama"
 
-
-def get_image_name(engine: str, version: str) -> str:
-    """Get Docker image name for build-from-source images.
+def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
+    """Get Docker image name for an engine.
 
     Args:
-        engine: 'vllm', 'llama', or 'ik_llama'
+        engine: Backend name ('vllm', 'llama', 'ik_llama', 'trtllm')
         version: Version tag or commit SHA
+        prebuilt: True for prebuilt registry images, False for local builds
 
     Returns:
-        Full image name (e.g., 'model-bench-vllm:v0.8.0')
+        Full image name with tag
     """
-    prefixes = {
-        "vllm": VLLM_IMAGE_PREFIX,
-        "llama": LLAMA_IMAGE_PREFIX,
-        "ik_llama": IK_LLAMA_IMAGE_PREFIX,
-    }
-    prefix = prefixes.get(engine, LLAMA_IMAGE_PREFIX)
-    return f"{prefix}:{version}"
+    cfg = BACKEND_REGISTRY.get(engine)
+    if not cfg:
+        raise SystemExit(f"Unknown engine: {engine}")
+
+    if prebuilt:
+        if not cfg["prebuilt_image"]:
+            available = [k for k, v in BACKEND_REGISTRY.items() if v["prebuilt_image"]]
+            raise SystemExit(
+                f"No prebuilt images available for '{engine}'.\n"
+                f"Engines with prebuilt images: {', '.join(available)}"
+            )
+        return f"{cfg['prebuilt_image']}:{version}"
+
+    if not cfg["image_prefix"]:
+        raise SystemExit(f"Engine '{engine}' only supports prebuilt images")
+    return f"{cfg['image_prefix']}:{version}"
 
 
-def get_prebuilt_image_name(engine: str, version: str) -> str:
-    """Get prebuilt Docker image name from official registry.
-
-    Args:
-        engine: 'vllm' or 'trtllm'
-        version: Version tag (e.g., 'v0.8.0' for vllm, '0.18.0' for trtllm)
-
-    Returns:
-        Full image name (e.g., 'vllm/vllm-openai:v0.8.0')
-
-    Raises:
-        SystemExit if engine doesn't have prebuilt images
-    """
-    if engine not in PREBUILT_IMAGES:
-        raise SystemExit(
-            f"No prebuilt images available for '{engine}'.\n"
-            f"Engines with prebuilt images: {', '.join(PREBUILT_IMAGES.keys())}"
-        )
-    return f"{PREBUILT_IMAGES[engine]}:{version}"
-
-
-def pull_image(image_name: str) -> bool:
+def _pull_image(image_name: str) -> bool:
     """Pull a Docker image from registry.
 
     Args:
@@ -90,7 +95,7 @@ def pull_image(image_name: str) -> bool:
         return False
 
 
-def image_exists_local(image_name: str) -> bool:
+def __image_exists_local(image_name: str) -> bool:
     """Check if Docker image exists locally.
 
     Args:
@@ -110,33 +115,11 @@ def image_exists_local(image_name: str) -> bool:
         return False
 
 
-def image_exists(engine: str, version: str) -> bool:
-    """Check if Docker image exists locally.
-
-    Args:
-        engine: 'vllm' or 'llama'
-        version: Version tag or commit SHA
-
-    Returns:
-        True if image exists locally
-    """
-    image_name = get_image_name(engine, version)
-    try:
-        result = subprocess.run(
-            ["docker", "image", "inspect", image_name],
-            capture_output=True,
-            timeout=10,
-        )
-        return result.returncode == 0
-    except Exception:
-        return False
-
-
-def build_image(engine: str, version: str, force: bool = False) -> str:
+def _build_image(engine: str, version: str, force: bool = False) -> str:
     """Build Docker image for engine and version.
 
     Args:
-        engine: 'vllm' or 'llama'
+        engine: 'vllm', 'llama', or 'ik_llama'
         version: Version tag or commit SHA
         force: If True, rebuild even if image exists
 
@@ -146,18 +129,17 @@ def build_image(engine: str, version: str, force: bool = False) -> str:
     Raises:
         SystemExit if build fails
     """
+    cfg = BACKEND_REGISTRY.get(engine)
+    if not cfg or not cfg["dockerfile"]:
+        raise SystemExit(f"Engine '{engine}' does not support building from source")
+
     image_name = get_image_name(engine, version)
 
-    if not force and image_exists(engine, version):
+    if not force and _image_exists_local(image_name):
         log(f"Image {image_name} already exists (use --rebuild to force)")
         return image_name
 
-    dockerfiles = {
-        "vllm": DOCKERFILE_VLLM,
-        "llama": DOCKERFILE_LLAMA,
-        "ik_llama": DOCKERFILE_IK_LLAMA,
-    }
-    dockerfile = dockerfiles.get(engine, DOCKERFILE_LLAMA)
+    dockerfile = cfg["dockerfile"]
 
     if not dockerfile.exists():
         raise SystemExit(f"Dockerfile not found: {dockerfile}")
@@ -190,7 +172,7 @@ def build_image(engine: str, version: str, force: bool = False) -> str:
     return image_name
 
 
-def docker_gpu_available() -> bool:
+def _docker_gpu_available() -> bool:
     """Check if Docker with GPU support is available.
 
     Returns:
@@ -208,6 +190,55 @@ def docker_gpu_available() -> bool:
         return False
 
 
+def _docker_run_base(
+    engine: str,
+    image_name: str,
+    port: int,
+    mounts: list[tuple[str, str, str]],
+) -> list[str]:
+    """Build common Docker run prefix.
+
+    Args:
+        engine: Backend name (uses BACKEND_REGISTRY for base flags)
+        image_name: Docker image to use
+        port: Port to expose
+        mounts: List of (host_path, container_path, mode) tuples
+
+    Returns:
+        Docker run command prefix (up to and including image name)
+    """
+    cfg = BACKEND_REGISTRY[engine]
+    cmd = ["docker", "run", "--rm"]
+    cmd.extend(cfg["docker_base"])
+    cmd.extend(["-p", f"{port}:{port}"])
+    for host_path, container_path, mode in mounts:
+        cmd.extend(["-v", f"{host_path}:{container_path}:{mode}"])
+    cmd.append(image_name)
+    return cmd
+
+
+def _get_model_specific_args(model_path: str) -> list[str]:
+    """Get model-specific vLLM args from config patterns.
+
+    Args:
+        model_path: Path to model (checked against patterns)
+
+    Returns:
+        List of additional CLI args for vLLM
+    """
+    from bench_utils import get_backend_config
+
+    cfg = get_backend_config("vllm")
+    patterns = cfg.get("model_patterns", [])
+
+    extra_args = []
+    lower = model_path.lower()
+    for p in patterns:
+        if re.search(p["pattern"], lower, re.IGNORECASE):
+            extra_args.extend(p["args"])
+    return extra_args
+
+
 def build_vllm_docker_cmd(
     image_name: str,
     model_path: str,
@@ -219,70 +250,31 @@ def build_vllm_docker_cmd(
     max_num_batched_tokens: int | None = None,
     extra_vllm_args: list[str] | None = None,
 ) -> list[str]:
-    """Build Docker run command for vLLM server.
-
-    Args:
-        image_name: Docker image to use
-        model_path: Path to model directory (will be bind-mounted)
-        host: Server host (inside container)
-        port: Server port
-        tensor_parallel: Tensor parallel size
-        max_model_len: Max context length (optional)
-        gpu_memory_utilization: GPU memory fraction (optional)
-        max_num_batched_tokens: Max batched tokens (optional)
-        extra_vllm_args: Additional vLLM arguments (optional)
-
-    Returns:
-        Docker run command list
-    """
+    """Build Docker run command for vLLM server."""
     model_path_resolved = str(Path(model_path).expanduser().resolve())
 
-    cmd = [
-        "docker", "run", "--rm",
-        "--gpus", "all",
-        "--ipc", "host",
-        "-p", f"{port}:{port}",
-        "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
-        image_name,
+    cmd = _docker_run_base(
+        "vllm", image_name, port,
+        [(model_path_resolved, model_path_resolved, "ro")],
+    )
+    cmd += [
         "--model", model_path_resolved,
-        "--host", "0.0.0.0",  # Bind to all interfaces inside container
+        "--host", "0.0.0.0",
         "--port", str(port),
         "--tensor-parallel-size", str(tensor_parallel),
+        "--max-model-len", str(max_model_len if max_model_len is not None else 10000),
     ]
-
-    # Default max-model-len to 10000 to avoid KV cache overload on large models
-    effective_max_model_len = max_model_len if max_model_len is not None else 10000
-    cmd += ["--max-model-len", str(effective_max_model_len)]
 
     if gpu_memory_utilization is not None:
         cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]
-
     if max_num_batched_tokens is not None:
         cmd += ["--max-num-batched-tokens", str(max_num_batched_tokens)]
 
-    # Model-specific flags (detect from path)
-    lower = model_path.lower()
-
-    # GLM vision models
-    if "glm" in lower and "v" in lower.split("glm")[-1]:
-        cmd += [
-            "--enable-expert-parallel",
-            "--allowed-local-media-path", "/",
-            "--mm-encoder-tp-mode", "data",
-            "--mm_processor_cache_type", "shm",
-        ]
-
-    # Mistral/Devstral models
-    if "mistral" in lower or "devstral" in lower or "ministral" in lower:
-        cmd += [
-            "--tokenizer_mode", "mistral",
-            "--config_format", "mistral",
-            "--load_format", "mistral",
-        ]
+    # Model-specific flags from config
+    cmd += _get_model_specific_args(model_path)
 
     if extra_vllm_args:
         cmd += extra_vllm_args
-
     return cmd
 
 
@@ -296,61 +288,30 @@ def build_llama_docker_cmd(
     mmproj_path: str | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
-    """Build Docker run command for llama-server.
-
-    Args:
-        image_name: Docker image to use
-        gguf_path: Path to GGUF model file (will be bind-mounted)
-        port: Server port
-        n_gpu_layers: GPU layers to offload (optional)
-        ctx: Context length (optional)
-        parallel: Parallel sequences (optional)
-        mmproj_path: Path to multimodal projector (optional)
-        extra_args: Additional llama-server arguments (optional)
-
-    Returns:
-        Docker run command list
-    """
+    """Build Docker run command for llama-server."""
     gguf_path_resolved = str(Path(gguf_path).expanduser().resolve())
     model_dir = str(Path(gguf_path_resolved).parent)
 
-    cmd = [
-        "docker", "run", "--rm",
-        "--gpus", "all",
-        "-p", f"{port}:{port}",
-        "-v", f"{model_dir}:{model_dir}:ro",
-    ]
-
-    # Also mount mmproj directory if different
+    mounts = [(model_dir, model_dir, "ro")]
     if mmproj_path:
         mmproj_resolved = str(Path(mmproj_path).expanduser().resolve())
         mmproj_dir = str(Path(mmproj_resolved).parent)
         if mmproj_dir != model_dir:
-            cmd += ["-v", f"{mmproj_dir}:{mmproj_dir}:ro"]
+            mounts.append((mmproj_dir, mmproj_dir, "ro"))
 
-    cmd += [
-        image_name,
-        "-m", gguf_path_resolved,
-        "--host", "0.0.0.0",
-        "--port", str(port),
-    ]
+    cmd = _docker_run_base("llama", image_name, port, mounts)
+    cmd += ["-m", gguf_path_resolved, "--host", "0.0.0.0", "--port", str(port)]
 
     if n_gpu_layers is not None:
         cmd += ["-ngl", str(n_gpu_layers)]
-
     if ctx is not None:
         cmd += ["-c", str(ctx)]
-
     if parallel is not None and parallel > 1:
         cmd += ["-np", str(parallel)]
-
     if mmproj_path:
-        mmproj_resolved = str(Path(mmproj_path).expanduser().resolve())
-        cmd += ["--mmproj", mmproj_resolved]
-
+        cmd += ["--mmproj", str(Path(mmproj_path).expanduser().resolve())]
     if extra_args:
         cmd += extra_args
-
     return cmd
 
 
@@ -364,53 +325,31 @@ def build_trtllm_docker_cmd(
     max_seq_len: int | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
-    """Build Docker run command for TensorRT-LLM trtllm-serve.
-
-    Args:
-        image_name: Docker image to use (NGC TensorRT-LLM image)
-        model_path: Path to model directory (will be bind-mounted)
-        port: Server port
-        tensor_parallel: Tensor parallel size (tp_size)
-        max_batch_size: Maximum batch size (optional)
-        max_num_tokens: Maximum number of tokens (optional)
-        max_seq_len: Maximum sequence length (optional)
-        extra_args: Additional trtllm-serve arguments (optional)
-
-    Returns:
-        Docker run command list
-    """
+    """Build Docker run command for TensorRT-LLM trtllm-serve."""
     model_path_resolved = str(Path(model_path).expanduser().resolve())
     cache_dir = os.path.expanduser("~/.cache")
 
-    cmd = [
-        "docker", "run", "--rm",
-        "--gpus", "all",
-        "--ipc", "host",
-        "--ulimit", "memlock=-1",
-        "--ulimit", "stack=67108864",
-        "-p", f"{port}:{port}",
-        "-v", f"{model_path_resolved}:{model_path_resolved}:ro",
-        "-v", f"{cache_dir}:/root/.cache:rw",
-        image_name,
+    cmd = _docker_run_base(
+        "trtllm", image_name, port,
+        [(model_path_resolved, model_path_resolved, "ro"),
+         (cache_dir, "/root/.cache", "rw")],
+    )
+    cmd += [
         "trtllm-serve", model_path_resolved,
         "--host", "0.0.0.0",
         "--port", str(port),
         "--tp_size", str(tensor_parallel),
-        "--return-perf-metrics",  # Enable Prometheus metrics at /prometheus/metrics
+        "--return-perf-metrics",
     ]
 
     if max_batch_size is not None:
         cmd += ["--max_batch_size", str(max_batch_size)]
-
     if max_num_tokens is not None:
         cmd += ["--max_num_tokens", str(max_num_tokens)]
-
     if max_seq_len is not None:
         cmd += ["--max_seq_len", str(max_seq_len)]
-
     if extra_args:
         cmd += extra_args
-
     return cmd
 
 
@@ -436,7 +375,7 @@ def ensure_image(
     Raises:
         SystemExit if GPU Docker not available or build/pull fails
     """
-    if not docker_gpu_available():
+    if not _docker_gpu_available():
         raise SystemExit(
             "Docker with GPU support not available.\n"
             "Ensure nvidia-container-toolkit is installed and Docker can access GPUs:\n"
@@ -445,22 +384,25 @@ def ensure_image(
 
     # Direct image override (highest priority)
     if image_override:
-        if not image_exists_local(image_override) or rebuild:
-            if not pull_image(image_override):
+        if not _image_exists_local(image_override) or rebuild:
+            if not _pull_image(image_override):
                 raise SystemExit(f"Failed to pull image: {image_override}")
         else:
             log(f"Using existing image: {image_override}")
         return image_override
 
     # Prebuilt images (vLLM or TensorRT-LLM)
-    if image_type == "prebuilt" or engine == "trtllm":
-        image_name = get_prebuilt_image_name(engine, version)
-        if not image_exists_local(image_name) or rebuild:
-            if not pull_image(image_name):
+    cfg = BACKEND_REGISTRY.get(engine)
+    use_prebuilt = image_type == "prebuilt" or (cfg and not cfg["dockerfile"])
+
+    if use_prebuilt:
+        image_name = get_image_name(engine, version, prebuilt=True)
+        if not _image_exists_local(image_name) or rebuild:
+            if not _pull_image(image_name):
                 raise SystemExit(f"Failed to pull prebuilt image: {image_name}")
         else:
             log(f"Using existing prebuilt image: {image_name}")
         return image_name
 
     # Build from source (default for llama/ik_llama, optional for vllm)
-    return build_image(engine, version, force=rebuild)
+    return _build_image(engine, version, force=rebuild)
