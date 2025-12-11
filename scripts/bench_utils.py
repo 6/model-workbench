@@ -757,15 +757,16 @@ def warmup_model(
     host: str,
     port: int,
     api_model: str,
-    prompt: str = "Hello",
-    max_tokens: int = 16,
+    prompt: str = "Explain the key differences between tensor parallelism and pipeline parallelism in distributed deep learning inference.",
+    max_tokens: int = 64,
     timeout: int = 300,
 ) -> bool:
     """
-    Make a small inference request to preload model into GPU memory.
+    Make an inference request to preload model into GPU memory.
 
     This prevents lazy loading on the first user request by warming up
-    the model during server startup.
+    the model during server startup. Uses a substantial request to ensure
+    the model is fully loaded (not just partially cached).
 
     Args:
         backend: Backend type ("vllm", "trtllm", "llama", "ik_llama")
@@ -785,12 +786,21 @@ def warmup_model(
             client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
             messages = build_chat_messages(prompt, image_path=None)
 
-            client.chat.completions.create(
+            response = client.chat.completions.create(
                 model=api_model,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=0.0,
             )
+
+            # Validate response contains completion
+            if not response.choices or not response.choices[0].message.content:
+                log(f"ERROR: Warmup got empty response from {backend}")
+                log(f"Response: {response}")
+                return False
+
+            generated = len(response.choices[0].message.content)
+            log(f"Warmup generated {generated} characters")
             return True
 
         elif backend in ("llama", "ik_llama"):
@@ -804,6 +814,16 @@ def warmup_model(
 
             r = requests.post(url, json=payload, timeout=timeout)
             r.raise_for_status()
+
+            # Validate response contains completion
+            data = r.json()
+            if "content" not in data or not data["content"]:
+                log(f"ERROR: Warmup got unexpected response from {backend}")
+                log(f"Response: {data}")
+                return False
+
+            generated = len(data["content"])
+            log(f"Warmup generated {generated} characters")
             return True
 
         else:

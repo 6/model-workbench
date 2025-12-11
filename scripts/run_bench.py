@@ -561,7 +561,8 @@ def run_benchmark_vllm(
             host=args.host,
             port=args.port,
             api_model=api_model,
-            max_tokens=min(64, args.max_tokens),
+            prompt=prompt_text,
+            max_tokens=min(128, args.max_tokens),
         )
         if not success:
             log("WARNING: Warmup failed, benchmark may include model load time")
@@ -720,7 +721,8 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             host=args.host,
             port=args.port,
             api_model=api_model,
-            max_tokens=min(64, args.max_tokens),
+            prompt=prompt_text,
+            max_tokens=min(128, args.max_tokens),
         )
         if not success:
             log("WARNING: Warmup failed, benchmark may include model load time")
@@ -908,7 +910,8 @@ def run_benchmark_gguf(
             host=args.host,
             port=args.port,
             api_model="gpt-3.5-turbo",  # llama.cpp uses this default model name
-            max_tokens=min(64, args.max_tokens),
+            prompt=prompt_text,
+            max_tokens=min(128, args.max_tokens),
         )
         if not success:
             log("WARNING: Warmup failed, benchmark may include model load time")
