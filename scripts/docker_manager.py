@@ -63,7 +63,7 @@ def _pull_image(image_name: str) -> bool:
         return False
 
 
-def __image_exists_local(image_name: str) -> bool:
+def _image_exists_local(image_name: str) -> bool:
     """Check if Docker image exists locally.
 
     Args:

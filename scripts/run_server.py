@@ -39,12 +39,8 @@ import time
 from pathlib import Path
 
 from bench_utils import (
-    get_gpu_count,
-    get_image_type,
-    get_model_backend_config,
     get_model_backend_version,
-    resolve_backend,
-    resolve_model_path,
+    resolve_run_config,
 )
 from common import BACKEND_REGISTRY, log
 from server_manager import ServerManager
@@ -130,24 +126,8 @@ def main():
 
     args = ap.parse_args()
 
-    # Resolve backend (auto-detect or explicit)
-    backend = resolve_backend(args.model, args.backend)
-    backend_info = BACKEND_REGISTRY[backend]
-
-    # Get merged config for this model + backend (defaults + model overrides)
-    backend_cfg = get_model_backend_config(args.model, backend)
-    backend_args = backend_cfg.get("args", {})
-
-    # Set default port based on backend
-    if args.port is None:
-        args.port = backend_info["default_port"]
-
-    # Auto-detect tensor parallel for vLLM and trtllm
-    if backend in ("vllm", "trtllm") and args.tensor_parallel is None:
-        args.tensor_parallel = get_gpu_count()
-
-    # Resolve model path
-    model_path = resolve_model_path(args.model) if backend in ("vllm", "trtllm") else args.model
+    # Resolve backend config and apply defaults
+    backend, model_path, backend_cfg = resolve_run_config(args)
 
     # Resolve backend version
     backend_version = args.backend_version or backend_cfg.get("version")
@@ -161,17 +141,6 @@ def main():
 
     # Resolve image type (from CLI, model config, or backend defaults)
     image_type = args.image_type or backend_cfg.get("image_type", "build")
-
-    # Resolve backend-specific args from config if not provided via CLI
-    # vLLM args
-    if args.max_model_len is None:
-        args.max_model_len = backend_args.get("max_model_len", 65536)
-    if args.gpu_memory_utilization is None:
-        args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
-
-    # llama.cpp / ik_llama args
-    if args.n_gpu_layers is None:
-        args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
 
     # Create server manager
     server = ServerManager(
@@ -201,8 +170,7 @@ def main():
         return
 
     # Start server
-    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp", "trtllm": "TensorRT-LLM"}
-    backend_label = backend_labels.get(backend, backend)
+    backend_label = BACKEND_REGISTRY[backend]["display_name"]
     log(f"Starting {backend_label} server...")
     log(f"  Model: {model_path}")
     log(f"  Backend: {backend}")

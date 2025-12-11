@@ -599,19 +599,6 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
     return result
 
 
-def get_image_type(engine: str) -> str:
-    """
-    Get image type (prebuilt or build) for engine from config.
-
-    Args:
-        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
-
-    Returns:
-        'prebuilt' or 'build'
-    """
-    return get_backend_config(engine).get("image_type", "build")
-
-
 def get_model_backend_version(model_arg: str, engine: str) -> str | None:
     """
     Get backend version for a specific model.
@@ -628,6 +615,72 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
         Version string or None if not configured
     """
     return get_model_backend_config(model_arg, engine).get("version")
+
+
+def resolve_run_config(args):
+    """Resolve backend config and apply defaults to args.
+
+    This centralizes the common setup pattern used by run_bench, run_server, run_eval.
+
+    Args:
+        args: Parsed argparse namespace with:
+            - model (required)
+            - backend (optional)
+            - port (optional)
+            - tensor_parallel (optional, for vLLM/trtllm)
+            - max_model_len (optional)
+            - gpu_memory_utilization (optional)
+            - n_gpu_layers (optional, for llama.cpp)
+            - image_type (optional)
+            - backend_version (optional)
+
+    Returns:
+        Tuple of (backend, model_path, backend_cfg) where:
+            - backend: Resolved backend name
+            - model_path: Resolved model path (safetensors get expanded, GGUF stays as-is)
+            - backend_cfg: Full config dict with merged defaults and model-specific settings
+
+    Side effects:
+        Modifies args in place to fill in defaults for:
+            - port
+            - tensor_parallel (for vLLM/trtllm)
+            - max_model_len
+            - gpu_memory_utilization
+            - n_gpu_layers
+    """
+    from common import BACKEND_REGISTRY
+
+    # Resolve backend (auto-detect or explicit)
+    backend = resolve_backend(args.model, getattr(args, 'backend', None))
+    backend_info = BACKEND_REGISTRY[backend]
+
+    # Get merged config for this model + backend
+    backend_cfg = get_model_backend_config(args.model, backend)
+    backend_args = backend_cfg.get("args", {})
+
+    # Set default port based on backend
+    if getattr(args, 'port', None) is None:
+        args.port = backend_info["default_port"]
+
+    # Auto-detect tensor parallel for vLLM and trtllm
+    if backend in ("vllm", "trtllm") and getattr(args, 'tensor_parallel', None) is None:
+        args.tensor_parallel = get_gpu_count()
+
+    # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
+    if backend in ("vllm", "trtllm"):
+        model_path = resolve_model_path(args.model)
+    else:
+        model_path = args.model
+
+    # Apply config defaults for args not specified on CLI
+    if getattr(args, 'max_model_len', None) is None:
+        args.max_model_len = backend_args.get("max_model_len", 65536)
+    if getattr(args, 'gpu_memory_utilization', None) is None:
+        args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
+    if getattr(args, 'n_gpu_layers', None) is None:
+        args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
+
+    return backend, model_path, backend_cfg
 
 
 # ----------------------------

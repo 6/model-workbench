@@ -37,11 +37,7 @@ from bench_utils import (
     sanitize,
     extract_repo_id,
     get_gpu_info,
-    get_gpu_count,
-    get_model_backend_config,
-    get_model_backend_version,
-    resolve_backend,
-    resolve_model_path,
+    resolve_run_config,
 )
 from common import BACKEND_REGISTRY, EVAL_RESULTS_ROOT, log
 from server_manager import ServerManager
@@ -226,24 +222,8 @@ def main():
 
     args = parser.parse_args()
 
-    # Resolve backend (auto-detect or explicit)
-    backend = resolve_backend(args.model, args.backend)
-    backend_info = BACKEND_REGISTRY[backend]
-
-    # Get merged config for this model + backend (defaults + model overrides)
-    backend_cfg = get_model_backend_config(args.model, backend)
-    backend_args = backend_cfg.get("args", {})
-
-    # Set default port based on backend
-    if args.port is None:
-        args.port = backend_info["default_port"]
-
-    # Auto-detect GPU count for tensor parallelism
-    if args.tensor_parallel is None:
-        args.tensor_parallel = get_gpu_count()
-
-    # Resolve and validate model path
-    model_path = resolve_model_path(args.model)
+    # Resolve backend config and apply defaults
+    backend, model_path, backend_cfg = resolve_run_config(args)
     repo_id = extract_repo_id(model_path)
 
     # Resolve backend version
@@ -256,19 +236,7 @@ def main():
             f"  2. Pass --backend-version"
         )
 
-    # Resolve backend-specific args from config if not provided via CLI
-    # vLLM args
-    if args.max_model_len is None:
-        args.max_model_len = backend_args.get("max_model_len", 65536)
-    if args.gpu_memory_utilization is None:
-        args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
-
-    # llama.cpp / ik_llama args
-    if args.n_gpu_layers is None:
-        args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
-
-    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp", "trtllm": "TensorRT-LLM"}
-    backend_label = backend_labels.get(backend, backend)
+    backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
     log(f"Model: {repo_id}")
     log(f"Backend: {backend_label}")

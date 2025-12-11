@@ -52,16 +52,12 @@ from bench_utils import (
     encode_image_base64,
     extract_repo_id,
     find_mmproj,
-    get_gpu_count,
     get_gpu_info,
-    get_image_type,
-    get_model_backend_config,
     get_model_backend_version,
     med,
-    resolve_backend,
     resolve_image_source,
     resolve_local_gguf,
-    resolve_model_path,
+    resolve_run_config,
     write_benchmark_result,
 )
 from common import BACKEND_REGISTRY, ROOT, log
@@ -69,26 +65,46 @@ from server_manager import ServerManager
 
 
 # ----------------------------
-# vLLM Prometheus metrics scraping
+# Prometheus metrics scraping (shared for vLLM and TensorRT-LLM)
 # ----------------------------
 
-VLLM_METRICS = [
-    "vllm:time_to_first_token_seconds",
-    "vllm:request_prefill_time_seconds",
-    "vllm:request_decode_time_seconds",
-]
+# Metric configs: (metric_name_base, output_key)
+PROMETHEUS_METRICS = {
+    "vllm": {
+        "path": "/metrics",
+        "pattern": r'^(vllm:[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)',
+        "mappings": {
+            "vllm:time_to_first_token_seconds": "ttft_ms",
+            "vllm:request_prefill_time_seconds": "prefill_ms",
+            "vllm:request_decode_time_seconds": "generation_ms",
+        },
+    },
+    "trtllm": {
+        "path": "/prometheus/metrics",
+        "pattern": r'^(trtllm_[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)',
+        "mappings": {
+            "trtllm_time_to_first_token_seconds": "ttft_ms",
+            "trtllm_e2e_latency_seconds": "e2e_latency_ms",
+            "trtllm_time_per_output_token_seconds": "tpot_ms",
+        },
+    },
+}
 
 
-def scrape_vllm_metrics(host: str, port: int) -> dict[str, float] | None:
-    """Scrape vLLM Prometheus /metrics endpoint and parse histogram sums/counts."""
+def scrape_prometheus_metrics(host: str, port: int, backend: str) -> dict[str, float] | None:
+    """Scrape Prometheus metrics from vLLM or TensorRT-LLM backend."""
+    cfg = PROMETHEUS_METRICS.get(backend)
+    if not cfg:
+        return None
+
     try:
-        resp = requests.get(f"http://{host}:{port}/metrics", timeout=5)
+        resp = requests.get(f"http://{host}:{port}{cfg['path']}", timeout=5)
         resp.raise_for_status()
     except Exception:
         return None
 
     metrics = {}
-    pattern = re.compile(r'^(vllm:[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)', re.MULTILINE)
+    pattern = re.compile(cfg["pattern"], re.MULTILINE)
 
     for match in pattern.finditer(resp.text):
         name, value = match.groups()
@@ -100,77 +116,21 @@ def scrape_vllm_metrics(host: str, port: int) -> dict[str, float] | None:
     return metrics if metrics else None
 
 
-def compute_metrics_delta(before: dict[str, float] | None, after: dict[str, float] | None) -> dict[str, float]:
+def compute_metrics_delta(
+    before: dict[str, float] | None,
+    after: dict[str, float] | None,
+    backend: str,
+) -> dict[str, float]:
     """Compute delta between two metrics snapshots. Returns timing in milliseconds."""
     result = {}
     if not before or not after:
         return result
 
-    for metric_base in VLLM_METRICS:
-        sum_key = f"{metric_base}_sum"
-        count_key = f"{metric_base}_count"
-
-        if sum_key in before and sum_key in after and count_key in before and count_key in after:
-            delta_sum = after[sum_key] - before[sum_key]
-            delta_count = after[count_key] - before[count_key]
-
-            if delta_count > 0:
-                time_ms = (delta_sum / delta_count) * 1000
-
-                if "time_to_first_token" in metric_base:
-                    result["ttft_ms"] = time_ms
-                elif "prefill_time" in metric_base:
-                    result["prefill_ms"] = time_ms
-                elif "decode_time" in metric_base:
-                    result["generation_ms"] = time_ms
-
-    return result
-
-
-# ----------------------------
-# TensorRT-LLM Prometheus metrics scraping
-# ----------------------------
-
-TRTLLM_METRICS = [
-    "trtllm_e2e_latency_seconds",
-    "trtllm_time_to_first_token_seconds",
-    "trtllm_time_per_output_token_seconds",
-]
-
-
-def scrape_trtllm_metrics(host: str, port: int) -> dict[str, float] | None:
-    """Scrape TensorRT-LLM Prometheus /prometheus/metrics endpoint and parse histogram sums/counts.
-
-    Note: TensorRT-LLM exposes metrics at /prometheus/metrics (not /metrics like vLLM)
-    and uses trtllm_ prefix (not vllm:).
-    """
-    try:
-        resp = requests.get(f"http://{host}:{port}/prometheus/metrics", timeout=5)
-        resp.raise_for_status()
-    except Exception:
-        return None
-
-    metrics = {}
-    # Match trtllm_* histogram metrics with _sum and _count suffixes
-    pattern = re.compile(r'^(trtllm_[a-z_]+(?:_sum|_count))(?:\{[^}]*\})?\s+([\d.eE+-]+)', re.MULTILINE)
-
-    for match in pattern.finditer(resp.text):
-        name, value = match.groups()
-        try:
-            metrics[name] = float(value)
-        except ValueError:
-            pass
-
-    return metrics if metrics else None
-
-
-def compute_trtllm_metrics_delta(before: dict[str, float] | None, after: dict[str, float] | None) -> dict[str, float]:
-    """Compute delta between two TensorRT-LLM metrics snapshots. Returns timing in milliseconds."""
-    result = {}
-    if not before or not after:
+    cfg = PROMETHEUS_METRICS.get(backend)
+    if not cfg:
         return result
 
-    for metric_base in TRTLLM_METRICS:
+    for metric_base, output_key in cfg["mappings"].items():
         sum_key = f"{metric_base}_sum"
         count_key = f"{metric_base}_count"
 
@@ -179,15 +139,7 @@ def compute_trtllm_metrics_delta(before: dict[str, float] | None, after: dict[st
             delta_count = after[count_key] - before[count_key]
 
             if delta_count > 0:
-                time_ms = (delta_sum / delta_count) * 1000
-
-                if "time_to_first_token" in metric_base:
-                    result["ttft_ms"] = time_ms
-                elif "e2e_latency" in metric_base:
-                    result["e2e_latency_ms"] = time_ms
-                elif "time_per_output_token" in metric_base:
-                    # TPOT is per-token time in seconds, convert to ms
-                    result["tpot_ms"] = time_ms
+                result[output_key] = (delta_sum / delta_count) * 1000
 
     return result
 
@@ -210,7 +162,7 @@ def bench_once_vllm(
     messages = build_chat_messages(prompt, image_path)
 
     # Scrape metrics before request
-    metrics_before = scrape_vllm_metrics(host, port)
+    metrics_before = scrape_prometheus_metrics(host, port, "vllm")
 
     t0 = time.perf_counter()
     response = client.chat.completions.create(
@@ -222,7 +174,7 @@ def bench_once_vllm(
     t1 = time.perf_counter()
 
     # Scrape metrics after request
-    metrics_after = scrape_vllm_metrics(host, port)
+    metrics_after = scrape_prometheus_metrics(host, port, "vllm")
 
     output_text = response.choices[0].message.content or ""
     wall = t1 - t0
@@ -238,7 +190,7 @@ def bench_once_vllm(
     if generated_tokens and wall > 0:
         tok_per_s = generated_tokens / wall
 
-    timing = compute_metrics_delta(metrics_before, metrics_after)
+    timing = compute_metrics_delta(metrics_before, metrics_after, "vllm")
 
     if generated_tokens and timing.get("generation_ms"):
         gen_s = timing["generation_ms"] / 1000
@@ -367,15 +319,11 @@ def bench_once_trtllm(
     host: str,
     port: int,
 ) -> dict:
-    """Run single inference via TensorRT-LLM OpenAI-compatible API.
-
-    TensorRT-LLM exposes Prometheus metrics at /prometheus/metrics (not /metrics like vLLM)
-    when started with --return-perf-metrics flag.
-    """
+    """Run single inference via TensorRT-LLM OpenAI-compatible API."""
     messages = build_chat_messages(prompt, image_path)
 
     # Scrape TensorRT-LLM metrics before request
-    metrics_before = scrape_trtllm_metrics(host, port)
+    metrics_before = scrape_prometheus_metrics(host, port, "trtllm")
 
     t0 = time.perf_counter()
     response = client.chat.completions.create(
@@ -387,7 +335,7 @@ def bench_once_trtllm(
     t1 = time.perf_counter()
 
     # Scrape metrics after request
-    metrics_after = scrape_trtllm_metrics(host, port)
+    metrics_after = scrape_prometheus_metrics(host, port, "trtllm")
 
     output_text = response.choices[0].message.content or ""
     wall = t1 - t0
@@ -403,7 +351,7 @@ def bench_once_trtllm(
     if generated_tokens and wall > 0:
         tok_per_s = generated_tokens / wall
 
-    timing = compute_trtllm_metrics_delta(metrics_before, metrics_after)
+    timing = compute_metrics_delta(metrics_before, metrics_after, "trtllm")
 
     # Calculate generation_tok_per_s from TPOT if available
     if generated_tokens and timing.get("tpot_ms"):
@@ -714,8 +662,7 @@ def run_benchmark_gguf(args, model_path: str, image_path: str | None, image_labe
     else:
         prompt_text = TEXT_PROMPTS[args.prompt_set]
 
-    backend_labels = {"llama": "llama.cpp", "ik_llama": "ik_llama.cpp"}
-    backend_label = backend_labels.get(backend, backend)
+    backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
     print(f"\n== {backend_label} Benchmark ==")
     print(f"model_id:        {model_path}")
@@ -891,41 +838,11 @@ def main():
 
     args = ap.parse_args()
 
-    # Resolve backend (auto-detect or explicit)
-    backend = resolve_backend(args.model, args.backend)
-    backend_info = BACKEND_REGISTRY[backend]
-
-    # Get merged config for this model + backend (defaults + model overrides)
-    backend_cfg = get_model_backend_config(args.model, backend)
-    backend_args = backend_cfg.get("args", {})
-
-    # Set default port based on backend
-    if args.port is None:
-        args.port = backend_info["default_port"]
-
-    # Auto-detect tensor parallel for vLLM and trtllm
-    if backend in ("vllm", "trtllm") and args.tensor_parallel is None:
-        args.tensor_parallel = get_gpu_count()
-
-    # Resolve model path
-    if backend in ("vllm", "trtllm"):
-        model_path = resolve_model_path(args.model)
-    else:
-        model_path = args.model  # GGUF backends resolve internally
+    # Resolve backend config and apply defaults
+    backend, model_path, backend_cfg = resolve_run_config(args)
 
     # Resolve image type (from CLI, model config, or backend defaults)
     image_type = args.image_type or backend_cfg.get("image_type", "build")
-
-    # Resolve backend-specific args from config if not provided via CLI
-    # vLLM args
-    if args.max_model_len is None:
-        args.max_model_len = backend_args.get("max_model_len", 65536)
-    if args.gpu_memory_utilization is None:
-        args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
-
-    # llama.cpp / ik_llama args
-    if args.n_gpu_layers is None:
-        args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
 
     # Resolve image (for vision benchmark, not Docker image)
     image_path, image_label = resolve_image_source(args.image)
@@ -951,8 +868,7 @@ def main():
         return
 
     # Log backend selection and run benchmark
-    backend_labels = {"vllm": "vLLM", "llama": "llama.cpp", "ik_llama": "ik_llama.cpp", "trtllm": "TensorRT-LLM"}
-    backend_label = backend_labels.get(backend, backend)
+    backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
     if args.backend:
         log(f"Using explicit backend: {backend_label}")
