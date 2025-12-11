@@ -149,3 +149,40 @@ models:
 - **`server_manager.py`**: Server lifecycle, `start_vllm()`/`start_llama()`/`start_trtllm()` for Docker
 - **`docker_manager.py`**: Image building/pulling, GPU Docker validation, command builders
 - **`run_server.py`**: Standalone server runner for general inference (not tied to benchmarking)
+
+## Troubleshooting
+
+### Benchmark Connection Issues
+
+If benchmark fails with "Server disconnected" or "Connection error":
+
+**Quick checks:**
+```bash
+docker ps                                    # Check if server still running
+docker logs <container-id> --tail 50         # Check for errors
+curl http://localhost:8000/v1/models         # Test server health
+```
+
+**Common fixes:**
+
+1. **Server still initializing** (large models take 60-120s):
+   ```bash
+   # Increase timeout (default: 360s)
+   uv run python scripts/run_bench.py --model ~/models/... --server-timeout 600
+
+   # Or connect to already-running server
+   uv run python scripts/run_bench.py --model ~/models/... --no-autostart
+   ```
+
+2. **Check Docker logs for errors:**
+   ```bash
+   docker logs <container-id> 2>&1 | grep -i "error\|oom\|cuda"
+   ```
+
+3. **Stop stuck containers:**
+   ```bash
+   docker stop <container-id>
+   # Or stop all: docker ps | grep vllm | awk '{print $1}' | xargs docker stop
+   ```
+
+**Platform note:** `nvidia-smi` and GPU commands only work on Linux, not macOS.
