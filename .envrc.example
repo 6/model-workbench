@@ -1,0 +1,13 @@
+# Disable DeepEval telemetry
+export DEEPEVAL_TELEMETRY_OPT_OUT=YES
+
+# For remote observability/telemetry setup:
+export TF_VAR_hcloud_token="..."
+export TF_VAR_cloudflare_api_token="..."
+export TF_VAR_root_domain="example.com"
+export TF_VAR_ssh_public_key="ssh-ed25519 ..."
+export TF_VAR_ssh_allowed_cidrs='[".../32"]'
+export TF_VAR_server_name="model-workbench-monitor"
+export TF_VAR_server_type="cx53"
+export TF_VAR_location="fsn1"
+export TF_VAR_image="ubuntu-24.04"
