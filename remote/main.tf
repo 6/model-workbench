@@ -89,3 +89,10 @@ resource "cloudflare_dns_record" "service_a" {
   proxied  = var.cloudflare_proxied
   ttl      = 1
 }
+
+# Set SSL/TLS mode to Full (strict)
+resource "cloudflare_zone_setting" "ssl_mode" {
+  zone_id    = local.cf_zone_id
+  setting_id = "ssl"
+  value      = "strict"
+}
