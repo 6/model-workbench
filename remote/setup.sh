@@ -123,7 +123,13 @@ EOF
   # Disable root password login (key-only)
   sed -i 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
   sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
-  systemctl reload sshd
+  # Ubuntu 24.04 uses 'ssh' service name, older versions use 'sshd'
+  systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
+
+  # Fix terminal compatibility for modern terminals (Ghostty, Kitty, Alacritty, etc.)
+  if ! grep -q 'TERM=xterm-256color' /root/.bashrc 2>/dev/null; then
+    echo 'export TERM=xterm-256color' >> /root/.bashrc
+  fi
 
   log "System hardening complete"
 }
