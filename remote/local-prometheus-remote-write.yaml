@@ -1,0 +1,59 @@
+# =============================================================================
+# Prometheus Remote Write Configuration (for local GPU server)
+# =============================================================================
+# Add this section to your local prometheus.yml to push metrics to Hetzner.
+#
+# Prerequisites:
+#   1. Run remote/setup.sh on Hetzner server
+#   2. Copy PROMETHEUS_REMOTE_PASSWORD from /opt/services/.env
+#   3. Set environment variables (see .envrc.example)
+#
+# For high-latency connections (200ms+), this config uses aggressive batching
+# to amortize round-trip time.
+# =============================================================================
+
+# Add this to your prometheus.yml under the global or root level:
+remote_write:
+  - url: "${REMOTE_PROMETHEUS_URL}/api/v1/write"
+
+    # Basic auth (Caddy handles this on the remote)
+    basic_auth:
+      username: "${REMOTE_PROMETHEUS_USER}"
+      password: "${REMOTE_PROMETHEUS_PASSWORD}"
+
+    # Queue config optimized for high latency (200ms RTT to Germany)
+    queue_config:
+      # Buffer capacity - larger for high latency to avoid drops
+      capacity: 100000
+
+      # Max parallel write requests - hide latency with parallelism
+      max_shards: 50
+      min_shards: 1
+
+      # Batch size - larger batches amortize RTT cost
+      max_samples_per_send: 5000
+
+      # Wait time for batching - allows more samples to accumulate
+      batch_send_deadline: 5s
+
+      # Retry settings for transient failures
+      min_backoff: 100ms
+      max_backoff: 30s
+      retry_on_http_429: true
+
+    # TLS config (Cloudflare handles certs)
+    tls_config:
+      insecure_skip_verify: false
+
+    # Metadata sending (reduce overhead)
+    metadata_config:
+      send: true
+      send_interval: 1m
+      max_samples_per_send: 2000
+
+    # Optional: filter what gets sent remotely
+    # Uncomment to only send specific metrics
+    # write_relabel_configs:
+    #   - source_labels: [__name__]
+    #     regex: 'node_.*|DCGM_.*|prometheus_.*'
+    #     action: keep

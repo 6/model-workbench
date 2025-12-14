@@ -1,0 +1,45 @@
+# =============================================================================
+# Grafana Datasource Provisioning
+# =============================================================================
+# Auto-configures Prometheus and Loki datasources on startup.
+# =============================================================================
+
+apiVersion: 1
+
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+  - name: Loki
+    orgId: 1
+
+datasources:
+  # Prometheus - primary metrics store
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "2.54.0"
+      timeInterval: "15s"
+
+  # Loki - log aggregation
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        # Link trace IDs to external tracing system (optional)
+        # - name: TraceID
+        #   matcherRegex: "trace_id=(\\w+)"
+        #   url: "https://tempo.example.com/trace/${__value.raw}"
+        #   datasourceUid: tempo

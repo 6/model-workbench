@@ -46,6 +46,6 @@ variable "ssh_allowed_cidrs" {
 
 variable "subdomains" {
   type        = list(string)
-  default     = ["grafana", "loki", "langfuse", "litellm", "mlflow"]
+  default     = ["grafana", "loki", "langfuse", "litellm", "mlflow", "prometheus", "minio"]
   description = "Subdomains to create A/AAAA records for"
 }

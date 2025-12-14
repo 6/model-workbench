@@ -1,0 +1,119 @@
+# =============================================================================
+# LiteLLM Proxy Configuration
+# =============================================================================
+# Routes requests to Anthropic and OpenAI APIs.
+# API keys read from environment variables.
+#
+# Usage:
+#   curl -X POST https://litellm.example.com/v1/chat/completions \
+#     -H "Authorization: Bearer sk-..." \
+#     -H "Content-Type: application/json" \
+#     -d '{"model": "claude-sonnet-4-20250514", "messages": [...]}'
+# =============================================================================
+
+model_list:
+  # ---------------------------------------------------------------------------
+  # Anthropic Claude Models
+  # ---------------------------------------------------------------------------
+  - model_name: claude-sonnet-4-20250514
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-5-sonnet-20241022
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-5-haiku-20241022
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-3-opus-20240229
+    litellm_params:
+      model: anthropic/claude-3-opus-20240229
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Aliases for convenience
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-haiku
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # ---------------------------------------------------------------------------
+  # OpenAI Models
+  # ---------------------------------------------------------------------------
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4-turbo
+    litellm_params:
+      model: openai/gpt-4-turbo
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: o1
+    litellm_params:
+      model: openai/o1
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: o1-mini
+    litellm_params:
+      model: openai/o1-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: o1-preview
+    litellm_params:
+      model: openai/o1-preview
+      api_key: os.environ/OPENAI_API_KEY
+
+  # Embeddings
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: text-embedding-3-large
+    litellm_params:
+      model: openai/text-embedding-3-large
+      api_key: os.environ/OPENAI_API_KEY
+
+# LiteLLM settings
+litellm_settings:
+  # Drop unsupported params instead of erroring
+  drop_params: true
+  # Disable verbose logging in production
+  set_verbose: false
+  # Enable caching (optional)
+  cache: false
+  # Request timeout
+  request_timeout: 600
+
+# General settings
+general_settings:
+  # Master key for admin access (from environment)
+  master_key: os.environ/LITELLM_MASTER_KEY
+
+  # PostgreSQL for API key management and usage tracking
+  database_url: os.environ/DATABASE_URL
+
+  # Enable spend tracking
+  enable_spend_tracking: true
+
+  # Alert settings (optional Slack webhook)
+  # alerting:
+  #   - slack
+  # alerting_args:
+  #   slack_webhook_url: os.environ/SLACK_WEBHOOK_URL
