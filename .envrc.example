@@ -2,7 +2,12 @@
 export DEEPEVAL_TELEMETRY_OPT_OUT=YES
 
 # For remote observability/telemetry setup:
+# Hetzner cloud API token (under Project > Security > API tokens)
 export TF_VAR_hcloud_token="..."
+# Cloudflare Zone-specific API token:
+# Account > Manage Account > API tokens
+# Enable Edit on: DNS Settings, Zone Settings, DNS
+# Zone Resources: Include > Specific zone > domain
 export TF_VAR_cloudflare_api_token="..."
 export TF_VAR_root_domain="example.com"
 export TF_VAR_ssh_public_key="ssh-ed25519 ..."
