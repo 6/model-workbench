@@ -44,12 +44,6 @@ variable "ssh_allowed_cidrs" {
   description = "CIDRs allowed to SSH (port 22). If your IP changes, update this and re-apply."
 }
 
-variable "cloudflare_proxied" {
-  type        = bool
-  default     = false
-  description = "Whether Cloudflare should proxy the records. For origin-managed TLS (Caddy/Traefik), keep false."
-}
-
 variable "subdomains" {
   type        = list(string)
   default     = ["grafana", "loki", "langfuse", "litellm", "mlflow"]
