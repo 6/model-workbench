@@ -1,0 +1,13 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+tfplan
+
+# Secrets (NEVER commit)
+.env
+
+# Caddy data (generated on server)
+caddy-data/
+caddy-config/

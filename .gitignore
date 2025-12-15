@@ -149,6 +149,7 @@ activemq-data/
 
 # Environments
 .env
+.envrc
 .venv
 nightly/.venv
 env/
@@ -217,3 +218,19 @@ __marimo__/
 
 # DeepEval
 .deepeval/
+
+# Terraform local state/cache
+**/.terraform/
+
+# Terraform state (never commit)
+**/*.tfstate
+**/*.tfstate.*
+**/crash.log
+**/crash.*.log
+
+# (Optional) local override files
+**/*override.tf
+**/*override.tf.json
+**/.terraformrc
+**/terraform.rc
+remote/tfplan
