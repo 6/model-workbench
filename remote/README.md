@@ -4,15 +4,17 @@ Hetzner Cloud setup for centralized observability and LLM proxy services.
 
 ## Services
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Grafana** | `https://grafana.{domain}` | Dashboards and visualization |
-| **Langfuse** | `https://langfuse.{domain}` | LLM tracing and observability |
-| **Loki** | `https://loki.{domain}` | Log aggregation |
-| **MLflow** | `https://mlflow.{domain}` | ML experiment tracking |
-| **LiteLLM** | `https://litellm.{domain}` | LLM API proxy (Anthropic/OpenAI) |
-| **Prometheus** | `https://prometheus.{domain}` | Metrics storage (remote write) |
-| **MinIO** | `https://minio.{domain}` | S3-compatible storage (for Langfuse) |
+| Service | URL | Auth |
+|---------|-----|------|
+| **Grafana** | `https://grafana.{domain}` | Built-in (admin / `GF_SECURITY_ADMIN_PASSWORD`) |
+| **Langfuse** | `https://langfuse.{domain}` | Built-in (create account) |
+| **Loki** | `https://loki.{domain}` | Shared basic auth |
+| **MLflow** | `https://mlflow.{domain}` | Shared basic auth |
+| **LiteLLM** | `https://litellm.{domain}` | API key (`LITELLM_MASTER_KEY`) |
+| **Prometheus** | `https://prometheus.{domain}` | Shared basic auth |
+| **MinIO** | `https://minio.{domain}` | Built-in (`MINIO_ROOT_USER/PASSWORD`) |
+
+**Shared basic auth** uses `ADMIN_USER` / `ADMIN_PASSWORD` from `/opt/services/.env`.
 
 ## Prerequisites
 
@@ -83,7 +85,7 @@ After setup completes, save the generated credentials:
 # On the server
 cat /opt/services/.env
 
-# Copy PROMETHEUS_REMOTE_PASSWORD to your local .envrc
+# Copy ADMIN_PASSWORD to your local .envrc for Prometheus/Loki push
 ```
 
 ### 5. Configure Local Prometheus (Optional)
@@ -95,10 +97,28 @@ To push metrics from your local GPU server to the remote Prometheus:
 3. Set environment variables:
    ```bash
    export REMOTE_PROMETHEUS_URL="https://prometheus.example.com"
-   export REMOTE_PROMETHEUS_USER="prometheus"
-   export REMOTE_PROMETHEUS_PASSWORD="<from-server>"
+   export REMOTE_ADMIN_USER="admin"
+   export REMOTE_ADMIN_PASSWORD="<ADMIN_PASSWORD from server>"
    ```
 4. Restart Prometheus
+
+### 6. Configure Local Loki Push (Optional)
+
+To push logs from your local server to the remote Loki:
+
+```bash
+# Using promtail or any Loki client:
+export LOKI_URL="https://loki.example.com"
+export LOKI_USER="admin"
+export LOKI_PASSWORD="<ADMIN_PASSWORD from server>"
+
+# Example promtail config:
+# clients:
+#   - url: https://loki.example.com/loki/api/v1/push
+#     basic_auth:
+#       username: admin
+#       password: ${LOKI_PASSWORD}
+```
 
 ## Storage & Retention
 
@@ -155,6 +175,20 @@ Available models:
 - `claude-sonnet-4-20250514`, `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`
 - `gpt-4o`, `gpt-4o-mini`, `o1`, `o1-mini`
 
+## MLflow Usage
+
+MLflow is protected with shared basic auth (`ADMIN_USER` / `ADMIN_PASSWORD`):
+
+```bash
+# Access via browser with credentials, or via CLI:
+export MLFLOW_TRACKING_URI="https://admin:<ADMIN_PASSWORD>@mlflow.example.com"
+
+# Or configure in Python
+import mlflow
+mlflow.set_tracking_uri("https://mlflow.example.com")
+# Auth via environment: MLFLOW_TRACKING_USERNAME=admin, MLFLOW_TRACKING_PASSWORD=<ADMIN_PASSWORD>
+```
+
 ## Files
 
 ```
@@ -163,21 +197,12 @@ remote/
 ├── variables.tf            # Terraform variables
 ├── outputs.tf              # Terraform outputs
 ├── versions.tf             # Provider versions
-├── setup.sh                # Server bootstrap script
-├── docker-compose.yml      # All services
-├── .env.example            # Environment template
-├── local-prometheus-remote-write.yaml  # Config for local server
-└── configs/
-    ├── Caddyfile           # Reverse proxy routes
-    ├── loki-config.yaml    # Loki with 14-day retention
-    ├── prometheus.yml      # Prometheus config
-    ├── litellm-config.yaml # LLM routing
-    ├── postgres-init.sql   # Database init
-    └── grafana/
-        └── provisioning/
-            └── datasources/
-                └── datasources.yaml
+├── setup.sh                # Server bootstrap (generates all configs)
+├── local-prometheus-remote-write.yaml  # Config snippet for local Prometheus
+└── README.md
 ```
+
+Note: `setup.sh` generates all Docker Compose and service configs on the server at `/opt/services/`.
 
 ## Troubleshooting
 
@@ -197,7 +222,7 @@ Check Cloudflare dashboard → SSL/TLS → Overview.
 
 1. Check credentials in local prometheus config
 2. Verify Caddy is running: `docker compose logs caddy`
-3. Test auth: `curl -u prometheus:<password> https://prometheus.example.com/api/v1/query?query=up`
+3. Test auth: `curl -u admin:<ADMIN_PASSWORD> https://prometheus.example.com/api/v1/query?query=up`
 
 ### Disk full
 

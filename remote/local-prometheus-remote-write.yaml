@@ -5,7 +5,7 @@
 #
 # Prerequisites:
 #   1. Run remote/setup.sh on Hetzner server
-#   2. Copy PROMETHEUS_REMOTE_PASSWORD from /opt/services/.env
+#   2. Copy ADMIN_PASSWORD from /opt/services/.env
 #   3. Set environment variables (see .envrc.example)
 #
 # For high-latency connections (200ms+), this config uses aggressive batching
@@ -17,9 +17,10 @@ remote_write:
   - url: "${REMOTE_PROMETHEUS_URL}/api/v1/write"
 
     # Basic auth (Caddy handles this on the remote)
+    # Uses shared admin credentials from /opt/services/.env
     basic_auth:
-      username: "${REMOTE_PROMETHEUS_USER}"
-      password: "${REMOTE_PROMETHEUS_PASSWORD}"
+      username: "${REMOTE_ADMIN_USER}"
+      password: "${REMOTE_ADMIN_PASSWORD}"
 
     # Queue config optimized for high latency (200ms RTT to Germany)
     queue_config:

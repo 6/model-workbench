@@ -185,9 +185,30 @@ generate_secrets() {
   local env_file="${BASE_DIR}/.env"
 
   if [[ -f "${env_file}" ]]; then
-    log "Secrets file exists, loading existing values..."
+    log "Secrets file exists, checking for missing variables..."
     # shellcheck source=/dev/null
     source "${env_file}"
+
+    # Add any missing variables (for upgrades)
+    if [[ -z "${CLICKHOUSE_PASSWORD:-}" ]]; then
+      log "Adding missing CLICKHOUSE_PASSWORD..."
+      echo "" >> "${env_file}"
+      echo "# ClickHouse (for Langfuse v3)" >> "${env_file}"
+      echo "CLICKHOUSE_PASSWORD=$(generate_password)" >> "${env_file}"
+      source "${env_file}"
+    fi
+
+    # Migrate from old separate auth vars to shared ADMIN_USER/PASSWORD
+    if [[ -z "${ADMIN_USER:-}" ]]; then
+      log "Adding shared ADMIN_USER/ADMIN_PASSWORD..."
+      local admin_password; admin_password="$(generate_password)"
+      echo "" >> "${env_file}"
+      echo "# Shared basic auth (MLflow, Prometheus, Loki)" >> "${env_file}"
+      echo "ADMIN_USER=admin" >> "${env_file}"
+      echo "ADMIN_PASSWORD=${admin_password}" >> "${env_file}"
+      source "${env_file}"
+      echo "Shared basic auth (user: admin): ${admin_password}"
+    fi
     return 0
   fi
 
@@ -199,10 +220,11 @@ generate_secrets() {
   local pg_password; pg_password="$(generate_password)"
   local grafana_password; grafana_password="$(generate_password)"
   local minio_root_password; minio_root_password="$(generate_password)"
+  local clickhouse_password; clickhouse_password="$(generate_password)"
   local langfuse_secret; langfuse_secret="$(generate_password)"
   local langfuse_salt; langfuse_salt="$(generate_password)"
   local litellm_master_key; litellm_master_key="sk-$(generate_password)"
-  local prometheus_password; prometheus_password="$(generate_password)"
+  local admin_password; admin_password="$(generate_password)"
 
   cat >"${env_file}" <<EOF
 # Domain
@@ -218,6 +240,9 @@ GF_SECURITY_ADMIN_PASSWORD=${grafana_password}
 MINIO_ROOT_USER=admin
 MINIO_ROOT_PASSWORD=${minio_root_password}
 
+# ClickHouse (for Langfuse v3)
+CLICKHOUSE_PASSWORD=${clickhouse_password}
+
 # Langfuse
 NEXTAUTH_SECRET=${langfuse_secret}
 SALT=${langfuse_salt}
@@ -227,9 +252,9 @@ LITELLM_MASTER_KEY=${litellm_master_key}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 OPENAI_API_KEY=${OPENAI_API_KEY}
 
-# Prometheus remote write auth
-PROMETHEUS_REMOTE_USER=prometheus
-PROMETHEUS_REMOTE_PASSWORD=${prometheus_password}
+# Shared basic auth (MLflow, Prometheus, Loki)
+ADMIN_USER=admin
+ADMIN_PASSWORD=${admin_password}
 
 # Retention
 LOKI_RETENTION_HOURS=$((LOKI_RETENTION_DAYS * 24))h
@@ -244,7 +269,8 @@ EOF
   echo "Grafana admin password: ${grafana_password}"
   echo "MinIO root password: ${minio_root_password}"
   echo "LiteLLM master key: ${litellm_master_key}"
-  echo "Prometheus remote password: ${prometheus_password}"
+  echo "Shared basic auth (user: admin): ${admin_password}"
+  echo "  (used for MLflow, Prometheus, Loki)"
   echo "=============================================="
 }
 
@@ -257,6 +283,11 @@ write_configs() {
   # Source secrets
   # shellcheck source=/dev/null
   source "${BASE_DIR}/.env"
+
+  # Validate required variables for basic auth
+  if [[ -z "${ADMIN_USER:-}" ]] || [[ -z "${ADMIN_PASSWORD:-}" ]]; then
+    error "ADMIN_USER or ADMIN_PASSWORD not set in ${BASE_DIR}/.env"
+  fi
 
   # Create directories
   mkdir -p "${BASE_DIR}/caddy"
@@ -287,34 +318,31 @@ langfuse.${DOMAIN} {
   reverse_proxy langfuse:3000
 }
 
-# Loki (push endpoint with basic auth)
+# Loki (full site basic auth)
 loki.${DOMAIN} {
-  @push {
-    path /loki/api/v1/push
-  }
-  basic_auth @push {
-    loki \$2a\$14\$placeholder
+  basic_auth {
+    ${ADMIN_USER} \$2a\$14\$admin_placeholder
   }
   reverse_proxy loki:3100
 }
 
-# MLflow
+# MLflow (full site basic auth)
 mlflow.${DOMAIN} {
+  basic_auth {
+    ${ADMIN_USER} \$2a\$14\$admin_placeholder
+  }
   reverse_proxy mlflow:5000
 }
 
-# LiteLLM
+# LiteLLM (API key auth via LITELLM_MASTER_KEY)
 litellm.${DOMAIN} {
   reverse_proxy litellm:4000
 }
 
-# Prometheus (remote write with basic auth)
+# Prometheus (full site basic auth)
 prometheus.${DOMAIN} {
-  @write {
-    path /api/v1/write
-  }
-  basic_auth @write {
-    ${PROMETHEUS_REMOTE_USER} \$2a\$14\$placeholder
+  basic_auth {
+    ${ADMIN_USER} \$2a\$14\$admin_placeholder
   }
   reverse_proxy prometheus:9090
 }
@@ -325,15 +353,18 @@ minio.${DOMAIN} {
 }
 EOF
 
-  # Generate bcrypt hashes for Caddy basic auth
-  local prom_hash; prom_hash=$(docker run --rm caddy:2 caddy hash-password --plaintext "${PROMETHEUS_REMOTE_PASSWORD}" 2>/dev/null || echo '$2a$14$placeholder')
-  sed -i "s|\\\$2a\\\$14\\\$placeholder|${prom_hash}|g" "${BASE_DIR}/caddy/Caddyfile"
+  # Generate bcrypt hash for shared basic auth (used by MLflow, Prometheus, Loki)
+  local admin_hash; admin_hash=$(docker run --rm caddy:2 caddy hash-password --plaintext "${ADMIN_PASSWORD}" 2>/dev/null || echo '$2a$14$admin_placeholder')
+  sed -i "s|\\\$2a\\\$14\\\$admin_placeholder|${admin_hash}|g" "${BASE_DIR}/caddy/Caddyfile"
 
   # -------------------------------------------------------------------------
   # Loki config
   # -------------------------------------------------------------------------
   cat >"${BASE_DIR}/loki/config.yaml" <<EOF
 auth_enabled: false
+
+analytics:
+  reporting_enabled: false
 
 server:
   http_listen_port: 3100
@@ -540,13 +571,7 @@ services:
       - caddy-config:/config
     networks:
       - services
-    depends_on:
-      - grafana
-      - langfuse
-      - loki
-      - mlflow
-      - litellm
-      - prometheus
+    # Note: No depends_on - Caddy should start regardless of backend health
 
   # =========================================================================
   # Database
@@ -598,11 +623,48 @@ services:
       /bin/sh -c "
       mc alias set myminio http://minio:9000 \${MINIO_ROOT_USER} \${MINIO_ROOT_PASSWORD};
       mc mb --ignore-existing myminio/langfuse;
-      mc ilm rule add --expire-days ${MINIO_RETENTION_DAYS} myminio/langfuse;
+      mc ilm rule add --expire-days ${MINIO_RETENTION_DAYS} myminio/langfuse || true;
       exit 0;
       "
     networks:
       - services
+
+  # =========================================================================
+  # ClickHouse (required for Langfuse v3)
+  # =========================================================================
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: langfuse
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: \${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks:
+      - services
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =========================================================================
+  # Redis (required for Langfuse v3 job queue)
+  # =========================================================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - services
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # =========================================================================
   # Langfuse (LLM Tracing)
@@ -612,9 +674,24 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://postgres:\${POSTGRES_PASSWORD}@postgres:5432/langfuse
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000/langfuse
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: \${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      REDIS_CONNECTION_STRING: redis://redis:6379
       NEXTAUTH_URL: https://langfuse.${DOMAIN}
       NEXTAUTH_SECRET: \${NEXTAUTH_SECRET}
       SALT: \${SALT}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_S3_BATCH_EXPORT_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_ENABLED: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: us-east-1
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: \${MINIO_ROOT_USER}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: \${MINIO_ROOT_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
       LANGFUSE_S3_MEDIA_UPLOAD_ENABLED: "true"
       LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
       LANGFUSE_S3_MEDIA_UPLOAD_REGION: us-east-1
@@ -628,6 +705,44 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # =========================================================================
+  # Langfuse Worker (processes events into ClickHouse)
+  # =========================================================================
+  langfuse-worker:
+    image: langfuse/langfuse:latest
+    restart: unless-stopped
+    command: ["node", "packages/worker/dist/index.js"]
+    environment:
+      DATABASE_URL: postgresql://postgres:\${POSTGRES_PASSWORD}@postgres:5432/langfuse
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000/langfuse
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: \${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      REDIS_CONNECTION_STRING: redis://redis:6379
+      SALT: \${SALT}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_ENABLED: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: us-east-1
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: \${MINIO_ROOT_USER}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: \${MINIO_ROOT_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+    networks:
+      - services
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
         condition: service_healthy
 
   # =========================================================================
@@ -672,6 +787,9 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: \${GF_SECURITY_ADMIN_PASSWORD}
       GF_SERVER_ROOT_URL: https://grafana.${DOMAIN}
       GF_INSTALL_PLUGINS: grafana-piechart-panel
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -684,12 +802,18 @@ services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.17.0
     restart: unless-stopped
-    command: >
-      mlflow server
-      --backend-store-uri postgresql://postgres:\${POSTGRES_PASSWORD}@postgres:5432/mlflow
-      --default-artifact-root /mlflow/artifacts
-      --host 0.0.0.0
-      --port 5000
+    environment:
+      MLFLOW_DISABLE_TELEMETRY: "true"
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        pip install --quiet psycopg2-binary && \
+        mlflow server \
+          --backend-store-uri postgresql://postgres:\${POSTGRES_PASSWORD}@postgres:5432/mlflow \
+          --default-artifact-root /mlflow/artifacts \
+          --host 0.0.0.0 \
+          --port 5000
     volumes:
       - mlflow-artifacts:/mlflow/artifacts
     networks:
@@ -726,6 +850,8 @@ volumes:
   caddy-config:
   postgres-data:
   minio-data:
+  clickhouse-data:
+  redis-data:
   loki-data:
   prometheus-data:
   grafana-data:
@@ -754,6 +880,10 @@ start_services() {
 
   log "Waiting for services to be healthy..."
   sleep 10
+
+  # Reload Caddy to ensure config changes are applied
+  log "Reloading Caddy configuration..."
+  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile || true
 
   # Check service status
   docker compose ps
