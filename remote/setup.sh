@@ -185,65 +185,64 @@ generate_secrets() {
   local env_file="${BASE_DIR}/.env"
 
   if [[ -f "${env_file}" ]]; then
-    log "Secrets file exists, checking for missing variables..."
+    log "Secrets file exists, checking if migration needed..."
     # shellcheck source=/dev/null
     source "${env_file}"
 
-    # Add any missing variables (for upgrades)
-    if [[ -z "${CLICKHOUSE_PASSWORD:-}" ]]; then
-      log "Adding missing CLICKHOUSE_PASSWORD..."
-      echo "" >> "${env_file}"
-      echo "# ClickHouse (for Langfuse v3)" >> "${env_file}"
-      echo "CLICKHOUSE_PASSWORD=$(generate_password)" >> "${env_file}"
-      source "${env_file}"
-    fi
+    # Check if we need to migrate to consolidated credentials
+    # Old format had separate GF_SECURITY_ADMIN_PASSWORD and MINIO_ROOT_PASSWORD
+    # New format uses ADMIN_PASSWORD for everything
+    if [[ -z "${LANGFUSE_INIT_USER_PASSWORD:-}" ]]; then
+      log "Migrating to consolidated credentials..."
+      # Back up old .env
+      cp "${env_file}" "${env_file}.backup.$(date +%Y%m%d%H%M%S)"
 
-    # Migrate from old separate auth vars to shared ADMIN_USER/PASSWORD
-    if [[ -z "${ADMIN_USER:-}" ]]; then
-      log "Adding shared ADMIN_USER/ADMIN_PASSWORD..."
+      # Generate new consolidated password
       local admin_password; admin_password="$(generate_password)"
-      echo "" >> "${env_file}"
-      echo "# Shared basic auth (MLflow, Prometheus, Loki)" >> "${env_file}"
-      echo "ADMIN_USER=admin" >> "${env_file}"
-      echo "ADMIN_PASSWORD=${admin_password}" >> "${env_file}"
-      source "${env_file}"
-      echo "Shared basic auth (user: admin): ${admin_password}"
-    fi
-    return 0
-  fi
+      local clickhouse_password; clickhouse_password="${CLICKHOUSE_PASSWORD:-$(generate_password)}"
+      local pg_password; pg_password="${POSTGRES_PASSWORD:-$(generate_password)}"
+      local langfuse_secret; langfuse_secret="${NEXTAUTH_SECRET:-$(generate_password)}"
+      local langfuse_salt; langfuse_salt="${SALT:-$(generate_password)}"
+      local litellm_master_key; litellm_master_key="${LITELLM_MASTER_KEY:-sk-$(generate_password)}"
 
-  log "Generating secrets..."
-
-  mkdir -p "${BASE_DIR}"
-
-  # Generate all passwords
-  local pg_password; pg_password="$(generate_password)"
-  local grafana_password; grafana_password="$(generate_password)"
-  local minio_root_password; minio_root_password="$(generate_password)"
-  local clickhouse_password; clickhouse_password="$(generate_password)"
-  local langfuse_secret; langfuse_secret="$(generate_password)"
-  local langfuse_salt; langfuse_salt="$(generate_password)"
-  local litellm_master_key; litellm_master_key="sk-$(generate_password)"
-  local admin_password; admin_password="$(generate_password)"
-
-  cat >"${env_file}" <<EOF
+      # Rewrite .env with consolidated format
+      cat >"${env_file}" <<EOF
 # Domain
 DOMAIN=${DOMAIN}
 
+# =============================================================================
+# MASTER CREDENTIALS (user: admin)
+# =============================================================================
+# Used for: Grafana, MinIO, MLflow, Prometheus, Loki, Langfuse
+ADMIN_USER=admin
+ADMIN_PASSWORD=${admin_password}
+
+# Grafana (uses master credentials)
+GF_SECURITY_ADMIN_PASSWORD=${admin_password}
+
+# MinIO (uses master credentials)
+MINIO_ROOT_USER=admin
+MINIO_ROOT_PASSWORD=${admin_password}
+
+# Langfuse initial user (uses master credentials)
+LANGFUSE_INIT_ORG_ID=default-org
+LANGFUSE_INIT_ORG_NAME=default
+LANGFUSE_INIT_PROJECT_ID=default-project
+LANGFUSE_INIT_PROJECT_NAME=default
+LANGFUSE_INIT_USER_EMAIL=admin@${DOMAIN}
+LANGFUSE_INIT_USER_NAME=admin
+LANGFUSE_INIT_USER_PASSWORD=${admin_password}
+
+# =============================================================================
+# Service-specific secrets (auto-generated)
+# =============================================================================
 # PostgreSQL
 POSTGRES_PASSWORD=${pg_password}
-
-# Grafana
-GF_SECURITY_ADMIN_PASSWORD=${grafana_password}
-
-# MinIO
-MINIO_ROOT_USER=admin
-MINIO_ROOT_PASSWORD=${minio_root_password}
 
 # ClickHouse (for Langfuse v3)
 CLICKHOUSE_PASSWORD=${clickhouse_password}
 
-# Langfuse
+# Langfuse encryption
 NEXTAUTH_SECRET=${langfuse_secret}
 SALT=${langfuse_salt}
 
@@ -252,9 +251,82 @@ LITELLM_MASTER_KEY=${litellm_master_key}
 ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
 OPENAI_API_KEY=${OPENAI_API_KEY}
 
-# Shared basic auth (MLflow, Prometheus, Loki)
+# Retention
+LOKI_RETENTION_HOURS=$((LOKI_RETENTION_DAYS * 24))h
+PROMETHEUS_RETENTION_DAYS=${PROMETHEUS_RETENTION_DAYS}d
+EOF
+
+      chmod 600 "${env_file}"
+      log "Migration complete. Old .env backed up."
+      echo "=============================================="
+      echo "NEW MASTER PASSWORD (user: admin): ${admin_password}"
+      echo "  → Grafana, MinIO, MLflow, Prometheus, Loki, Langfuse"
+      echo ""
+      echo "LiteLLM API key: ${litellm_master_key}"
+      echo "=============================================="
+      return 0
+    fi
+
+    log "Credentials already in consolidated format"
+    return 0
+  fi
+
+  log "Generating secrets..."
+
+  mkdir -p "${BASE_DIR}"
+
+  # Generate passwords - single ADMIN_PASSWORD for all user-facing services
+  local admin_password; admin_password="$(generate_password)"
+  local pg_password; pg_password="$(generate_password)"
+  local clickhouse_password; clickhouse_password="$(generate_password)"
+  local langfuse_secret; langfuse_secret="$(generate_password)"
+  local langfuse_salt; langfuse_salt="$(generate_password)"
+  local litellm_master_key; litellm_master_key="sk-$(generate_password)"
+
+  cat >"${env_file}" <<EOF
+# Domain
+DOMAIN=${DOMAIN}
+
+# =============================================================================
+# MASTER CREDENTIALS (user: admin)
+# =============================================================================
+# Used for: Grafana, MinIO, MLflow, Prometheus, Loki, Langfuse
 ADMIN_USER=admin
 ADMIN_PASSWORD=${admin_password}
+
+# Grafana (uses master credentials)
+GF_SECURITY_ADMIN_PASSWORD=${admin_password}
+
+# MinIO (uses master credentials)
+MINIO_ROOT_USER=admin
+MINIO_ROOT_PASSWORD=${admin_password}
+
+# Langfuse initial user (uses master credentials)
+LANGFUSE_INIT_ORG_ID=default-org
+LANGFUSE_INIT_ORG_NAME=default
+LANGFUSE_INIT_PROJECT_ID=default-project
+LANGFUSE_INIT_PROJECT_NAME=default
+LANGFUSE_INIT_USER_EMAIL=admin@${DOMAIN}
+LANGFUSE_INIT_USER_NAME=admin
+LANGFUSE_INIT_USER_PASSWORD=${admin_password}
+
+# =============================================================================
+# Service-specific secrets (auto-generated)
+# =============================================================================
+# PostgreSQL
+POSTGRES_PASSWORD=${pg_password}
+
+# ClickHouse (for Langfuse v3)
+CLICKHOUSE_PASSWORD=${clickhouse_password}
+
+# Langfuse encryption
+NEXTAUTH_SECRET=${langfuse_secret}
+SALT=${langfuse_salt}
+
+# LiteLLM
+LITELLM_MASTER_KEY=${litellm_master_key}
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+OPENAI_API_KEY=${OPENAI_API_KEY}
 
 # Retention
 LOKI_RETENTION_HOURS=$((LOKI_RETENTION_DAYS * 24))h
@@ -264,13 +336,11 @@ EOF
   chmod 600 "${env_file}"
 
   log "Secrets generated and saved to ${env_file}"
-  log "IMPORTANT: Save these credentials securely!"
   echo "=============================================="
-  echo "Grafana admin password: ${grafana_password}"
-  echo "MinIO root password: ${minio_root_password}"
-  echo "LiteLLM master key: ${litellm_master_key}"
-  echo "Shared basic auth (user: admin): ${admin_password}"
-  echo "  (used for MLflow, Prometheus, Loki)"
+  echo "MASTER PASSWORD (user: admin): ${admin_password}"
+  echo "  → Grafana, MinIO, MLflow, Prometheus, Loki, Langfuse"
+  echo ""
+  echo "LiteLLM API key: ${litellm_master_key}"
   echo "=============================================="
 }
 
@@ -849,6 +919,16 @@ services:
       NEXTAUTH_SECRET: \${NEXTAUTH_SECRET}
       SALT: \${SALT}
       TELEMETRY_ENABLED: "false"
+      # Initial admin user (uses master credentials)
+      # Note: ":- " syntax required per https://github.com/orgs/langfuse/discussions/6640
+      LANGFUSE_INIT_ORG_ID: \${LANGFUSE_INIT_ORG_ID:-}
+      LANGFUSE_INIT_ORG_NAME: \${LANGFUSE_INIT_ORG_NAME:-}
+      LANGFUSE_INIT_PROJECT_ID: \${LANGFUSE_INIT_PROJECT_ID:-}
+      LANGFUSE_INIT_PROJECT_NAME: \${LANGFUSE_INIT_PROJECT_NAME:-}
+      LANGFUSE_INIT_USER_EMAIL: \${LANGFUSE_INIT_USER_EMAIL:-}
+      LANGFUSE_INIT_USER_NAME: \${LANGFUSE_INIT_USER_NAME:-}
+      LANGFUSE_INIT_USER_PASSWORD: \${LANGFUSE_INIT_USER_PASSWORD:-}
+      # S3/MinIO storage
       LANGFUSE_S3_BATCH_EXPORT_ENABLED: "false"
       LANGFUSE_S3_EVENT_UPLOAD_ENABLED: "true"
       LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse

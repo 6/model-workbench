@@ -6,15 +6,15 @@ Hetzner Cloud setup for centralized observability and LLM proxy services.
 
 | Service | URL | Auth |
 |---------|-----|------|
-| **Grafana** | `https://grafana.{domain}` | Built-in (admin / `GF_SECURITY_ADMIN_PASSWORD`) |
-| **Langfuse** | `https://langfuse.{domain}` | Built-in (create account) |
-| **Loki** | `https://loki.{domain}` | Shared basic auth |
-| **MLflow** | `https://mlflow.{domain}` | Shared basic auth |
+| **Grafana** | `https://grafana.{domain}` | Master credentials |
+| **Langfuse** | `https://langfuse.{domain}` | Master credentials (auto-created) |
+| **Loki** | `https://loki.{domain}` | Master credentials |
+| **MLflow** | `https://mlflow.{domain}` | Master credentials |
 | **LiteLLM** | `https://litellm.{domain}` | API key (`LITELLM_MASTER_KEY`) |
-| **Prometheus** | `https://prometheus.{domain}` | Shared basic auth |
-| **MinIO** | `https://minio.{domain}` | Built-in (`MINIO_ROOT_USER/PASSWORD`) |
+| **Prometheus** | `https://prometheus.{domain}` | Master credentials |
+| **MinIO** | `https://minio.{domain}` | Master credentials |
 
-**Shared basic auth** uses `ADMIN_USER` / `ADMIN_PASSWORD` from `/opt/services/.env`.
+**Master credentials**: Single `ADMIN_USER` / `ADMIN_PASSWORD` from `/opt/services/.env` works for all services.
 
 ## Prerequisites
 
@@ -73,7 +73,8 @@ OPENAI_API_KEY=sk-... \
 The script will:
 - Harden the system (unattended-upgrades, fail2ban, UFW)
 - Install Docker
-- Generate random passwords for all services
+- Generate a single master password for all services
+- Create systemd service for auto-start on boot
 - Start all containers
 - Print credentials to save
 
@@ -82,10 +83,13 @@ The script will:
 After setup completes, save the generated credentials:
 
 ```bash
-# On the server
-cat /opt/services/.env
+# On the server - credentials printed at end of setup:
+# MASTER PASSWORD (user: admin): xxxxx
+#   → Grafana, MinIO, MLflow, Prometheus, Loki, Langfuse
+# LiteLLM API key: sk-xxxxx
 
-# Copy ADMIN_PASSWORD to your local .envrc for Prometheus/Loki push
+# Or view later:
+cat /opt/services/.env | grep -E "^ADMIN_PASSWORD|^LITELLM_MASTER_KEY"
 ```
 
 ### 5. Configure Local Prometheus (Optional)
@@ -175,9 +179,31 @@ Available models:
 - `claude-sonnet-4-20250514`, `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`
 - `gpt-4o`, `gpt-4o-mini`, `o1`, `o1-mini`
 
+### Updating API Keys
+
+To add or update API keys after initial setup:
+
+```bash
+ssh root@<server-ip>
+cd /opt/services
+
+# Edit .env file
+nano .env  # or vim
+
+# Update these lines:
+# ANTHROPIC_API_KEY=sk-ant-...
+# OPENAI_API_KEY=sk-...
+
+# Restart LiteLLM to pick up changes
+docker compose restart litellm
+
+# Verify
+docker compose logs litellm | head -20
+```
+
 ## MLflow Usage
 
-MLflow is protected with shared basic auth (`ADMIN_USER` / `ADMIN_PASSWORD`):
+MLflow uses master credentials (`ADMIN_USER` / `ADMIN_PASSWORD`):
 
 ```bash
 # Access via browser with credentials, or via CLI:
