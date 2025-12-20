@@ -46,12 +46,17 @@ defaults:
       image_type: prebuilt    # Uses NGC images
 
 models:
+  - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
+
+  - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
+
+
   - repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:
       #- "UD-Q3_K_XL/*.gguf"
       - "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
-      - "UD-Q6_K_XL/*.gguf"
+      #- "UD-Q5_K_XL/*.gguf"
+      #- "UD-Q6_K_XL/*.gguf"
 
   - repo_id: unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF
     include:

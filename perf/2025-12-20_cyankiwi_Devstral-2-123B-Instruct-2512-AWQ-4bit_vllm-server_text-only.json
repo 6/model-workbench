@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-20T23:04:11.826670",
+  "repo_id": "cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit",
+  "model_ref": "~/models/cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95856
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95856
+      }
+    ],
+    "memory_used_mib": 191712,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.12.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 11.708407266999984,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is a performance optimization in transformer-based LLMs (e.g., LLama, Mistral) that stores intermediate key-value states from previous tokens during inference, avoiding redundant recomputation. It is critical for **long-context efficiency** because:\n\n1. **Reduces Compute Overhead**\n   - Without caching, self-attention requires recomputing K/V states for all prior tokens at each step, leading to **O(L\u00b2)** complexity (where L = sequence length).\n   - KV cache stores these states once, reducing per-token compute to **O(1)** after the first pass.\n\n2. **Enables Long-Context Scaling**\n   - Long sequences (e.g., 32K+ tokens) become feasible by amortizing memory/compute costs.\n   - Example: A 100K-token context with caching may only require ~100x the compute of a 1K-token sequence, rather than 100\u00b2x.\n\n3. **Memory Tradeoffs**\n   - **Pros**: Dramatically speeds up inference for long contexts.\n   - **Cons**: Cache memory grows linearly with context length (O(L)), posing challenges for extreme-scale deployments (e.g., 1M+ tokens).\n\n**Why It Matters for Long Context**\n- **Practicality**: Makes long-context models usable in real-world applications (e.g., RAG, multi-document QA).\n- **Latency**: Reduces per-token generation time from seconds to milliseconds in long sequences.\n- **Future Work**: Research focuses on **compressed caching** (e.g., quantized KV states) to balance memory and performance.\n\n**Key Takeaway**: KV caching is the backbone of efficient long-context LLMs, trading off memory for speed\u2014critical as models push toward 100K+ token contexts.",
+      "prompt_tokens": 19,
+      "generated_tokens": 401,
+      "tok_per_s": 34.2488940515602,
+      "generation_tok_per_s": 34.34806971714906,
+      "ttft_ms": 30.749797821044922,
+      "prefill_ms": 30.097054000179924,
+      "generation_ms": 11674.600735999775
+    },
+    {
+      "wall_s": 11.782012988000133,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is a performance optimization in transformer-based LLMs (e.g., LLama, Mistral) that stores intermediate key-value states from previous tokens during inference, avoiding redundant recomputation. It is critical for **long-context efficiency** because:\n\n1. **Reduces Compute Overhead**\n   - Without caching, self-attention requires recomputing K/V states for all prior tokens at each step, leading to **O(L\u00b2)** complexity (where L = sequence length).\n   - KV cache stores these states once, reducing per-token compute to **O(1)** after the first pass.\n\n2. **Enables Long-Context Scaling**\n   - Long sequences (e.g., 32K+ tokens) become feasible by amortizing memory/compute costs.\n   - Example: A 100K-token context with caching may only require ~100x the compute of a 1K-token sequence, rather than 100\u00b2x.\n\n3. **Memory Tradeoffs**\n   - **Pros**: Dramatically speeds up inference for long contexts.\n   - **Cons**: Cache memory grows linearly with context length (O(L)), posing challenges for extreme-scale deployments (e.g., 1M+ tokens).\n\n**Why It Matters for Long Context**\n- **Practicality**: Makes long-context models usable in real-world applications (e.g., RAG, multi-document QA).\n- **Latency**: Reduces per-token generation time from seconds to milliseconds in long sequences.\n- **Future Work**: Research focuses on **compressed caching** (e.g., quantized KV states) to balance memory and performance.\n\n**Key Takeaway**: KV caching is the backbone of efficient long-context LLMs, trading off memory for speed\u2014critical as models push toward 100K+ token contexts.",
+      "prompt_tokens": 19,
+      "generated_tokens": 401,
+      "tok_per_s": 34.034931077432574,
+      "generation_tok_per_s": 34.13253092280403,
+      "ttft_ms": 31.144380569458008,
+      "prefill_ms": 30.526228000326228,
+      "generation_ms": 11748.323055999663
+    },
+    {
+      "wall_s": 11.848144672999751,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is a performance optimization in transformer-based LLMs (e.g., LLama, Mistral) that stores intermediate key-value states from previous tokens during inference, avoiding redundant recomputation. It is critical for **long-context efficiency** because:\n\n1. **Reduces Compute Overhead**\n   - Without caching, self-attention requires recomputing K/V states for all prior tokens at each step, leading to **O(L\u00b2)** complexity (where L = sequence length).\n   - KV cache stores these states once, reducing per-token compute to **O(1)** after the first pass.\n\n2. **Enables Long-Context Scaling**\n   - Long sequences (e.g., 32K+ tokens) become feasible by amortizing memory/compute costs.\n   - Example: A 100K-token context with caching may only require ~100x the compute of a 1K-token sequence, rather than 100\u00b2x.\n\n3. **Memory Tradeoffs**\n   - **Pros**: Dramatically speeds up inference for long contexts.\n   - **Cons**: Cache memory grows linearly with context length (O(L)), posing challenges for extreme-scale deployments (e.g., 1M+ tokens).\n\n**Why It Matters for Long Context**\n- **Practicality**: Makes long-context models usable in real-world applications (e.g., RAG, multi-document QA).\n- **Latency**: Reduces per-token generation time from seconds to milliseconds in long sequences.\n- **Future Work**: Research focuses on **compressed caching** (e.g., quantized KV states) to balance memory and performance.\n\n**Key Takeaway**: KV caching is the backbone of efficient long-context LLMs, trading off memory for speed\u2014critical as models push toward 100K+ token contexts.",
+      "prompt_tokens": 19,
+      "generated_tokens": 401,
+      "tok_per_s": 33.84496147433297,
+      "generation_tok_per_s": 33.94129944216271,
+      "ttft_ms": 30.81679344177246,
+      "prefill_ms": 30.16120400025102,
+      "generation_ms": 11814.515253999616
+    },
+    {
+      "wall_s": 11.890853552999943,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is a performance optimization in transformer-based LLMs (e.g., LLama, Mistral) that stores intermediate key-value states from previous tokens during inference, avoiding redundant recomputation. It is critical for **long-context efficiency** because:\n\n1. **Reduces Compute Overhead**\n   - Without caching, self-attention requires recomputing K/V states for all prior tokens at each step, leading to **O(L\u00b2)** complexity (where L = sequence length).\n   - KV cache stores these states once, reducing per-token compute to **O(1)** after the first pass.\n\n2. **Enables Long-Context Scaling**\n   - Long sequences (e.g., 32K+ tokens) become feasible by amortizing memory/compute costs.\n   - Example: A 100K-token context with caching may only require ~100x the compute of a 1K-token sequence, rather than 100\u00b2x.\n\n3. **Memory Tradeoffs**\n   - **Pros**: Dramatically speeds up inference for long contexts.\n   - **Cons**: Cache memory grows linearly with context length (O(L)), posing challenges for extreme-scale deployments (e.g., 1M+ tokens).\n\n**Why It Matters for Long Context**\n- **Practicality**: Makes long-context models usable in real-world applications (e.g., RAG, multi-document QA).\n- **Latency**: Reduces per-token generation time from seconds to milliseconds in long sequences.\n- **Future Work**: Research focuses on **compressed caching** (e.g., quantized KV states) to balance memory and performance.\n\n**Key Takeaway**: KV caching is the backbone of efficient long-context LLMs, trading off memory for speed\u2014critical as models push toward 100K+ token contexts.",
+      "prompt_tokens": 19,
+      "generated_tokens": 401,
+      "tok_per_s": 33.72339909937178,
+      "generation_tok_per_s": 33.81781950337147,
+      "ttft_ms": 30.744552612304688,
+      "prefill_ms": 30.229832000259194,
+      "generation_ms": 11857.653919999848
+    },
+    {
+      "wall_s": 11.938330965000205,
+      "output_text": "### **Technical Overview: KV Cache and Its Role in Long-Context LLMs**\n\n**Key-Value (KV) Cache** is a performance optimization in transformer-based LLMs (e.g., LLama, Mistral) that stores intermediate key-value states from previous tokens during inference, avoiding redundant recomputation. It is critical for **long-context efficiency** because:\n\n1. **Reduces Compute Overhead**\n   - Without caching, self-attention requires recomputing K/V states for all prior tokens at each step, leading to **O(L\u00b2)** complexity (where L = sequence length).\n   - KV cache stores these states once, reducing per-token compute to **O(1)** after the first pass.\n\n2. **Enables Long-Context Scaling**\n   - Long sequences (e.g., 32K+ tokens) become feasible by amortizing memory/compute costs.\n   - Example: A 100K-token context with caching may only require ~100x the compute of a 1K-token sequence, rather than 100\u00b2x.\n\n3. **Memory Tradeoffs**\n   - **Pros**: Dramatically speeds up inference for long contexts.\n   - **Cons**: Cache memory grows linearly with context length (O(L)), posing challenges for extreme-scale deployments (e.g., 1M+ tokens).\n\n**Why It Matters for Long Context**\n- **Practicality**: Makes long-context models usable in real-world applications (e.g., RAG, multi-document QA).\n- **Latency**: Reduces per-token generation time from seconds to milliseconds in long sequences.\n- **Future Work**: Research focuses on **compressed caching** (e.g., quantized KV states) to balance memory and performance.\n\n**Key Takeaway**: KV caching is the backbone of efficient long-context LLMs, trading off memory for speed\u2014critical as models push toward 100K+ token contexts.",
+      "prompt_tokens": 19,
+      "generated_tokens": 401,
+      "tok_per_s": 33.58928489883704,
+      "generation_tok_per_s": 33.68364754333987,
+      "ttft_ms": 30.852556228637695,
+      "prefill_ms": 30.30513300018356,
+      "generation_ms": 11904.886472999806
+    }
+  ],
+  "summary": {
+    "median_wall_s": 11.848144672999751,
+    "median_tok_per_s": 33.84496147433297,
+    "median_ttft_ms": 30.81679344177246,
+    "median_generation_tok_per_s": 33.94129944216271
+  }
+}
