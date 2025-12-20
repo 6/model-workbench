@@ -42,7 +42,7 @@ defaults:
         n_gpu_layers: 999
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: v1.0.0
+      version: 1.1.0
       image_type: prebuilt    # Uses NGC images
 
 models:

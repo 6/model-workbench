@@ -330,7 +330,6 @@ def build_trtllm_docker_cmd(
         str(port),
         "--tp_size",
         str(tensor_parallel),
-        "--return-perf-metrics",
     ]
 
     if max_batch_size is not None:
