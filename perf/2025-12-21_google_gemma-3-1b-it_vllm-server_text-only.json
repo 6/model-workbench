@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-21T00:58:29.701443",
+  "repo_id": "google/gemma-3-1b-it",
+  "model_ref": "~/models/google/gemma-3-1b-it",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94490
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94490
+      }
+    ],
+    "memory_used_mib": 188980,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 32768,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.12.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 1.2460446060013055,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and DynamoDB, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates as a temporary storage layer, holding frequently accessed data from the primary data store (e.g., DynamoDB) and serving it directly to the application.\n\n**How it Works:**\n\n1. **Cache Hit:** When a read request arrives, the KV cache first checks if the requested data is already present in the cache.\n2. **Cache Hit:** If a \"cache hit\" occurs (data is found), the data is immediately returned to the application, bypassing the primary data store.\n3. **Cache Miss:** If a \"cache miss\" occurs (data isn't in the cache), the KV cache retrieves the data from the primary data store and stores a copy in the cache for future requests.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce latency for queries involving large key-value pairs.  By serving data directly, the application doesn't have to repeatedly interact with the primary data store, which is often a bottleneck.\n* **Improved Throughput:**  Caching reduces the load on the primary data store, allowing it to handle more requests overall.\n* **Long Context Support:** This is *key*.  KV caches are particularly effective for handling long-context queries (where the application needs to maintain state across multiple operations).  By storing intermediate results, the cache can provide a \"window\" of consistent data, enabling applications to efficiently process complex, multi-step operations.  Without a cache, these types of queries would be extremely slow.\n* **Data Consistency:**  KV caches often employ techniques like write-through or write-back caching to maintain data consistency between the primary store and the cache.\n\n\n**Key Considerations:**\n\n* **Cache Eviction:**  The KV cache must manage eviction policies (e.g., Least Recently Used - LRU) to prevent the cache from growing indefinitely.\n* **Cache Size:**  Determining the appropriate cache size is critical for balancing performance and cost.\n\n---\n\n**To help me tailor this further, could you tell me:**\n\n*   **What is the intended audience for this overview?** (e.",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 410.9002178044528,
+      "generation_tok_per_s": 413.86388331456726,
+      "ttft_ms": 4.146337509155273,
+      "prefill_ms": 3.510079000989208,
+      "generation_ms": 1237.1217220006656
+    },
+    {
+      "wall_s": 1.2398951400009537,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and DynamoDB, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates as a temporary storage layer, holding frequently accessed data from the primary data store (e.g., DynamoDB) and serving it directly to the application.\n\n**How it Works:**\n\n1. **Cache Hit:** When a read request arrives, the KV cache first checks if the requested data is already present in the cache.\n2. **Cache Hit:** If a \"cache hit\" occurs (data is found), the data is immediately returned to the application, bypassing the primary data store.\n3. **Cache Miss:** If a \"cache miss\" occurs (data isn't in the cache), the KV cache retrieves the data from the primary data store and stores a copy in the cache for future requests.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce latency for queries involving large key-value pairs.  By serving data directly, the application doesn't have to repeatedly interact with the primary data store, which is often a bottleneck.\n* **Improved Throughput:**  Caching reduces the load on the primary data store, allowing it to handle more requests overall.\n* **Long Context Support:** This is *key*.  KV caches are particularly effective for handling long-context queries (where the application needs to maintain state across multiple operations).  By storing intermediate results, the cache can provide a \"window\" of consistent data, enabling applications to efficiently process complex, multi-step operations.  Without a cache, these types of queries would be extremely slow.\n* **Data Consistency:**  KV caches often employ techniques like write-through or write-back caching to maintain data consistency between the primary store and the cache.\n\n\n**Key Considerations:**\n\n* **Cache Eviction:**  The KV cache must manage eviction policies (e.g., Least Recently Used - LRU) to prevent the cache from growing indefinitely.\n* **Cache Size:**  Determining the appropriate cache size is critical for balancing performance and cost.\n\n---\n\n**To help me tailor this further, could you tell me:**\n\n*   **What is the intended audience for this overview?** (e.",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 412.9381457206181,
+      "generation_tok_per_s": 415.6320756285256,
+      "ttft_ms": 3.756284713745117,
+      "prefill_ms": 3.2238719995802967,
+      "generation_ms": 1231.8587280005886
+    },
+    {
+      "wall_s": 1.2398507260004408,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and DynamoDB, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates as a temporary storage layer, holding frequently accessed data from the primary data store (e.g., DynamoDB) and serving it directly to the application.\n\n**How it Works:**\n\n1. **Cache Hit:** When a read request arrives, the KV cache first checks if the requested data is already present in the cache.\n2. **Cache Hit:** If a \"cache hit\" occurs (data is found), the data is immediately returned to the application, bypassing the primary data store.\n3. **Cache Miss:** If a \"cache miss\" occurs (data isn't in the cache), the KV cache retrieves the data from the primary data store and stores a copy in the cache for future requests.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce latency for queries involving large key-value pairs.  By serving data directly, the application doesn't have to repeatedly interact with the primary data store, which is often a bottleneck.\n* **Improved Throughput:**  Caching reduces the load on the primary data store, allowing it to handle more requests overall.\n* **Long Context Support:** This is *key*.  KV caches are particularly effective for handling long-context queries (where the application needs to maintain state across multiple operations).  By storing intermediate results, the cache can provide a \"window\" of consistent data, enabling applications to efficiently process complex, multi-step operations.  Without a cache, these types of queries would be extremely slow.\n* **Data Consistency:**  KV caches often employ techniques like write-through or write-back caching to maintain data consistency between the primary store and the cache.\n\n\n**Key Considerations:**\n\n* **Cache Eviction:**  The KV cache must manage eviction policies (e.g., Least Recently Used - LRU) to prevent the cache from growing indefinitely.\n* **Cache Size:**  Determining the appropriate cache size is critical for balancing performance and cost.\n\n---\n\n**To help me tailor this further, could you tell me:**\n\n*   **What is the intended audience for this overview?** (e.",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 412.95293801345724,
+      "generation_tok_per_s": 415.64181868832054,
+      "ttft_ms": 3.689289093017578,
+      "prefill_ms": 3.1756820008013165,
+      "generation_ms": 1231.8298520003736
+    },
+    {
+      "wall_s": 1.236724475000301,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and DynamoDB, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates as a temporary storage layer, holding frequently accessed data from the primary data store (e.g., DynamoDB) and serving it directly to the application.\n\n**How it Works:**\n\n1. **Cache Hit:** When a read request arrives, the KV cache first checks if the requested data is already present in the cache.\n2. **Cache Hit:** If a \"cache hit\" occurs (data is found), the data is immediately returned to the application, bypassing the primary data store.\n3. **Cache Miss:** If a \"cache miss\" occurs (data isn't in the cache), the KV cache retrieves the data from the primary data store and stores a copy in the cache for future requests.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce latency for queries involving large key-value pairs.  By serving data directly, the application doesn't have to repeatedly interact with the primary data store, which is often a bottleneck.\n* **Improved Throughput:**  Caching reduces the load on the primary data store, allowing it to handle more requests overall.\n* **Long Context Support:** This is *key*.  KV caches are particularly effective for handling long-context queries (where the application needs to maintain state across multiple operations).  By storing intermediate results, the cache can provide a \"window\" of consistent data, enabling applications to efficiently process complex, multi-step operations.  Without a cache, these types of queries would be extremely slow.\n* **Data Consistency:**  KV caches often employ techniques like write-through or write-back caching to maintain data consistency between the primary store and the cache.\n\n\n**Key Considerations:**\n\n* **Cache Eviction:**  The KV cache must manage eviction policies (e.g., Least Recently Used - LRU) to prevent the cache from growing indefinitely.\n* **Cache Size:**  Determining the appropriate cache size is critical for balancing performance and cost.\n\n---\n\n**To help me tailor this further, could you tell me:**\n\n*   **What is the intended audience for this overview?** (e.",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 413.9968201081129,
+      "generation_tok_per_s": 416.62079837169216,
+      "ttft_ms": 3.5576820373535156,
+      "prefill_ms": 3.1164320007519564,
+      "generation_ms": 1228.9352859988867
+    },
+    {
+      "wall_s": 1.2374486810003873,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and DynamoDB, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates as a temporary storage layer, holding frequently accessed data from the primary data store (e.g., DynamoDB) and serving it directly to the application.\n\n**How it Works:**\n\n1. **Cache Hit:** When a read request arrives, the KV cache first checks if the requested data is already present in the cache.\n2. **Cache Hit:** If a \"cache hit\" occurs (data is found), the data is immediately returned to the application, bypassing the primary data store.\n3. **Cache Miss:** If a \"cache miss\" occurs (data isn't in the cache), the KV cache retrieves the data from the primary data store and stores a copy in the cache for future requests.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce latency for queries involving large key-value pairs.  By serving data directly, the application doesn't have to repeatedly interact with the primary data store, which is often a bottleneck.\n* **Improved Throughput:**  Caching reduces the load on the primary data store, allowing it to handle more requests overall.\n* **Long Context Support:** This is *key*.  KV caches are particularly effective for handling long-context queries (where the application needs to maintain state across multiple operations).  By storing intermediate results, the cache can provide a \"window\" of consistent data, enabling applications to efficiently process complex, multi-step operations.  Without a cache, these types of queries would be extremely slow.\n* **Data Consistency:**  KV caches often employ techniques like write-through or write-back caching to maintain data consistency between the primary store and the cache.\n\n\n**Key Considerations:**\n\n* **Cache Eviction:**  The KV cache must manage eviction policies (e.g., Least Recently Used - LRU) to prevent the cache from growing indefinitely.\n* **Cache Size:**  Determining the appropriate cache size is critical for balancing performance and cost.\n\n---\n\n**To help me tailor this further, could you tell me:**\n\n*   **What is the intended audience for this overview?** (e.",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 413.7545320958969,
+      "generation_tok_per_s": 416.5505172771376,
+      "ttft_ms": 3.8039684295654297,
+      "prefill_ms": 3.277011999671231,
+      "generation_ms": 1229.1426339997997
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.2398507260004408,
+    "median_tok_per_s": 412.95293801345724,
+    "median_ttft_ms": 3.756284713745117,
+    "median_generation_tok_per_s": 415.64181868832054
+  }
+}

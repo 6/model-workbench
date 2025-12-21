@@ -1,0 +1,103 @@
+{
+  "timestamp": "2025-12-21T00:48:07.758593",
+  "repo_id": "google/gemma-3-1b-it",
+  "model_ref": "~/models/google/gemma-3-1b-it",
+  "engine": "trtllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88045
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 87420
+      }
+    ],
+    "memory_used_mib": 175465,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "image": "none",
+    "backend_version": "1.2.0rc5"
+  },
+  "iterations": [
+    {
+      "wall_s": 1.3496125479996408,
+      "output_text": "Okay, here's a concise technical overview of a concise technical overview of KV cache for a KV cache cache cache cache.\n\n**\n\n**\n\n**Technical Overview:\n\nHere's a model, focusing on the key aspects of KV cache and its importance for long context.\n\n**KV Cache Explained**\n\n**What is KV Cache?**\n\nThe KV Cache-on the KV cache cache for long-\n\nThe KV caches, particularly for long context: A Concise Model:\n\nThe KV Cache?**\n\nThe KV Cache (Key-Value Cache) is a crucial component in modern large language models (LLMs) like those powering chatbots. It's a memory layer of-Cache is a Key-to-based on-but not just-scale models like GPT models) that use a lotvia the core to the core mechanism for handling long-context conversations.\n\n**How it Works:**\n\n1. **Tokenization:**  The conversation turns into a sequence of tokens (words and most LLMs.  context \u2013 each tokenization:**\n   (Simplified: **Sequential Processing:**  The conversation is broken down-list of tokens (words, sub-words, etc.).\n2. **KV Cache Lookup:**  The model's KV cache stores the *most recent* tokens seen during the \"kicks, and sub- it' **KV Cache Entry:** When you ask:\n   searches are used tokens in-recently generated tokens.  It's essentially a \"snapshot\" of the conversation history up to that point.\n3. **Context Window:** This cached information is then passed to the model parameters like a limited by-10 of the most recently processed.\n4.\n4. **Key:**  This cached data is stored in the KV cache.  This is the \"context window\" \u2013 the model's memory for the current conversation.\n4. **Next Token Prediction:**  -most recent tokens.  This is what the \"window*.  the key word embeddings are stored information it's context windowing. Memory:**  (or Generation):**  When the model needs to generate the next token, it looks up the relevant information in the KV cache.  This significantly speeds up the process of course):\n\n**Crucially, based on-based on the model, in the relevant tokens from the KV cache.\n\n**Crucially speeds up the process.\n\n**Why it Matters for Long Context:**\n\n* **Reduced Latency:**  Without KV caching",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 379.36813847713,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 1.3475005750005948,
+      "output_text": "Okay, here's a concise technical overview of a concise technical overview of KV cache for a KV cache cache cache cache.\n\n**\n\n**\n\n**Technical Overview:\n\nHere's a model, focusing on the key aspects of KV cache and its importance for long context.\n\n**KV Cache Explained**\n\n**What is KV Cache?**\n\nThe KV Cache-on the KV cache cache for long-\n\nThe KV caches, particularly for long context: A Concise Model:\n\nThe KV Cache?**\n\nThe KV Cache (Key-Value Cache) is a crucial component in modern large language models (LLMs) like those powering chatbots. It's a memory layer of-Cache is a Key-to-based on-but not just-scale models like GPT models) that use a lotvia the core to the core mechanism for handling long-context conversations.\n\n**How it Works:**\n\n1. **Tokenization:**  The conversation turns into a sequence of tokens (words and most LLMs.  context \u2013 each tokenization:**\n   (Simplified: **Sequential Processing:**  The conversation is broken down-list of tokens (words, sub-words, etc.).\n2. **KV Cache Lookup:**  The model's KV cache stores the *most recent* tokens seen during the \"kicks, and sub- it' **KV Cache Entry:** When you ask:\n   searches are used tokens in-recently generated tokens.  It's essentially a \"snapshot\" of the conversation history up to that point.\n3. **Context Window:** This cached information is then passed to the model parameters like a limited by-10 of the most recently processed.\n4.\n4. **Key:**  This cached data is stored in the KV cache.  This is the \"context window\" \u2013 the model's memory for the current conversation.\n4. **Next Token Prediction:**  -most recent tokens.  This is what the \"window*.  the key word embeddings are stored information it's context windowing. Memory:**  (or Generation):**  When the model needs to generate the next token, it looks up the relevant information in the KV cache.  This significantly speeds up the process of course):\n\n**Crucially, based on-based on the model, in the relevant tokens from the KV cache.\n\n**Crucially speeds up the process.\n\n**Why it Matters for Long Context:**\n\n* **Reduced Latency:**  Without KV caching",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 379.96273211221,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 1.3485001059998467,
+      "output_text": "Okay, here's a concise technical overview of a concise technical overview of KV cache for a KV cache cache cache cache.\n\n**\n\n**\n\n**Technical Overview:\n\nHere's a model, focusing on the key aspects of KV cache and its importance for long context.\n\n**KV Cache Explained**\n\n**What is KV Cache?**\n\nThe KV Cache-on the KV cache cache for long-\n\nThe KV caches, particularly for long context: A Concise Model:\n\nThe KV Cache?**\n\nThe KV Cache (Key-Value Cache) is a crucial component in modern large language models (LLMs) like those powering chatbots. It's a memory layer of-Cache is a Key-to-based on-but not just-scale models like GPT models) that use a lotvia the core to the core mechanism for handling long-context conversations.\n\n**How it Works:**\n\n1. **Tokenization:**  The conversation turns into a sequence of tokens (words and most LLMs.  context \u2013 each tokenization:**\n   (Simplified: **Sequential Processing:**  The conversation is broken down-list of tokens (words, sub-words, etc.).\n2. **KV Cache Lookup:**  The model's KV cache stores the *most recent* tokens seen during the \"kicks, and sub- it' **KV Cache Entry:** When you ask:\n   searches are used tokens in-recently generated tokens.  It's essentially a \"snapshot\" of the conversation history up to that point.\n3. **Context Window:** This cached information is then passed to the model parameters like a limited by-10 of the most recently processed.\n4.\n4. **Key:**  This cached data is stored in the KV cache.  This is the \"context window\" \u2013 the model's memory for the current conversation.\n4. **Next Token Prediction:**  -most recent tokens.  This is what the \"window*.  the key word embeddings are stored information it's context windowing. Memory:**  (or Generation):**  When the model needs to generate the next token, it looks up the relevant information in the KV cache.  This significantly speeds up the process of course):\n\n**Crucially, based on-based on the model, in the relevant tokens from the KV cache.\n\n**Crucially speeds up the process.\n\n**Why it Matters for Long Context:**\n\n* **Reduced Latency:**  Without KV caching",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 379.6810973332309,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 1.3471821310013183,
+      "output_text": "Okay, here's a concise technical overview of a concise technical overview of KV cache for a KV cache cache cache cache.\n\n**\n\n**\n\n**Technical Overview:\n\nHere's a model, focusing on the key aspects of KV cache and its importance for long context.\n\n**KV Cache Explained**\n\n**What is KV Cache?**\n\nThe KV Cache-on the KV cache cache for long-\n\nThe KV caches, particularly for long context: A Concise Model:\n\nThe KV Cache?**\n\nThe KV Cache (Key-Value Cache) is a crucial component in modern large language models (LLMs) like those powering chatbots. It's a memory layer of-Cache is a Key-to-based on-but not just-scale models like GPT models) that use a lotvia the core to the core mechanism for handling long-context conversations.\n\n**How it Works:**\n\n1. **Tokenization:**  The conversation turns into a sequence of tokens (words and most LLMs.  context \u2013 each tokenization:**\n   (Simplified: **Sequential Processing:**  The conversation is broken down-list of tokens (words, sub-words, etc.).\n2. **KV Cache Lookup:**  The model's KV cache stores the *most recent* tokens seen during the \"kicks, and sub- it' **KV Cache Entry:** When you ask:\n   searches are used tokens in-recently generated tokens.  It's essentially a \"snapshot\" of the conversation history up to that point.\n3. **Context Window:** This cached information is then passed to the model parameters like a limited by-10 of the most recently processed.\n4.\n4. **Key:**  This cached data is stored in the KV cache.  This is the \"context window\" \u2013 the model's memory for the current conversation.\n4. **Next Token Prediction:**  -most recent tokens.  This is what the \"window*.  the key word embeddings are stored information it's context windowing. Memory:**  (or Generation):**  When the model needs to generate the next token, it looks up the relevant information in the KV cache.  This significantly speeds up the process of course):\n\n**Crucially, based on-based on the model, in the relevant tokens from the KV cache.\n\n**Crucially speeds up the process.\n\n**Why it Matters for Long Context:**\n\n* **Reduced Latency:**  Without KV caching",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 380.0525468812791,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 1.3488459569998668,
+      "output_text": "Okay, here's a concise technical overview of a concise technical overview of KV cache for a KV cache cache cache cache.\n\n**\n\n**\n\n**Technical Overview:\n\nHere's a model, focusing on the key aspects of KV cache and its importance for long context.\n\n**KV Cache Explained**\n\n**What is KV Cache?**\n\nThe KV Cache-on the KV cache cache for long-\n\nThe KV caches, particularly for long context: A Concise Model:\n\nThe KV Cache?**\n\nThe KV Cache (Key-Value Cache) is a crucial component in modern large language models (LLMs) like those powering chatbots. It's a memory layer of-Cache is a Key-to-based on-but not just-scale models like GPT models) that use a lotvia the core to the core mechanism for handling long-context conversations.\n\n**How it Works:**\n\n1. **Tokenization:**  The conversation turns into a sequence of tokens (words and most LLMs.  context \u2013 each tokenization:**\n   (Simplified: **Sequential Processing:**  The conversation is broken down-list of tokens (words, sub-words, etc.).\n2. **KV Cache Lookup:**  The model's KV cache stores the *most recent* tokens seen during the \"kicks, and sub- it' **KV Cache Entry:** When you ask:\n   searches are used tokens in-recently generated tokens.  It's essentially a \"snapshot\" of the conversation history up to that point.\n3. **Context Window:** This cached information is then passed to the model parameters like a limited by-10 of the most recently processed.\n4.\n4. **Key:**  This cached data is stored in the KV cache.  This is the \"context window\" \u2013 the model's memory for the current conversation.\n4. **Next Token Prediction:**  -most recent tokens.  This is what the \"window*.  the key word embeddings are stored information it's context windowing. Memory:**  (or Generation):**  When the model needs to generate the next token, it looks up the relevant information in the KV cache.  This significantly speeds up the process of course):\n\n**Crucially, based on-based on the model, in the relevant tokens from the KV cache.\n\n**Crucially speeds up the process.\n\n**Why it Matters for Long Context:**\n\n* **Reduced Latency:**  Without KV caching",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 379.5837451585664,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.3485001059998467,
+    "median_tok_per_s": 379.6810973332309,
+    "median_ttft_ms": null,
+    "median_generation_tok_per_s": null,
+    "median_tpot_ms": null
+  }
+}

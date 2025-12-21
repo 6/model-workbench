@@ -1,0 +1,103 @@
+{
+  "timestamp": "2025-12-21T00:36:09.374081",
+  "repo_id": "openai/gpt-oss-120b",
+  "model_ref": "~/models/openai/gpt-oss-120b",
+  "engine": "trtllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 91365
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 90740
+      }
+    ],
+    "memory_used_mib": 182105,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "image": "none",
+    "backend_version": "1.2.0rc5"
+  },
+  "iterations": [
+    {
+      "wall_s": 3.2531426229998033,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Description |\n|--------|-------------|\n| **What it is** | A *key\u2011value (KV) cache* stores the intermediate **key** and **value** tensors produced by each transformer layer for every token that has already been processed. |\n| **Where it lives** | In the attention sub\u2011layer of each decoder block (or encoder\u2011decoder cross\u2011attention). After the first forward pass, the KV tensors are kept in GPU/CPU memory and are reused for subsequent generation steps. |\n| **Data shape** | For a model with *L* layers, *h* heads, and head dimension *d*: <br>\u2022 **Key**: `(L, N, T, h, d)` <br>\u2022 **Value**: `(L, N, T, h, d)` <br>where *N* = batch size, *T* = number of tokens cached so far. |\n| **Update rule** | - **First pass** (prompt): compute KV for all tokens \u2192 store. <br> - **Generation step *t***: compute KV only for the newly generated token, append it to the existing cache (often via concatenation or circular buffer). |\n| **Access pattern** | During self\u2011attention, each query *Q* (shape `(N, 1, h, d)`) attends to the full cached sequence: <br> `Attention(Q, K_cache, V_cache) = softmax(Q\u00b7K_cache\u1d40 / \u221ad) \u00b7 V_cache`. |\n| **Complexity impact** | - **Without KV cache**: each generation step recomputes *K* and *V* for the entire context \u2192 O(T\u00b2) time, O(T) memory per step. <br> - **With KV cache**: only O(1) new KV computation per step; attention still costs O(T) per step (query \u00d7 cached length) but the quadratic *T\u00b2* blow\u2011up is avoided. |\n| **Memory trade\u2011off** | Caching grows linearly with context length: `Memory \u2248 2 \u00d7 L \u00d7 N \u00d7 T \u00d7 h \u00d7 d \u00d7 sizeof(fp)`. For 8\u2011bit quantized KV, a 32\u202fk token context can fit in ~2\u202fGB on a single GPU. |\n| **Implementation tricks** | \u2022 **Chunked /",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 157.38627516056218,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 3.2562600410001323,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Description |\n|--------|-------------|\n| **What it is** | A *key\u2011value (KV) cache* stores the intermediate key and value tensors produced by each transformer layer\u2019s self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In GPU/CPU memory attached to the model\u2019s execution context (e.g., `past_key_values` in Hugging\u2011Face \ud83e\udd17 Transformers, `past_key`/`past_value` in TensorRT\u2011LLM, or `kv_cache` in vLLM). |\n| **Data shape** | For a model with *L* layers, *H* heads, and head dimension *D*: <br> `key`  \u2013 `(L, B, H, S, D)` <br> `value` \u2013 `(L, B, H, S, D)` <br> where *B* = batch size, *S* = number of cached tokens (grows with generation). |\n| **How it is used** | During generation the attention score for a new token *t* is computed as: <br> `attn(t) = softmax( (Q_t \u00b7 K_{\u2264t}) / \u221ad ) \u00b7 V_{\u2264t}` <br> *K* and *V* for all previous positions are read directly from the cache; only the new *Q* (query) is computed on\u2011the\u2011fly. |\n| **Update rule** | After producing token *t*, its key/value pair `(K_t, V_t)` is appended to the cache. No recomputation of earlier keys/values is required. |\n\n---\n\n### Why KV Cache Matters for Long Context\n\n| Challenge | KV\u2011Cache Solution |\n|-----------|-------------------|\n| **Quadratic attention cost** (`O(S\u00b2)`) when recomputing K/V for every step | Cache makes each step **O(S)** (dot\u2011product of new Q with cached K) and eliminates the `S`\u2011by\u2011`S` recompute, turning generation into essentially linear time w.r.t. context length. |\n| **Memory blow\u2011up** for na\u00efve recomputation (store all hidden states) | Only the compact K/V tensors (size \u2248 `2\u00b7L\u00b7H\u00b7D\u00b7S`) are kept; hidden states can be discarded. |\n| **",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 157.23559959994583,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 3.2552850120000585,
+      "output_text": "**KV Cache \u2013 Technical Overview & Its Role in Long\u2011Context Transformers**\n\n---\n\n### 1. What the KV Cache Is\n- **KV = Key\u2011Value** pairs produced by each self\u2011attention layer for every input token.\n- In a standard transformer, for token *t* the *l*\u2011th layer computes  \n  \\[\n  K^{(l)}_t = W_K^{(l)}\\,x_t,\\qquad\n  V^{(l)}_t = W_V^{(l)}\\,x_t\n  \\]\n  where \\(x_t\\) is the hidden state after the previous layer.\n- During **autoregressive generation** the model repeatedly attends to *all* previous tokens, recomputing the same \\(K\\) and \\(V\\) for the already\u2011generated prefix at every step \u2013 an \\(O(N^2)\\) cost in sequence length *N*.\n\n**KV cache** stores the already\u2011computed \\(K^{(l)}\\) and \\(V^{(l)}\\) for every layer after a token is processed, so that on the next generation step the model only needs to compute new keys/values for the fresh token and can reuse the cached ones for the prefix.\n\n---\n\n### 2. How It Works Internally\n| Step | Operation (per layer) | Cache Interaction |\n|------|-----------------------|-------------------|\n| **1. First pass** (prompt) | Compute \\(K^{(l)}_{1..P}, V^{(l)}_{1..P}\\) for all *P* prompt tokens. | Store them in a contiguous buffer `cache_K[l]`, `cache_V[l]`. |\n| **2. Generation step *t*** | Compute \\(K^{(l)}_t, V^{(l)}_t\\) for the new token only. | Append to the end of the buffers. |\n| **3. Attention** | For token *t* the query \\(Q^{(l)}_t\\) attends to the concatenation \\([K^{(l)}_{1..t}, V^{(l)}_{1..t}]\\) taken directly from the cache. | No recomputation of earlier keys/values; just a matrix\u2011multiply \\(Q_t \\cdot K_{1..t}^\\top\\). |\n\nImplementation details (e.g., in PyTorch, TensorFlow",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 157.2826950981553,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 3.2504818900006285,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Description |\n|--------|-------------|\n| **What it is** | A *key\u2011value (KV) cache* stores the intermediate **key** and **value** tensors produced by each transformer layer for every input token that has already been processed. |\n| **Where it lives** | In the model\u2019s inference engine (e.g., PyTorch, TensorFlow, ONNX Runtime, or custom C++/CUDA kernels). The cache is kept in GPU/CPU memory and is indexed by token position. |\n| **Data shape** | For a model with *L* layers, *H* heads, hidden size *D* and sequence length *T*: <br>\u2022 **Key**: `(L, T, H, D_head)` <br>\u2022 **Value**: `(L, T, H, D_head)` <br>where `D_head = D / H`. |\n| **Update rule** | When a new token *t* arrives: <br>1. Compute its query *Q\u209c*, key *K\u209c*, value *V\u209c* for each layer. <br>2. Append *K\u209c* and *V\u209c* to the existing cache along the time dimension. <br>3. Attention for token *t* uses `softmax(Q\u209c\u00b7K_{1..t}\u1d40)\u00b7V_{1..t}`. |\n| **Memory cost** | O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fD_head\u202f\u00b7\u202fT). For a 70\u202fB model (L=80, H=64, D=8192) a 4\u202fk token cache needs \u2248\u202f30\u202fGB of FP16 memory. |\n| **Compute cost** | Without a cache, each new token would recompute attention over the whole prefix \u2192 O(T\u00b2) per step. With KV cache, attention per step is O(T\u00b7H\u00b7D_head) for the matrix\u2011multiply `Q\u00b7K\u1d40`, but the *K* and *V* are reused, giving overall O(T\u00b7L\u00b7H\u00b7D_head) per token, i.e., linear rather than quadratic. |\n| **Implementation tricks** | \u2022 **Ring buffer** or **sliding window** to drop oldest entries when a max context length is reached. <br>\u2022 **Chunked storage**",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 157.51510616781223,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 3.252005061000091,
+      "output_text": "**KV Cache \u2013 Technical Overview & Its Role in Long\u2011Context Transformers**\n\n---\n\n### 1. What the KV Cache Is\n- **KV = Key\u2011Value pairs** produced by each self\u2011attention layer for every input token.\n- In a standard Transformer, for token *t* at layer *\u2113* we compute  \n  \\[\n  \\mathbf{k}^{(\\ell)}_t = \\mathbf{W}^{(\\ell)}_K \\mathbf{x}_t,\\qquad\n  \\mathbf{v}^{(\\ell)}_t = \\mathbf{W}^{(\\ell)}_V \\mathbf{x}_t\n  \\]\n  where \\(\\mathbf{x}_t\\) is the token representation after the previous layer.\n- During **autoregressive generation** the model repeatedly attends to *all* previous tokens, recomputing the same \\(\\mathbf{k},\\mathbf{v}\\) for every step \u2192 \\(O(N^2)\\) time and memory (with *N* = current sequence length).\n\n**KV cache** stores the already\u2011computed \\(\\mathbf{k}^{(\\ell)}\\) and \\(\\mathbf{v}^{(\\ell)}\\) for every past position, so that at generation step *t* the model only needs to:\n1. Compute new \\(\\mathbf{k}^{(\\ell)}_t, \\mathbf{v}^{(\\ell)}_t\\) for the fresh token.\n2. Append them to the cached matrices.\n3. Perform attention using the *cached* keys/values for all previous positions.\n\n---\n\n### 2. How It Changes Complexity\n| Operation | Without KV cache | With KV cache |\n|-----------|------------------|--------------|\n| **Key/Value computation** | \\(O(L \\cdot N \\cdot d)\\) (re\u2011compute for every step) | \\(O(L \\cdot d)\\) per new token (only the latest position) |\n| **Attention score matrix** | \\(O(L \\cdot N^2)\\) (full quadratic) | Same \\(O(L \\cdot N^2)\\) for the *matrix multiplication* but the *constant* is far lower because keys/values are already materialised in memory. |\n| **Memory for activations** | Needs to keep all intermediate hidden states for back\u2011prop (training) | Only the cached \\(\\mathbf{k},\\mathbf{v}\\) (2\u202f\u00d7",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 157.44132939403985,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    }
+  ],
+  "summary": {
+    "median_wall_s": 3.2531426229998033,
+    "median_tok_per_s": 157.38627516056218,
+    "median_ttft_ms": null,
+    "median_generation_tok_per_s": null,
+    "median_tpot_ms": null
+  }
+}

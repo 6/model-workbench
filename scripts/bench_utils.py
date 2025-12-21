@@ -356,6 +356,30 @@ def detect_model_format(model_arg: str) -> str:
     return "safetensors"
 
 
+def detect_max_position_embeddings(model_path: str) -> int | None:
+    """Detect max_position_embeddings from model's config.json.
+
+    Args:
+        model_path: Path to model directory
+
+    Returns:
+        max_position_embeddings value if found, None otherwise
+    """
+    config_path = Path(model_path).expanduser() / "config.json"
+    if not config_path.exists():
+        return None
+    try:
+        with open(config_path) as f:
+            config = json.load(f)
+        # Check common field names used by different model architectures
+        for field in ["max_position_embeddings", "seq_length", "context_length", "max_seq_len"]:
+            if field in config:
+                return config[field]
+    except Exception:
+        pass
+    return None
+
+
 # ----------------------------
 # GGUF resolution
 # ----------------------------
@@ -676,7 +700,17 @@ def resolve_run_config(args):
 
     # Apply config defaults for args not specified on CLI
     if getattr(args, "max_model_len", None) is None:
-        args.max_model_len = backend_args.get("max_model_len", 65536)
+        config_default = backend_args.get("max_model_len", 65536)
+        if backend in ("vllm", "trtllm"):
+            detected = detect_max_position_embeddings(model_path)
+            if detected:
+                args.max_model_len = min(config_default, detected)
+                if args.max_model_len < config_default:
+                    log(f"Capping max_model_len to {args.max_model_len} (model's max_position_embeddings)")
+            else:
+                args.max_model_len = config_default
+        else:
+            args.max_model_len = config_default
     if getattr(args, "gpu_memory_utilization", None) is None:
         args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
     if getattr(args, "n_gpu_layers", None) is None:

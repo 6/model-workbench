@@ -42,7 +42,7 @@ defaults:
         n_gpu_layers: 999
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: 1.1.0
+      version: 1.2.0rc5
       image_type: prebuilt    # Uses NGC images
 
 models:
@@ -74,6 +74,8 @@ models:
   #- repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
   #  include:
   #    - "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L.gguf"
+
+  - repo_id: google/gemma-3-1b-it
 
   - repo_id: zai-org/GLM-4.6V-FP8
 
