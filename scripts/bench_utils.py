@@ -830,13 +830,15 @@ def warmup_model(
                 temperature=0.0,
             )
 
-            # Validate response contains completion
-            if not response.choices or not response.choices[0].message.content:
+            # Validate response contains completion (check both content and reasoning_content for thinking models)
+            msg = response.choices[0].message if response.choices else None
+            content = (msg.content or getattr(msg, "reasoning_content", "") or "") if msg else ""
+            if not response.choices or not content:
                 log(f"ERROR: Warmup got empty response from {backend}")
                 log(f"Response: {response}")
                 return False
 
-            generated = len(response.choices[0].message.content)
+            generated = len(content)
             log(f"Warmup generated {generated} characters")
             return True
 

@@ -380,6 +380,8 @@ def build_sglang_docker_cmd(
         "--tp",
         str(tensor_parallel),
         "--trust-remote-code",
+        "--random-seed",
+        "0",
     ]
 
     # Model-specific flags from config
