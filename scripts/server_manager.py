@@ -400,20 +400,18 @@ class ServerManager:
         mem_fraction_static: float | None = None,
         max_model_len: int | None = None,
         rebuild: bool = False,
-        image_type: str = "build",
         image_override: str | None = None,
         extra_args: list[str] | None = None,
     ) -> None:
-        """Start SGLang server via Docker with version pinning.
+        """Start SGLang server via Docker (prebuilt images only).
 
         Args:
             model_path: Path to model directory
             tensor_parallel: Tensor parallel size
-            version: SGLang version (release tag like 'v0.5.6.post2' or commit SHA)
+            version: SGLang version tag (e.g., 'nightly-dev-20251221-1d90b194')
             mem_fraction_static: Memory fraction for static allocation (optional)
             max_model_len: Max context length (optional)
-            rebuild: Force rebuild image even if cached
-            image_type: 'prebuilt' to use official images, 'build' to build from source
+            rebuild: Force re-pull image even if cached
             image_override: Direct image name to use (highest priority)
             extra_args: Additional SGLang server arguments (optional)
         """
@@ -422,12 +420,12 @@ class ServerManager:
             ensure_image,
         )
 
-        # Ensure image exists (builds or pulls as needed)
+        # Ensure image exists (pulls as needed) - SGLang is prebuilt-only
         image_name = ensure_image(
             "sglang",
             version,
             rebuild=rebuild,
-            image_type=image_type,
+            image_type="prebuilt",
             image_override=image_override,
         )
 
@@ -440,16 +438,9 @@ class ServerManager:
             mem_fraction_static=mem_fraction_static,
             max_model_len=max_model_len,
             extra_args=extra_args,
-            is_prebuilt=(image_type == "prebuilt"),
         )
 
-        # Label based on image source
-        if image_override:
-            label = f"SGLang ({image_override})"
-        elif image_type == "prebuilt":
-            label = f"SGLang (prebuilt {version})"
-        else:
-            label = f"SGLang (Docker {version})"
+        label = f"SGLang ({image_override or version})"
 
         self.start(
             cmd,

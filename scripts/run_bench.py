@@ -930,7 +930,6 @@ def run_benchmark_sglang(
                 mem_fraction_static=mem_fraction,
                 max_model_len=max_model_len,
                 rebuild=args.rebuild,
-                image_type=image_type,
                 image_override=args.docker_image,
             )
 
