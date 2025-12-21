@@ -718,6 +718,8 @@ def resolve_run_config(args):
         args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
     if getattr(args, "n_gpu_layers", None) is None:
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
+    if getattr(args, "frequency_penalty", None) is None:
+        args.frequency_penalty = backend_args.get("frequency_penalty", 0.0)
 
     return backend, model_path, backend_cfg
 

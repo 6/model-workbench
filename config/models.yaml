@@ -64,6 +64,10 @@ defaults:
 models:
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
     backend: sglang           # Only SGLang supports this model
+    backends:
+      sglang:
+        args:
+          frequency_penalty: 0.2   # Prevent repetition loops with AWQ quant
 
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 

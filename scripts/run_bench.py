@@ -240,6 +240,7 @@ def bench_once_vllm(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
+    frequency_penalty: float,
     host: str,
     port: int,
 ) -> dict:
@@ -255,6 +256,7 @@ def bench_once_vllm(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
         seed=0,
     )
     t1 = time.perf_counter()
@@ -405,6 +407,7 @@ def bench_once_trtllm(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
+    frequency_penalty: float,
     host: str,
     port: int,
 ) -> dict:
@@ -420,6 +423,7 @@ def bench_once_trtllm(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
         seed=0,
     )
     t1 = time.perf_counter()
@@ -589,6 +593,7 @@ def run_benchmark_vllm(
                 image_path,
                 args.max_tokens,
                 args.temperature,
+                args.frequency_penalty,
                 args.host,
                 args.port,
             )
@@ -749,6 +754,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 image_path,
                 args.max_tokens,
                 args.temperature,
+                args.frequency_penalty,
                 args.host,
                 args.port,
             )
@@ -808,6 +814,7 @@ def bench_once_sglang(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
+    frequency_penalty: float,
 ) -> dict:
     """Run single inference via SGLang OpenAI-compatible API."""
     messages = build_chat_messages(prompt, image_path)
@@ -818,6 +825,7 @@ def bench_once_sglang(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
         seed=0,
     )
     t1 = time.perf_counter()
@@ -969,6 +977,7 @@ def run_benchmark_sglang(
                 image_path,
                 args.max_tokens,
                 args.temperature,
+                args.frequency_penalty,
             )
             tok_s = r.get("tok_per_s")
             if tok_s is not None:
@@ -1228,6 +1237,12 @@ def main():
     )
     ap.add_argument("--max-tokens", type=int, default=512, help="Max tokens to generate")
     ap.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
+    ap.add_argument(
+        "--frequency-penalty",
+        type=float,
+        default=None,
+        help="Frequency penalty (0.0-2.0) to reduce repetition. Default: from config or 0.0",
+    )
     ap.add_argument("--iterations", type=int, default=5, help="Number of benchmark iterations")
     ap.add_argument(
         "--image", default=None, help="Image for vision benchmark: path, URL, 'example', or 'none'"
