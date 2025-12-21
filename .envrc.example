@@ -1,0 +1,6 @@
+# Disable DeepEval telemetry
+export DEEPEVAL_TELEMETRY_OPT_OUT=YES
+
+# Hugging Face token for gated models (e.g., Gemma, Llama)
+# Get your token at: https://huggingface.co/settings/tokens
+export HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx

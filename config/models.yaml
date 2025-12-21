@@ -4,7 +4,7 @@ defaults:
   backends:
     # https://github.com/vllm-project/vllm/releases
     vllm:
-      version: v0.12.0
+      version: v0.13.0
       image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
       args:
         gpu_memory_utilization: 0.95
@@ -42,16 +42,19 @@ defaults:
         n_gpu_layers: 999
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: v1.0.0
+      version: 1.2.0rc5
       image_type: prebuilt    # Uses NGC images
 
 models:
+  - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
+
+
   - repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:
       #- "UD-Q3_K_XL/*.gguf"
       - "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
-      - "UD-Q6_K_XL/*.gguf"
+      #- "UD-Q5_K_XL/*.gguf"
+      #- "UD-Q6_K_XL/*.gguf"
 
   - repo_id: unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF
     include:
@@ -69,6 +72,8 @@ models:
   #- repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
   #  include:
   #    - "mistralai_Devstral-Small-2-24B-Instruct-2512-Q4_K_L.gguf"
+
+  - repo_id: google/gemma-3-1b-it
 
   - repo_id: zai-org/GLM-4.6V-FP8
 

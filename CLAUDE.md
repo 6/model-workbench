@@ -21,6 +21,10 @@ Model Workbench is a local LLM benchmarking suite for downloading, serving, and 
 # Sync dependencies
 uv sync --all-extras
 
+# Lint and format (run after making Python changes)
+uv run ruff check --fix .
+uv run ruff format .
+
 # Download/update models from config
 uv run python scripts/fetch_models.py
 

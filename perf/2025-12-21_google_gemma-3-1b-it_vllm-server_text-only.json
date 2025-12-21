@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-21T01:06:18.049428",
+  "repo_id": "google/gemma-3-1b-it",
+  "model_ref": "~/models/google/gemma-3-1b-it",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94490
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94490
+      }
+    ],
+    "memory_used_mib": 188980,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 32768,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 1.2509726339994813,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and Memcached, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates by storing frequently accessed KV data in a fast, in-memory cache.\n\n**How it Works:**\n\n1. **Cache Hit:** When a client requests a key, the cache first checks if the key already exists. If it does (a \"cache hit\"), the data is immediately retrieved from the cache.\n2. **Cache Miss:** If the key is not found (a \"cache miss\"), the KV store retrieves the data from the underlying data store (e.g., database) and stores a copy in the cache.\n3. **Cache Eviction:** The cache maintains a limited size. When the cache is full, it employs a eviction policy (e.g., Least Recently Used - LRU) to remove less frequently accessed keys.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce the latency associated with retrieving long-context data.  Without a cache, retrieving a large, complex key-value pair would involve a round trip to the data store, significantly increasing response time.\n* **Improved Throughput:** By serving frequently accessed data from the cache, the KV store can handle a much higher volume of read requests.\n* **Memory Bandwidth Optimization:**  Caching reduces the load on the underlying data store, freeing up bandwidth for more complex operations.\n* **Impact on Long Contexts:**  For applications relying on long-context data (e.g., analytics, session management, complex data pipelines), the KV cache is *essential* for maintaining responsiveness and avoiding performance bottlenecks.  Without it, the application's performance degrades dramatically as the context grows.\n\n**Key Considerations:**\n\n* **Cache Size:**  Properly sizing the cache is critical. Too small, and you'll experience frequent misses. Too large, and you'll waste resources.\n* **Cache Eviction Strategy:**  Choosing the right eviction policy is important for maintaining a healthy cache.\n* **Data Consistency:**  KV caches typically offer eventual consistency.  Data in the cache might not be immediately consistent with the underlying data store.\n\n\n---\n\n**To help me tailor this further,",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 409.28153509088855,
+      "generation_tok_per_s": 412.29725324869185,
+      "ttft_ms": 4.221439361572266,
+      "prefill_ms": 3.534483999828808,
+      "generation_ms": 1241.8224859993643
+    },
+    {
+      "wall_s": 1.2508884159997251,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and Memcached, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates by storing frequently accessed KV data in a fast, in-memory cache.\n\n**How it Works:**\n\n1. **Cache Hit:** When a client requests a key, the cache first checks if the key already exists. If it does (a \"cache hit\"), the data is immediately retrieved from the cache.\n2. **Cache Miss:** If the key is not found (a \"cache miss\"), the KV store retrieves the data from the underlying data store (e.g., database) and stores a copy in the cache.\n3. **Cache Eviction:** The cache maintains a limited size. When the cache is full, it employs a eviction policy (e.g., Least Recently Used - LRU) to remove less frequently accessed keys.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce the latency associated with retrieving long-context data.  Without a cache, retrieving a large, complex key-value pair would involve a round trip to the data store, significantly increasing response time.\n* **Improved Throughput:** By serving frequently accessed data from the cache, the KV store can handle a much higher volume of read requests.\n* **Memory Bandwidth Optimization:**  Caching reduces the load on the underlying data store, freeing up bandwidth for more complex operations.\n* **Impact on Long Contexts:**  For applications relying on long-context data (e.g., analytics, session management, complex data pipelines), the KV cache is *essential* for maintaining responsiveness and avoiding performance bottlenecks.  Without it, the application's performance degrades dramatically as the context grows.\n\n**Key Considerations:**\n\n* **Cache Size:**  Properly sizing the cache is critical. Too small, and you'll experience frequent misses. Too large, and you'll waste resources.\n* **Cache Eviction Strategy:**  Choosing the right eviction policy is important for maintaining a healthy cache.\n* **Data Consistency:**  KV caches typically offer eventual consistency.  Data in the cache might not be immediately consistent with the underlying data store.\n\n\n---\n\n**To help me tailor this further,",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 409.3090906040595,
+      "generation_tok_per_s": 412.1024558986358,
+      "ttft_ms": 3.874540328979492,
+      "prefill_ms": 3.314962999866111,
+      "generation_ms": 1242.4094849993708
+    },
+    {
+      "wall_s": 1.2494516730002942,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and Memcached, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates by storing frequently accessed KV data in a fast, in-memory cache.\n\n**How it Works:**\n\n1. **Cache Hit:** When a client requests a key, the cache first checks if the key already exists. If it does (a \"cache hit\"), the data is immediately retrieved from the cache.\n2. **Cache Miss:** If the key is not found (a \"cache miss\"), the KV store retrieves the data from the underlying data store (e.g., database) and stores a copy in the cache.\n3. **Cache Eviction:** The cache maintains a limited size. When the cache is full, it employs a eviction policy (e.g., Least Recently Used - LRU) to remove less frequently accessed keys.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce the latency associated with retrieving long-context data.  Without a cache, retrieving a large, complex key-value pair would involve a round trip to the data store, significantly increasing response time.\n* **Improved Throughput:** By serving frequently accessed data from the cache, the KV store can handle a much higher volume of read requests.\n* **Memory Bandwidth Optimization:**  Caching reduces the load on the underlying data store, freeing up bandwidth for more complex operations.\n* **Impact on Long Contexts:**  For applications relying on long-context data (e.g., analytics, session management, complex data pipelines), the KV cache is *essential* for maintaining responsiveness and avoiding performance bottlenecks.  Without it, the application's performance degrades dramatically as the context grows.\n\n**Key Considerations:**\n\n* **Cache Size:**  Properly sizing the cache is critical. Too small, and you'll experience frequent misses. Too large, and you'll waste resources.\n* **Cache Eviction Strategy:**  Choosing the right eviction policy is important for maintaining a healthy cache.\n* **Data Consistency:**  KV caches typically offer eventual consistency.  Data in the cache might not be immediately consistent with the underlying data store.\n\n\n---\n\n**To help me tailor this further,",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 409.7797546427227,
+      "generation_tok_per_s": 412.5428330455558,
+      "ttft_ms": 3.7775039672851562,
+      "prefill_ms": 3.288171999884071,
+      "generation_ms": 1241.0832499990647
+    },
+    {
+      "wall_s": 1.248741923000125,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and Memcached, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates by storing frequently accessed KV data in a fast, in-memory cache.\n\n**How it Works:**\n\n1. **Cache Hit:** When a client requests a key, the cache first checks if the key already exists. If it does (a \"cache hit\"), the data is immediately retrieved from the cache.\n2. **Cache Miss:** If the key is not found (a \"cache miss\"), the KV store retrieves the data from the underlying data store (e.g., database) and stores a copy in the cache.\n3. **Cache Eviction:** The cache maintains a limited size. When the cache is full, it employs a eviction policy (e.g., Least Recently Used - LRU) to remove less frequently accessed keys.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce the latency associated with retrieving long-context data.  Without a cache, retrieving a large, complex key-value pair would involve a round trip to the data store, significantly increasing response time.\n* **Improved Throughput:** By serving frequently accessed data from the cache, the KV store can handle a much higher volume of read requests.\n* **Memory Bandwidth Optimization:**  Caching reduces the load on the underlying data store, freeing up bandwidth for more complex operations.\n* **Impact on Long Contexts:**  For applications relying on long-context data (e.g., analytics, session management, complex data pipelines), the KV cache is *essential* for maintaining responsiveness and avoiding performance bottlenecks.  Without it, the application's performance degrades dramatically as the context grows.\n\n**Key Considerations:**\n\n* **Cache Size:**  Properly sizing the cache is critical. Too small, and you'll experience frequent misses. Too large, and you'll waste resources.\n* **Cache Eviction Strategy:**  Choosing the right eviction policy is important for maintaining a healthy cache.\n* **Data Consistency:**  KV caches typically offer eventual consistency.  Data in the cache might not be immediately consistent with the underlying data store.\n\n\n---\n\n**To help me tailor this further,",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 410.0126619997755,
+      "generation_tok_per_s": 412.61289772907617,
+      "ttft_ms": 3.6017894744873047,
+      "prefill_ms": 3.1935150000208523,
+      "generation_ms": 1240.8725049990608
+    },
+    {
+      "wall_s": 1.2487748240000656,
+      "output_text": "Okay, here's a concise technical overview of KV cache and its importance for long-context queries, suitable for a technical audience:\n\n**KV Cache: A Concise Overview**\n\nThe KV cache is a crucial component in distributed key-value stores like Redis and Memcached, designed to significantly improve performance for read-heavy workloads involving large key-value pairs. It operates by storing frequently accessed KV data in a fast, in-memory cache.\n\n**How it Works:**\n\n1. **Cache Hit:** When a client requests a key, the cache first checks if the key already exists. If it does (a \"cache hit\"), the data is immediately retrieved from the cache.\n2. **Cache Miss:** If the key is not found (a \"cache miss\"), the KV store retrieves the data from the underlying data store (e.g., database) and stores a copy in the cache.\n3. **Cache Eviction:** The cache maintains a limited size. When the cache is full, it employs a eviction policy (e.g., Least Recently Used - LRU) to remove less frequently accessed keys.\n\n**Why it Matters for Long Contexts:**\n\n* **Reduced Latency:**  KV caches drastically reduce the latency associated with retrieving long-context data.  Without a cache, retrieving a large, complex key-value pair would involve a round trip to the data store, significantly increasing response time.\n* **Improved Throughput:** By serving frequently accessed data from the cache, the KV store can handle a much higher volume of read requests.\n* **Memory Bandwidth Optimization:**  Caching reduces the load on the underlying data store, freeing up bandwidth for more complex operations.\n* **Impact on Long Contexts:**  For applications relying on long-context data (e.g., analytics, session management, complex data pipelines), the KV cache is *essential* for maintaining responsiveness and avoiding performance bottlenecks.  Without it, the application's performance degrades dramatically as the context grows.\n\n**Key Considerations:**\n\n* **Cache Size:**  Properly sizing the cache is critical. Too small, and you'll experience frequent misses. Too large, and you'll waste resources.\n* **Cache Eviction Strategy:**  Choosing the right eviction policy is important for maintaining a healthy cache.\n* **Data Consistency:**  KV caches typically offer eventual consistency.  Data in the cache might not be immediately consistent with the underlying data store.\n\n\n---\n\n**To help me tailor this further,",
+      "prompt_tokens": 25,
+      "generated_tokens": 512,
+      "tok_per_s": 410.00185955059993,
+      "generation_tok_per_s": 412.4765710188287,
+      "ttft_ms": 3.53240966796875,
+      "prefill_ms": 3.1749099998705788,
+      "generation_ms": 1241.2826229992788
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.2494516730002942,
+    "median_tok_per_s": 409.7797546427227,
+    "median_ttft_ms": 3.7775039672851562,
+    "median_generation_tok_per_s": 412.4765710188287
+  }
+}

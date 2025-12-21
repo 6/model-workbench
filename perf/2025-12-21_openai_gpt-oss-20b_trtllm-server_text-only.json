@@ -1,0 +1,103 @@
+{
+  "timestamp": "2025-12-21T00:34:36.629571",
+  "repo_id": "openai/gpt-oss-20b",
+  "model_ref": "~/models/openai/gpt-oss-20b",
+  "engine": "trtllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88661
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88036
+      }
+    ],
+    "memory_used_mib": 176697,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "image": "none",
+    "backend_version": "1.2.0rc5"
+  },
+  "iterations": [
+    {
+      "wall_s": 2.2664041660000294,
+      "output_text": "**KV Cache (Key\u2011Value Cache) \u2013 Technical Overview**\n\n| Aspect | Description |\n|--------|-------------|\n| **What it is** | A memory\u2011resident table that stores the *key* (attention\u2011query) and *value* (contextual representation) vectors produced by each transformer layer during a forward pass. |\n| **How it works** | 1. **Forward pass**: For every token, each layer computes query, key, and value vectors. 2. **Cache storage**: The key and value vectors of all previously processed tokens are written to the KV cache. 3. **Subsequent passes**: When new tokens arrive, the model re\u2011uses the cached keys/values instead of recomputing them, only computing new queries for the new tokens. |\n| **Why it matters for long context** | - **Linear time & memory**: Without caching, each new token would require recomputing attention over *all* past tokens, leading to O(n\u00b2) time and memory. With KV cache, the cost per new token is O(k\u00b7d) (k = number of new tokens, d = hidden size), independent of the total context length. <br> - **Latency**: Real\u2011time inference (e.g., chat, streaming) needs sub\u2011second response times; caching eliminates the quadratic bottleneck. <br> - **Hardware efficiency**: Keeps working set small, enabling better cache locality on GPUs/TPUs and reducing memory bandwidth pressure. <br> - **Model scaling**: Allows models to support thousands of tokens (e.g., 32k\u2011token LLMs) without prohibitive compute or memory overhead. |\n| **Implementation notes** | - **Layer\u2011wise caching**: Each transformer layer maintains its own KV cache; the cache is typically a 2\u2011D tensor of shape `[batch, seq_len, d]`. <br> - **Memory layout**: Often stored in contiguous blocks per layer to maximize throughput. <br> - **Cache eviction**: For extremely long contexts, a sliding window or chunking strategy may be used to discard the oldest entries. <br> - **Precision**: KV cache can be stored in lower precision (e.g., FP16 or INT8) to save memory while still providing sufficient accuracy. |\n| **Key takeaways** | - KV cache is the core optimization that turns transformer inference from quadratic to",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 225.90851520698862,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 2.269185615999959,
+      "output_text": "**KV Cache in Transformer Models**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2013Value (KV) cache** | During a forward pass, each self\u2011attention layer produces a *key* (K) and a *value* (V) matrix from the input tokens. The KV cache stores these matrices for all tokens that have already been processed. | It allows the model to reuse previously computed attention information instead of recomputing it for every new token. This is essential when the context length grows, because the cost of a na\u00efve transformer scales as *O(L\u00b2)* (L = sequence length). |\n| **Cache size** | For a model with *H* heads and *D* hidden dimension, each head stores a key of shape *(L, D/H)* and a value of shape *(L, D/H)*. | The memory footprint grows linearly with L. Efficient caching keeps the per\u2011token cost roughly constant, enabling practical inference on sequences of thousands or tens of thousands of tokens. |\n| **Cache update** | After generating a new token, its K/V are appended to the cache. The cache is then used for the next token\u2019s attention. | This incremental update avoids recomputing the entire attention matrix, reducing compute from *O(L\u00b2)* to *O(L)* per token. |\n| **Cache pruning / sliding window** | For extremely long contexts, one may keep only the most recent *W* tokens (sliding window) or use hierarchical caching. | Keeps memory usage bounded while still providing the model with recent context, which is often the most relevant for generation. |\n| **Hardware considerations** | KV cache is typically stored in fast GPU/TPU memory (e.g., HBM) and accessed in a batched, contiguous manner. | Proper layout (e.g., interleaved per head) maximizes memory bandwidth and reduces cache misses, further speeding up inference. |\n\n### Why KV Cache Matters for Long Context\n\n1. **Computational Efficiency**  \n   - Without caching, each new token requires recomputing attention over the entire sequence, leading to quadratic time.  \n   - With caching, the cost per token is linear, making it feasible to generate or evaluate sequences of 10k+ tokens on commodity hardware.\n\n2. **Memory Efficiency**  \n   - Storing K/V once per token avoids redundant",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 225.63160826946176,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 2.268285146999915,
+      "output_text": "**KV Cache (Key\u2011Value Cache) \u2013 Technical Overview**\n\n| Aspect | Description |\n|--------|-------------|\n| **What it is** | A memory buffer that stores the *key* and *value* tensors produced by each transformer layer during a forward pass. For a model with *L* layers, the cache holds *L* key\u2011value pairs per token. |\n| **How it works** | 1. **First pass** (e.g., generating the first token of a prompt): the model computes keys/values for every token in the input and writes them to the cache. 2. **Subsequent passes** (e.g., generating the next token): the model re\u2011uses the cached keys/values for all previously processed tokens, only computing keys/values for the new token. |\n| **Why it matters for long context** | - **Computational savings**: Without a cache, each new token would require recomputing attention over the entire context, leading to *O(N\u00b2)* complexity per token. With a cache, only the new token\u2019s keys/values are computed, reducing per\u2011token cost to *O(N)*. <br> - **Latency**: Faster generation for long prompts (hundreds to thousands of tokens) because the heavy part of the attention matrix is reused. <br> - **Memory footprint**: The cache grows linearly with context length, but is still far smaller than recomputing full attention matrices. <br> - **Model scaling**: Enables practical use of very large models (e.g., 70B, 175B) on long documents, where otherwise the quadratic cost would be prohibitive. |\n| **Implementation notes** | - **Cache format**: Typically a 3\u2011D tensor `[layers, seq_len, head_dim]` for keys and a similar shape for values. <br> - **Batching**: For batched inference, the cache is often padded to the maximum sequence length in the batch. <br> - **Hardware**: GPUs/TPUs benefit from contiguous memory layout; some frameworks (e.g., HuggingFace Accelerate, DeepSpeed) provide optimized KV cache APIs. <br> - **Precision**: KV cache can be stored in lower precision (e.g., FP16 or INT8) to save memory without significant loss in quality. |\n| **Practical impact** | - **Cost**:",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 225.7211800188273,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 2.2652807060003397,
+      "output_text": "**KV Cache in Transformer Models**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2013Value (KV) cache** | During a forward pass, each self\u2011attention layer produces a *key* (K) and *value* (V) matrix from the input tokens. The KV cache stores these matrices for all tokens that have already been processed. | It allows the model to reuse previously computed attention information instead of recomputing it for every new token. This is essential when the context length grows, because the cost of a na\u00efve transformer scales as *O(L\u00b2)* (L = sequence length). |\n| **Cache size** | For a model with *H* heads and *D* hidden size, each head stores a matrix of shape *(L, D/H)* for keys and the same for values. | The memory footprint grows linearly with L. Efficient caching keeps the per\u2011token cost roughly *O(L)* rather than *O(L\u00b2)*, making it feasible to process thousands of tokens. |\n| **Cache update** | After generating a new token, its K and V are appended to the cache. The cache is then used for the next token\u2019s attention. | Enables *autoregressive* generation without re\u2011encoding the entire context, drastically reducing latency. |\n| **Cache pruning / sliding window** | For extremely long contexts, older entries can be dropped or compressed (e.g., via attention\u2011sparse or hierarchical schemes). | Keeps memory usage bounded while still providing the model with a long\u2011term memory of past tokens. |\n| **Hardware considerations** | KV cache is often stored in fast on\u2011device memory (e.g., GPU/TPU SRAM or HBM) and accessed with low\u2011latency kernels. | Reduces memory bandwidth pressure and allows higher throughput on modern accelerators. |\n\n### Why KV Cache Matters for Long Context\n\n1. **Computational Efficiency**  \n   - Without caching, each new token would require recomputing attention over the entire *L* tokens, leading to *O(L\u00b2)* complexity.  \n   - With a cache, the cost per new token is *O(L)* (only the new token\u2019s K/V are computed, and the rest are reused).\n\n2. **Memory Footprint**  \n   - Storing K/V for all tokens is linear in *L*, which is far cheaper than",
+      "prompt_tokens": 87,
+      "generated_tokens": 512,
+      "tok_per_s": 226.02055394009224,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 1.8041277189995526,
+      "output_text": "**KV Cache (Key\u2011Value Cache) \u2013 Technical Overview**\n\n| Aspect | Description |\n|--------|-------------|\n| **What it is** | A memory\u2011resident table that stores the *key* (attention\u2011query) and *value* (contextual representation) vectors produced by each transformer layer during a forward pass. |\n| **How it works** | 1. **Forward pass**: For each token, the model computes query, key, and value vectors. 2. **Cache storage**: The key and value vectors for all tokens processed so far are written to the KV cache. 3. **Subsequent passes**: When generating the next token, the model re\u2011uses the cached keys/values instead of recomputing them, only computing a new query for the new token. |\n| **Why it matters for long context** | - **Computational savings**: Without a cache, each new token would require recomputing keys/values for *all* previous tokens, leading to O(n\u00b2) complexity. With a cache, only the new token\u2019s query is computed, reducing cost to O(n). <br> - **Latency**: Faster token generation enables real\u2011time applications (chat, code completion) even with 10k+ token contexts. <br> - **Memory\u2011efficiency**: The cache stores only the necessary vectors (often 16\u2011bit or 8\u2011bit quantized), allowing models to handle longer contexts without exceeding GPU memory. <br> - **Model scaling**: Enables large\u2011scale models (e.g., 70B) to process long documents by offloading repeated work to the cache rather than the GPU\u2019s compute units. |\n\n**Bottom line:** The KV cache turns a quadratic\u2011time attention operation into a linear\u2011time one, making it feasible to generate or evaluate sequences with thousands of tokens while keeping compute and memory footprints manageable.",
+      "prompt_tokens": 87,
+      "generated_tokens": 406,
+      "tok_per_s": 225.03950009988216,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    }
+  ],
+  "summary": {
+    "median_wall_s": 2.2664041660000294,
+    "median_tok_per_s": 225.7211800188273,
+    "median_ttft_ms": null,
+    "median_generation_tok_per_s": null,
+    "median_tpot_ms": null
+  }
+}
