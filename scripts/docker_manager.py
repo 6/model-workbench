@@ -385,7 +385,7 @@ def build_sglang_docker_cmd(
         "--tp",
         str(tensor_parallel),
         "--trust-remote-code",
-        "--random-seed",
+        "--random-seed",  # Note: doesn't achieve determinism for MiMo, but no performance cost
         "0",
     ]
 
