@@ -77,6 +77,14 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
             )
         return backend_override
 
+    # Check model config for explicit backend preference
+    model_cfg = get_model_config(model_arg)
+    if model_cfg and model_cfg.get("backend"):
+        configured_backend = model_cfg["backend"]
+        if configured_backend in compatible:
+            return configured_backend
+        # Configured backend incompatible with format - fall through to default
+
     return get_default_backend(fmt)
 
 
