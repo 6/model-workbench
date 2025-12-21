@@ -365,6 +365,11 @@ def build_sglang_docker_cmd(
         [(model_path_resolved, model_path_resolved, "ro")],
     )
 
+    # Disable DeepGEMM for Blackwell (SM120) - not supported, causes CUDA graph capture to fail
+    # https://github.com/sgl-project/sglang/issues/12320
+    cmd.insert(-1, "-e")
+    cmd.insert(-1, "SGLANG_ENABLE_JIT_DEEPGEMM=0")
+
     # For prebuilt images, need to specify the command explicitly
     # (our built images have ENTRYPOINT set, prebuilt images don't)
     if is_prebuilt:
@@ -382,6 +387,7 @@ def build_sglang_docker_cmd(
         "--trust-remote-code",
         "--random-seed",
         "0",
+        "--enable-deterministic-inference",
     ]
 
     # Model-specific flags from config
