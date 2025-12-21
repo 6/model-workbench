@@ -348,10 +348,6 @@ def build_trtllm_docker_cmd(
     if config_dir.exists():
         mounts.append((str(config_dir), "/config", "ro"))
 
-    # Get model-specific args first to check for autodeploy mode
-    model_args = _get_trtllm_model_specific_args(model_path)
-    uses_autodeploy = "--backend" in model_args and "_autodeploy" in model_args
-
     cmd = _docker_run_base(
         "trtllm",
         image_name,
@@ -365,11 +361,9 @@ def build_trtllm_docker_cmd(
         "0.0.0.0",
         "--port",
         str(port),
+        "--tp_size",
+        str(tensor_parallel),
     ]
-
-    # AutoDeploy auto-detects GPUs, standard mode uses --tp_size
-    if not uses_autodeploy:
-        cmd += ["--tp_size", str(tensor_parallel)]
 
     if max_batch_size is not None:
         cmd += ["--max_batch_size", str(max_batch_size)]
@@ -379,7 +373,7 @@ def build_trtllm_docker_cmd(
         cmd += ["--max_seq_len", str(max_seq_len)]
 
     # Model-specific flags from config (e.g., --backend _autodeploy for NemotronH)
-    cmd += model_args
+    cmd += _get_trtllm_model_specific_args(model_path)
 
     if extra_args:
         cmd += extra_args
