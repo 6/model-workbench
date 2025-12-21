@@ -706,7 +706,9 @@ def resolve_run_config(args):
             if detected:
                 args.max_model_len = min(config_default, detected)
                 if args.max_model_len < config_default:
-                    log(f"Capping max_model_len to {args.max_model_len} (model's max_position_embeddings)")
+                    log(
+                        f"Capping max_model_len to {args.max_model_len} (model's max_position_embeddings)"
+                    )
             else:
                 args.max_model_len = config_default
         else:
