@@ -201,8 +201,8 @@ def main():
         timeout=args.server_timeout,
     )
 
-    # Model name for API (vLLM/trtllm/sglang use full path, llama.cpp uses gpt-3.5-turbo)
-    api_model = model_path if backend in ("vllm", "trtllm", "sglang") else "gpt-3.5-turbo"
+    # Model name for API (llama.cpp uses gpt-3.5-turbo, others use full path)
+    api_model = "gpt-3.5-turbo" if backend in ("llama", "ik_llama") else model_path
 
     # Test-only mode
     if args.test_only:
