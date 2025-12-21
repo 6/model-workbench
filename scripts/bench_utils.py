@@ -582,9 +582,10 @@ def get_backend_config(engine: str) -> dict:
             "version": backend_cfg.get("version"),
             "image_type": backend_cfg.get("image_type", "build"),
             "args": backend_cfg.get("args", {}),
+            "model_patterns": backend_cfg.get("model_patterns", []),
         }
 
-    return {"version": None, "image_type": "build", "args": {}}
+    return {"version": None, "image_type": "build", "args": {}, "model_patterns": []}
 
 
 def get_model_backend_config(model_arg: str, engine: str) -> dict:
@@ -688,8 +689,8 @@ def resolve_run_config(args):
     if getattr(args, "port", None) is None:
         args.port = backend_info["default_port"]
 
-    # Auto-detect tensor parallel for vLLM and trtllm
-    if backend in ("vllm", "trtllm") and getattr(args, "tensor_parallel", None) is None:
+    # Auto-detect tensor parallel for vLLM, trtllm, and sglang
+    if backend in ("vllm", "trtllm", "sglang") and getattr(args, "tensor_parallel", None) is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
@@ -717,6 +718,8 @@ def resolve_run_config(args):
         args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
     if getattr(args, "n_gpu_layers", None) is None:
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
+    if getattr(args, "frequency_penalty", None) is None:
+        args.frequency_penalty = backend_args.get("frequency_penalty", 0.0)
 
     return backend, model_path, backend_cfg
 
@@ -805,7 +808,7 @@ def warmup_model(
     the model is fully loaded (not just partially cached).
 
     Args:
-        backend: Backend type ("vllm", "trtllm", "llama", "ik_llama")
+        backend: Backend type ("vllm", "trtllm", "sglang", "llama", "ik_llama")
         host: Server host
         port: Server port
         api_model: Model name for API requests
@@ -817,7 +820,7 @@ def warmup_model(
         True if warmup succeeded, False if it failed
     """
     try:
-        if backend in ("vllm", "trtllm"):
+        if backend in ("vllm", "trtllm", "sglang"):
             # Use OpenAI-compatible API
             client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
             messages = build_chat_messages(prompt, image_path=None)
@@ -829,13 +832,15 @@ def warmup_model(
                 temperature=0.0,
             )
 
-            # Validate response contains completion
-            if not response.choices or not response.choices[0].message.content:
+            # Validate response contains completion (check both content and reasoning_content for thinking models)
+            msg = response.choices[0].message if response.choices else None
+            content = (msg.content or getattr(msg, "reasoning_content", "") or "") if msg else ""
+            if not response.choices or not content:
                 log(f"ERROR: Warmup got empty response from {backend}")
                 log(f"Response: {response}")
                 return False
 
-            generated = len(response.choices[0].message.content)
+            generated = len(content)
             log(f"Warmup generated {generated} characters")
             return True
 

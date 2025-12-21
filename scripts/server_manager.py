@@ -392,6 +392,62 @@ class ServerManager:
             label=f"TensorRT-LLM ({version})",
         )
 
+    def start_sglang(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        version: str,
+        mem_fraction_static: float | None = None,
+        max_model_len: int | None = None,
+        rebuild: bool = False,
+        image_override: str | None = None,
+        extra_args: list[str] | None = None,
+    ) -> None:
+        """Start SGLang server via Docker (prebuilt images only).
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size
+            version: SGLang version tag (e.g., 'nightly-dev-20251221-1d90b194')
+            mem_fraction_static: Memory fraction for static allocation (optional)
+            max_model_len: Max context length (optional)
+            rebuild: Force re-pull image even if cached
+            image_override: Direct image name to use (highest priority)
+            extra_args: Additional SGLang server arguments (optional)
+        """
+        from docker_manager import (
+            build_sglang_docker_cmd,
+            ensure_image,
+        )
+
+        # Ensure image exists (pulls as needed) - SGLang is prebuilt-only
+        image_name = ensure_image(
+            "sglang",
+            version,
+            rebuild=rebuild,
+            image_type="prebuilt",
+            image_override=image_override,
+        )
+
+        cmd = build_sglang_docker_cmd(
+            image_name=image_name,
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            mem_fraction_static=mem_fraction_static,
+            max_model_len=max_model_len,
+            extra_args=extra_args,
+        )
+
+        label = f"SGLang ({image_override or version})"
+
+        self.start(
+            cmd,
+            lambda: wait_for_openai_ready(self.host, self.port),  # SGLang uses OpenAI API
+            label=label,
+        )
+
 
 # ----------------------------
 # Readiness checks

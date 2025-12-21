@@ -17,6 +17,9 @@ Examples:
   # Use TensorRT-LLM backend
   uv run python scripts/run_bench.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
 
+  # Use SGLang backend (e.g., for MiMo models)
+  uv run python scripts/run_bench.py --model ~/models/cyankiwi/MiMo-V2-Flash-AWQ-4bit --backend sglang
+
   # GGUF model -> llama.cpp (auto-detected)
   uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
@@ -237,6 +240,7 @@ def bench_once_vllm(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
+    frequency_penalty: float,
     host: str,
     port: int,
 ) -> dict:
@@ -252,13 +256,18 @@ def bench_once_vllm(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
+        seed=0,
     )
     t1 = time.perf_counter()
 
     # Scrape metrics after request
     metrics_after = scrape_prometheus_metrics(host, port, "vllm")
 
-    output_text = response.choices[0].message.content or ""
+    msg = response.choices[0].message
+    reasoning = getattr(msg, "reasoning_content", "") or ""
+    content = msg.content or ""
+    output_text = reasoning if len(reasoning) > len(content) else content
     wall = t1 - t0
 
     prompt_tokens = None
@@ -398,6 +407,7 @@ def bench_once_trtllm(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
+    frequency_penalty: float,
     host: str,
     port: int,
 ) -> dict:
@@ -413,13 +423,18 @@ def bench_once_trtllm(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
+        seed=0,
     )
     t1 = time.perf_counter()
 
     # Scrape metrics after request
     metrics_after = scrape_prometheus_metrics(host, port, "trtllm")
 
-    output_text = response.choices[0].message.content or ""
+    msg = response.choices[0].message
+    reasoning = getattr(msg, "reasoning_content", "") or ""
+    content = msg.content or ""
+    output_text = reasoning if len(reasoning) > len(content) else content
     wall = t1 - t0
 
     prompt_tokens = None
@@ -578,6 +593,7 @@ def run_benchmark_vllm(
                 image_path,
                 args.max_tokens,
                 args.temperature,
+                args.frequency_penalty,
                 args.host,
                 args.port,
             )
@@ -738,6 +754,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 image_path,
                 args.max_tokens,
                 args.temperature,
+                args.frequency_penalty,
                 args.host,
                 args.port,
             )
@@ -782,6 +799,218 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
+                "image": image_label,
+                "backend_version": backend_version,
+            },
+            iterations=results,
+            summary=summary,
+        )
+
+
+def bench_once_sglang(
+    client: OpenAI,
+    model: str,
+    prompt: str,
+    image_path: str | None,
+    max_tokens: int,
+    temperature: float,
+    frequency_penalty: float,
+) -> dict:
+    """Run single inference via SGLang OpenAI-compatible API."""
+    messages = build_chat_messages(prompt, image_path)
+
+    t0 = time.perf_counter()
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
+        seed=0,
+    )
+    t1 = time.perf_counter()
+
+    msg = response.choices[0].message
+    reasoning = getattr(msg, "reasoning_content", "") or ""
+    content = msg.content or ""
+    output_text = reasoning if len(reasoning) > len(content) else content
+    wall = t1 - t0
+
+    prompt_tokens = None
+    generated_tokens = None
+    if response.usage:
+        prompt_tokens = response.usage.prompt_tokens
+        generated_tokens = response.usage.completion_tokens
+
+    tok_per_s = None
+    if generated_tokens and wall > 0:
+        tok_per_s = generated_tokens / wall
+
+    return {
+        "wall_s": wall,
+        "output_text": output_text,
+        "prompt_tokens": prompt_tokens,
+        "generated_tokens": generated_tokens,
+        "tok_per_s": tok_per_s,
+    }
+
+
+def run_benchmark_sglang(
+    args, model_path: str, image_path: str | None, image_label: str, image_type: str = "build"
+):
+    """Run benchmarks using SGLang backend (Docker)."""
+    from bench_utils import get_model_backend_config
+
+    is_vision = image_path is not None
+    mode = "vision" if is_vision else "text-only"
+
+    # Resolve backend version from config or CLI
+    backend_version = args.backend_version or get_model_backend_version(args.model, "sglang")
+    if not backend_version:
+        raise SystemExit(
+            "No backend version specified and none found in config.\n"
+            "Either:\n"
+            "  1. Set defaults.backends.sglang.version in config/models.yaml\n"
+            "  2. Pass --backend-version 47cdb65"
+        )
+
+    # Get SGLang-specific args from config
+    backend_cfg = get_model_backend_config(args.model, "sglang")
+    mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
+    max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
+
+    # Select prompt
+    if args.prompt:
+        prompt_text = args.prompt
+    elif is_vision:
+        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
+    else:
+        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+
+    print("\n== SGLang Benchmark ==")
+    print(f"model:           {model_path}")
+    print(f"mode:            {mode}")
+    print(f"backend_version: {backend_version}")
+    print(f"image_type:      {image_type}")
+    print(f"tensor_parallel: {args.tensor_parallel}")
+    print(f"image:           {image_label}")
+    print(f"prompt:          {prompt_text[:50]}...")
+    print(f"max_model_len:   {max_model_len}")
+
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
+    )
+
+    if not server.is_running() and args.no_autostart:
+        raise SystemExit(
+            f"SGLang server not detected on {args.host}:{args.port} and --no-autostart was set."
+        )
+
+    with server:
+        # Check for existing containers and prompt user
+        if not args.no_autostart and not args.force_cleanup:
+            existing = get_containers_on_port(args.port)
+
+            if existing:
+                # Non-interactive environment check
+                if not sys.stdin.isatty():
+                    log("Error: Container running on port and stdin is not interactive")
+                    log("Use --force-cleanup to automatically stop containers in CI/CD")
+                    sys.exit(1)
+
+                # Interactive prompt
+                if not prompt_cleanup_confirmation(args.port, existing):
+                    log("Use --no-autostart to benchmark against existing server")
+                    sys.exit(0)
+
+                cleanup_existing_containers(args.port)
+        elif not args.no_autostart and args.force_cleanup:
+            # Force cleanup without prompt (for automation)
+            cleanup_existing_containers(args.port)
+
+        if not server.is_running():
+            server.start_sglang(
+                model_path=model_path,
+                tensor_parallel=args.tensor_parallel,
+                version=backend_version,
+                mem_fraction_static=mem_fraction,
+                max_model_len=max_model_len,
+                rebuild=args.rebuild,
+                image_override=args.docker_image,
+            )
+
+        gpu_info = get_gpu_info(include_memory=True)
+        log(
+            f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB"
+        )
+
+        client = OpenAI(
+            base_url=f"http://{args.host}:{args.port}/v1",
+            api_key="dummy",
+        )
+
+        api_model = model_path
+
+        # Warmup
+        log("Warmup request...")
+        success = warmup_model(
+            backend="sglang",
+            host=args.host,
+            port=args.port,
+            api_model=api_model,
+            prompt=prompt_text,
+            max_tokens=min(128, args.max_tokens),
+        )
+        if not success:
+            log("WARNING: Warmup failed, benchmark may include model load time")
+
+        # Benchmark
+        results = []
+        for i in range(args.iterations):
+            log(f"Benchmark {i + 1} of {args.iterations}...")
+            r = bench_once_sglang(
+                client,
+                api_model,
+                prompt_text,
+                image_path,
+                args.max_tokens,
+                args.temperature,
+                args.frequency_penalty,
+            )
+            tok_s = r.get("tok_per_s")
+            if tok_s is not None:
+                log(f"  {r['wall_s']:.2f}s | {tok_s:.1f} tok/s")
+            else:
+                log(f"  {r['wall_s']:.2f}s")
+            results.append(r)
+
+        summary = {
+            "median_wall_s": med(results, "wall_s"),
+            "median_tok_per_s": med(results, "tok_per_s"),
+        }
+
+        if summary["median_tok_per_s"] is not None:
+            log(f"Median: {summary['median_tok_per_s']:.1f} tok/s")
+        else:
+            log(f"Median: {summary['median_wall_s']:.2f}s")
+
+        write_benchmark_result(
+            results_dir=RESULTS_ROOT,
+            repo_id=extract_repo_id(args.model),
+            model_ref=compact_path(model_path),
+            engine="sglang-server",
+            mode=mode,
+            gpu_info=gpu_info,
+            config={
+                "prompt_set": args.prompt_set,
+                "prompt": prompt_text,
+                "max_tokens": args.max_tokens,
+                "temperature": args.temperature,
+                "tensor_parallel_size": args.tensor_parallel,
+                "max_model_len": max_model_len,
+                "mem_fraction_static": mem_fraction,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -1008,6 +1237,12 @@ def main():
     )
     ap.add_argument("--max-tokens", type=int, default=512, help="Max tokens to generate")
     ap.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
+    ap.add_argument(
+        "--frequency-penalty",
+        type=float,
+        default=None,
+        help="Frequency penalty (0.0-2.0) to reduce repetition. Default: from config or 0.0",
+    )
     ap.add_argument("--iterations", type=int, default=5, help="Number of benchmark iterations")
     ap.add_argument(
         "--image", default=None, help="Image for vision benchmark: path, URL, 'example', or 'none'"
@@ -1151,6 +1386,8 @@ def main():
         run_benchmark_vllm(args, model_path, image_path, image_label, image_type)
     elif backend == "trtllm":
         run_benchmark_trtllm(args, model_path, image_path, image_label)
+    elif backend == "sglang":
+        run_benchmark_sglang(args, model_path, image_path, image_label, image_type)
     else:
         run_benchmark_gguf(args, model_path, image_path, image_label, backend)
 

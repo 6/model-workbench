@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-12-21T04:05:03.058605",
+  "repo_id": "cyankiwi/MiMo-V2-Flash-AWQ-4bit",
+  "model_ref": "~/models/cyankiwi/MiMo-V2-Flash-AWQ-4bit",
+  "engine": "sglang-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88476
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88476
+      }
+    ],
+    "memory_used_mib": 176952,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "mem_fraction_static": 0.9,
+    "image": "none",
+    "backend_version": "nightly-dev-20251221-1d90b194"
+  },
+  "iterations": [
+    {
+      "wall_s": 4.31138085099883,
+      "output_text": "### Technical Overview: KV Cache in Long-Context Architectures\n\n**Definition**\nKV (Key-Value) Cache is a memory mechanism used to store and retrieve past computational states (Keys) and their corresponding outputs (Values). In the context of Large Language Models (LLMs), it specifically refers to the **Key-Value pairs** generated during the self-attention operation.\n\n the Transformer architecture.\n\n.\n\n**Why it Matters for Long Context**\n\n**\n\nStandard self-attention has a computational complexity of **$O(N^2)$**, where $N$ is the sequence length. As $N$ grows (e.g., processing long documents, codebases, or conversations), this quadratic cost becomes a severe bottleneck for both inference latency and training memory.\n\n**\n\nKV Cache optimization addresses this by changing how attention is computed:\n\n specifically by caching the Key ($K$) and Value ($V$) states of previous tokens so they do not need to be recomputed for every new token generated.\n\n**\n\n### 1. The Core Mechanism: Reusing Past Computations\nIn standard self-attention, when generating the $t$-th token, the model computes attention scores between this new token and all previous tokens ($1$ to $t-1$). This requires retrieving the Key and Value vectors for all previous tokens from memory.\n\n  \n\n**With KV Cache Optimization:**\n**\n1.  **Pre-computation:** Before generation starts, the model computes the $K$ and $V$ vectors for the entire context (or prefix) and stores them in a fast key-value store.\n2.  **Token Generation:** When generating the $t$-th token, we only need to compute the Query ($Q_t$) for this new token.\n3.  **Attention Score:** We compute attention scores between $Q_t$ and all cached Keys ($K_1, K_2, ..., K_{t-1}$). This is done via a fast matrix multiplication or kernel computation.\n4.  **Retrieval:** We retrieve the corresponding Values ($V_1, ..., V_{t-1}$) using these scores.\n\n5.  **No Recomputation:** We do **not** need to re-fetch or re-compute the Keys and Values for previous tokens; they are already in the cache.\n\nThis optimization is crucial for long-context tasks because it reduces the memory access overhead and avoids redundant computations, allowing models to process much longer sequences efficiently.\n\n### 3. Why It Matters for Long Context\n\nThe primary benefit of KV",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 118.75545624353354
+    },
+    {
+      "wall_s": 3.0020384170020407,
+      "output_text": "### Technical Overview: KV Cache and Long Context\n\n**What is KV Cache?**\nKV (Key-Value) cache is the dynamic memory used by Transformer-based LLMs to store intermediate computations\u2014specifically, the Keys ($K$) and Values ($V$) matrices\u2014during the attention mechanism. In a standard self-attention layer, the model computes a unique set of $K$ and $V$ matrices for every token in the input sequence. These matrices are used to calculate the attention scores that determine how much each token attends to every other token.\n\n The size of this KV cache scales linearly with the sequence length ($O(N)$), as it must store a separate set of key/value vectors for every token in the context.\n\n \n\n### Why It Matters for Long Context\n\n The KV cache is the primary bottleneck for processing long sequences because its memory footprint grows with the context length, not just with the model's fixed parameter count. For a fixed hardware budget, this forces a trade-off: you can either process a long context with a small batch size, or a short context with a large batch size. This scaling is what makes processing very long contexts (e.g., 100k+ tokens) computationally prohibitive without specialized techniques.\n\n Techniques like **Sliding Window Attention** (e.g., in Transformer-XL) or **Sparse Attention** (e.g., BigBird) aim to mitigate this by not storing the full KV cache for every layer or by only computing attention over sparse blocks, but they still fundamentally scale with context length. The KV cache is the core reason why \"infinite\" context is an active research frontier (e.g., RWKV, Mamba, which replace the KV cache with a state vector that scales sub-linearly).",
+      "prompt_tokens": 42,
+      "generated_tokens": 359,
+      "tok_per_s": 119.58541168787313
+    },
+    {
+      "wall_s": 4.273268731998542,
+      "output_text": "### Technical Overview: KV Cache and Long Context\n\n**KV cache** (Key-Value Cache) is a memory optimization technique used in transformer-based LLMs to reduce the computational cost of self-attention.\n\n In standard attention, the complexity scales quadratically ($O(N^2)$) with sequence length $ $N$. KV cache reduces this to $O(N)$ by caching the Key ($K$) and Value ($V$) tensors of previous tokens, rather than recomputing them at every layer and every step.\n\n**\n\n#### Why It Matters for Long Context\n1.  **Computational Efficiency**: Without KV cache, the attention mechanism must process all $N$ tokens for each new token, leading to $ quadratic complexity. With KV cache, only the new token's query is computed against the cached keys and values, reducing the per-step complexity to $O(N)$.\n This makes processing long sequences (e.g., thousands of tokens) feasible.\n\n otherwise it would be prohibitively slow.\n\n2.  **Memory Optimization**: It avoids redundant computation. In autoregressive generation, the key/value tensors for previous tokens are static; recomputing them is wasteful. Caching them allows the model to focus compute power on the new token's query and attention scores.\n\n3.  **Enables Real-Time Applications**: Without KV cache, generating a long response could take minutes or hours. With it, generation becomes fast enough for interactive use (e.g., chatbots, code completion), making advanced LLMs practical in user-facing products.\n\nIn summary, KV cache is a memory optimization that reduces the quadratic cost of attention to linear per-step complexity by caching static key/value tensors. This is critical for long contexts because it makes generation computationally feasible and fast enough for real-time applications, turning what would be a slow batch process into an interactive experience.",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 119.81460378705121
+    },
+    {
+      "wall_s": 4.273928006998176,
+      "output_text": "### Technical Overview: KV Cache and Long Context\n\n**KV cache (Key-Value Cache)** is a memory optimization technique used in Large Language Models (LLMs) to store the intermediate computations (Keys, Values, and sometimes Gates) of previous tokens. It is the enabling technology behind **StreamingLLM** and **FlashAttention-2**.\n\n#### 1. The Problem: Quadratic Context\nStandard Transformer inference relies on the **Self-Attention** mechanism. To compute the attention for a new token, the model must attend to all previous tokens.\n\n This requires loading the Key (K) and Value (V) matrices of every token in the history into GPU memory.\n\n As the context length grows:\n this leads to two bottlenecks:\n*   **Memory Explosion:** KV cache size scales linearly ($O(N)$) with sequence length.\n Loading 100k tokens is significantly slower than 1k.\n  \n   **Compute Bottleneck:** The attention operation ($Softmax(Q \\cdot K^T) \\cdot V$) becomes quadratic in complexity ($O(N^2)$).\n\n This causes latency to grow exponentially as context grows.\n\n#### Why KV Cache Matters for Long Context\n\nThe KV Cache is the primary optimization technique for **Inference** on long sequences. It matters because it solves two problems:\n\n1.  **Memory Bandwidth (The \"Loading\" Problem):**\n    *   **Standard Attention:** Requires loading all $K$ and $V$ matrices from GPU memory for every token. As context grows to 100k tokens, this becomes a massive bottleneck.\n    *   **KV Cache Optimization:** Techniques like **FlashAttention-2** use a tiling strategy. It loads small blocks of $K$ and $V$ into fast on-chip memory (SRAM), computes attention, and writes back results. This minimizes expensivequent data movement between GPU HBM and SRAM, making attention compute-bound rather than memory-bound.\n\n2.  **Compute Complexity (The \"N^2\" Problem):**\n    *   Standard attention has quadratic complexity $ $O(N^2)$.\n For 100k tokens, this is 10 billion operations per token.\n    *   KV Cache optimizations like FlashAttention are not just about memory; they also improve compute efficiency by reducing overhead from softmaxmax backpropagation and using tiling strategies that are better suited for modern GPU architectures.\n\n#### Why It Matters for Long Context\n\nWithout KV Cache optimization, long-context LLMs are impr",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 119.79612177875848
+    },
+    {
+      "wall_s": 4.27250577200175,
+      "output_text": "### Technical Overview: KV Cache and Long Context\n\n**What is KV Cache?**\nKV (Key-Value) cache is a dynamic memory store that maps unique keys to arbitrary values. In the context of long-context processing (e.g., LLMs, RAG, or streaming analytics), it serves as the primary backend for managing state that exceeds the lifespan of a single request. Unlike ephemeral caches (e.g., local variables or short-lived LRU caches), KV stores are designed for persistence, scalability, and fault tolerance.\n\n allowing state to survive process restarts and be shared across distributed nodes.\n\n**Why It Matters for Long Context**\nLong context implies state that grows over time and must be accessible beyond a single request or node. KV cache addresses this by providing:\n\n* ** **Persistence:** State survives process restarts and crashes, ensuring continuity for long-running interactions (e.g., multi-turn conversations, RAG over large documents).\n*   **Scalability:** Distributed KV stores (e.g., Redis, RocksDB) allow state to be shared across nodes, enabling horizontal scaling and fault tolerance.\n without a single point of failure.\n*   **Arbitrary Growth:** Unlike fixed-size LRU caches, KV stores can grow arbitrarily (subject to resource limits), accommodating long documents or multi-turn conversations.\n*   **Consistency:** Provides mechanisms (e.g., transactions, versioning) to manage consistency across distributed nodes, avoiding stale state.\n\n*   **Arbitrary Value Size:** Unlike fixed-size LRU caches, KV stores can hold arbitrarily large values (subject to resource limits), accommodating long documents or multi-turn conversations.\n\n*   **Persistence:** State survives process restarts and crashes, ensuring continuity for long-running interactions.\n\n*   **Scalability:** Distributed KV stores allow horizontal scaling and fault tolerance, avoiding single points of failure.\n\n*   **Arbitrary Growth:** Unlike fixed-size LRU caches, KV stores can grow arbitrarily (subject to resource limits), accommodating long documents or multi-turn conversations.\n\n*   **Persistence:** State survives process restarts and crashes, ensuring continuity for long-running interactions.\n\n*   **Scalability:** Distributed KV stores allow horizontal scaling and fault tolerance, avoiding single points of failure.\n\n*   **Arbitrary Growth:** Unlike fixed-size LRU caches, KV stores can grow arbitrarily (subject to resource limits), accommodating long documents or multi-turn conversations.\n\n*   **Persistence:** State survives process restarts and crashes, ensuring continuity for long-running interactions.\n\n*   **Scalability:** Distributed KV stores allow horizontal scaling and",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 119.83599960360458
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.273268731998542,
+    "median_tok_per_s": 119.79612177875848
+  }
+}
