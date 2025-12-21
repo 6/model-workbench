@@ -440,6 +440,7 @@ class ServerManager:
             mem_fraction_static=mem_fraction_static,
             max_model_len=max_model_len,
             extra_args=extra_args,
+            is_prebuilt=(image_type == "prebuilt"),
         )
 
         # Label based on image source

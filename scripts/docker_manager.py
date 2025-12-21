@@ -353,6 +353,7 @@ def build_sglang_docker_cmd(
     mem_fraction_static: float | None = None,
     max_model_len: int | None = None,
     extra_args: list[str] | None = None,
+    is_prebuilt: bool = False,
 ) -> list[str]:
     """Build Docker run command for SGLang server."""
     model_path_resolved = str(Path(model_path).expanduser().resolve())
@@ -363,6 +364,12 @@ def build_sglang_docker_cmd(
         port,
         [(model_path_resolved, model_path_resolved, "ro")],
     )
+
+    # For prebuilt images, need to specify the command explicitly
+    # (our built images have ENTRYPOINT set, prebuilt images don't)
+    if is_prebuilt:
+        cmd += ["python", "-m", "sglang.launch_server"]
+
     cmd += [
         "--model-path",
         model_path_resolved,

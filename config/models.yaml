@@ -44,10 +44,10 @@ defaults:
     trtllm:
       version: 1.2.0rc5
       image_type: prebuilt    # Uses NGC images
-    # https://github.com/sgl-project/sglang/commits/main
+    # https://hub.docker.com/r/lmsysorg/sglang/tags
     sglang:
-      version: 4b351f6
-      image_type: build
+      version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
+      image_type: prebuilt
       args:
         mem_fraction_static: 0.9
         max_model_len: 65536
