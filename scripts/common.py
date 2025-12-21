@@ -79,9 +79,9 @@ BACKEND_REGISTRY = {
         "display_name": "SGLang",
         "formats": ["safetensors"],
         "default_port": 30000,
-        "image_prefix": "model-bench-sglang",
+        "image_prefix": None,  # Prebuilt only
         "prebuilt_image": "lmsysorg/sglang",
-        "dockerfile": ROOT / "docker" / "Dockerfile.sglang",
+        "dockerfile": None,  # Prebuilt only, no build-from-source support
         "docker_base": [
             "--gpus",
             "all",
