@@ -387,7 +387,6 @@ def build_sglang_docker_cmd(
         "--trust-remote-code",
         "--random-seed",
         "0",
-        "--enable-deterministic-inference",
     ]
 
     # Model-specific flags from config
