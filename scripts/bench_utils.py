@@ -546,7 +546,7 @@ def get_backend_config(engine: str) -> dict:
         engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
 
     Returns:
-        Backend config dict with keys: version, image_type, args
+        Backend config dict with keys: version, image_type, args, model_patterns
     """
     config = _load_config()
     defaults = config.get("defaults", {})
@@ -558,9 +558,10 @@ def get_backend_config(engine: str) -> dict:
             "version": backend_cfg.get("version"),
             "image_type": backend_cfg.get("image_type", "build"),
             "args": backend_cfg.get("args", {}),
+            "model_patterns": backend_cfg.get("model_patterns", []),
         }
 
-    return {"version": None, "image_type": "build", "args": {}}
+    return {"version": None, "image_type": "build", "args": {}, "model_patterns": []}
 
 
 def get_model_backend_config(model_arg: str, engine: str) -> dict:

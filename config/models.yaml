@@ -44,12 +44,22 @@ defaults:
     trtllm:
       version: 1.1.0
       image_type: prebuilt    # Uses NGC images
+      # Model-specific CLI args (pattern is regex matched against model path)
+      model_patterns:
+        - pattern: "nemotron.*nano"  # NemotronH architecture models
+          args:
+            - "--backend"
+            - "_autodeploy"
+            - "--trust_remote_code"
+            - "--extra_llm_api_options"
+            - "/config/nano_v3.yaml"
 
 models:
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
 
-  - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
+  - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
 
+  - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 
   - repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:
