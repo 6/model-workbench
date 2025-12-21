@@ -688,8 +688,8 @@ def resolve_run_config(args):
     if getattr(args, "port", None) is None:
         args.port = backend_info["default_port"]
 
-    # Auto-detect tensor parallel for vLLM and trtllm
-    if backend in ("vllm", "trtllm") and getattr(args, "tensor_parallel", None) is None:
+    # Auto-detect tensor parallel for vLLM, trtllm, and sglang
+    if backend in ("vllm", "trtllm", "sglang") and getattr(args, "tensor_parallel", None) is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
@@ -805,7 +805,7 @@ def warmup_model(
     the model is fully loaded (not just partially cached).
 
     Args:
-        backend: Backend type ("vllm", "trtllm", "llama", "ik_llama")
+        backend: Backend type ("vllm", "trtllm", "sglang", "llama", "ik_llama")
         host: Server host
         port: Server port
         api_model: Model name for API requests
@@ -817,7 +817,7 @@ def warmup_model(
         True if warmup succeeded, False if it failed
     """
     try:
-        if backend in ("vllm", "trtllm"):
+        if backend in ("vllm", "trtllm", "sglang"):
             # Use OpenAI-compatible API
             client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
             messages = build_chat_messages(prompt, image_path=None)

@@ -44,8 +44,25 @@ defaults:
     trtllm:
       version: 1.2.0rc5
       image_type: prebuilt    # Uses NGC images
+    # https://github.com/sgl-project/sglang/commits/main
+    sglang:
+      version: 4b351f6
+      image_type: build
+      args:
+        mem_fraction_static: 0.9
+        max_model_len: 65536
+      model_patterns:
+        - pattern: "mimo"
+          args:
+            - "--reasoning-parser"
+            - "qwen3"
+            - "--tool-call-parser"
+            - "mimo"
 
 models:
+  - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
+    backend: sglang           # Only SGLang supports this model
+
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 
 

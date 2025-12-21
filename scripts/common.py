@@ -75,4 +75,20 @@ BACKEND_REGISTRY = {
             "stack=67108864",
         ],
     },
+    "sglang": {
+        "display_name": "SGLang",
+        "formats": ["safetensors"],
+        "default_port": 30000,
+        "image_prefix": "model-bench-sglang",
+        "prebuilt_image": "lmsysorg/sglang",
+        "dockerfile": ROOT / "docker" / "Dockerfile.sglang",
+        "docker_base": [
+            "--gpus",
+            "all",
+            "--ipc",
+            "host",
+            "--shm-size",
+            "32g",
+        ],
+    },
 }

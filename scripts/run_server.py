@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, or TensorRT-LLM server.
+Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, or SGLang server.
 
 Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
 Use --backend to explicitly select a backend.
@@ -18,6 +18,9 @@ Examples:
 
   # Start TensorRT-LLM server
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
+
+  # Start SGLang server (e.g., for MiMo models)
+  uv run python scripts/run_server.py --model ~/models/cyankiwi/MiMo-V2-Flash-AWQ-4bit --backend sglang
 
   # Start llama.cpp server (GGUF model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
@@ -65,7 +68,7 @@ def test_chat_completion(host: str, port: int, model_name: str) -> bool:
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Start a standalone vLLM, llama.cpp, ik_llama.cpp, or TensorRT-LLM server",
+        description="Start a standalone vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, or SGLang server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -198,8 +201,8 @@ def main():
         timeout=args.server_timeout,
     )
 
-    # Model name for API (vLLM/trtllm use full path, llama.cpp uses gpt-3.5-turbo)
-    api_model = model_path if backend in ("vllm", "trtllm") else "gpt-3.5-turbo"
+    # Model name for API (vLLM/trtllm/sglang use full path, llama.cpp uses gpt-3.5-turbo)
+    api_model = model_path if backend in ("vllm", "trtllm", "sglang") else "gpt-3.5-turbo"
 
     # Test-only mode
     if args.test_only:
@@ -262,6 +265,21 @@ def main():
             parallel=args.parallel,
             mmproj_path=mmproj_path,
             rebuild=args.rebuild,
+        )
+    elif backend == "sglang":
+        # Get SGLang-specific args from config
+        mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
+        max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
+
+        server.start_sglang(
+            model_path=model_path,
+            tensor_parallel=args.tensor_parallel,
+            version=backend_version,
+            mem_fraction_static=mem_fraction,
+            max_model_len=max_model_len,
+            rebuild=args.rebuild,
+            image_type=image_type,
+            image_override=args.docker_image,
         )
 
     # Warmup model (preload into GPU memory by default)

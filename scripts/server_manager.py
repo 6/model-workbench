@@ -392,6 +392,70 @@ class ServerManager:
             label=f"TensorRT-LLM ({version})",
         )
 
+    def start_sglang(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        version: str,
+        mem_fraction_static: float | None = None,
+        max_model_len: int | None = None,
+        rebuild: bool = False,
+        image_type: str = "build",
+        image_override: str | None = None,
+        extra_args: list[str] | None = None,
+    ) -> None:
+        """Start SGLang server via Docker with version pinning.
+
+        Args:
+            model_path: Path to model directory
+            tensor_parallel: Tensor parallel size
+            version: SGLang version (release tag like 'v0.5.6.post2' or commit SHA)
+            mem_fraction_static: Memory fraction for static allocation (optional)
+            max_model_len: Max context length (optional)
+            rebuild: Force rebuild image even if cached
+            image_type: 'prebuilt' to use official images, 'build' to build from source
+            image_override: Direct image name to use (highest priority)
+            extra_args: Additional SGLang server arguments (optional)
+        """
+        from docker_manager import (
+            build_sglang_docker_cmd,
+            ensure_image,
+        )
+
+        # Ensure image exists (builds or pulls as needed)
+        image_name = ensure_image(
+            "sglang",
+            version,
+            rebuild=rebuild,
+            image_type=image_type,
+            image_override=image_override,
+        )
+
+        cmd = build_sglang_docker_cmd(
+            image_name=image_name,
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            mem_fraction_static=mem_fraction_static,
+            max_model_len=max_model_len,
+            extra_args=extra_args,
+        )
+
+        # Label based on image source
+        if image_override:
+            label = f"SGLang ({image_override})"
+        elif image_type == "prebuilt":
+            label = f"SGLang (prebuilt {version})"
+        else:
+            label = f"SGLang (Docker {version})"
+
+        self.start(
+            cmd,
+            lambda: wait_for_openai_ready(self.host, self.port),  # SGLang uses OpenAI API
+            label=label,
+        )
+
 
 # ----------------------------
 # Readiness checks

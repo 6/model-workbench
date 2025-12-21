@@ -196,18 +196,19 @@ def _docker_run_base(
     return cmd
 
 
-def _get_model_specific_args(model_path: str) -> list[str]:
-    """Get model-specific vLLM args from config patterns.
+def _get_model_specific_args(model_path: str, backend: str = "vllm") -> list[str]:
+    """Get model-specific args from config patterns.
 
     Args:
         model_path: Path to model (checked against patterns)
+        backend: Backend name (vllm, sglang, etc.)
 
     Returns:
-        List of additional CLI args for vLLM
+        List of additional CLI args
     """
     from bench_utils import get_backend_config
 
-    cfg = get_backend_config("vllm")
+    cfg = get_backend_config(backend)
     patterns = cfg.get("model_patterns", [])
 
     extra_args = []
@@ -343,6 +344,49 @@ def build_trtllm_docker_cmd(
     return cmd
 
 
+def build_sglang_docker_cmd(
+    image_name: str,
+    model_path: str,
+    host: str,
+    port: int,
+    tensor_parallel: int,
+    mem_fraction_static: float | None = None,
+    max_model_len: int | None = None,
+    extra_args: list[str] | None = None,
+) -> list[str]:
+    """Build Docker run command for SGLang server."""
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
+
+    cmd = _docker_run_base(
+        "sglang",
+        image_name,
+        port,
+        [(model_path_resolved, model_path_resolved, "ro")],
+    )
+    cmd += [
+        "--model-path",
+        model_path_resolved,
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port),
+        "--tp",
+        str(tensor_parallel),
+        "--trust-remote-code",
+    ]
+
+    # Model-specific flags from config
+    cmd += _get_model_specific_args(model_path, "sglang")
+
+    if mem_fraction_static is not None:
+        cmd += ["--mem-fraction-static", str(mem_fraction_static)]
+    if max_model_len is not None:
+        cmd += ["--context-length", str(max_model_len)]
+    if extra_args:
+        cmd += extra_args
+    return cmd
+
+
 def ensure_image(
     engine: str,
     version: str,
@@ -353,7 +397,7 @@ def ensure_image(
     """Ensure Docker image exists, building or pulling as needed.
 
     Args:
-        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
+        engine: 'vllm', 'llama', 'ik_llama', 'trtllm', or 'sglang'
         version: Version tag or commit SHA
         rebuild: Force rebuild/repull even if exists
         image_type: 'prebuilt' to use official images, 'build' to build from source
