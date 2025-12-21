@@ -81,9 +81,8 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
     model_cfg = get_model_config(model_arg)
     if model_cfg and model_cfg.get("backend"):
         configured_backend = model_cfg["backend"]
-        if configured_backend in compatible:
-            return configured_backend
-        # Configured backend incompatible with format - fall through to default
+        if configured_backend in BACKEND_REGISTRY:
+            return configured_backend  # Trust explicit config from models.yaml
 
     return get_default_backend(fmt)
 
@@ -816,7 +815,7 @@ def warmup_model(
     the model is fully loaded (not just partially cached).
 
     Args:
-        backend: Backend type ("vllm", "trtllm", "sglang", "llama", "ik_llama")
+        backend: Backend type ("vllm", "trtllm", "sglang", "mlx", "llama", "ik_llama")
         host: Server host
         port: Server port
         api_model: Model name for API requests
@@ -828,7 +827,7 @@ def warmup_model(
         True if warmup succeeded, False if it failed
     """
     try:
-        if backend in ("vllm", "trtllm", "sglang"):
+        if backend in ("vllm", "trtllm", "sglang", "mlx"):
             # Use OpenAI-compatible API
             client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
             messages = build_chat_messages(prompt, image_path=None)

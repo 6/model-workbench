@@ -398,6 +398,69 @@ def build_sglang_docker_cmd(
     return cmd
 
 
+def build_mlx_docker_cmd(
+    image_name: str,
+    model_path: str,
+    host: str,
+    port: int,
+    gpu_device: int = 0,
+    max_tokens: int = 4096,
+    extra_args: list[str] | None = None,
+) -> list[str]:
+    """Build Docker run command for MLX server (single-GPU only).
+
+    MLX CUDA only supports single-GPU inference, so we use device-specific GPU binding.
+
+    Args:
+        image_name: Docker image to use
+        model_path: Model path (local path or HuggingFace repo ID)
+        host: Host to bind to
+        port: Port to expose
+        gpu_device: GPU device index (default: 0)
+        max_tokens: Maximum generation tokens (default: 4096)
+        extra_args: Additional mlx_lm.server arguments
+
+    Returns:
+        Docker run command as list
+    """
+    cmd = ["docker", "run", "--rm"]
+
+    # Single GPU only - use device-specific binding
+    cmd.extend(["--gpus", f"device={gpu_device}"])
+
+    # Port mapping
+    cmd.extend(["-p", f"{port}:{port}"])
+
+    # Mount HuggingFace cache for model downloads (rw for caching)
+    hf_cache = Path.home() / ".cache" / "huggingface"
+    hf_cache.mkdir(parents=True, exist_ok=True)
+    cmd.extend(["-v", f"{hf_cache}:/root/.cache/huggingface:rw"])
+
+    # If model_path is a local path, mount it
+    model_path_obj = Path(model_path).expanduser()
+    if model_path_obj.exists():
+        model_path_resolved = str(model_path_obj.resolve())
+        model_dir = str(Path(model_path_resolved).parent)
+        cmd.extend(["-v", f"{model_dir}:{model_dir}:ro"])
+        model_arg = model_path_resolved
+    else:
+        # Assume HuggingFace repo ID (e.g., mlx-community/Model-Name)
+        model_arg = model_path
+
+    cmd.append(image_name)
+
+    # Server arguments
+    cmd.extend(["--model", model_arg])
+    cmd.extend(["--host", "0.0.0.0"])
+    cmd.extend(["--port", str(port)])
+    cmd.extend(["--max-tokens", str(max_tokens)])
+
+    if extra_args:
+        cmd.extend(extra_args)
+
+    return cmd
+
+
 def ensure_image(
     engine: str,
     version: str,
@@ -408,7 +471,7 @@ def ensure_image(
     """Ensure Docker image exists, building or pulling as needed.
 
     Args:
-        engine: 'vllm', 'llama', 'ik_llama', 'trtllm', or 'sglang'
+        engine: 'vllm', 'llama', 'ik_llama', 'trtllm', 'sglang', or 'mlx'
         version: Version tag or commit SHA
         rebuild: Force rebuild/repull even if exists
         image_type: 'prebuilt' to use official images, 'build' to build from source

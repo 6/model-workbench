@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, or SGLang server.
+Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, SGLang, or MLX server.
 
 Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
 Use --backend to explicitly select a backend.
@@ -21,6 +21,9 @@ Examples:
 
   # Start SGLang server (e.g., for MiMo models)
   uv run python scripts/run_server.py --model ~/models/cyankiwi/MiMo-V2-Flash-AWQ-4bit --backend sglang
+
+  # Start MLX server (mlx-community models, single-GPU CUDA only)
+  uv run python scripts/run_server.py --model mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-BF16 --backend mlx
 
   # Start llama.cpp server (GGUF model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
@@ -169,6 +172,21 @@ def main():
         "--mmproj", default=None, help="Multimodal projector path (auto-detected if not specified)"
     )
 
+    # MLX-specific options
+    mlx_group = ap.add_argument_group("MLX options (mlx-community models)")
+    mlx_group.add_argument(
+        "--gpu-device",
+        type=int,
+        default=0,
+        help="GPU device index (MLX is single-GPU only, default: 0)",
+    )
+    mlx_group.add_argument(
+        "--mlx-max-tokens",
+        type=int,
+        default=4096,
+        help="MLX server max tokens (default: 4096)",
+    )
+
     # Warmup options
     ap.add_argument(
         "--no-warmup",
@@ -202,6 +220,7 @@ def main():
     )
 
     # Model name for API (llama.cpp uses gpt-3.5-turbo, others use full path)
+    # MLX also uses the model path/repo ID as the model name
     api_model = "gpt-3.5-turbo" if backend in ("llama", "ik_llama") else model_path
 
     # Test-only mode
@@ -279,6 +298,14 @@ def main():
             max_model_len=max_model_len,
             rebuild=args.rebuild,
             image_override=args.docker_image,
+        )
+    elif backend == "mlx":
+        server.start_mlx(
+            model_path=model_path,
+            version=backend_version,
+            gpu_device=args.gpu_device,
+            max_tokens=args.mlx_max_tokens,
+            rebuild=args.rebuild,
         )
 
     # Warmup model (preload into GPU memory by default)

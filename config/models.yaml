@@ -60,6 +60,14 @@ defaults:
             - "qwen3"
             - "--tool-call-parser"
             - "mimo"
+    # MLX (https://github.com/ml-explore/mlx) - Apple's ML framework with CUDA support
+    # NOTE: MLX CUDA only supports single-GPU and BF16/FP32 models (no quantization)
+    # https://pypi.org/project/mlx/
+    mlx:
+      version: "0.30.1"
+      image_type: build
+      args:
+        max_tokens: 4096
 
 models:
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
@@ -71,6 +79,8 @@ models:
 
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 
+  - repo_id: mlx-community/gemma-3-1b-it-bf16
+    backend: mlx              # MLX CUDA backend (single-GPU, BF16 only)
 
   - repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:

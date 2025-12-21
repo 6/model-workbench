@@ -91,4 +91,13 @@ BACKEND_REGISTRY = {
             "32g",
         ],
     },
+    "mlx": {
+        "display_name": "MLX",
+        "formats": ["mlx"],  # MLX-format models from mlx-community
+        "default_port": 8080,
+        "image_prefix": "model-bench-mlx",
+        "prebuilt_image": None,  # Build from source only
+        "dockerfile": ROOT / "docker" / "Dockerfile.mlx",
+        "docker_base": [],  # GPU flag added dynamically (single-GPU only)
+    },
 }

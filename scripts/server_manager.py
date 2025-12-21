@@ -448,6 +448,58 @@ class ServerManager:
             label=label,
         )
 
+    def start_mlx(
+        self,
+        model_path: str,
+        version: str,
+        gpu_device: int = 0,
+        max_tokens: int = 4096,
+        rebuild: bool = False,
+        extra_args: list[str] | None = None,
+    ) -> None:
+        """Start MLX server via Docker (single-GPU CUDA only).
+
+        MLX CUDA backend limitations:
+        - Single-GPU only (no tensor parallelism)
+        - BF16/FP32 models only (no quantization)
+
+        Args:
+            model_path: Path to model or HuggingFace repo ID (e.g., mlx-community/Model-Name)
+            version: MLX version (e.g., '0.25.0')
+            gpu_device: GPU device index (default: 0)
+            max_tokens: Maximum generation tokens (default: 4096)
+            rebuild: Force rebuild image even if cached
+            extra_args: Additional mlx_lm.server arguments (optional)
+        """
+        from docker_manager import (
+            build_mlx_docker_cmd,
+            ensure_image,
+        )
+
+        # Ensure image exists (builds if needed) - MLX is build-only
+        image_name = ensure_image(
+            "mlx",
+            version,
+            rebuild=rebuild,
+            image_type="build",
+        )
+
+        cmd = build_mlx_docker_cmd(
+            image_name=image_name,
+            model_path=model_path,
+            host=self.host,
+            port=self.port,
+            gpu_device=gpu_device,
+            max_tokens=max_tokens,
+            extra_args=extra_args,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_openai_ready(self.host, self.port),  # MLX uses OpenAI-compatible API
+            label=f"MLX ({version})",
+        )
+
 
 # ----------------------------
 # Readiness checks

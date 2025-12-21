@@ -1019,6 +1019,207 @@ def run_benchmark_sglang(
         )
 
 
+# ----------------------------
+# MLX Benchmark
+# ----------------------------
+
+
+def bench_once_mlx(
+    client: OpenAI,
+    model: str,
+    prompt: str,
+    image_path: str | None,
+    max_tokens: int,
+    temperature: float,
+    frequency_penalty: float | None,
+) -> dict:
+    """Run single inference via MLX OpenAI-compatible API.
+
+    MLX doesn't have Prometheus metrics, so we only measure wall time and token counts.
+    """
+    messages = build_chat_messages(prompt, image_path)
+
+    t0 = time.perf_counter()
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty or 0.0,
+    )
+    t1 = time.perf_counter()
+
+    msg = response.choices[0].message
+    output_text = msg.content or ""
+    wall = t1 - t0
+
+    prompt_tokens = None
+    generated_tokens = None
+    if response.usage:
+        prompt_tokens = response.usage.prompt_tokens
+        generated_tokens = response.usage.completion_tokens
+
+    tok_per_s = None
+    if generated_tokens and wall > 0:
+        tok_per_s = generated_tokens / wall
+
+    return {
+        "wall_s": wall,
+        "tok_per_s": tok_per_s,
+        "prompt_tokens": prompt_tokens,
+        "generated_tokens": generated_tokens,
+        "output_text": output_text[:200],
+    }
+
+
+def run_benchmark_mlx(args, model_path: str, image_path: str | None, image_label: str):
+    """Run benchmarks using MLX backend (Docker, single-GPU CUDA only)."""
+    is_vision = image_path is not None
+    mode = "vision" if is_vision else "text-only"
+
+    # Resolve backend version from config or CLI
+    backend_version = args.backend_version or get_model_backend_version(args.model, "mlx")
+    if not backend_version:
+        raise SystemExit(
+            "No backend version specified and none found in config.\n"
+            "Either:\n"
+            "  1. Set defaults.backends.mlx.version in config/models.yaml\n"
+            "  2. Pass --backend-version 0.25.0"
+        )
+
+    # Select prompt
+    if args.prompt:
+        prompt_text = args.prompt
+    elif is_vision:
+        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
+    else:
+        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+
+    print("\n== MLX Benchmark ==")
+    print(f"model:           {model_path}")
+    print(f"mode:            {mode}")
+    print(f"backend_version: {backend_version}")
+    print(f"gpu_device:      {args.gpu_device}")
+    print(f"image:           {image_label}")
+    print(f"prompt:          {prompt_text[:50]}...")
+
+    server = ServerManager(
+        host=args.host,
+        port=args.port,
+        timeout=args.server_timeout,
+    )
+
+    if not server.is_running() and args.no_autostart:
+        raise SystemExit(
+            f"MLX server not detected on {args.host}:{args.port} and --no-autostart was set."
+        )
+
+    with server:
+        # Check for existing containers and prompt user
+        if not args.no_autostart and not args.force_cleanup:
+            existing = get_containers_on_port(args.port)
+
+            if existing:
+                # Non-interactive environment check
+                if not sys.stdin.isatty():
+                    log("Error: Container running on port and stdin is not interactive")
+                    log("Use --force-cleanup to automatically stop containers in CI/CD")
+                    sys.exit(1)
+
+                # Interactive prompt
+                if not prompt_cleanup_confirmation(args.port, existing):
+                    log("Use --no-autostart to benchmark against existing server")
+                    sys.exit(0)
+
+                cleanup_existing_containers(args.port)
+        elif not args.no_autostart and args.force_cleanup:
+            # Force cleanup without prompt (for automation)
+            cleanup_existing_containers(args.port)
+
+        if not server.is_running():
+            server.start_mlx(
+                model_path=model_path,
+                version=backend_version,
+                gpu_device=args.gpu_device,
+                max_tokens=args.mlx_max_tokens,
+                rebuild=args.rebuild,
+            )
+
+        gpu_info = get_gpu_info(include_memory=True)
+        log(
+            f"GPU memory: {gpu_info.get('memory_used_mib', '?')} / {gpu_info.get('memory_total_mib', '?')} MiB"
+        )
+
+        client = OpenAI(
+            base_url=f"http://{args.host}:{args.port}/v1",
+            api_key="dummy",
+        )
+
+        # MLX uses the model path as the model name
+        api_model = model_path
+
+        # Warmup
+        log("Warmup request...")
+        success = warmup_model(
+            backend="mlx",
+            host=args.host,
+            port=args.port,
+            api_model=api_model,
+            prompt=prompt_text,
+            max_tokens=min(128, args.max_tokens),
+        )
+        if not success:
+            log("WARNING: Warmup failed, benchmark may include model load time")
+
+        # Benchmark
+        results = []
+        for i in range(args.iterations):
+            log(f"Benchmark {i + 1} of {args.iterations}...")
+            r = bench_once_mlx(
+                client,
+                api_model,
+                prompt_text,
+                image_path,
+                args.max_tokens,
+                args.temperature,
+                args.frequency_penalty,
+            )
+            tok_per_s = r.get("tok_per_s")
+            if tok_per_s is not None:
+                log(f"  {r['wall_s']:.2f}s | {tok_per_s:.1f} tok/s")
+            else:
+                log(f"  {r['wall_s']:.2f}s")
+            results.append(r)
+
+        summary = {
+            "median_wall_s": med(results, "wall_s"),
+            "median_tok_per_s": med(results, "tok_per_s"),
+        }
+
+        log(f"Median: {summary['median_wall_s']:.2f}s | {summary['median_tok_per_s']:.1f} tok/s")
+
+        write_benchmark_result(
+            results_dir=RESULTS_ROOT,
+            repo_id=extract_repo_id(args.model),
+            model_ref=compact_path(model_path),
+            engine="mlx-server",
+            mode=mode,
+            gpu_info=gpu_info,
+            config={
+                "prompt_set": args.prompt_set,
+                "prompt": prompt_text,
+                "max_tokens": args.max_tokens,
+                "temperature": args.temperature,
+                "gpu_device": args.gpu_device,
+                "mlx_max_tokens": args.mlx_max_tokens,
+                "image": image_label,
+                "backend_version": backend_version,
+            },
+            iterations=results,
+            summary=summary,
+        )
+
+
 def run_benchmark_gguf(
     args, model_path: str, image_path: str | None, image_label: str, backend: str
 ):
@@ -1342,6 +1543,21 @@ def main():
         "--extra-args", nargs=argparse.REMAINDER, help="Extra args passed to llama-server"
     )
 
+    # MLX-specific options
+    mlx_group = ap.add_argument_group("MLX options (mlx-community models)")
+    mlx_group.add_argument(
+        "--gpu-device",
+        type=int,
+        default=0,
+        help="GPU device index (MLX is single-GPU only, default: 0)",
+    )
+    mlx_group.add_argument(
+        "--mlx-max-tokens",
+        type=int,
+        default=4096,
+        help="MLX server max tokens (default: 4096)",
+    )
+
     args = ap.parse_args()
 
     # Resolve backend config and apply defaults
@@ -1388,6 +1604,8 @@ def main():
         run_benchmark_trtllm(args, model_path, image_path, image_label)
     elif backend == "sglang":
         run_benchmark_sglang(args, model_path, image_path, image_label, image_type)
+    elif backend == "mlx":
+        run_benchmark_mlx(args, model_path, image_path, image_label)
     else:
         run_benchmark_gguf(args, model_path, image_path, image_label, backend)
 
