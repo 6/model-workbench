@@ -54,6 +54,8 @@ defaults:
       model_patterns:
         - pattern: "mimo"
           args:
+            - "--attention-backend"
+            - "triton"
             - "--reasoning-parser"
             - "qwen3"
             - "--tool-call-parser"

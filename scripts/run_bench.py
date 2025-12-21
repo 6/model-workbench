@@ -255,13 +255,17 @@ def bench_once_vllm(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        seed=0,
     )
     t1 = time.perf_counter()
 
     # Scrape metrics after request
     metrics_after = scrape_prometheus_metrics(host, port, "vllm")
 
-    output_text = response.choices[0].message.content or ""
+    msg = response.choices[0].message
+    reasoning = getattr(msg, "reasoning_content", "") or ""
+    content = msg.content or ""
+    output_text = reasoning if len(reasoning) > len(content) else content
     wall = t1 - t0
 
     prompt_tokens = None
@@ -416,13 +420,17 @@ def bench_once_trtllm(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        seed=0,
     )
     t1 = time.perf_counter()
 
     # Scrape metrics after request
     metrics_after = scrape_prometheus_metrics(host, port, "trtllm")
 
-    output_text = response.choices[0].message.content or ""
+    msg = response.choices[0].message
+    reasoning = getattr(msg, "reasoning_content", "") or ""
+    content = msg.content or ""
+    output_text = reasoning if len(reasoning) > len(content) else content
     wall = t1 - t0
 
     prompt_tokens = None
@@ -810,10 +818,14 @@ def bench_once_sglang(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        seed=0,
     )
     t1 = time.perf_counter()
 
-    output_text = response.choices[0].message.content or ""
+    msg = response.choices[0].message
+    reasoning = getattr(msg, "reasoning_content", "") or ""
+    content = msg.content or ""
+    output_text = reasoning if len(reasoning) > len(content) else content
     wall = t1 - t0
 
     prompt_tokens = None

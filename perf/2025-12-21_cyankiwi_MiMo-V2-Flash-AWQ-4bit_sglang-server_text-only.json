@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-12-21T03:01:24.625276",
+  "repo_id": "cyankiwi/MiMo-V2-Flash-AWQ-4bit",
+  "model_ref": "~/models/cyankiwi/MiMo-V2-Flash-AWQ-4bit",
+  "engine": "sglang-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88476
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88476
+      }
+    ],
+    "memory_used_mib": 176952,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "mem_fraction_static": 0.9,
+    "image": "none",
+    "backend_version": "nightly-dev-20251221-1d90b194"
+  },
+  "iterations": [
+    {
+      "wall_s": 4.321579104998818,
+      "output_text": "### Technical Overview: KV Cache and Long-Context Relevance\n\n**KV Cache (Key-Value Cache)** is a high-performance, in-memory key-value store designed for low-latency and high throughput. It typically operates as a distributed system or a single-node in-memory store (e.g., Redis, Memcached, or custom in-memory hash tables) where data is accessed via unique keys. The primary value proposition is **fast lookups** (O(1) and **high concurrency**, making it ideal for caching frequently accessed data, session states, or metadata in distributed systems.\n\n---\n\n**Why It Matters for Long Context**\n\n**\n\nLong context refers to scenarios where a system must maintain state, history, or metadata over extended periods or across large datasets\u2014think user sessions in web applications, distributed state in microservices, or metadata for large language models (LLMs) processing long sequences. KV caches matter here because:\n\n1. **Low Latency State Management**: Long context often requires frequent access to state (e.g., user session data in a web app). KV caches provide O(1) lookups, avoiding the overhead of database queries or serializing long contexts repeatedly.\n\n2. **High Concurrency**: In distributed systems handling long context (e.g., LLM inference), KV caches allow multiple workers to access shared state without bottlenecks, improving throughput.\n\n3. **Scalability**: KV caches (like Redis) can be distributed, allowing state to be sharded across nodes. This avoids the \"long context\" problem becoming a single-node bottleneck, enabling horizontal scaling.\n\n4. **State Offloading**: For LLMs, KV caches can store intermediate activations or metadata, reducing the need to recompute long context windows repeatedly, thus improving inference latency.\n\nIn summary, KV caches are critical for managing state in long-context scenarios by providing low-latency, high-concurrency access, enabling scalability, and reducing computational overhead in distributed systems like LLMs.",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 118.47521185202046
+    },
+    {
+      "wall_s": 4.272515704000398,
+      "output_text": "### Technical Overview: KV Cache for Long-Context LLMs\n\n**1. Definition & Role**\nKey-Value (KV) cache is a memory optimization technique used during the **inference** of Transformer-based Large Language Models (LLMs). It stores the intermediate Key (K) and Value (V) matrices calculated in previous steps to avoid redundant computation.\n\n the \"context\" grows.\n\n**2. The Redundancy Problem**\nIn a standard attention mechanism, the attention score for a token depends on all previous tokens.\n Without caching, computing the attention for the $n$-th token requires $O(n^2)$ operations (or $O(n)$ with optimizations) because it must interact with all $1$ to $n-1$ tokens.\n\n This leads to quadratic complexity as context length increases.\n\n **3. How KV Cache Works**\n- **Pre-computation:** When a new token enters the model, the Key ($K$) and Value ($V$) matrices are computed for that specific token.\n \n- **Storage:** These $K$ and $V$ matrices are stored in a growing cache (key-value store) rather than being discarded.\n \n- **Reusability:** When computing the attention for the next token, the model retrieves the entire cache of previous keys and values. It does not need to recompute them. It only computes the Key/Value for the new token. \n- **Efficiency:** This reduces the time complexity from $O(n^2)$ (quadratic) to $O(n)$ (linear) for the attention mechanism, as the number of operations grows linearly with the sequence length.\n\n **4. Why It Matters for Long Context**\n- **Redundant Computation:** Without KV Cache, the model must re-scan the entire history for every new token. This is computationally expensive and slow. \n- **Linear vs Quadratic:** KV Cache reduces the complexity from $O(n^2)$ to $O(n)$, making inference on long sequences feasible. \n- **Memory:** It avoids the need to recompute intermediate states, saving processing time. \n- **Scalability:** It enables models to handle much longer context windows without a quadratic slowdown. \n\n **5. The Trade-off (The \"KV Cache Matters\" Paradox)\nWhile KV Cache is essential for efficiency, it introduces a **memory bottleneck**:\n:\n\n **The Problem:** The size of the KV cache grows linearly with the sequence length. For a context of 100,0",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 119.8357210297927
+    },
+    {
+      "wall_s": 2.8592789220019768,
+      "output_text": "### Technical Overview: KV Cache and Long Context\n\n**KV cache** (Key-Value Cache) is a high-speed, in-memory data layer that stores data as key-value pairs. It acts as a intermediary between an application and a slower, persistent backend (like a database or disk), significantly improving read/write performance for frequently accessed data.\n\n**Why it Matters for Long Context:**\n\nIn systems requiring long context (e.g., Large Language Models, session management, real-time analytics), the bottleneck is rarely CPU speed, but rather **I/O latency** and **throughput**. As context length grows, the volume of data that must be accessed in real-time increases exponentially.\n\n KV cache solves this by:\n\n1.  **Reducing Latency:** It serves data in RAM, making access times drop from milliseconds (disk/db) to microseconds (cache). This is critical for maintaining real-time responsiveness in applications like chatbots or live session management.\n2.  **Offloading the Database:** By absorbing frequent read requests, it prevents the primary database from being overwhelmed. This ensures the database remains available for critical write operations and complex queries, preventing bottlenecks.\n3.  **Cost Efficiency:** RAM is expensive, but using it *strategically* for a hot subset of data is far cheaper than scaling a disk-based database to handle the same throughput. It acts as a high-performance buffer.\n\nIn essence, a KV cache is a **performance multiplier**. It doesn't replace the database; it ensures the database can focus on what it does best\u2014durability and complex queries\u2014while the cache handles the high-volume, low-latency, real-time access that long context applications demand.",
+      "prompt_tokens": 42,
+      "generated_tokens": 341,
+      "tok_per_s": 119.2608378902897
+    },
+    {
+      "wall_s": 3.712013719999959,
+      "output_text": "### Technical Overview: KV Cache for Long-Context LLMs\n\n**1. Definition**\nKV Cache (Key-Value Cache) is the dynamic memory allocated during the inference of Large Language Models (LLMs) to store the Key ($K$) and Value ($V$) matrices of the attention mechanism. It represents the compressed state of the \"past\" tokens.\n\n allowing the model to attend to the entire context window without re-computing the history.\n\n $O(N \\cdot D)$, where $N$ is the context length and $D$ is the model dimension.\n\n It is the mechanism that enables \"Streaming\" or \"Continuous\" generation.\n\n allowing the context to grow beyond the limits of a single forward pass.\n\n**\n\n### Why It Matters for Long Context\n\n**1. Enables Infinite Context Windows**\nWithout KV Cache, a model is limited to its fixed context window (e.g., 4k or 32k tokens). KV Cache allows the context to grow linearly (limited only by GPU RAM), enabling the model to attend to information from thousands of tokens ago without re-computing the entire history.\n\n This is the foundation of RAG (Retrieval-Augmented Generation) and long-conversation memory.\n\n**2. Decouples Context Length from Latency**\n**\nIn a standard forward pass, computation cost is $O(N^2)$ (quadratic attention). With KV Cache, the cost of adding $N$ new tokens is $O(N \\cdot K)$, where $K$ is the context length. This allows for continuous generation where the model attends to the entire growing history without the latency of a full $O(N^2)$ re-compute.\n\n**3. Enables \"Infinite\" Memory (Limited by RAM)**\nWithout KV Cache, memory is fixed to the context window. With KV Cache, the context can grow until it hits GPU RAM limits (e.g., 100k+ tokens on an A100). This is the foundation of RAG (Retrieval-Augmented Generation) and long-conversation memory, allowing the model to attend to information from thousands of tokens ago without re-computing the entire history.",
+      "prompt_tokens": 42,
+      "generated_tokens": 444,
+      "tok_per_s": 119.61162686650978
+    },
+    {
+      "wall_s": 4.267270230000577,
+      "output_text": "### 1. The \"Why\" \u2013 The Attention Mechanism\n\nIn Transformer-based Large Language Models (LLMs), the **Self-Attention** mechanism allows a token to \"attend\" to every other token in the input sequence to compute its representation. Mathematically, this involves comparing the current token (Query) against all other tokens (Keys).\n\n The cost of this operation is $O(N^2)$, where $N$ is the sequence length.\n\n This quadratic cost is the primary bottleneck for long contexts.\n\n### 2. The KV Cache Optimization\n\n During inference (generation), we can optimize this process. We don't need to recompute the attention for *previous* tokens every time a *new* token is generated. We can pre-compute and store the **Keys ($K$)** and **Values ($V$)** for the existing sequence. This is the **KV Cache**.\n\n When a new token is generated, it only needs to compute its own attention against the entire KV Cache. This reduces the per-step compute cost from $O(N^2)$ to $O(N)$, where $ cost is linear with the context length $N$.\n\n However, the KV Cache itself grows with the context length.\n\n This creates a memory bottleneck.\n\n which is why long context is a challenge.\n\n The KV Cache memory footprint grows linearly with context",
+      "prompt_tokens": 42,
+      "generated_tokens": 512,
+      "tok_per_s": 119.98302718221125
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.267270230000577,
+    "median_tok_per_s": 119.61162686650978
+  }
+}
