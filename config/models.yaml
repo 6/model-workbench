@@ -46,8 +46,6 @@ defaults:
       image_type: prebuilt    # Uses NGC images
 
 models:
-  - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
-
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 
 
