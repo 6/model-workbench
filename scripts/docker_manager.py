@@ -218,28 +218,6 @@ def _get_model_specific_args(model_path: str) -> list[str]:
     return extra_args
 
 
-def _get_trtllm_model_specific_args(model_path: str) -> list[str]:
-    """Get model-specific TensorRT-LLM args from config patterns.
-
-    Args:
-        model_path: Path to model (checked against patterns)
-
-    Returns:
-        List of additional CLI args for trtllm-serve
-    """
-    from bench_utils import get_backend_config
-
-    cfg = get_backend_config("trtllm")
-    patterns = cfg.get("model_patterns", [])
-
-    extra_args = []
-    lower = model_path.lower()
-    for p in patterns:
-        if re.search(p["pattern"], lower, re.IGNORECASE):
-            extra_args.extend(p["args"])
-    return extra_args
-
-
 def build_vllm_docker_cmd(
     image_name: str,
     model_path: str,
@@ -337,22 +315,11 @@ def build_trtllm_docker_cmd(
     model_path_resolved = str(Path(model_path).expanduser().resolve())
     cache_dir = os.path.expanduser("~/.cache")
 
-    # Build mounts list
-    mounts = [
-        (model_path_resolved, model_path_resolved, "ro"),
-        (cache_dir, "/root/.cache", "rw"),
-    ]
-
-    # Mount config directory if it exists (for model-specific YAML configs)
-    config_dir = ROOT / "config" / "trtllm"
-    if config_dir.exists():
-        mounts.append((str(config_dir), "/config", "ro"))
-
     cmd = _docker_run_base(
         "trtllm",
         image_name,
         port,
-        mounts,
+        [(model_path_resolved, model_path_resolved, "ro"), (cache_dir, "/root/.cache", "rw")],
     )
     cmd += [
         "trtllm-serve",
@@ -371,10 +338,6 @@ def build_trtllm_docker_cmd(
         cmd += ["--max_num_tokens", str(max_num_tokens)]
     if max_seq_len is not None:
         cmd += ["--max_seq_len", str(max_seq_len)]
-
-    # Model-specific flags from config (e.g., --backend _autodeploy for NemotronH)
-    cmd += _get_trtllm_model_specific_args(model_path)
-
     if extra_args:
         cmd += extra_args
     return cmd
