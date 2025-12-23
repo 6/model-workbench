@@ -64,8 +64,7 @@ defaults:
 models:
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
-      - "UD-Q3_K_XL/*.gguf" 
-
+      - "UD-Q3_K_XL/*.gguf"
 
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
     backend: sglang           # Only SGLang supports this model
