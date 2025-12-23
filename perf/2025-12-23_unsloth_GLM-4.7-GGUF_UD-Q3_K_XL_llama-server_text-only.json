@@ -1,0 +1,100 @@
+{
+  "timestamp": "2025-12-23T15:18:20.301257",
+  "repo_id": "unsloth/GLM-4.7-GGUF/UD-Q3_K_XL",
+  "model_ref": "~/models/unsloth/GLM-4.7-GGUF/UD-Q3_K_XL/GLM-4.7-UD-Q3_K_XL-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95350
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 93934
+      }
+    ],
+    "memory_used_mib": 189284,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7522",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 10.745980521999854,
+      "prompt_tokens": 16,
+      "generated_tokens": 395,
+      "ttft_ms": 18.236,
+      "tok_per_s": 36.75793001777092,
+      "generation_tok_per_s": 36.903040763846235,
+      "generation_ms": 10703.725,
+      "output_text": " KV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nKV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nIn the attention mechanism of a Transformer, the model computes the compatibility between a query (Q) and a set of keys (K) and values (V). For each new token generated, the model must attend to all previous tokens in the context window.\nWithout KV cache, the model would need to re-compute the K and V vectors for every previous token at every generation step. This results in a computational complexity of $O(T^2)$ for a sequence of length $T$, which becomes prohibitively expensive for long contexts.\nWith KV cache, the K and V vectors for all previous tokens are stored in memory (GPU RAM) after their initial computation. At each subsequent step, the model only computes the Q, K, and V for the latest token and reuses the cached K and V for the history. This reduces the per-step compute complexity from $O(T)$ to $O(1)$, though the memory footprint grows linearly with the sequence length ($O(T)$).\n**Why it matters for long context:**\n1.  **Latency:** It drastically reduces the time to generate the next token (time-to-first-token is unaffected, but time-per-output-token is significantly improved).\n2.  **Throughput:** By avoiding quadratic recomputation, it makes processing long sequences feasible in reasonable timeframes.\n3.  **Memory Bandwidth:** While it shifts the bottleneck from compute to memory bandwidth (reading the large cache), it is still vastly more efficient than recomputing.\n\nHowever, the linear growth in memory usage is the primary constraint for extending context windows, leading to research into techniques like \"KV cache eviction\" or compression to handle extremely long sequences."
+    },
+    {
+      "wall_s": 10.546077365999963,
+      "prompt_tokens": 16,
+      "generated_tokens": 395,
+      "ttft_ms": 19.733,
+      "tok_per_s": 37.45468445674983,
+      "generation_tok_per_s": 37.695238671459464,
+      "generation_ms": 10478.777,
+      "output_text": " KV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nKV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nIn the attention mechanism of a Transformer, the model computes the compatibility between a query (Q) and a set of keys (K) and values (V). For each new token generated, the model must attend to all previous tokens in the context window.\nWithout KV cache, the model would need to re-compute the K and V vectors for every previous token at every generation step. This results in a computational complexity of $O(T^2)$ for a sequence of length $T$, which becomes prohibitively expensive for long contexts.\nWith KV cache, the K and V vectors for all previous tokens are stored in memory (GPU RAM) after their initial computation. At each subsequent step, the model only computes the Q, K, and V for the latest token and reuses the cached K and V for the history. This reduces the per-step compute complexity from $O(T)$ to $O(1)$, though the memory footprint grows linearly with the sequence length ($O(T)$).\n**Why it matters for long context:**\n1.  **Latency:** It drastically reduces the time to generate the next token (time-to-first-token is unaffected, but time-per-output-token is significantly improved).\n2.  **Throughput:** By avoiding quadratic recomputation, it makes processing long sequences feasible in reasonable timeframes.\n3.  **Memory Bandwidth:** While it shifts the bottleneck from compute to memory bandwidth (reading the large cache), it is still vastly more efficient than recomputing.\n\nHowever, the linear growth in memory usage is the primary constraint for extending context windows, leading to research into techniques like \"KV cache eviction\" or compression to handle extremely long sequences."
+    },
+    {
+      "wall_s": 10.511003412000036,
+      "prompt_tokens": 16,
+      "generated_tokens": 395,
+      "ttft_ms": 19.513,
+      "tok_per_s": 37.5796662332963,
+      "generation_tok_per_s": 37.68691277588251,
+      "generation_ms": 10481.092,
+      "output_text": " KV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nKV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nIn the attention mechanism of a Transformer, the model computes the compatibility between a query (Q) and a set of keys (K) and values (V). For each new token generated, the model must attend to all previous tokens in the context window.\nWithout KV cache, the model would need to re-compute the K and V vectors for every previous token at every generation step. This results in a computational complexity of $O(T^2)$ for a sequence of length $T$, which becomes prohibitively expensive for long contexts.\nWith KV cache, the K and V vectors for all previous tokens are stored in memory (GPU RAM) after their initial computation. At each subsequent step, the model only computes the Q, K, and V for the latest token and reuses the cached K and V for the history. This reduces the per-step compute complexity from $O(T)$ to $O(1)$, though the memory footprint grows linearly with the sequence length ($O(T)$).\n**Why it matters for long context:**\n1.  **Latency:** It drastically reduces the time to generate the next token (time-to-first-token is unaffected, but time-per-output-token is significantly improved).\n2.  **Throughput:** By avoiding quadratic recomputation, it makes processing long sequences feasible in reasonable timeframes.\n3.  **Memory Bandwidth:** While it shifts the bottleneck from compute to memory bandwidth (reading the large cache), it is still vastly more efficient than recomputing.\n\nHowever, the linear growth in memory usage is the primary constraint for extending context windows, leading to research into techniques like \"KV cache eviction\" or compression to handle extremely long sequences."
+    },
+    {
+      "wall_s": 10.501141284999903,
+      "prompt_tokens": 16,
+      "generated_tokens": 395,
+      "ttft_ms": 19.629,
+      "tok_per_s": 37.61495910584767,
+      "generation_tok_per_s": 37.72240701426671,
+      "generation_ms": 10471.23,
+      "output_text": " KV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nKV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nIn the attention mechanism of a Transformer, the model computes the compatibility between a query (Q) and a set of keys (K) and values (V). For each new token generated, the model must attend to all previous tokens in the context window.\nWithout KV cache, the model would need to re-compute the K and V vectors for every previous token at every generation step. This results in a computational complexity of $O(T^2)$ for a sequence of length $T$, which becomes prohibitively expensive for long contexts.\nWith KV cache, the K and V vectors for all previous tokens are stored in memory (GPU RAM) after their initial computation. At each subsequent step, the model only computes the Q, K, and V for the latest token and reuses the cached K and V for the history. This reduces the per-step compute complexity from $O(T)$ to $O(1)$, though the memory footprint grows linearly with the sequence length ($O(T)$).\n**Why it matters for long context:**\n1.  **Latency:** It drastically reduces the time to generate the next token (time-to-first-token is unaffected, but time-per-output-token is significantly improved).\n2.  **Throughput:** By avoiding quadratic recomputation, it makes processing long sequences feasible in reasonable timeframes.\n3.  **Memory Bandwidth:** While it shifts the bottleneck from compute to memory bandwidth (reading the large cache), it is still vastly more efficient than recomputing.\n\nHowever, the linear growth in memory usage is the primary constraint for extending context windows, leading to research into techniques like \"KV cache eviction\" or compression to handle extremely long sequences."
+    },
+    {
+      "wall_s": 10.49240024200003,
+      "prompt_tokens": 16,
+      "generated_tokens": 395,
+      "ttft_ms": 19.512,
+      "tok_per_s": 37.64629549860807,
+      "generation_tok_per_s": 37.754850016707714,
+      "generation_ms": 10462.232,
+      "output_text": " KV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nKV cache is a standard technique used in autoregressive LLMs to avoid recomputing representations for tokens that have already been processed.\nIn the attention mechanism of a Transformer, the model computes the compatibility between a query (Q) and a set of keys (K) and values (V). For each new token generated, the model must attend to all previous tokens in the context window.\nWithout KV cache, the model would need to re-compute the K and V vectors for every previous token at every generation step. This results in a computational complexity of $O(T^2)$ for a sequence of length $T$, which becomes prohibitively expensive for long contexts.\nWith KV cache, the K and V vectors for all previous tokens are stored in memory (GPU RAM) after their initial computation. At each subsequent step, the model only computes the Q, K, and V for the latest token and reuses the cached K and V for the history. This reduces the per-step compute complexity from $O(T)$ to $O(1)$, though the memory footprint grows linearly with the sequence length ($O(T)$).\n**Why it matters for long context:**\n1.  **Latency:** It drastically reduces the time to generate the next token (time-to-first-token is unaffected, but time-per-output-token is significantly improved).\n2.  **Throughput:** By avoiding quadratic recomputation, it makes processing long sequences feasible in reasonable timeframes.\n3.  **Memory Bandwidth:** While it shifts the bottleneck from compute to memory bandwidth (reading the large cache), it is still vastly more efficient than recomputing.\n\nHowever, the linear growth in memory usage is the primary constraint for extending context windows, leading to research into techniques like \"KV cache eviction\" or compression to handle extremely long sequences."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 10.511003412000036,
+    "median_tok_per_s": 37.5796662332963,
+    "median_ttft_ms": 19.513,
+    "median_generation_tok_per_s": 37.695238671459464
+  }
+}
