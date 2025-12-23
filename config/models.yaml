@@ -70,11 +70,6 @@ defaults:
         cache_size: 32768
 
 models:
-  # ExLlamaV3 test model (EXL3 4.0bpw quant from non-main branch)
-  - repo_id: turboderp/Qwen3-0.6B-exl3
-    revision: 4.0bpw
-    backend: exl
-
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"
@@ -87,7 +82,6 @@ models:
           frequency_penalty: 0.2   # Prevent repetition loops with AWQ quant
 
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
-
 
   - repo_id: unsloth/Devstral-2-123B-Instruct-2512-GGUF
     include:
@@ -108,6 +102,11 @@ models:
   - repo_id: mistralai/Devstral-2-123B-Instruct-2512
     exclude:
       - "model-*.safetensors" # use consolidated
+
+  # ExLlamaV3 test model (EXL3 4.0bpw quant from non-main branch)
+  - repo_id: turboderp/Qwen3-0.6B-exl3
+    revision: 4.0bpw
+    backend: exl
 
   #- repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
   #  include:
