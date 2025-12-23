@@ -60,8 +60,21 @@ defaults:
             - "qwen3"
             - "--tool-call-parser"
             - "mimo"
+    # https://github.com/turboderp-org/exllamav3/releases
+    # https://github.com/theroyallab/tabbyAPI (commit SHA, no releases)
+    exl:
+      version: v0.0.18
+      tabby_version: 84bb1ce   # TabbyAPI commit (pinned in Dockerfile default)
+      image_type: build
+      args:
+        cache_size: 32768
 
 models:
+  # ExLlamaV3 test model (EXL3 4.0bpw quant from non-main branch)
+  - repo_id: turboderp/Qwen3-0.6B-exl3
+    revision: 4.0bpw
+    backend: exl
+
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"

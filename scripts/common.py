@@ -91,4 +91,13 @@ BACKEND_REGISTRY = {
             "32g",
         ],
     },
+    "exl": {
+        "display_name": "ExLlamaV3",
+        "formats": ["exl3"],  # EXL3 quantized models
+        "default_port": 5000,  # TabbyAPI default
+        "image_prefix": "model-bench-exl",
+        "prebuilt_image": None,  # Build-from-source only
+        "dockerfile": ROOT / "docker" / "Dockerfile.exl",
+        "docker_base": ["--gpus", "all", "--ipc", "host"],
+    },
 }

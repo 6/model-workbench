@@ -398,6 +398,50 @@ def build_sglang_docker_cmd(
     return cmd
 
 
+def build_exl_docker_cmd(
+    image_name: str,
+    model_path: str,
+    host: str,
+    port: int,
+    cache_size: int | None = None,
+    max_seq_len: int | None = None,
+    extra_args: list[str] | None = None,
+) -> list[str]:
+    """Build Docker run command for ExLlamaV3 via TabbyAPI server."""
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
+    model_dir = str(Path(model_path_resolved).parent)
+    model_name = Path(model_path_resolved).name
+
+    cmd = _docker_run_base(
+        "exl",
+        image_name,
+        port,
+        [(model_dir, model_dir, "ro")],
+    )
+    cmd += [
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port),
+        "--disable-auth",
+        "true",  # Disable token auth for local benchmarking
+        "--model-dir",
+        model_dir,
+        "--model-name",
+        model_name,
+        "--backend",
+        "exllamav3",
+    ]
+
+    if cache_size is not None:
+        cmd += ["--cache-size", str(cache_size)]
+    if max_seq_len is not None:
+        cmd += ["--max-seq-len", str(max_seq_len)]
+    if extra_args:
+        cmd += extra_args
+    return cmd
+
+
 def ensure_image(
     engine: str,
     version: str,
