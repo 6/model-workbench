@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, or SGLang server.
+Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, SGLang, or ExLlamaV3 server.
 
 Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
 Use --backend to explicitly select a backend.
@@ -201,8 +201,13 @@ def main():
         timeout=args.server_timeout,
     )
 
-    # Model name for API (llama.cpp uses gpt-3.5-turbo, others use full path)
-    api_model = "gpt-3.5-turbo" if backend in ("llama", "ik_llama") else model_path
+    # Model name for API (llama.cpp uses gpt-3.5-turbo, exl uses model dir name, others use full path)
+    if backend in ("llama", "ik_llama"):
+        api_model = "gpt-3.5-turbo"
+    elif backend == "exl":
+        api_model = Path(model_path).name  # TabbyAPI uses model_name (directory name)
+    else:
+        api_model = model_path
 
     # Test-only mode
     if args.test_only:
@@ -279,6 +284,18 @@ def main():
             max_model_len=max_model_len,
             rebuild=args.rebuild,
             image_override=args.docker_image,
+        )
+    elif backend == "exl":
+        # Get ExLlamaV3-specific args from config
+        cache_size = backend_cfg.get("args", {}).get("cache_size")
+        max_seq_len = args.max_model_len or backend_cfg.get("args", {}).get("max_seq_len")
+
+        server.start_exl(
+            model_path=model_path,
+            version=backend_version,
+            cache_size=cache_size,
+            max_seq_len=max_seq_len,
+            rebuild=args.rebuild,
         )
 
     # Warmup model (preload into GPU memory by default)

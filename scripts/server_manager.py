@@ -448,6 +448,51 @@ class ServerManager:
             label=label,
         )
 
+    def start_exl(
+        self,
+        model_path: str,
+        version: str,
+        cache_size: int | None = None,
+        max_seq_len: int | None = None,
+        rebuild: bool = False,
+        extra_args: list[str] | None = None,
+    ) -> None:
+        """Start ExLlamaV3 server via TabbyAPI in Docker.
+
+        Args:
+            model_path: Path to EXL3 model directory
+            version: ExLlamaV3 version (release tag like 'v0.0.18')
+            cache_size: Cache size in tokens (optional)
+            max_seq_len: Maximum sequence length (optional)
+            rebuild: Force rebuild image even if cached
+            extra_args: Additional TabbyAPI arguments (optional)
+        """
+        from docker_manager import (
+            build_exl_docker_cmd,
+            ensure_image,
+        )
+
+        model_path_resolved = str(Path(model_path).expanduser().resolve())
+
+        # Ensure image exists (builds if needed)
+        image_name = ensure_image("exl", version, rebuild=rebuild)
+
+        cmd = build_exl_docker_cmd(
+            image_name=image_name,
+            model_path=model_path_resolved,
+            host=self.host,
+            port=self.port,
+            cache_size=cache_size,
+            max_seq_len=max_seq_len,
+            extra_args=extra_args,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_openai_ready(self.host, self.port),  # TabbyAPI uses OpenAI API
+            label=f"ExLlamaV3 (Docker {version})",
+        )
+
 
 # ----------------------------
 # Readiness checks

@@ -1,0 +1,70 @@
+# ExLlamaV3 + TabbyAPI Docker Image
+# Build with: docker build -f docker/Dockerfile.exl --build-arg VERSION=v0.0.18 -t model-bench-exl:v0.0.18 .
+#
+# VERSION refers to ExLlamaV3 release tag (e.g., v0.0.18)
+# TABBY_VERSION refers to TabbyAPI commit SHA (no releases available)
+
+ARG CUDA_VERSION=12.8.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
+
+# Required: ExLlamaV3 version to install (release tag)
+ARG VERSION
+RUN test -n "$VERSION" || (echo "ERROR: VERSION build-arg is required (e.g., v0.0.18)" && exit 1)
+
+# TabbyAPI version (commit SHA, default pinned for compatibility with ExLlamaV3 v0.0.18)
+ARG TABBY_VERSION=84bb1ce
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    build-essential \
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Python
+RUN ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3 /usr/bin/python
+
+# Create virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Upgrade pip
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Clone TabbyAPI and checkout pinned version
+WORKDIR /opt
+RUN git clone https://github.com/theroyallab/tabbyAPI.git
+
+WORKDIR /opt/tabbyAPI
+RUN git checkout ${TABBY_VERSION}
+
+# Install TabbyAPI with CUDA 12 support and ExLlamaV3
+# This installs exllamav3 from the prebuilt wheels
+RUN pip install --no-cache-dir ".[cu12,extras]"
+
+# Verify exllamav3 is installed (from TabbyAPI deps)
+RUN python -c "import exllamav3; print(f'ExLlamaV3 installed')"
+
+# Create a minimal config template that will be overwritten at runtime
+RUN echo "# Runtime config - overwritten by docker command" > /opt/tabbyAPI/config.yml
+
+# Expose TabbyAPI default port
+EXPOSE 5000
+
+# Set working directory for runtime
+WORKDIR /opt/tabbyAPI
+
+# Default entrypoint: TabbyAPI main
+ENTRYPOINT ["python", "main.py"]
+
+# Default arguments (can be overridden)
+CMD ["--host", "0.0.0.0", "--port", "5000"]
