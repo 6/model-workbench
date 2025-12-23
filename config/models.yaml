@@ -30,7 +30,7 @@ defaults:
             - "mistral"
     # https://github.com/ggerganov/llama.cpp/releases
     llama:
-      version: b7349
+      version: b7522
       image_type: build
       args:
         n_gpu_layers: 999
@@ -62,6 +62,11 @@ defaults:
             - "mimo"
 
 models:
+  - repo_id: unsloth/GLM-4.7-GGUF
+    include:
+      - "UD-Q3_K_XL/*.gguf" 
+
+
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
     backend: sglang           # Only SGLang supports this model
     backends:
