@@ -1087,8 +1087,11 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
 
     # Get ExLlamaV3-specific args from config
     backend_cfg = get_model_backend_config(args.model, "exl")
-    cache_size = backend_cfg.get("args", {}).get("cache_size")
-    max_seq_len = args.max_model_len or backend_cfg.get("args", {}).get("max_seq_len")
+    backend_args = backend_cfg.get("args", {})
+    cache_size = backend_args.get("cache_size")
+    max_seq_len = args.max_model_len or backend_args.get("max_seq_len")
+    gpu_split_auto = backend_args.get("gpu_split_auto", True)
+    gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
     # Select prompt
     if args.prompt:
@@ -1146,6 +1149,8 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
                 version=backend_version,
                 cache_size=cache_size,
                 max_seq_len=max_seq_len,
+                gpu_split_auto=gpu_split_auto,
+                gpu_split=gpu_split,
                 rebuild=args.rebuild,
             )
 

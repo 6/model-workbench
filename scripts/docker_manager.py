@@ -405,18 +405,35 @@ def build_exl_docker_cmd(
     port: int,
     cache_size: int | None = None,
     max_seq_len: int | None = None,
+    gpu_split_auto: bool = True,
+    gpu_split: list[int] | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
-    """Build Docker run command for ExLlamaV3 via TabbyAPI server."""
+    """Build Docker run command for ExLlamaV3 via TabbyAPI server.
+
+    Args:
+        image_name: Docker image to use
+        model_path: Path to EXL3 model directory
+        host: Host to bind to
+        port: Port to expose
+        cache_size: Cache size in tokens (optional)
+        max_seq_len: Maximum sequence length (optional)
+        gpu_split_auto: Enable automatic GPU splitting (default: True)
+        gpu_split: Explicit GPU memory split in GB per GPU (e.g., [24, 24])
+        extra_args: Additional TabbyAPI arguments (optional)
+    """
     model_path_resolved = str(Path(model_path).expanduser().resolve())
     model_dir = str(Path(model_path_resolved).parent)
     model_name = Path(model_path_resolved).name
+
+    # Build mounts list
+    mounts = [(model_dir, model_dir, "ro")]
 
     cmd = _docker_run_base(
         "exl",
         image_name,
         port,
-        [(model_dir, model_dir, "ro")],
+        mounts,
     )
     cmd += [
         "--host",
@@ -437,9 +454,60 @@ def build_exl_docker_cmd(
         cmd += ["--cache-size", str(cache_size)]
     if max_seq_len is not None:
         cmd += ["--max-seq-len", str(max_seq_len)]
+
+    # GPU split settings via CLI args (config.yml parsing has issues)
+    if gpu_split:
+        # Explicit split: --gpu-split 24 24
+        cmd += ["--gpu-split"] + [str(g) for g in gpu_split]
+        cmd += ["--gpu-split-auto", "false"]
+    else:
+        # Auto split
+        cmd += ["--gpu-split-auto", str(gpu_split_auto).lower()]
+
     if extra_args:
         cmd += extra_args
     return cmd
+
+
+def generate_tabby_config(
+    gpu_split_auto: bool = True,
+    gpu_split: list[float] | None = None,
+    autosplit_reserve: list[int] | None = None,
+) -> str:
+    """Generate a TabbyAPI config.yml file and return its path.
+
+    Args:
+        gpu_split_auto: Enable automatic GPU splitting (ignored if gpu_split provided)
+        gpu_split: Explicit GPU memory split in GB per GPU (e.g., [24, 24])
+        autosplit_reserve: VRAM to reserve per GPU in MB (default: [96])
+
+    Returns:
+        Path to the generated config file
+    """
+    import tempfile
+
+    import yaml
+
+    if autosplit_reserve is None:
+        autosplit_reserve = [96]
+
+    config = {
+        "autosplit_reserve": autosplit_reserve,
+    }
+
+    # Explicit gpu_split takes priority over gpu_split_auto
+    if gpu_split:
+        config["gpu_split"] = gpu_split
+        config["gpu_split_auto"] = False  # Disable auto when explicit split provided
+    else:
+        config["gpu_split_auto"] = gpu_split_auto
+
+    # Create a persistent temp file (not deleted on close)
+    fd, path = tempfile.mkstemp(suffix=".yml", prefix="tabby_config_")
+    with os.fdopen(fd, "w") as f:
+        yaml.dump(config, f, default_flow_style=False)
+
+    return path
 
 
 def ensure_image(

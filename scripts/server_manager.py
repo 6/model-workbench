@@ -454,6 +454,8 @@ class ServerManager:
         version: str,
         cache_size: int | None = None,
         max_seq_len: int | None = None,
+        gpu_split_auto: bool = True,
+        gpu_split: list[int] | None = None,
         rebuild: bool = False,
         extra_args: list[str] | None = None,
     ) -> None:
@@ -464,6 +466,8 @@ class ServerManager:
             version: ExLlamaV3 version (release tag like 'v0.0.18')
             cache_size: Cache size in tokens (optional)
             max_seq_len: Maximum sequence length (optional)
+            gpu_split_auto: Enable automatic GPU splitting (default: True)
+            gpu_split: Explicit GPU memory split in GB per GPU (e.g., [24, 24])
             rebuild: Force rebuild image even if cached
             extra_args: Additional TabbyAPI arguments (optional)
         """
@@ -484,6 +488,8 @@ class ServerManager:
             port=self.port,
             cache_size=cache_size,
             max_seq_len=max_seq_len,
+            gpu_split_auto=gpu_split_auto,
+            gpu_split=gpu_split,
             extra_args=extra_args,
         )
 

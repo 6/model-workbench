@@ -68,6 +68,8 @@ defaults:
       image_type: build
       args:
         cache_size: 32768
+        gpu_split_auto: true   # Automatically split model across GPUs
+        # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
 
 models:
   - repo_id: unsloth/GLM-4.7-GGUF

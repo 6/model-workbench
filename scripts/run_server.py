@@ -287,14 +287,19 @@ def main():
         )
     elif backend == "exl":
         # Get ExLlamaV3-specific args from config
-        cache_size = backend_cfg.get("args", {}).get("cache_size")
-        max_seq_len = args.max_model_len or backend_cfg.get("args", {}).get("max_seq_len")
+        backend_args = backend_cfg.get("args", {})
+        cache_size = backend_args.get("cache_size")
+        max_seq_len = args.max_model_len or backend_args.get("max_seq_len")
+        gpu_split_auto = backend_args.get("gpu_split_auto", True)
+        gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
         server.start_exl(
             model_path=model_path,
             version=backend_version,
             cache_size=cache_size,
             max_seq_len=max_seq_len,
+            gpu_split_auto=gpu_split_auto,
+            gpu_split=gpu_split,
             rebuild=args.rebuild,
         )
 
