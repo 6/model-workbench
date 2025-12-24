@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-24T19:10:47.902872",
+  "repo_id": "openai/gpt-oss-120b",
+  "model_ref": "~/models/openai/gpt-oss-120b",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94932
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94934
+      }
+    ],
+    "memory_used_mib": 189866,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 2.2313702349999858,
+      "output_text": "**KV Cache \u2013 Technical Overview & Relevance to Long\u2011Context Inference**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | In decoder\u2011only (or encoder\u2011decoder) Transformers, each self\u2011attention layer computes **Key (K)** and **Value (V)** matrices from the input tokens. During autoregressive generation the same K/V for already\u2011generated tokens are needed again at every new step. The **KV cache** stores these K/V tensors once and re\u2011uses them, avoiding recomputation. |\n| **Data layout** | For a model with *L* layers, *h* heads, and hidden dimension *d*: <br>\u2022 **K cache**: shape *(L, h, T\\_cached, d/h)* <br>\u2022 **V cache**: shape *(L, h, T\\_cached, d/h)* <br>where *T\\_cached* is the number of tokens that have been processed so far. The cache is typically a contiguous GPU buffer per layer/head for maximal memory bandwidth. |\n| **Forward pass with cache** | 1. **New token** \u2192 compute Q, K\\_new, V\\_new for the current step only. <br>2. **Append** K\\_new/V\\_new to the existing cache (or overwrite the last slot in a sliding\u2011window scheme). <br>3. **Attention**: <br>\u2003\u2003`Attn = softmax(Q\u00b7K_cache\u1d40 / \u221ad_k) \u00b7 V_cache` <br>Only the Q\u2011matrix is freshly computed; K/V are read from the cache. |\n| **Complexity reduction** | \u2022 **Without cache**: O(L\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per generation step (quadratic in total sequence length *T*). <br>\u2022 **With cache**: O(L\u202f\u00b7\u202fT\u202f\u00b7\u202fd) per step (linear",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 229.45542248841699,
+      "generation_tok_per_s": 230.9239876228225,
+      "ttft_ms": 10.230064392089844,
+      "prefill_ms": 9.417367999986936,
+      "generation_ms": 2217.179797
+    },
+    {
+      "wall_s": 2.227455055000007,
+      "output_text": "**KV Cache \u2013 Technical Overview & Relevance to Long\u2011Context Inference**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | In decoder\u2011only (or encoder\u2011decoder) Transformers, each self\u2011attention layer computes **Key (K)** and **Value (V)** matrices from the input tokens. During autoregressive generation the same K/V for already\u2011generated tokens are needed again at every new step. The **KV cache** stores these K/V tensors once and re\u2011uses them, avoiding recomputation. |\n| **Data layout** | For a model with *L* layers, *h* heads, and hidden dimension *d*: <br>\u2022 **K cache**: shape *(L, h, T\\_cached, d/h)* <br>\u2022 **V cache**: shape *(L, h, T\\_cached, d/h)* <br>where *T\\_cached* is the number of tokens that have been processed so far. The cache is typically a contiguous GPU buffer per layer/head for maximal memory bandwidth. |\n| **Forward pass with cache** | 1. **New token** \u2192 compute Q, K\\_new, V\\_new for the current step only. <br>2. **Append** K\\_new/V\\_new to the existing cache (or overwrite the last slot in a sliding\u2011window scheme). <br>3. **Attention**: <br>\u2003\u2003`Attn = softmax(Q\u00b7K_cache\u1d40 / \u221ad_k) \u00b7 V_cache` <br>Only the Q\u2011matrix is freshly computed; K/V are read from the cache. |\n| **Complexity reduction** | \u2022 **Without cache**: O(L\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per generation step (quadratic in total sequence length *T*). <br>\u2022 **With cache**: O(L\u202f\u00b7\u202fT\u202f\u00b7\u202fd) per step (linear",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 229.85873445603522,
+      "generation_tok_per_s": 231.1200555615876,
+      "ttft_ms": 9.326457977294922,
+      "prefill_ms": 8.839375000007976,
+      "generation_ms": 2215.298878999988
+    },
+    {
+      "wall_s": 2.2300307340000245,
+      "output_text": "**KV Cache \u2013 Technical Overview & Relevance to Long\u2011Context Inference**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | In decoder\u2011only (or encoder\u2011decoder) Transformers, each self\u2011attention layer computes **Key (K)** and **Value (V)** matrices from the input tokens. During autoregressive generation the same K/V for already\u2011generated tokens are needed again at every new step. The **KV cache** stores these K/V tensors once and re\u2011uses them, avoiding recomputation. |\n| **Data layout** | For a model with *L* layers, *h* heads, and hidden dimension *d*: <br>\u2022 **K cache**: shape *(L, h, T\\_cached, d/h)* <br>\u2022 **V cache**: shape *(L, h, T\\_cached, d/h)* <br>where *T\\_cached* is the number of tokens that have been processed so far. The cache is typically a contiguous GPU buffer per layer/head for maximal memory bandwidth. |\n| **Forward pass with cache** | 1. **New token** \u2192 compute Q, K\\_new, V\\_new for the current step only. <br>2. **Append** K\\_new/V\\_new to the existing cache (or overwrite the last slot in a sliding\u2011window scheme). <br>3. **Attention**: <br>\u2003\u2003`Attn = softmax(Q\u00b7K_cache\u1d40 / \u221ad_k) \u00b7 V_cache` <br>Only the Q\u2011matrix is freshly computed; K/V are read from the cache. |\n| **Complexity reduction** | \u2022 **Without cache**: O(L\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per generation step (quadratic in total sequence length *T*). <br>\u2022 **With cache**: O(L\u202f\u00b7\u202fT\u202f\u00b7\u202fd) per step (linear",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 229.59324828748947,
+      "generation_tok_per_s": 230.80423190504212,
+      "ttft_ms": 9.158134460449219,
+      "prefill_ms": 8.727508999982092,
+      "generation_ms": 2218.330209000015
+    },
+    {
+      "wall_s": 2.2278349869999943,
+      "output_text": "**KV Cache \u2013 Technical Overview & Relevance to Long\u2011Context Inference**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | In decoder\u2011only (or encoder\u2011decoder) Transformers, each self\u2011attention layer computes **Key (K)** and **Value (V)** matrices from the input tokens. During autoregressive generation the same K/V for already\u2011generated tokens are needed again at every new step. The **KV cache** stores these K/V tensors once and re\u2011uses them, avoiding recomputation. |\n| **Data layout** | For a model with *L* layers, *h* heads, and hidden dimension *d*: <br>\u2022 **K cache**: shape *(L, h, T\\_cached, d/h)* <br>\u2022 **V cache**: shape *(L, h, T\\_cached, d/h)* <br>where *T\\_cached* is the number of tokens that have been processed so far. The cache is typically a contiguous GPU buffer per layer/head for maximal memory bandwidth. |\n| **Forward pass with cache** | 1. **New token** \u2192 compute Q, K\\_new, V\\_new for the current step only. <br>2. **Append** K\\_new/V\\_new to the existing cache (or overwrite the last slot in a sliding\u2011window scheme). <br>3. **Attention**: <br>\u2003\u2003`Attn = softmax(Q\u00b7K_cache\u1d40 / \u221ad_k) \u00b7 V_cache` <br>Only the Q\u2011matrix is freshly computed; K/V are read from the cache. |\n| **Complexity reduction** | \u2022 **Without cache**: O(L\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per generation step (quadratic in total sequence length *T*). <br>\u2022 **With cache**: O(L\u202f\u00b7\u202fT\u202f\u00b7\u202fd) per step (linear",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 229.81953465479054,
+      "generation_tok_per_s": 231.07985027592784,
+      "ttft_ms": 9.183168411254883,
+      "prefill_ms": 8.750503000015897,
+      "generation_ms": 2215.6843159999935
+    },
+    {
+      "wall_s": 2.2308707640000023,
+      "output_text": "**KV Cache \u2013 Technical Overview & Relevance to Long\u2011Context Inference**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | In decoder\u2011only (or encoder\u2011decoder) Transformers, each self\u2011attention layer computes **Key (K)** and **Value (V)** matrices from the input tokens. During autoregressive generation the same K/V for already\u2011generated tokens are needed again at every new step. The **KV cache** stores these K/V tensors once and re\u2011uses them, avoiding recomputation. |\n| **Data layout** | For a model with *L* layers, *h* heads, and hidden dimension *d*: <br>\u2022 **K cache**: shape *(L, h, T\\_cached, d/h)* <br>\u2022 **V cache**: shape *(L, h, T\\_cached, d/h)* <br>where *T\\_cached* is the number of tokens that have been processed so far. The cache is typically a contiguous GPU buffer per layer/head for maximal memory bandwidth. |\n| **Forward pass with cache** | 1. **New token** \u2192 compute Q, K\\_new, V\\_new for the current step only. <br>2. **Append** K\\_new/V\\_new to the existing cache (or overwrite the last slot in a sliding\u2011window scheme). <br>3. **Attention**: <br>\u2003\u2003`Attn = softmax(Q\u00b7K_cache\u1d40 / \u221ad_k) \u00b7 V_cache` <br>Only the Q\u2011matrix is freshly computed; K/V are read from the cache. |\n| **Complexity reduction** | \u2022 **Without cache**: O(L\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per generation step (quadratic in total sequence length *T*). <br>\u2022 **With cache**: O(L\u202f\u00b7\u202fT\u202f\u00b7\u202fd) per step (linear",
+      "prompt_tokens": 85,
+      "generated_tokens": 512,
+      "tok_per_s": 229.5067954012595,
+      "generation_tok_per_s": 230.76177566614382,
+      "ttft_ms": 9.206056594848633,
+      "prefill_ms": 8.792803999995158,
+      "generation_ms": 2218.738344000002
+    }
+  ],
+  "summary": {
+    "median_wall_s": 2.2300307340000245,
+    "median_tok_per_s": 229.59324828748947,
+    "median_ttft_ms": 9.206056594848633,
+    "median_generation_tok_per_s": 230.9239876228225
+  }
+}
