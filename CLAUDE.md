@@ -9,7 +9,7 @@ Model Workbench is a local LLM benchmarking suite for downloading, serving, and 
 - Both safetensors (vLLM, TensorRT-LLM) and GGUF (llama.cpp, ik_llama.cpp) formats
 - Vision and text-only benchmarks
 - Docker-based execution for reproducible benchmarks with version pinning
-- Multiple backends: `--backend vllm` (default for safetensors), `--backend trtllm` (TensorRT-LLM), `--backend llama` (default for GGUF), `--backend ik_llama`
+- Multiple backends: `--backend vllm`, `--backend sglang`, `--backend llama`, etc. (see `config/models.yaml` for full list and version pinning)
 - Pre-built Docker images for vLLM and TensorRT-LLM; build-from-source for llama.cpp
 
 ## Common Commands
