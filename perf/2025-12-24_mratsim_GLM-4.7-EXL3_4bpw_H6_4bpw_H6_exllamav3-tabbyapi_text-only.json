@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-12-24T00:35:00.017566",
-  "repo_id": "mratsim/GLM-4.7-EXL3",
-  "model_ref": "~/models/mratsim/GLM-4.7-EXL3",
+  "timestamp": "2025-12-24T01:06:44.444711",
+  "repo_id": "mratsim/GLM-4.7-EXL3/4bpw_H6",
+  "model_ref": "~/models/mratsim/GLM-4.7-EXL3/4bpw_H6",
   "engine": "exllamav3-tabbyapi",
   "mode": "text-only",
   "gpu_info": {
@@ -39,43 +39,44 @@
   },
   "iterations": [
     {
-      "wall_s": 17.09644380499958,
+      "wall_s": 17.099474918999476,
       "output_text": "1.  **Analyze the Request:**\n    *   **Topic:** KV Cache (Key-Value Cache).\n    *   **Context:** Long context (why it matters for long context).\n    *   **Format:** Concise technical overview.\n\n2.  **Define KV Cache:**\n    *   What is it? A caching mechanism used in Transformer models (specifically the attention mechanism).\n    *   What does it store? The Keys (K) and Values (V) matrices for previously generated tokens.\n    *   Why? To avoid recomputing them during autoregressive generation.\n\n3.  **Explain the Mechanism (Technical Overview):**\n    *   *Standard Attention:* $Attention(Q, K, V) = softmax(QK^T / \\sqrt{d})V$.\n    *   *Autoregressive Generation:* To generate token $t$, we need the context of tokens $1$ to $t-1$.\n    *   *Naive approach:* Re-run the whole prompt + new token through the model every step. $O(N^2)$ complexity per step (cumulative $O(N^3)$).\n    *   *KV Cache approach:* Store $K$ and $V$ for tokens $1$ to $t-1$. For token $t$, only compute $Q_t$, $K_t$, $V_t$. Then compute attention using cached $K_{1:t-1}$, $V_{1:t-1}$ and new $Q_t$, $K_t$, $V_t$.\n    *   *Benefit:* Reduces per-step complexity from $O(N^2)$ to $O(N)$ (where $N$ is context length).\n\n4.  **Address \"Why it matters for Long Context\":**\n    *   *Memory Bottleneck:* As context length ($N$) grows, the size of the KV cache grows linearly ($O(N \\times d_{model} \\times \\text{layers}$). For very long contexts (e.g., 1M tokens), this consumes massive GPU VRAM.\n    *   *Latency:* Even with caching, the attention calculation involves $Q \\times K^T$. If $K$ is huge (long context), the matrix multiplication is slow.\n    *   *The Trade-off:* It makes generation *possible* (speed-wise) but introduces a memory pressure that limits maximum context length.\n    *   *Optimization techniques (briefly):*",
       "prompt_tokens": 22,
       "generated_tokens": 511,
-      "tok_per_s": 29.889256843611317
+      "tok_per_s": 29.883958567185033
     },
     {
-      "wall_s": 17.087130720999994,
+      "wall_s": 17.089079534998746,
       "output_text": "1.  **Analyze the Request:**\n    *   **Topic:** KV Cache (Key-Value Cache).\n    *   **Context:** Long context (why it matters for long context).\n    *   **Format:** Concise technical overview.\n\n2.  **Define KV Cache:**\n    *   What is it? A caching mechanism used in Transformer models (specifically the attention mechanism).\n    *   What does it store? The Keys (K) and Values (V) matrices for previously generated tokens.\n    *   Why? To avoid recomputing them during autoregressive generation.\n\n3.  **Explain the Mechanism (Technical Overview):**\n    *   *Standard Attention:* $Attention(Q, K, V) = softmax(QK^T / \\sqrt{d})V$.\n    *   *Autoregressive Generation:* To generate token $t$, we need the context of tokens $1$ to $t-1$.\n    *   *Naive approach:* Re-run the whole prompt + new token through the model every step. $O(N^2)$ complexity per step (cumulative $O(N^3)$).\n    *   *KV Cache approach:* Store $K$ and $V$ for tokens $1$ to $t-1$. For token $t$, only compute $Q_t$, $K_t$, $V_t$. Then compute attention using cached $K_{1:t-1}$, $V_{1:t-1}$ and new $Q_t$, $K_t$, $V_t$.\n    *   *Benefit:* Reduces per-step complexity from $O(N^2)$ to $O(N)$ (where $N$ is context length).\n\n4.  **Address \"Why it matters for Long Context\":**\n    *   *Memory Bottleneck:* As context length ($N$) grows, the size of the KV cache grows linearly ($O(N \\times d_{model} \\times \\text{layers}$). For very long contexts (e.g., 1M tokens), this consumes massive GPU VRAM.\n    *   *Latency:* Even with caching, the attention calculation involves $Q \\times K^T$. If $K$ is huge (long context), the matrix multiplication is slow.\n    *   *The Trade-off:* It makes generation *possible* (speed-wise) but introduces a memory pressure that limits maximum context length.\n    *   *Optimization techniques (briefly):*",
       "prompt_tokens": 22,
       "generated_tokens": 511,
-      "tok_per_s": 29.905547534202665
+      "tok_per_s": 29.90213714866636
     },
     {
-      "wall_s": 17.071853123000437,
+      "wall_s": 17.07271864500035,
       "output_text": "1.  **Analyze the Request:**\n    *   **Topic:** KV Cache (Key-Value Cache).\n    *   **Context:** Long context (why it matters for long context).\n    *   **Format:** Concise technical overview.\n\n2.  **Define KV Cache:**\n    *   What is it? A caching mechanism used in Transformer models (specifically the attention mechanism).\n    *   What does it store? The Keys (K) and Values (V) matrices for previously generated tokens.\n    *   Why? To avoid recomputing them during autoregressive generation.\n\n3.  **Explain the Mechanism (Technical Overview):**\n    *   *Standard Attention:* $Attention(Q, K, V) = softmax(QK^T / \\sqrt{d})V$.\n    *   *Autoregressive Generation:* To generate token $t$, we need the context of tokens $1$ to $t-1$.\n    *   *Naive approach:* Re-run the whole prompt + new token through the model every step. $O(N^2)$ complexity per step (cumulative $O(N^3)$).\n    *   *KV Cache approach:* Store $K$ and $V$ for tokens $1$ to $t-1$. For token $t$, only compute $Q_t$, $K_t$, $V_t$. Then compute attention using cached $K_{1:t-1}$, $V_{1:t-1}$ and new $Q_t$, $K_t$, $V_t$.\n    *   *Benefit:* Reduces per-step complexity from $O(N^2)$ to $O(N)$ (where $N$ is context length).\n\n4.  **Address \"Why it matters for Long Context\":**\n    *   *Memory Bottleneck:* As context length ($N$) grows, the size of the KV cache grows linearly ($O(N \\times d_{model} \\times \\text{layers}$). For very long contexts (e.g., 1M tokens), this consumes massive GPU VRAM.\n    *   *Latency:* Even with caching, the attention calculation involves $Q \\times K^T$. If $K$ is huge (long context), the matrix multiplication is slow.\n    *   *The Trade-off:* It makes generation *possible* (speed-wise) but introduces a memory pressure that limits maximum context length.\n    *   *Optimization techniques (briefly):*",
       "prompt_tokens": 22,
       "generated_tokens": 511,
-      "tok_per_s": 29.93231000280478
+      "tok_per_s": 29.930792548358635
     },
     {
-      "wall_s": 17.054438973999822,
+      "wall_s": 17.05674442399868,
       "output_text": "1.  **Analyze the Request:**\n    *   **Topic:** KV Cache (Key-Value Cache).\n    *   **Context:** Long context (why it matters for long context).\n    *   **Format:** Concise technical overview.\n\n2.  **Define KV Cache:**\n    *   What is it? A caching mechanism used in Transformer models (specifically the attention mechanism).\n    *   What does it store? The Keys (K) and Values (V) matrices for previously generated tokens.\n    *   Why? To avoid recomputing them during autoregressive generation.\n\n3.  **Explain the Mechanism (Technical Overview):**\n    *   *Standard Attention:* $Attention(Q, K, V) = softmax(QK^T / \\sqrt{d})V$.\n    *   *Autoregressive Generation:* To generate token $t$, we need the context of tokens $1$ to $t-1$.\n    *   *Naive approach:* Re-run the whole prompt + new token through the model every step. $O(N^2)$ complexity per step (cumulative $O(N^3)$).\n    *   *KV Cache approach:* Store $K$ and $V$ for tokens $1$ to $t-1$. For token $t$, only compute $Q_t$, $K_t$, $V_t$. Then compute attention using cached $K_{1:t-1}$, $V_{1:t-1}$ and new $Q_t$, $K_t$, $V_t$.\n    *   *Benefit:* Reduces per-step complexity from $O(N^2)$ to $O(N)$ (where $N$ is context length).\n\n4.  **Address \"Why it matters for Long Context\":**\n    *   *Memory Bottleneck:* As context length ($N$) grows, the size of the KV cache grows linearly ($O(N \\times d_{model} \\times \\text{layers}$). For very long contexts (e.g., 1M tokens), this consumes massive GPU VRAM.\n    *   *Latency:* Even with caching, the attention calculation involves $Q \\times K^T$. If $K$ is huge (long context), the matrix multiplication is slow.\n    *   *The Trade-off:* It makes generation *possible* (speed-wise) but introduces a memory pressure that limits maximum context length.\n    *   *Optimization techniques (briefly):*",
       "prompt_tokens": 22,
       "generated_tokens": 511,
-      "tok_per_s": 29.96287364122854
+      "tok_per_s": 29.958823753085483
     },
     {
-      "wall_s": 17.037503382000068,
+      "wall_s": 17.034988704999705,
       "output_text": "1.  **Analyze the Request:**\n    *   **Topic:** KV Cache (Key-Value Cache).\n    *   **Context:** Long context (why it matters for long context).\n    *   **Format:** Concise technical overview.\n\n2.  **Define KV Cache:**\n    *   What is it? A caching mechanism used in Transformer models (specifically the attention mechanism).\n    *   What does it store? The Keys (K) and Values (V) matrices for previously generated tokens.\n    *   Why? To avoid recomputing them during autoregressive generation.\n\n3.  **Explain the Mechanism (Technical Overview):**\n    *   *Standard Attention:* $Attention(Q, K, V) = softmax(QK^T / \\sqrt{d})V$.\n    *   *Autoregressive Generation:* To generate token $t$, we need the context of tokens $1$ to $t-1$.\n    *   *Naive approach:* Re-run the whole prompt + new token through the model every step. $O(N^2)$ complexity per step (cumulative $O(N^3)$).\n    *   *KV Cache approach:* Store $K$ and $V$ for tokens $1$ to $t-1$. For token $t$, only compute $Q_t$, $K_t$, $V_t$. Then compute attention using cached $K_{1:t-1}$, $V_{1:t-1}$ and new $Q_t$, $K_t$, $V_t$.\n    *   *Benefit:* Reduces per-step complexity from $O(N^2)$ to $O(N)$ (where $N$ is context length).\n\n4.  **Address \"Why it matters for Long Context\":**\n    *   *Memory Bottleneck:* As context length ($N$) grows, the size of the KV cache grows linearly ($O(N \\times d_{model} \\times \\text{layers}$). For very long contexts (e.g., 1M tokens), this consumes massive GPU VRAM.\n    *   *Latency:* Even with caching, the attention calculation involves $Q \\times K^T$. If $K$ is huge (long context), the matrix multiplication is slow.\n    *   *The Trade-off:* It makes generation *possible* (speed-wise) but introduces a memory pressure that limits maximum context length.\n    *   *Optimization techniques (briefly):*",
       "prompt_tokens": 22,
       "generated_tokens": 511,
-      "tok_per_s": 29.99265728920505
+      "tok_per_s": 29.997084755919058
     }
   ],
   "summary": {
-    "median_wall_s": 17.071853123000437,
-    "median_tok_per_s": 29.93231000280478
-  }
+    "median_wall_s": 17.07271864500035,
+    "median_tok_per_s": 29.930792548358635
+  },
+  "revision": "4bpw_H6"
 }

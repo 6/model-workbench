@@ -55,6 +55,7 @@ from bench_utils import (
     build_chat_messages,
     compact_path,
     extract_repo_id,
+    extract_revision_from_path,
     find_mmproj,
     get_gpu_info,
     get_model_backend_version,
@@ -646,6 +647,7 @@ def run_benchmark_vllm(
             },
             iterations=results,
             summary=summary,
+            revision=extract_revision_from_path(args.model),
         )
 
 
@@ -807,6 +809,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             },
             iterations=results,
             summary=summary,
+            revision=extract_revision_from_path(args.model),
         )
 
 
@@ -1065,6 +1068,7 @@ def run_benchmark_sglang(
             },
             iterations=results,
             summary=summary,
+            revision=extract_revision_from_path(args.model),
         )
 
 
@@ -1229,6 +1233,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
             },
             iterations=results,
             summary=summary,
+            revision=extract_revision_from_path(args.model),
         )
 
 
@@ -1415,6 +1420,7 @@ def run_benchmark_gguf(
             config=config,
             iterations=results,
             summary=summary,
+            revision=extract_revision_from_path(model_path),
         )
 
 

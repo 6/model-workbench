@@ -249,6 +249,30 @@ def extract_repo_id(path: str) -> str:
     return compact_path(path)
 
 
+def extract_revision_from_path(path: str) -> str | None:
+    """
+    Extract revision/branch from a model path if present.
+
+    Revisions are stored in subfolders under org/repo:
+        ~/models/org/repo/revision/ -> "revision"
+        ~/models/org/repo/ -> None
+
+    Examples:
+        ~/models/mratsim/GLM-4.7-EXL3/4bpw_H6 -> "4bpw_H6"
+        ~/models/mratsim/GLM-4.7-EXL3 -> None
+    """
+    p = Path(path).expanduser()
+    try:
+        rel = p.relative_to(MODELS_ROOT)
+        parts = rel.parts
+        # If we have 3+ parts (org/repo/revision[/...]), the 3rd is revision
+        if len(parts) >= 3:
+            return parts[2]
+    except ValueError:
+        pass
+    return None
+
+
 def get_gpu_info(include_memory: bool = False) -> dict:
     """
     Returns a dict with driver_version and a list of GPUs with PCIe info.
@@ -763,6 +787,7 @@ def write_benchmark_result(
     iterations: list[dict],
     summary: dict,
     extra: dict | None = None,
+    revision: str | None = None,
 ) -> Path:
     """Write benchmark results with consistent format and naming.
 
@@ -777,6 +802,7 @@ def write_benchmark_result(
         iterations: List of per-iteration results
         summary: Summary statistics (median_wall_s, etc.)
         extra: Optional extra fields to include at top level
+        revision: Optional model revision/branch (e.g., "4bpw_H6")
 
     Returns:
         Path to written results file
@@ -795,16 +821,24 @@ def write_benchmark_result(
         "summary": summary,
     }
 
+    # Add revision to payload if present
+    if revision:
+        payload["revision"] = revision
+
     # Merge extra fields at top level
     if extra:
         payload.update(extra)
 
-    # Generate filename: DATE_REPO-ID_ENGINE_MODE.json
+    # Generate filename: DATE_REPO-ID_[REVISION_]ENGINE_MODE.json
     date_str = datetime.now().strftime("%Y-%m-%d")
     safe_repo = sanitize(repo_id)
     safe_engine = sanitize(engine)
     safe_mode = sanitize(mode)
-    filename = f"{date_str}_{safe_repo}_{safe_engine}_{safe_mode}.json"
+    if revision:
+        safe_revision = sanitize(revision)
+        filename = f"{date_str}_{safe_repo}_{safe_revision}_{safe_engine}_{safe_mode}.json"
+    else:
+        filename = f"{date_str}_{safe_repo}_{safe_engine}_{safe_mode}.json"
 
     out_path = results_dir / filename
     with open(out_path, "w") as f:

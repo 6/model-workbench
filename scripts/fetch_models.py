@@ -58,54 +58,70 @@ def main():
         return
 
     for item, repo_id, out_path in hf_models:
-        out_path.mkdir(parents=True, exist_ok=True)
-
         files = normalize_to_list(item.get("files"))
         include = normalize_to_list(item.get("include"))
         exclude = normalize_to_list(item.get("exclude"))
-        revision = item.get("revision")
         repo_type = item.get("repo_type")  # optional: "model", "dataset", "space"
 
-        print("\nDownloading:")
-        print(f"  repo_id:   {repo_id}")
-        print(f"  local_dir: {out_path}")
-        if files:
-            print(f"  files:     {files}")
-        if include:
-            print(f"  include:   {include}")
-        if exclude:
-            print(f"  exclude:   {exclude}")
-        if revision:
-            print(f"  revision:  {revision}")
-        if repo_type:
-            print(f"  repo_type: {repo_type}")
+        # Support both 'revision' (string) and 'revisions' (array)
+        # Each revision is downloaded to its own subfolder: {out_path}/{revision}/
+        revisions = item.get("revisions") or []
+        if not revisions:
+            # Backward compat: single 'revision' string
+            single_rev = item.get("revision")
+            if single_rev:
+                revisions = [single_rev]
+            else:
+                revisions = [None]  # No revision specified, download default branch
 
-        cmd = ["hf", "download", repo_id]
+        for revision in revisions:
+            # Determine target directory - use subfolder if revision specified
+            if revision:
+                target_dir = out_path / revision
+            else:
+                target_dir = out_path
+            target_dir.mkdir(parents=True, exist_ok=True)
 
-        # If files are specified, download only those exact files.
-        # Paths can include subdirectories like "UD-Q4_K_XL/xyz.gguf".
-        if files:
-            cmd.extend(files)
+            print("\nDownloading:")
+            print(f"  repo_id:   {repo_id}")
+            print(f"  local_dir: {target_dir}")
+            if files:
+                print(f"  files:     {files}")
+            if include:
+                print(f"  include:   {include}")
+            if exclude:
+                print(f"  exclude:   {exclude}")
+            if revision:
+                print(f"  revision:  {revision}")
+            if repo_type:
+                print(f"  repo_type: {repo_type}")
 
-        # Pattern-based filtering for partial repo downloads.
-        # IMPORTANT: Use single flag with multiple patterns, NOT a for-loop with
-        # separate flags per pattern. The hf CLI overwrites (not appends) when
-        # the same flag is repeated, so `--include a --include b` only downloads b.
-        if include:
-            cmd.append("--include")
-            cmd.extend(include)
-        if exclude:
-            cmd.append("--exclude")
-            cmd.extend(exclude)
+            cmd = ["hf", "download", repo_id]
 
-        if revision:
-            cmd.extend(["--revision", str(revision)])
-        if repo_type:
-            cmd.extend(["--repo-type", str(repo_type)])
+            # If files are specified, download only those exact files.
+            # Paths can include subdirectories like "UD-Q4_K_XL/xyz.gguf".
+            if files:
+                cmd.extend(files)
 
-        cmd.extend(["--local-dir", str(out_path)])
+            # Pattern-based filtering for partial repo downloads.
+            # IMPORTANT: Use single flag with multiple patterns, NOT a for-loop with
+            # separate flags per pattern. The hf CLI overwrites (not appends) when
+            # the same flag is repeated, so `--include a --include b` only downloads b.
+            if include:
+                cmd.append("--include")
+                cmd.extend(include)
+            if exclude:
+                cmd.append("--exclude")
+                cmd.extend(exclude)
 
-        run(cmd)
+            if revision:
+                cmd.extend(["--revision", str(revision)])
+            if repo_type:
+                cmd.extend(["--repo-type", str(repo_type)])
+
+            cmd.extend(["--local-dir", str(target_dir)])
+
+            run(cmd)
 
     print("\nModel fetch complete.")
 

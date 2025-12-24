@@ -31,7 +31,13 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from bench_utils import extract_repo_id, get_gpu_info, resolve_run_config, sanitize
+from bench_utils import (
+    extract_repo_id,
+    extract_revision_from_path,
+    get_gpu_info,
+    resolve_run_config,
+    sanitize,
+)
 from common import BACKEND_REGISTRY, EVAL_RESULTS_ROOT, log
 from deepeval.benchmarks import GSM8K, IFEval
 from eval_model_wrapper import LocalServerLLM
@@ -87,13 +93,16 @@ def run_gsm8k(model: LocalServerLLM) -> dict:
     }
 
 
-def save_results(results: dict, repo_id: str, benchmark_name: str) -> Path:
+def save_results(
+    results: dict, repo_id: str, benchmark_name: str, revision: str | None = None
+) -> Path:
     """Save results to evals/.
 
     Args:
         results: The results dict to save.
         repo_id: Model repo ID for filename.
         benchmark_name: Benchmark name(s) for filename.
+        revision: Optional model revision/branch for filename.
 
     Returns:
         Path to saved results file.
@@ -102,7 +111,11 @@ def save_results(results: dict, repo_id: str, benchmark_name: str) -> Path:
 
     date_str = datetime.now().strftime("%Y-%m-%d")
     safe_name = sanitize(repo_id)
-    filename = f"{date_str}_{safe_name}_{benchmark_name}.json"
+    if revision:
+        safe_revision = sanitize(revision)
+        filename = f"{date_str}_{safe_name}_{safe_revision}_{benchmark_name}.json"
+    else:
+        filename = f"{date_str}_{safe_name}_{benchmark_name}.json"
     path = EVAL_RESULTS_ROOT / filename
 
     with open(path, "w") as f:
@@ -217,6 +230,7 @@ def main():
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)
     repo_id = extract_repo_id(model_path)
+    revision = extract_revision_from_path(model_path)
 
     # Resolve backend version
     backend_version = args.backend_version or backend_cfg.get("version")
@@ -303,6 +317,8 @@ def main():
             "gpu_info": get_gpu_info(include_memory=True),
             "benchmarks": {},
         }
+        if revision:
+            all_results["revision"] = revision
 
         # Run requested benchmarks
         for benchmark in args.benchmark:
@@ -316,7 +332,7 @@ def main():
 
         # Save combined results
         benchmarks_str = "-".join(args.benchmark)
-        save_results(all_results, repo_id, benchmarks_str)
+        save_results(all_results, repo_id, benchmarks_str, revision=revision)
 
 
 if __name__ == "__main__":

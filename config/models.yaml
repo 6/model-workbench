@@ -73,7 +73,8 @@ defaults:
 
 models:
   - repo_id: mratsim/GLM-4.7-EXL3
-    revision: 4bpw_H6
+    revisions:
+      - 4bpw_H6
     backend: exl
 
   - repo_id: unsloth/GLM-4.7-GGUF
@@ -111,7 +112,8 @@ models:
 
   # ExLlamaV3 test model (EXL3 4.0bpw quant from non-main branch)
   - repo_id: turboderp/Qwen3-0.6B-exl3
-    revision: 4.0bpw
+    revisions:
+      - 4.0bpw
     backend: exl
 
   #- repo_id: bartowski/mistralai_Devstral-Small-2-24B-Instruct-2512-GGUF
