@@ -72,6 +72,10 @@ defaults:
         # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
 
 models:
+  - repo_id: mratsim/GLM-4.7-EXL3
+    revision: 4bpw_H6
+    backend: exl
+
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"
@@ -116,7 +120,7 @@ models:
 
   - repo_id: google/gemma-3-1b-it
 
-  - repo_id: zai-org/GLM-4.6V-FP8
+  #- repo_id: zai-org/GLM-4.6V-FP8
 
   - repo_id: unsloth/MiniMax-M2-GGUF
     include:
