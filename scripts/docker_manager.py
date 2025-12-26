@@ -123,13 +123,15 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
     ]
     if force:
         cmd.append("--no-cache")
-    cmd.extend([
-        "--build-arg",
-        f"VERSION={version}",
-        "-t",
-        image_name,
-        str(ROOT),
-    ])
+    cmd.extend(
+        [
+            "--build-arg",
+            f"VERSION={version}",
+            "-t",
+            image_name,
+            str(ROOT),
+        ]
+    )
 
     log(f"+ {' '.join(cmd)}")
 
