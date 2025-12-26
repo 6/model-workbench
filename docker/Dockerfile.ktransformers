@@ -31,12 +31,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create symlink for python
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-# Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel --break-system-packages
+# Note: Skip pip/wheel/setuptools upgrade - Ubuntu 24.04 system packages are sufficient
 
 # Install PyTorch (CUDA 12.8)
 RUN pip3 install --no-cache-dir --break-system-packages \
-    torch==2.5.1 \
+    torch==2.7.0 \
     --index-url https://download.pytorch.org/whl/cu128
 
 # Install kt-kernel (pre-built wheels with AVX512/AMX support)
@@ -71,7 +70,5 @@ EXPOSE 10002
 # Set working directory
 WORKDIR /workspace
 
-# Default entrypoint: kt CLI (handles M2.1 and other models)
-# Override with specific model commands
-ENTRYPOINT ["kt"]
-CMD ["--help"]
+# No default entrypoint - docker command specifies full command
+# (uses python -m sglang.launch_server with kt-kernel integration)

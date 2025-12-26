@@ -481,7 +481,7 @@ def build_ktransformers_docker_cmd(
     model_path: str,
     host: str,
     port: int,
-    tensor_parallel: int = 2,
+    tensor_parallel: int | None = None,
     cpu_threads: int | None = None,
     numa_nodes: int | None = None,
     kt_method: str | None = None,
@@ -513,18 +513,24 @@ def build_ktransformers_docker_cmd(
         [(model_path_resolved, model_path_resolved, "ro")],
     )
 
-    # Use kt CLI with 'serve' subcommand for server mode
+    # Use SGLang's launch_server with ktransformers integration
+    # (kvcache-ai's SGLang fork has kt-kernel integration built-in)
     cmd += [
-        "serve",
+        "python",
+        "-m",
+        "sglang.launch_server",
         "--model-path",
         model_path_resolved,
         "--host",
         "0.0.0.0",
         "--port",
         str(port),
-        "--tensor-parallel-size",
-        str(tensor_parallel),
+        "--trust-remote-code",
     ]
+
+    # Only add tensor parallel if explicitly set (SGLang will auto-detect GPUs)
+    if tensor_parallel is not None and tensor_parallel > 0:
+        cmd += ["--tp", str(tensor_parallel)]
 
     if cpu_threads is not None:
         cmd += ["--kt-cpuinfer", str(cpu_threads)]
@@ -532,10 +538,8 @@ def build_ktransformers_docker_cmd(
         cmd += ["--kt-threadpool-count", str(numa_nodes)]
     if kt_method is not None:
         cmd += ["--kt-method", kt_method]
-    if max_new_tokens is not None:
-        cmd += ["--max-new-tokens", str(max_new_tokens)]
     if cache_lens is not None:
-        cmd += ["--cache-lens", str(cache_lens)]
+        cmd += ["--max-total-tokens", str(cache_lens)]
     if extra_args:
         cmd += extra_args
     return cmd
