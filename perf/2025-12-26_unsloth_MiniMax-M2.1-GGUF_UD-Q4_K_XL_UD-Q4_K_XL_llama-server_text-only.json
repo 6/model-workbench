@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-26T17:06:22.808838",
+  "timestamp": "2025-12-26T17:18:42.602850",
   "repo_id": "unsloth/MiniMax-M2.1-GGUF/UD-Q4_K_XL",
   "model_ref": "~/models/unsloth/MiniMax-M2.1-GGUF/UD-Q4_K_XL/MiniMax-M2.1-UD-Q4_K_XL-00001-of-00003.gguf",
   "engine": "llama-server",
@@ -32,7 +32,7 @@
     "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
     "max_tokens": 512,
     "temperature": 0.0,
-    "backend_version": "b7541",
+    "backend_version": "b7522",
     "ctx": null,
     "n_gpu_layers": 999,
     "parallel": 1,
@@ -41,61 +41,61 @@
   },
   "iterations": [
     {
-      "wall_s": 5.594014182999999,
+      "wall_s": 4.512898700999926,
       "prompt_tokens": 17,
       "generated_tokens": 512,
-      "ttft_ms": 3.769,
-      "tok_per_s": 91.52640362549472,
-      "generation_tok_per_s": 91.89764325622068,
-      "generation_ms": 5571.416,
+      "ttft_ms": 0.386,
+      "tok_per_s": 113.45257979900053,
+      "generation_tok_per_s": 113.97936928892679,
+      "generation_ms": 4492.041,
       "output_text": " \n\n## KV Cache: Technical Overview\n\n**What it is:**\nThe KV cache stores the **Key (K)** and **Value (V)** tensors from the attention mechanism for each token position. During autoregressive generation, previously computed K and V matrices are cached to avoid redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational Complexity:** Without caching, each new token requires recomputing attention over all previous tokens: O(n\u00b2) per step. With KV cache, each step is O(n), reducing total generation cost from O(n\u00b3) to O(n\u00b2).\n\n2. **Memory vs. Compute Tradeoff:** KV cache trades memory for compute. For a model with:\n   - Hidden dimension: 4096\n   - Attention heads: 32\n   - Head dimension: 128\n   - Context length: 128K tokens\n   \n   The KV cache per layer is ~2 \u00d7 128K \u00d7 128 \u00d7 4 bytes \u2248 **256 MB**. For 32 layers, that's ~8 GB just for KV cache.\n\n3. **Long Context Bottlenecks:**\n   - **Memory capacity:** GPU VRAM limits max context length\n   - **Memory bandwidth:** Reading large KV caches each step causes memory-bound inference\n   - **Cache invalidation:** Sliding windows, RoPE rotation, and other techniques evict old tokens\n\n4. **Optimization Techniques:**\n   - **PagedAttention (vLLM):** Non-contiguous storage with OS-style paging\n   - **FlashAttention:** Hardware-aware attention with fused kernels\n   - **Quantization:** FP8/INT4 KV cache to reduce memory footprint\n   - **Prefix caching:** Reuse KV for repeated prompt prefixes\n\n**Key insight:** KV cache transforms the attention problem from compute-bound to memory-bound for long contexts, making memory efficiency optimizations critical for practical long-context inference. KV cache is a critical optimization in transformer inference that stores previously computed Key and Value tensors to avoid redundant computation during autoregressive token generation.\n\nThe mechanism fundamentally transforms computational complexity by enabling incremental token generation. By caching attention states, the system reduces per-token processing from quadratic to linear complexity, dramatically improving inference efficiency.\n\nMemory management becomes crucial, with techniques like PagedAttention and quantization addressing the significant memory overhead of storing attention states across long contexts. The approach essentially trades memory consumption for computational speed, allowing more efficient processing of extended sequences.\n\nKey innovations like prefix caching and FlashAttention further optimize memory access patterns, making long-context inference more practical by minimizing redundant computations and improving"
     },
     {
-      "wall_s": 5.497143496999996,
+      "wall_s": 4.41716248299997,
       "prompt_tokens": 17,
       "generated_tokens": 512,
-      "ttft_ms": 4.592,
-      "tok_per_s": 93.13928229805502,
-      "generation_tok_per_s": 93.97714776786837,
-      "generation_ms": 5448.133,
+      "ttft_ms": 3.366,
+      "tok_per_s": 115.91151604010476,
+      "generation_tok_per_s": 117.1489067856216,
+      "generation_ms": 4370.506,
       "output_text": " \n\n## KV Cache: Technical Overview\n\n**What it is:**\nThe KV cache stores the **Key (K)** and **Value (V)** tensors from the attention mechanism for each token position. During autoregressive generation, previously computed K and V matrices are cached to avoid redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational Complexity:** Without caching, each new token requires recomputing attention over all previous tokens: O(n\u00b2) per step. With KV cache, each step is O(n), reducing total generation cost from O(n\u00b3) to O(n\u00b2).\n\n2. **Memory vs. Compute Tradeoff:** KV cache trades memory for compute. For a model with:\n   - Hidden dimension: 4096\n   - Attention heads: 32\n   - Head dimension: 128\n   - Context length: 128K tokens\n   \n   The KV cache per layer is ~2 \u00d7 128K \u00d7 128 \u00d7 4 bytes \u2248 **256 MB**. For 32 layers, that's ~8 GB just for KV cache.\n\n3. **Long Context Bottlenecks:**\n   - **Memory capacity:** GPU VRAM limits max context length\n   - **Memory bandwidth:** Reading large KV caches each step causes memory-bound inference\n   - **Cache invalidation:** Sliding windows, RoPE rotation, and other techniques evict old tokens\n\n4. **Optimization Techniques:**\n   - **PagedAttention (vLLM):** Non-contiguous storage with OS-style paging\n   - **FlashAttention:** Hardware-aware attention with fused kernels\n   - **Quantization:** FP8/INT4 KV cache to reduce memory footprint\n   - **Prefix caching:** Reuse KV for repeated prompt prefixes\n\n**Key insight:** KV cache transforms the attention problem from compute-bound to memory-bound for long contexts, making memory efficiency optimizations critical for practical long-context inference. KV cache is a critical optimization in transformer inference that stores previously computed Key and Value tensors to avoid redundant computation during autoregressive token generation.\n\nThe mechanism fundamentally transforms computational complexity by enabling incremental token generation. By caching attention states, the system reduces per-token processing from quadratic to linear complexity, dramatically improving inference efficiency.\n\nMemory management becomes crucial, with techniques like PagedAttention and quantization addressing the significant memory overhead of storing attention states across long contexts. The approach essentially trades memory consumption for computational speed, allowing more efficient processing of extended sequences.\n\nKey innovations like prefix caching and FlashAttention further optimize memory access patterns, making long-context inference more practical by minimizing redundant computations and improving"
     },
     {
-      "wall_s": 5.469141506,
+      "wall_s": 4.382593960000008,
       "prompt_tokens": 17,
       "generated_tokens": 512,
-      "ttft_ms": 4.508,
-      "tok_per_s": 93.61615519333392,
-      "generation_tok_per_s": 93.909854243469,
-      "generation_ms": 5452.037,
+      "ttft_ms": 2.319,
+      "tok_per_s": 116.82578962893452,
+      "generation_tok_per_s": 117.17397428717831,
+      "generation_ms": 4369.571,
       "output_text": " \n\n## KV Cache: Technical Overview\n\n**What it is:**\nThe KV cache stores the **Key (K)** and **Value (V)** tensors from the attention mechanism for each token position. During autoregressive generation, previously computed K and V matrices are cached to avoid redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational Complexity:** Without caching, each new token requires recomputing attention over all previous tokens: O(n\u00b2) per step. With KV cache, each step is O(n), reducing total generation cost from O(n\u00b3) to O(n\u00b2).\n\n2. **Memory vs. Compute Tradeoff:** KV cache trades memory for compute. For a model with:\n   - Hidden dimension: 4096\n   - Attention heads: 32\n   - Head dimension: 128\n   - Context length: 128K tokens\n   \n   The KV cache per layer is ~2 \u00d7 128K \u00d7 128 \u00d7 4 bytes \u2248 **256 MB**. For 32 layers, that's ~8 GB just for KV cache.\n\n3. **Long Context Bottlenecks:**\n   - **Memory capacity:** GPU VRAM limits max context length\n   - **Memory bandwidth:** Reading large KV caches each step causes memory-bound inference\n   - **Cache invalidation:** Sliding windows, RoPE rotation, and other techniques evict old tokens\n\n4. **Optimization Techniques:**\n   - **PagedAttention (vLLM):** Non-contiguous storage with OS-style paging\n   - **FlashAttention:** Hardware-aware attention with fused kernels\n   - **Quantization:** FP8/INT4 KV cache to reduce memory footprint\n   - **Prefix caching:** Reuse KV for repeated prompt prefixes\n\n**Key insight:** KV cache transforms the attention problem from compute-bound to memory-bound for long contexts, making memory efficiency optimizations critical for practical long-context inference. KV cache is a critical optimization in transformer inference that stores previously computed Key and Value tensors to avoid redundant computation during autoregressive token generation.\n\nThe mechanism fundamentally transforms computational complexity by enabling incremental token generation. By caching attention states, the system reduces per-token processing from quadratic to linear complexity, dramatically improving inference efficiency.\n\nMemory management becomes crucial, with techniques like PagedAttention and quantization addressing the significant memory overhead of storing attention states across long contexts. The approach essentially trades memory consumption for computational speed, allowing more efficient processing of extended sequences.\n\nKey innovations like prefix caching and FlashAttention further optimize memory access patterns, making long-context inference more practical by minimizing redundant computations and improving"
     },
     {
-      "wall_s": 5.465815614000007,
+      "wall_s": 4.383530341999972,
       "prompt_tokens": 17,
       "generated_tokens": 512,
-      "ttft_ms": 4.556,
-      "tok_per_s": 93.67311965090363,
-      "generation_tok_per_s": 93.94431634133859,
-      "generation_ms": 5450.037,
+      "ttft_ms": 2.598,
+      "tok_per_s": 116.80083404336644,
+      "generation_tok_per_s": 117.16247139588101,
+      "generation_ms": 4370.0,
       "output_text": " \n\n## KV Cache: Technical Overview\n\n**What it is:**\nThe KV cache stores the **Key (K)** and **Value (V)** tensors from the attention mechanism for each token position. During autoregressive generation, previously computed K and V matrices are cached to avoid redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational Complexity:** Without caching, each new token requires recomputing attention over all previous tokens: O(n\u00b2) per step. With KV cache, each step is O(n), reducing total generation cost from O(n\u00b3) to O(n\u00b2).\n\n2. **Memory vs. Compute Tradeoff:** KV cache trades memory for compute. For a model with:\n   - Hidden dimension: 4096\n   - Attention heads: 32\n   - Head dimension: 128\n   - Context length: 128K tokens\n   \n   The KV cache per layer is ~2 \u00d7 128K \u00d7 128 \u00d7 4 bytes \u2248 **256 MB**. For 32 layers, that's ~8 GB just for KV cache.\n\n3. **Long Context Bottlenecks:**\n   - **Memory capacity:** GPU VRAM limits max context length\n   - **Memory bandwidth:** Reading large KV caches each step causes memory-bound inference\n   - **Cache invalidation:** Sliding windows, RoPE rotation, and other techniques evict old tokens\n\n4. **Optimization Techniques:**\n   - **PagedAttention (vLLM):** Non-contiguous storage with OS-style paging\n   - **FlashAttention:** Hardware-aware attention with fused kernels\n   - **Quantization:** FP8/INT4 KV cache to reduce memory footprint\n   - **Prefix caching:** Reuse KV for repeated prompt prefixes\n\n**Key insight:** KV cache transforms the attention problem from compute-bound to memory-bound for long contexts, making memory efficiency optimizations critical for practical long-context inference. KV cache is a critical optimization in transformer inference that stores previously computed Key and Value tensors to avoid redundant computation during autoregressive token generation.\n\nThe mechanism fundamentally transforms computational complexity by enabling incremental token generation. By caching attention states, the system reduces per-token processing from quadratic to linear complexity, dramatically improving inference efficiency.\n\nMemory management becomes crucial, with techniques like PagedAttention and quantization addressing the significant memory overhead of storing attention states across long contexts. The approach essentially trades memory consumption for computational speed, allowing more efficient processing of extended sequences.\n\nKey innovations like prefix caching and FlashAttention further optimize memory access patterns, making long-context inference more practical by minimizing redundant computations and improving"
     },
     {
-      "wall_s": 5.460186746000005,
+      "wall_s": 4.382564067999965,
       "prompt_tokens": 17,
       "generated_tokens": 512,
-      "ttft_ms": 4.447,
-      "tok_per_s": 93.76968660917656,
-      "generation_tok_per_s": 94.00629107726068,
-      "generation_ms": 5446.444,
+      "ttft_ms": 2.35,
+      "tok_per_s": 116.82658645847413,
+      "generation_tok_per_s": 117.169147624201,
+      "generation_ms": 4369.751,
       "output_text": " \n\n## KV Cache: Technical Overview\n\n**What it is:**\nThe KV cache stores the **Key (K)** and **Value (V)** tensors from the attention mechanism for each token position. During autoregressive generation, previously computed K and V matrices are cached to avoid redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational Complexity:** Without caching, each new token requires recomputing attention over all previous tokens: O(n\u00b2) per step. With KV cache, each step is O(n), reducing total generation cost from O(n\u00b3) to O(n\u00b2).\n\n2. **Memory vs. Compute Tradeoff:** KV cache trades memory for compute. For a model with:\n   - Hidden dimension: 4096\n   - Attention heads: 32\n   - Head dimension: 128\n   - Context length: 128K tokens\n   \n   The KV cache per layer is ~2 \u00d7 128K \u00d7 128 \u00d7 4 bytes \u2248 **256 MB**. For 32 layers, that's ~8 GB just for KV cache.\n\n3. **Long Context Bottlenecks:**\n   - **Memory capacity:** GPU VRAM limits max context length\n   - **Memory bandwidth:** Reading large KV caches each step causes memory-bound inference\n   - **Cache invalidation:** Sliding windows, RoPE rotation, and other techniques evict old tokens\n\n4. **Optimization Techniques:**\n   - **PagedAttention (vLLM):** Non-contiguous storage with OS-style paging\n   - **FlashAttention:** Hardware-aware attention with fused kernels\n   - **Quantization:** FP8/INT4 KV cache to reduce memory footprint\n   - **Prefix caching:** Reuse KV for repeated prompt prefixes\n\n**Key insight:** KV cache transforms the attention problem from compute-bound to memory-bound for long contexts, making memory efficiency optimizations critical for practical long-context inference. KV cache is a critical optimization in transformer inference that stores previously computed Key and Value tensors to avoid redundant computation during autoregressive token generation.\n\nThe mechanism fundamentally transforms computational complexity by enabling incremental token generation. By caching attention states, the system reduces per-token processing from quadratic to linear complexity, dramatically improving inference efficiency.\n\nMemory management becomes crucial, with techniques like PagedAttention and quantization addressing the significant memory overhead of storing attention states across long contexts. The approach essentially trades memory consumption for computational speed, allowing more efficient processing of extended sequences.\n\nKey innovations like prefix caching and FlashAttention further optimize memory access patterns, making long-context inference more practical by minimizing redundant computations and improving"
     }
   ],
   "summary": {
-    "median_wall_s": 5.469141506,
-    "median_tok_per_s": 93.61615519333392,
-    "median_ttft_ms": 4.508,
-    "median_generation_tok_per_s": 93.94431634133859
+    "median_wall_s": 4.383530341999972,
+    "median_tok_per_s": 116.80083404336644,
+    "median_ttft_ms": 2.35,
+    "median_generation_tok_per_s": 117.16247139588101
   },
   "revision": "UD-Q4_K_XL"
 }

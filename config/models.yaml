@@ -30,7 +30,7 @@ defaults:
             - "mistral"
     # https://github.com/ggerganov/llama.cpp/releases
     llama:
-      version: b7541
+      version: b7522
       image_type: build
       args:
         n_gpu_layers: 999
