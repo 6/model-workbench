@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-12-26T17:47:12.104505",
+  "repo_id": "unsloth/MiniMax-M2.1-GGUF/UD-Q5_K_XL",
+  "model_ref": "~/models/unsloth/MiniMax-M2.1-GGUF/UD-Q5_K_XL/MiniMax-M2.1-UD-Q5_K_XL-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94816
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94254
+      }
+    ],
+    "memory_used_mib": 189070,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 4.87459521899973,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 4.731,
+      "tok_per_s": 105.03436223881226,
+      "generation_tok_per_s": 105.50114279167562,
+      "generation_ms": 4853.028,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens. During autoregressive generation, we repeatedly compute attention for new tokens against the entire context. The **KV cache** stores the computed **key (K)** and **value (V)** tensors from previous tokens, avoiding redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational efficiency**: Without KV cache, each new token requires O(n\u00b2) attention over all previous tokens. KV cache reduces this to O(n) per token by caching K/V projections.\n\n2. **Memory bandwidth bottleneck**: For long contexts, memory bandwidth becomes the limiting factor. KV cache minimizes data movement by storing pre-computed K/V in high-speed memory (SRAM/HBM).\n\n3. **Enables practical long-context**: Without caching, context length would be severely limited by compute budgets. KV cache makes it feasible to process contexts of 128K+ tokens.\n\n**Key considerations:**\n\n- **Memory footprint**: KV cache grows linearly with context length and batch size. For a model with hidden dimension h, n layers, and context length L, memory \u2248 2 \u00d7 n \u00d7 h \u00d7 L \u00d7 sizeof(fp16).\n- **PagedAttention**: Systems like vLLM use paged memory management to handle non-contiguous KV cache storage efficiently.\n- **Quantization**: FP8, INT8, and 4-bit KV cache reduce memory pressure at the cost of some accuracy.\n\n**TL;DR**: KV cache is the critical optimization that makes autoregressive LLM inference tractable by trading memory for compute, enabling the long-context capabilities of modern models. \n\n---\n\nThis overview covers the core technical aspects concisely. Let me know if you'd like me to expand on any particular aspect like specific implementations (PagedAttention, FlashAttention integration) or quantization strategies.\n</think>\n\n# KV Cache: Technical Overview\n\n## What is KV Cache?\n\nIn transformer inference, each new token must attend to all previous tokens. The **KV cache** stores pre-computed **key (K)** and **value (V)** tensors from prior tokens, eliminating redundant recomputation during autoregressive generation.\n\n## Why It Matters for Long Context\n\n| Without KV Cache | With KV Cache |\n|------------------|---------------|\n| O(n\u00b2) attention per token | O(n) per token |\n| Recomputes K/V for all tokens | Cached K/V reused |\n| Context severely limited | Enables 128K+ context"
+    },
+    {
+      "wall_s": 4.798437961000218,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 7.625,
+      "tok_per_s": 106.70138994425497,
+      "generation_tok_per_s": 107.81741541860637,
+      "generation_ms": 4748.769,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens. During autoregressive generation, we repeatedly compute attention for new tokens against the entire context. The **KV cache** stores the computed **key (K)** and **value (V)** tensors from previous tokens, avoiding redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational efficiency**: Without KV cache, each new token requires O(n\u00b2) attention over all previous tokens. KV cache reduces this to O(n) per token by caching K/V projections.\n\n2. **Memory bandwidth bottleneck**: For long contexts, memory bandwidth becomes the limiting factor. KV cache minimizes data movement by storing pre-computed K/V in high-speed memory (SRAM/HBM).\n\n3. **Enables practical long-context**: Without caching, context length would be severely limited by compute budgets. KV cache makes it feasible to process contexts of 128K+ tokens.\n\n**Key considerations:**\n\n- **Memory footprint**: KV cache grows linearly with context length and batch size. For a model with hidden dimension h, n layers, and context length L, memory \u2248 2 \u00d7 n \u00d7 h \u00d7 L \u00d7 sizeof(fp16).\n- **PagedAttention**: Systems like vLLM use paged memory management to handle non-contiguous KV cache storage efficiently.\n- **Quantization**: FP8, INT8, and 4-bit KV cache reduce memory pressure at the cost of some accuracy.\n\n**TL;DR**: KV cache is the critical optimization that makes autoregressive LLM inference tractable by trading memory for compute, enabling the long-context capabilities of modern models. \n\n---\n\nThis overview covers the core technical aspects concisely. Let me know if you'd like me to expand on any particular aspect like specific implementations (PagedAttention, FlashAttention integration) or quantization strategies.\n</think>\n\n# KV Cache: Technical Overview\n\n## What is KV Cache?\n\nIn transformer inference, each new token must attend to all previous tokens. The **KV cache** stores pre-computed **key (K)** and **value (V)** tensors from prior tokens, eliminating redundant recomputation during autoregressive generation.\n\n## Why It Matters for Long Context\n\n| Without KV Cache | With KV Cache |\n|------------------|---------------|\n| O(n\u00b2) attention per token | O(n) per token |\n| Recomputes K/V for all tokens | Cached K/V reused |\n| Context severely limited | Enables 128K+ context"
+    },
+    {
+      "wall_s": 4.7621920629999295,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 6.539,
+      "tok_per_s": 107.51351336247178,
+      "generation_tok_per_s": 107.82633894198774,
+      "generation_ms": 4748.376,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens. During autoregressive generation, we repeatedly compute attention for new tokens against the entire context. The **KV cache** stores the computed **key (K)** and **value (V)** tensors from previous tokens, avoiding redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational efficiency**: Without KV cache, each new token requires O(n\u00b2) attention over all previous tokens. KV cache reduces this to O(n) per token by caching K/V projections.\n\n2. **Memory bandwidth bottleneck**: For long contexts, memory bandwidth becomes the limiting factor. KV cache minimizes data movement by storing pre-computed K/V in high-speed memory (SRAM/HBM).\n\n3. **Enables practical long-context**: Without caching, context length would be severely limited by compute budgets. KV cache makes it feasible to process contexts of 128K+ tokens.\n\n**Key considerations:**\n\n- **Memory footprint**: KV cache grows linearly with context length and batch size. For a model with hidden dimension h, n layers, and context length L, memory \u2248 2 \u00d7 n \u00d7 h \u00d7 L \u00d7 sizeof(fp16).\n- **PagedAttention**: Systems like vLLM use paged memory management to handle non-contiguous KV cache storage efficiently.\n- **Quantization**: FP8, INT8, and 4-bit KV cache reduce memory pressure at the cost of some accuracy.\n\n**TL;DR**: KV cache is the critical optimization that makes autoregressive LLM inference tractable by trading memory for compute, enabling the long-context capabilities of modern models. \n\n---\n\nThis overview covers the core technical aspects concisely. Let me know if you'd like me to expand on any particular aspect like specific implementations (PagedAttention, FlashAttention integration) or quantization strategies.\n</think>\n\n# KV Cache: Technical Overview\n\n## What is KV Cache?\n\nIn transformer inference, each new token must attend to all previous tokens. The **KV cache** stores pre-computed **key (K)** and **value (V)** tensors from prior tokens, eliminating redundant recomputation during autoregressive generation.\n\n## Why It Matters for Long Context\n\n| Without KV Cache | With KV Cache |\n|------------------|---------------|\n| O(n\u00b2) attention per token | O(n) per token |\n| Recomputes K/V for all tokens | Cached K/V reused |\n| Context severely limited | Enables 128K+ context"
+    },
+    {
+      "wall_s": 4.761927216999993,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 6.581,
+      "tok_per_s": 107.51949298430462,
+      "generation_tok_per_s": 107.81741541860637,
+      "generation_ms": 4748.769,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens. During autoregressive generation, we repeatedly compute attention for new tokens against the entire context. The **KV cache** stores the computed **key (K)** and **value (V)** tensors from previous tokens, avoiding redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational efficiency**: Without KV cache, each new token requires O(n\u00b2) attention over all previous tokens. KV cache reduces this to O(n) per token by caching K/V projections.\n\n2. **Memory bandwidth bottleneck**: For long contexts, memory bandwidth becomes the limiting factor. KV cache minimizes data movement by storing pre-computed K/V in high-speed memory (SRAM/HBM).\n\n3. **Enables practical long-context**: Without caching, context length would be severely limited by compute budgets. KV cache makes it feasible to process contexts of 128K+ tokens.\n\n**Key considerations:**\n\n- **Memory footprint**: KV cache grows linearly with context length and batch size. For a model with hidden dimension h, n layers, and context length L, memory \u2248 2 \u00d7 n \u00d7 h \u00d7 L \u00d7 sizeof(fp16).\n- **PagedAttention**: Systems like vLLM use paged memory management to handle non-contiguous KV cache storage efficiently.\n- **Quantization**: FP8, INT8, and 4-bit KV cache reduce memory pressure at the cost of some accuracy.\n\n**TL;DR**: KV cache is the critical optimization that makes autoregressive LLM inference tractable by trading memory for compute, enabling the long-context capabilities of modern models. \n\n---\n\nThis overview covers the core technical aspects concisely. Let me know if you'd like me to expand on any particular aspect like specific implementations (PagedAttention, FlashAttention integration) or quantization strategies.\n</think>\n\n# KV Cache: Technical Overview\n\n## What is KV Cache?\n\nIn transformer inference, each new token must attend to all previous tokens. The **KV cache** stores pre-computed **key (K)** and **value (V)** tensors from prior tokens, eliminating redundant recomputation during autoregressive generation.\n\n## Why It Matters for Long Context\n\n| Without KV Cache | With KV Cache |\n|------------------|---------------|\n| O(n\u00b2) attention per token | O(n) per token |\n| Recomputes K/V for all tokens | Cached K/V reused |\n| Context severely limited | Enables 128K+ context"
+    },
+    {
+      "wall_s": 4.769866663999892,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 6.523,
+      "tok_per_s": 107.34052669947161,
+      "generation_tok_per_s": 107.85988916132405,
+      "generation_ms": 4746.899,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens. During autoregressive generation, we repeatedly compute attention for new tokens against the entire context. The **KV cache** stores the computed **key (K)** and **value (V)** tensors from previous tokens, avoiding redundant recomputation.\n\n**Why it matters for long context:**\n\n1. **Computational efficiency**: Without KV cache, each new token requires O(n\u00b2) attention over all previous tokens. KV cache reduces this to O(n) per token by caching K/V projections.\n\n2. **Memory bandwidth bottleneck**: For long contexts, memory bandwidth becomes the limiting factor. KV cache minimizes data movement by storing pre-computed K/V in high-speed memory (SRAM/HBM).\n\n3. **Enables practical long-context**: Without caching, context length would be severely limited by compute budgets. KV cache makes it feasible to process contexts of 128K+ tokens.\n\n**Key considerations:**\n\n- **Memory footprint**: KV cache grows linearly with context length and batch size. For a model with hidden dimension h, n layers, and context length L, memory \u2248 2 \u00d7 n \u00d7 h \u00d7 L \u00d7 sizeof(fp16).\n- **PagedAttention**: Systems like vLLM use paged memory management to handle non-contiguous KV cache storage efficiently.\n- **Quantization**: FP8, INT8, and 4-bit KV cache reduce memory pressure at the cost of some accuracy.\n\n**TL;DR**: KV cache is the critical optimization that makes autoregressive LLM inference tractable by trading memory for compute, enabling the long-context capabilities of modern models. \n\n---\n\nThis overview covers the core technical aspects concisely. Let me know if you'd like me to expand on any particular aspect like specific implementations (PagedAttention, FlashAttention integration) or quantization strategies.\n</think>\n\n# KV Cache: Technical Overview\n\n## What is KV Cache?\n\nIn transformer inference, each new token must attend to all previous tokens. The **KV cache** stores pre-computed **key (K)** and **value (V)** tensors from prior tokens, eliminating redundant recomputation during autoregressive generation.\n\n## Why It Matters for Long Context\n\n| Without KV Cache | With KV Cache |\n|------------------|---------------|\n| O(n\u00b2) attention per token | O(n) per token |\n| Recomputes K/V for all tokens | Cached K/V reused |\n| Context severely limited | Enables 128K+ context"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.769866663999892,
+    "median_tok_per_s": 107.34052669947161,
+    "median_ttft_ms": 6.539,
+    "median_generation_tok_per_s": 107.81741541860637
+  },
+  "revision": "UD-Q5_K_XL"
+}

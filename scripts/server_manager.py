@@ -15,6 +15,27 @@ from common import log
 # ----------------------------
 
 
+def _get_gpu_memory_usage() -> str:
+    """Get GPU memory usage from nvidia-smi."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            lines = result.stdout.strip().split("\n")
+            usages = []
+            for i, line in enumerate(lines):
+                used, total = line.split(",")
+                usages.append(f"GPU{i}: {used.strip()}/{total.strip()}MB")
+            return " | ".join(usages)
+    except Exception:
+        pass
+    return ""
+
+
 class ServerManager:
     """Manages local model server lifecycle with context manager support.
 
@@ -136,6 +157,7 @@ class ServerManager:
         # Wait for server to be ready
         log(f"Waiting for {label} to be ready (timeout: {self.timeout}s)...")
         start_time = time.time()
+        last_status_time = 0.0
 
         while time.time() - start_time < self.timeout:
             read_output()
@@ -150,6 +172,16 @@ class ServerManager:
                         return True
                 except Exception:
                     pass
+
+            # Show elapsed time and GPU memory every 10s
+            elapsed = time.time() - start_time
+            if elapsed - last_status_time >= 10:
+                gpu_mem = _get_gpu_memory_usage()
+                status_msg = f"Waiting... {elapsed:.0f}s elapsed"
+                if gpu_mem:
+                    status_msg += f" | {gpu_mem}"
+                print(f"  [{label}] {status_msg}")
+                last_status_time = elapsed
 
             time.sleep(2)
 

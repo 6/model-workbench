@@ -29,8 +29,10 @@ defaults:
             - "--load_format"
             - "mistral"
     # https://github.com/ggerganov/llama.cpp/releases
+    # Note: b7538 introduced Blackwell changes that break CUDA graphs on SM120
+    # Staying on b7531 (last version before that change) for stable performance
     llama:
-      version: b7522
+      version: b7531
       image_type: build
       args:
         n_gpu_layers: 999
@@ -73,6 +75,11 @@ defaults:
 
 models:
   - repo_id: MiniMaxAI/MiniMax-M2.1
+
+  - repo_id: unsloth/MiniMax-M2.1-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
+      - "UD-Q5_K_XL/*.gguf"
 
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:
@@ -221,10 +228,10 @@ models:
   #    #- "UD-Q4_K_XL/*.gguf"
   #    #- "UD-Q5_K_XL/*.gguf"
 
-  - repo_id: unsloth/GLM-4.6-REAP-268B-A32B-GGUF
-    include:
-      - "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
+  #- repo_id: unsloth/GLM-4.6-REAP-268B-A32B-GGUF
+  #  include:
+  #    - "UD-Q4_K_XL/*.gguf"
+  #    - "UD-Q5_K_XL/*.gguf"
 
   #- repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
   #  include:
