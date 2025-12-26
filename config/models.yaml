@@ -30,7 +30,7 @@ defaults:
             - "mistral"
     # https://github.com/ggerganov/llama.cpp/releases
     llama:
-      version: b7522
+      version: b7541
       image_type: build
       args:
         n_gpu_layers: 999
@@ -72,6 +72,12 @@ defaults:
         # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
 
 models:
+  - repo_id: MiniMaxAI/MiniMax-M2.1
+
+  - repo_id: unsloth/MiniMax-M2.1-GGUF
+    include:
+      - "UD-Q4_K_XL/*.gguf"
+
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:
       - 4bpw_H6
@@ -99,7 +105,7 @@ models:
 
   - repo_id: unsloth/Devstral-Small-2-24B-Instruct-2512-GGUF
     include:
-      - "Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL.gguf"
+      #- "Devstral-Small-2-24B-Instruct-2512-UD-Q4_K_XL.gguf"
       - "Devstral-Small-2-24B-Instruct-2512-UD-Q6_K_XL.gguf"
 
   - repo_id: mistralai/Devstral-Small-2-24B-Instruct-2512
@@ -128,7 +134,7 @@ models:
 
   - repo_id: unsloth/MiniMax-M2-GGUF
     include:
-      - "UD-Q4_K_XL/*.gguf"
+      #- "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
 
   # Seems buggy
@@ -212,17 +218,17 @@ models:
 
   #- repo_id: zai-org/GLM-4.5-Air-FP8
 
-  - repo_id: unsloth/GLM-4.6-GGUF
-    include:
-      - "UD-Q3_K_XL/*.gguf"
-      - "IQ4_XS/*.gguf"
-      #- "UD-Q4_K_XL/*.gguf"
-      #- "UD-Q5_K_XL/*.gguf"
+  #- repo_id: unsloth/GLM-4.6-GGUF
+  #  include:
+  #    - "UD-Q3_K_XL/*.gguf"
+  #    #- "IQ4_XS/*.gguf"
+  #    #- "UD-Q4_K_XL/*.gguf"
+  #    #- "UD-Q5_K_XL/*.gguf"
 
-  - repo_id: unsloth/GLM-4.6-REAP-268B-A32B-GGUF
-    include:
-      - "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
+  #- repo_id: unsloth/GLM-4.6-REAP-268B-A32B-GGUF
+  #  include:
+  #    - "UD-Q4_K_XL/*.gguf"
+  #    - "UD-Q5_K_XL/*.gguf"
 
   #- repo_id: unsloth/Ministral-3-14B-Instruct-2512-GGUF
   #  include:

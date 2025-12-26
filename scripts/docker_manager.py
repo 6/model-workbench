@@ -120,12 +120,16 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
         "build",
         "-f",
         str(dockerfile),
+    ]
+    if force:
+        cmd.append("--no-cache")
+    cmd.extend([
         "--build-arg",
         f"VERSION={version}",
         "-t",
         image_name,
         str(ROOT),
-    ]
+    ])
 
     log(f"+ {' '.join(cmd)}")
 
@@ -287,7 +291,10 @@ def build_llama_docker_cmd(
             mounts.append((mmproj_dir, mmproj_dir, "ro"))
 
     cmd = _docker_run_base("llama", image_name, port, mounts)
-    cmd += ["-m", gguf_path_resolved, "--host", "0.0.0.0", "--port", str(port)]
+    # Disable CUDA graphs for Blackwell (SM120) - causes crash on inference
+    cmd.insert(-1, "-e")
+    cmd.insert(-1, "GGML_CUDA_DISABLE_GRAPHS=1")
+    cmd += ["-m", gguf_path_resolved, "--host", "0.0.0.0", "--port", str(port), "-v"]
 
     if n_gpu_layers is not None:
         cmd += ["-ngl", str(n_gpu_layers)]
