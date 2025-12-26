@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-12-26T23:54:05.353014",
+  "repo_id": "unsloth/Qwen3-0.6B-GGUF",
+  "model_ref": "~/models/unsloth/Qwen3-0.6B-GGUF/Qwen3-0.6B-UD-Q4_K_XL.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 3568
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 3430
+      }
+    ],
+    "memory_used_mib": 6998,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 0.7957816779999121,
+      "prompt_tokens": 16,
+      "generated_tokens": 512,
+      "ttft_ms": 0.23,
+      "tok_per_s": 643.3925461652267,
+      "generation_tok_per_s": 649.8905213721321,
+      "generation_ms": 787.825,
+      "output_text": " What are the key features of KV cache? What are the benefits of using KV cache? What are the potential risks and challenges in implementing it? What are the future directions for KV cache? What are the possible applications? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache? What are the limitations of KV cache? What are the possible improvements to KV cache? What are the possible future directions for KV cache? What are the possible applications for KV cache?"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.7957816779999121,
+    "median_tok_per_s": 643.3925461652267,
+    "median_ttft_ms": 0.23,
+    "median_generation_tok_per_s": 649.8905213721321
+  },
+  "revision": "Qwen3-0.6B-UD-Q4_K_XL"
+}

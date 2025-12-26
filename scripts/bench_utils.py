@@ -219,11 +219,11 @@ def extract_repo_id(path: str) -> str:
     Extract repo ID from a model path.
 
     For directories: returns up to org/repo/quant (3 parts)
-    For .gguf files: returns org/repo/filename (without .gguf extension)
+    For .gguf files: returns org/repo only (quant variant goes in revision)
 
     Examples:
         ~/models/unsloth/GLM-GGUF/Q4_K_XL -> unsloth/GLM-GGUF/Q4_K_XL
-        ~/models/unsloth/Qwen-GGUF/Model-Q4.gguf -> unsloth/Qwen-GGUF/Model-Q4
+        ~/models/unsloth/Qwen-GGUF/Model-Q4.gguf -> unsloth/Qwen-GGUF
         ~/models/org/repo -> org/repo
     """
     p = Path(path).expanduser()
@@ -236,11 +236,9 @@ def extract_repo_id(path: str) -> str:
             n = min(len(parts), 3)
             return "/".join(parts[:n])
         else:
-            # File: include org/repo + filename without extension
+            # GGUF file: just return org/repo (quant variant captured in revision)
             if len(parts) >= 2:
-                repo_parts = parts[:2]  # org/repo
-                filename = p.stem  # filename without extension
-                return f"{repo_parts[0]}/{repo_parts[1]}/{filename}"
+                return f"{parts[0]}/{parts[1]}"
             elif len(parts) == 1:
                 return p.stem
     except ValueError:
@@ -267,7 +265,11 @@ def extract_revision_from_path(path: str) -> str | None:
         parts = rel.parts
         # If we have 3+ parts (org/repo/revision[/...]), the 3rd is revision
         if len(parts) >= 3:
-            return parts[2]
+            revision = parts[2]
+            # Strip .gguf extension if present (quant variant without extension)
+            if revision.endswith(".gguf"):
+                revision = revision[:-5]
+            return revision
     except ValueError:
         pass
     return None
@@ -846,6 +848,120 @@ def write_benchmark_result(
 
     log(f"Wrote: {out_path}")
     return out_path
+
+
+# ----------------------------
+# Container cleanup utilities
+# ----------------------------
+
+
+def get_containers_on_port(port: int) -> list[str]:
+    """Get list of container IDs running on the target port.
+
+    Args:
+        port: Port number to check
+
+    Returns:
+        List of container IDs (may be empty)
+    """
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--filter", f"publish={port}", "-q"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        container_ids = [cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()]
+        return container_ids
+    except Exception:
+        return []
+
+
+def prompt_cleanup_confirmation(port: int, container_ids: list[str]) -> bool:
+    """Ask user if they want to stop existing containers.
+
+    Args:
+        port: Port number
+        container_ids: List of container IDs to stop
+
+    Returns:
+        True if user confirms, False otherwise
+    """
+    count = len(container_ids)
+    plural = "container" if count == 1 else "containers"
+
+    print(f"\n{count} {plural} already running on port {port}:")
+    for cid in container_ids:
+        print(f"  - {cid[:12]}")
+
+    try:
+        response = input(f"\nStop {'it' if count == 1 else 'them'} and start new server? [y/n]: ")
+        return response.lower() in ["y", "yes"]
+    except (KeyboardInterrupt, EOFError):
+        print("\nAborted.")
+        return False
+
+
+def cleanup_existing_containers(port: int):
+    """Stop any Docker containers using the target port.
+
+    This ensures benchmark is idempotent - can be run multiple times
+    without manual cleanup of orphaned containers.
+
+    Args:
+        port: Port number to check for containers
+    """
+    import subprocess
+
+    container_ids = get_containers_on_port(port)
+    if container_ids:
+        log(f"Found {len(container_ids)} existing container(s) on port {port}, cleaning up...")
+        for cid in container_ids:
+            try:
+                subprocess.run(["docker", "stop", cid], timeout=30, capture_output=True)
+                log(f"Stopped container {cid[:12]}")
+            except Exception as e:
+                log(f"Warning: Failed to stop container {cid[:12]}: {e}")
+
+
+def handle_container_cleanup(port: int, no_autostart: bool, force_cleanup: bool) -> None:
+    """Handle container cleanup based on runtime flags.
+
+    Args:
+        port: Port number to check
+        no_autostart: If True, skip cleanup (server already running)
+        force_cleanup: If True, clean up without prompting
+
+    Exits:
+        If containers exist and user declines to clean them up
+    """
+    import sys
+
+    if no_autostart:
+        return
+
+    if force_cleanup:
+        cleanup_existing_containers(port)
+        return
+
+    existing = get_containers_on_port(port)
+    if not existing:
+        return
+
+    # Non-interactive environment check
+    if not sys.stdin.isatty():
+        log("Error: Container running on port and stdin is not interactive")
+        log("Use --force-cleanup to automatically stop containers in CI/CD")
+        sys.exit(1)
+
+    # Interactive prompt
+    if not prompt_cleanup_confirmation(port, existing):
+        log("Use --no-autostart to benchmark against existing server")
+        sys.exit(0)
+
+    cleanup_existing_containers(port)
 
 
 def warmup_model(

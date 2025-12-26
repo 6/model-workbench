@@ -39,8 +39,6 @@ Examples:
 import argparse
 import os
 import re
-import subprocess
-import sys
 import time
 from pathlib import Path
 
@@ -56,6 +54,7 @@ from bench_utils import (
     find_mmproj,
     get_gpu_info,
     get_model_backend_version,
+    handle_container_cleanup,
     med,
     resolve_image_source,
     resolve_local_gguf,
@@ -66,88 +65,6 @@ from bench_utils import (
 from common import BACKEND_REGISTRY, RESULTS_ROOT, log
 from openai import OpenAI
 from server_manager import ServerManager
-
-# ----------------------------
-# Cleanup helpers (ensure idempotency)
-# ----------------------------
-
-
-def get_containers_on_port(port: int) -> list[str]:
-    """Get list of container IDs running on the target port.
-
-    Args:
-        port: Port number to check
-
-    Returns:
-        List of container IDs (may be empty)
-    """
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--filter", f"publish={port}", "-q"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        container_ids = [cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()]
-        return container_ids
-    except Exception:
-        return []
-
-
-def prompt_cleanup_confirmation(port: int, container_ids: list[str]) -> bool:
-    """Ask user if they want to stop existing containers.
-
-    Args:
-        port: Port number
-        container_ids: List of container IDs to stop
-
-    Returns:
-        True if user confirms, False otherwise
-    """
-    count = len(container_ids)
-    plural = "container" if count == 1 else "containers"
-
-    print(f"\n{count} {plural} already running on port {port}:")
-    for cid in container_ids:
-        print(f"  - {cid[:12]}")
-
-    try:
-        response = input(f"\nStop {'it' if count == 1 else 'them'} and start new server? [y/n]: ")
-        return response.lower() in ["y", "yes"]
-    except (KeyboardInterrupt, EOFError):
-        print("\nAborted.")
-        return False
-
-
-def cleanup_existing_containers(port: int):
-    """Stop any Docker containers using the target port.
-
-    This ensures benchmark is idempotent - can be run multiple times
-    without manual cleanup of orphaned containers.
-
-    Args:
-        port: Port number to check for containers
-    """
-    try:
-        result = subprocess.run(
-            ["docker", "ps", "--filter", f"publish={port}", "-q"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        container_ids = [cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()]
-
-        if container_ids:
-            log(f"Found {len(container_ids)} existing container(s) on port {port}, cleaning up...")
-            for cid in container_ids:
-                try:
-                    subprocess.run(["docker", "stop", cid], timeout=30, capture_output=True)
-                    log(f"Stopped container {cid[:12]}")
-                except Exception as e:
-                    log(f"Warning: Failed to stop container {cid[:12]}: {e}")
-    except Exception as e:
-        log(f"Warning: Could not check for existing containers: {e}")
-
 
 # ----------------------------
 # Prometheus metrics scraping (shared for vLLM and TensorRT-LLM)
@@ -234,7 +151,7 @@ def compute_metrics_delta(
 # ----------------------------
 
 
-def bench_once_vllm(
+def bench_once_openai(
     client: OpenAI,
     model: str,
     prompt: str,
@@ -242,14 +159,35 @@ def bench_once_vllm(
     max_tokens: int,
     temperature: float,
     frequency_penalty: float,
-    host: str,
-    port: int,
+    backend: str,
+    host: str = "127.0.0.1",
+    port: int = 8000,
 ) -> dict:
-    """Run single inference via vLLM OpenAI-compatible API."""
+    """Run single inference via OpenAI-compatible API.
+
+    Unified function for vLLM, TensorRT-LLM, SGLang, and ExLlamaV3 backends.
+
+    Args:
+        client: OpenAI client
+        model: Model name for API
+        prompt: Prompt text
+        image_path: Optional image path for vision models
+        max_tokens: Max tokens to generate
+        temperature: Sampling temperature
+        frequency_penalty: Frequency penalty
+        backend: Backend name ("vllm", "trtllm", "sglang", "exl", "ktransformers")
+        host: Server host (for metrics scraping)
+        port: Server port (for metrics scraping)
+
+    Returns:
+        Benchmark result dict with wall_s, tokens, timing metrics
+    """
     messages = build_chat_messages(prompt, image_path)
 
-    # Scrape metrics before request
-    metrics_before = scrape_prometheus_metrics(host, port, "vllm")
+    # Scrape prometheus metrics before request (vllm/trtllm only)
+    metrics_before = None
+    if backend in ("vllm", "trtllm"):
+        metrics_before = scrape_prometheus_metrics(host, port, backend)
 
     t0 = time.perf_counter()
     response = client.chat.completions.create(
@@ -261,43 +199,57 @@ def bench_once_vllm(
         seed=0,
     )
     t1 = time.perf_counter()
+    wall = t1 - t0
 
     # Scrape metrics after request
-    metrics_after = scrape_prometheus_metrics(host, port, "vllm")
+    metrics_after = None
+    if backend in ("vllm", "trtllm"):
+        metrics_after = scrape_prometheus_metrics(host, port, backend)
 
+    # Extract output text (handle reasoning_content for thinking models)
     msg = response.choices[0].message
     reasoning = getattr(msg, "reasoning_content", "") or ""
     content = msg.content or ""
     output_text = reasoning if len(reasoning) > len(content) else content
-    wall = t1 - t0
 
+    # Extract token counts
     prompt_tokens = None
     generated_tokens = None
     if response.usage:
         prompt_tokens = response.usage.prompt_tokens
         generated_tokens = response.usage.completion_tokens
 
+    # Calculate tok_per_s from wall time
     tok_per_s = None
-    generation_tok_per_s = None
     if generated_tokens and wall > 0:
         tok_per_s = generated_tokens / wall
 
-    timing = compute_metrics_delta(metrics_before, metrics_after, "vllm")
-
-    if generated_tokens and timing.get("generation_ms"):
-        gen_s = timing["generation_ms"] / 1000
-        if gen_s > 0:
-            generation_tok_per_s = generated_tokens / gen_s
-
+    # Build base result
     result = {
         "wall_s": wall,
         "output_text": output_text,
         "prompt_tokens": prompt_tokens,
         "generated_tokens": generated_tokens,
         "tok_per_s": tok_per_s,
-        "generation_tok_per_s": generation_tok_per_s,
     }
-    result.update(timing)
+
+    # Add prometheus timing metrics for vllm/trtllm
+    if metrics_before and metrics_after:
+        timing = compute_metrics_delta(metrics_before, metrics_after, backend)
+        result.update(timing)
+
+        # Calculate generation_tok_per_s from timing metrics
+        generation_tok_per_s = None
+        if backend == "vllm" and generated_tokens and timing.get("generation_ms"):
+            gen_s = timing["generation_ms"] / 1000
+            if gen_s > 0:
+                generation_tok_per_s = generated_tokens / gen_s
+        elif backend == "trtllm" and generated_tokens and timing.get("tpot_ms"):
+            tpot_s = timing["tpot_ms"] / 1000
+            if tpot_s > 0:
+                generation_tok_per_s = 1 / tpot_s
+
+        result["generation_tok_per_s"] = generation_tok_per_s
 
     return result
 
@@ -401,77 +353,6 @@ def bench_once_llama(
         }
 
 
-def bench_once_trtllm(
-    client: OpenAI,
-    model: str,
-    prompt: str,
-    image_path: str | None,
-    max_tokens: int,
-    temperature: float,
-    frequency_penalty: float,
-    host: str,
-    port: int,
-) -> dict:
-    """Run single inference via TensorRT-LLM OpenAI-compatible API."""
-    messages = build_chat_messages(prompt, image_path)
-
-    # Scrape TensorRT-LLM metrics before request
-    metrics_before = scrape_prometheus_metrics(host, port, "trtllm")
-
-    t0 = time.perf_counter()
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature if temperature > 0 else 0.0,
-        frequency_penalty=frequency_penalty,
-        seed=0,
-    )
-    t1 = time.perf_counter()
-
-    # Scrape metrics after request
-    metrics_after = scrape_prometheus_metrics(host, port, "trtllm")
-
-    msg = response.choices[0].message
-    reasoning = getattr(msg, "reasoning_content", "") or ""
-    content = msg.content or ""
-    output_text = reasoning if len(reasoning) > len(content) else content
-    wall = t1 - t0
-
-    prompt_tokens = None
-    generated_tokens = None
-    if response.usage:
-        prompt_tokens = response.usage.prompt_tokens
-        generated_tokens = response.usage.completion_tokens
-
-    tok_per_s = None
-    generation_tok_per_s = None
-    if generated_tokens and wall > 0:
-        tok_per_s = generated_tokens / wall
-
-    timing = compute_metrics_delta(metrics_before, metrics_after, "trtllm")
-
-    # Calculate generation_tok_per_s from TPOT if available
-    if generated_tokens and timing.get("tpot_ms"):
-        tpot_s = timing["tpot_ms"] / 1000
-        if tpot_s > 0:
-            generation_tok_per_s = 1 / tpot_s
-
-    result = {
-        "wall_s": wall,
-        "output_text": output_text,
-        "prompt_tokens": prompt_tokens,
-        "generated_tokens": generated_tokens,
-        "tok_per_s": tok_per_s,
-        "generation_tok_per_s": generation_tok_per_s,
-        "ttft_ms": timing.get("ttft_ms"),
-        "tpot_ms": timing.get("tpot_ms"),
-        "e2e_latency_ms": timing.get("e2e_latency_ms"),
-    }
-
-    return result
-
-
 # ----------------------------
 # Unified benchmark runner
 # ----------------------------
@@ -524,26 +405,7 @@ def run_benchmark_vllm(
         )
 
     with server:
-        # Check for existing containers and prompt user
-        if not args.no_autostart and not args.force_cleanup:
-            existing = get_containers_on_port(args.port)
-
-            if existing:
-                # Non-interactive environment check
-                if not sys.stdin.isatty():
-                    log("Error: Container running on port and stdin is not interactive")
-                    log("Use --force-cleanup to automatically stop containers in CI/CD")
-                    sys.exit(1)
-
-                # Interactive prompt
-                if not prompt_cleanup_confirmation(args.port, existing):
-                    log("Use --no-autostart to benchmark against existing server")
-                    sys.exit(0)
-
-                cleanup_existing_containers(args.port)
-        elif not args.no_autostart and args.force_cleanup:
-            # Force cleanup without prompt (for automation)
-            cleanup_existing_containers(args.port)
+        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
             server.start_vllm(
@@ -587,7 +449,7 @@ def run_benchmark_vllm(
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_vllm(
+            r = bench_once_openai(
                 client,
                 api_model,
                 prompt_text,
@@ -595,8 +457,9 @@ def run_benchmark_vllm(
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
-                args.host,
-                args.port,
+                backend="vllm",
+                host=args.host,
+                port=args.port,
             )
             ttft = r.get("ttft_ms")
             gen_tok_s = r.get("generation_tok_per_s")
@@ -691,26 +554,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         )
 
     with server:
-        # Check for existing containers and prompt user
-        if not args.no_autostart and not args.force_cleanup:
-            existing = get_containers_on_port(args.port)
-
-            if existing:
-                # Non-interactive environment check
-                if not sys.stdin.isatty():
-                    log("Error: Container running on port and stdin is not interactive")
-                    log("Use --force-cleanup to automatically stop containers in CI/CD")
-                    sys.exit(1)
-
-                # Interactive prompt
-                if not prompt_cleanup_confirmation(args.port, existing):
-                    log("Use --no-autostart to benchmark against existing server")
-                    sys.exit(0)
-
-                cleanup_existing_containers(args.port)
-        elif not args.no_autostart and args.force_cleanup:
-            # Force cleanup without prompt (for automation)
-            cleanup_existing_containers(args.port)
+        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
             server.start_trtllm(
@@ -749,7 +593,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_trtllm(
+            r = bench_once_openai(
                 client,
                 api_model,
                 prompt_text,
@@ -757,8 +601,9 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
-                args.host,
-                args.port,
+                backend="trtllm",
+                host=args.host,
+                port=args.port,
             )
             ttft = r.get("ttft_ms")
             gen_tok_s = r.get("generation_tok_per_s")
@@ -808,100 +653,6 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             summary=summary,
             revision=extract_revision_from_path(args.model),
         )
-
-
-def bench_once_sglang(
-    client: OpenAI,
-    model: str,
-    prompt: str,
-    image_path: str | None,
-    max_tokens: int,
-    temperature: float,
-    frequency_penalty: float,
-) -> dict:
-    """Run single inference via SGLang OpenAI-compatible API."""
-    messages = build_chat_messages(prompt, image_path)
-
-    t0 = time.perf_counter()
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature if temperature > 0 else 0.0,
-        frequency_penalty=frequency_penalty,
-        seed=0,
-    )
-    t1 = time.perf_counter()
-
-    msg = response.choices[0].message
-    reasoning = getattr(msg, "reasoning_content", "") or ""
-    content = msg.content or ""
-    output_text = reasoning if len(reasoning) > len(content) else content
-    wall = t1 - t0
-
-    prompt_tokens = None
-    generated_tokens = None
-    if response.usage:
-        prompt_tokens = response.usage.prompt_tokens
-        generated_tokens = response.usage.completion_tokens
-
-    tok_per_s = None
-    if generated_tokens and wall > 0:
-        tok_per_s = generated_tokens / wall
-
-    return {
-        "wall_s": wall,
-        "output_text": output_text,
-        "prompt_tokens": prompt_tokens,
-        "generated_tokens": generated_tokens,
-        "tok_per_s": tok_per_s,
-    }
-
-
-def bench_once_exl(
-    client: OpenAI,
-    model: str,
-    prompt: str,
-    image_path: str | None,
-    max_tokens: int,
-    temperature: float,
-    frequency_penalty: float,
-) -> dict:
-    """Run single inference via ExLlamaV3/TabbyAPI OpenAI-compatible API."""
-    messages = build_chat_messages(prompt, image_path)
-
-    t0 = time.perf_counter()
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature if temperature > 0 else 0.0,
-        frequency_penalty=frequency_penalty,
-        seed=0,
-    )
-    t1 = time.perf_counter()
-
-    msg = response.choices[0].message
-    output_text = msg.content or ""
-    wall = t1 - t0
-
-    prompt_tokens = None
-    generated_tokens = None
-    if response.usage:
-        prompt_tokens = response.usage.prompt_tokens
-        generated_tokens = response.usage.completion_tokens
-
-    tok_per_s = None
-    if generated_tokens and wall > 0:
-        tok_per_s = generated_tokens / wall
-
-    return {
-        "wall_s": wall,
-        "output_text": output_text,
-        "prompt_tokens": prompt_tokens,
-        "generated_tokens": generated_tokens,
-        "tok_per_s": tok_per_s,
-    }
 
 
 def run_benchmark_sglang(
@@ -958,26 +709,7 @@ def run_benchmark_sglang(
         )
 
     with server:
-        # Check for existing containers and prompt user
-        if not args.no_autostart and not args.force_cleanup:
-            existing = get_containers_on_port(args.port)
-
-            if existing:
-                # Non-interactive environment check
-                if not sys.stdin.isatty():
-                    log("Error: Container running on port and stdin is not interactive")
-                    log("Use --force-cleanup to automatically stop containers in CI/CD")
-                    sys.exit(1)
-
-                # Interactive prompt
-                if not prompt_cleanup_confirmation(args.port, existing):
-                    log("Use --no-autostart to benchmark against existing server")
-                    sys.exit(0)
-
-                cleanup_existing_containers(args.port)
-        elif not args.no_autostart and args.force_cleanup:
-            # Force cleanup without prompt (for automation)
-            cleanup_existing_containers(args.port)
+        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
             server.start_sglang(
@@ -1019,7 +751,7 @@ def run_benchmark_sglang(
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_sglang(
+            r = bench_once_openai(
                 client,
                 api_model,
                 prompt_text,
@@ -1027,6 +759,7 @@ def run_benchmark_sglang(
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                backend="sglang",
             )
             tok_s = r.get("tok_per_s")
             if tok_s is not None:
@@ -1123,26 +856,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         )
 
     with server:
-        # Check for existing containers and prompt user
-        if not args.no_autostart and not args.force_cleanup:
-            existing = get_containers_on_port(args.port)
-
-            if existing:
-                # Non-interactive environment check
-                if not sys.stdin.isatty():
-                    log("Error: Container running on port and stdin is not interactive")
-                    log("Use --force-cleanup to automatically stop containers in CI/CD")
-                    sys.exit(1)
-
-                # Interactive prompt
-                if not prompt_cleanup_confirmation(args.port, existing):
-                    log("Use --no-autostart to benchmark against existing server")
-                    sys.exit(0)
-
-                cleanup_existing_containers(args.port)
-        elif not args.no_autostart and args.force_cleanup:
-            # Force cleanup without prompt (for automation)
-            cleanup_existing_containers(args.port)
+        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
             server.start_exl(
@@ -1185,7 +899,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_exl(
+            r = bench_once_openai(
                 client,
                 api_model,
                 prompt_text,
@@ -1193,6 +907,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                backend="exl",
             )
             tok_s = r.get("tok_per_s")
             if tok_s is not None:
@@ -1290,26 +1005,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
         )
 
     with server:
-        # Check for existing containers and prompt user
-        if not args.no_autostart and not args.force_cleanup:
-            existing = get_containers_on_port(args.port)
-
-            if existing:
-                # Non-interactive environment check
-                if not sys.stdin.isatty():
-                    log("Error: Container running on port and stdin is not interactive")
-                    log("Use --force-cleanup to automatically stop containers in CI/CD")
-                    sys.exit(1)
-
-                # Interactive prompt
-                if not prompt_cleanup_confirmation(args.port, existing):
-                    log("Use --no-autostart to benchmark against existing server")
-                    sys.exit(0)
-
-                cleanup_existing_containers(args.port)
-        elif not args.no_autostart and args.force_cleanup:
-            # Force cleanup without prompt (for automation)
-            cleanup_existing_containers(args.port)
+        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
             server.start_ktransformers(
@@ -1348,11 +1044,11 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
         if not success:
             log("WARNING: Warmup failed, benchmark may include model load time")
 
-        # Benchmark - reuse SGLang's bench function since both use OpenAI API
+        # Benchmark
         results = []
         for i in range(args.iterations):
             log(f"Benchmark {i + 1} of {args.iterations}...")
-            r = bench_once_sglang(
+            r = bench_once_openai(
                 client,
                 api_model,
                 prompt_text,
@@ -1360,6 +1056,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                backend="ktransformers",
             )
             tok_s = r.get("tok_per_s")
             if tok_s is not None:
@@ -1479,26 +1176,7 @@ def run_benchmark_gguf(
         )
 
     with server:
-        # Check for existing containers and prompt user
-        if not args.no_autostart and not args.force_cleanup:
-            existing = get_containers_on_port(args.port)
-
-            if existing:
-                # Non-interactive environment check
-                if not sys.stdin.isatty():
-                    log("Error: Container running on port and stdin is not interactive")
-                    log("Use --force-cleanup to automatically stop containers in CI/CD")
-                    sys.exit(1)
-
-                # Interactive prompt
-                if not prompt_cleanup_confirmation(args.port, existing):
-                    log("Use --no-autostart to benchmark against existing server")
-                    sys.exit(0)
-
-                cleanup_existing_containers(args.port)
-        elif not args.no_autostart and args.force_cleanup:
-            # Force cleanup without prompt (for automation)
-            cleanup_existing_containers(args.port)
+        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
             gguf_path = server.start_gguf_backend(

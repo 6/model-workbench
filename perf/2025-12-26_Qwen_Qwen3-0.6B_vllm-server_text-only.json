@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-12-26T23:41:44.951129",
+  "repo_id": "Qwen/Qwen3-0.6B",
+  "model_ref": "~/models/Qwen/Qwen3-0.6B",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94066
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94066
+      }
+    ],
+    "memory_used_mib": 188132,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 40960,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 1.0001628079990041,
+      "output_text": "<think>\nOkay, the user wants a concise technical overview of the KV cache and why it matters for long context. Let me start by recalling what a KV cache is. It's a key-value cache, right? So it's a data structure that stores frequently accessed keys and their corresponding values. \n\nNow, why is it important for long context? Well, when dealing with long sequences, like in text generation or NLP, the model needs to process a lot of information quickly. If the model has to process a long context, it's important to have a cache that can hold the most recent information. \n\nWait, but how exactly does the KV cache help here? Maybe it's used in models like BERT or GPT. They use a cache to store the previous tokens so that the model can reuse those tokens without reprocessing them. That way, the model can handle long sequences more efficiently. \n\nI should mention that the KV cache is part of the model's architecture, maybe the transformer's attention mechanism. The key here is that the cache helps in reducing the computational load by reusing previously stored information. Also, it's important for models that need to handle very long sequences, like in a chatbot that needs to process a lot of conversation history. \n\nWait, but the user asked for a concise overview. So I need to make sure I don't get too technical. Maybe start with the definition, then explain the role in long context, and mention the benefits like efficiency and handling of long sequences. Also, maybe touch on how it's part of the model's design to optimize performance. \n\nLet me check if I'm missing anything. The user wants it to be concise, so I should avoid jargon but still be accurate. Maybe mention that the KV cache is a key-value cache that's used in the model's attention mechanism to store the most recent tokens. That should cover it. Alright, time to put it all together in a clear, concise way.\n</think>\n\nThe **KV cache** is a key-value cache used in models like transformers to store recently accessed key-value pairs, enabling efficient processing of long sequences. It reduces computational overhead by reusing previously stored information, allowing the model to handle long context more effectively. This is crucial for tasks like text generation, NLP, and large-scale language models, where processing a large amount of data quickly is essential. The cache optimizes both memory usage and model performance by avoiding redundant computations.",
+      "prompt_tokens": 24,
+      "generated_tokens": 498,
+      "tok_per_s": 497.91893481455656,
+      "ttft_ms": 3.9587020874023438,
+      "prefill_ms": 3.0894420015101787,
+      "generation_ms": 990.9624799984158,
+      "generation_tok_per_s": 502.5417309450466
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.0001628079990041,
+    "median_tok_per_s": 497.91893481455656,
+    "median_ttft_ms": 3.9587020874023438,
+    "median_generation_tok_per_s": 502.5417309450466
+  }
+}
