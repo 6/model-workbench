@@ -19,7 +19,7 @@ from pathlib import Path
 DEFAULT_OUTPUT_BASE = Path.home() / "models-quantized"
 DEFAULT_CALIBRATION_SAMPLES = 512
 DEFAULT_MAX_SEQ_LENGTH = 2048
-DEFAULT_VLLM_VERSION = "nightly"  # Must use nightly until vLLM includes compressed-tensors>=0.13.0
+DEFAULT_VLLM_VERSION = "v0.13.0"
 CALIBRATION_DATASET = "HuggingFaceH4/ultrachat_200k"
 CALIBRATION_SPLIT = "train_sft"
 IMAGE_PREFIX = "model-bench-compressor"
@@ -230,6 +230,16 @@ def run_quantization(args, model_path: Path, output_path: Path):
     output_path.mkdir(parents=True, exist_ok=True)
     model.save_pretrained(str(output_path), save_compressed=True)
     tokenizer.save_pretrained(str(output_path))
+
+    # Fix config for vLLM compatibility (Gemma3 requires tie_word_embeddings=true)
+    import json
+
+    config_path = output_path / "config.json"
+    config = json.loads(config_path.read_text())
+    if config.get("tie_word_embeddings") is False:
+        print("Fixing tie_word_embeddings=false -> true for vLLM compatibility")
+        config["tie_word_embeddings"] = True
+        config_path.write_text(json.dumps(config, indent=2) + "\n")
 
     print(f"\nDone! Quantized model saved to: {output_path}")
 
