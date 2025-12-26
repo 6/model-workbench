@@ -1,0 +1,11 @@
+# AWQ compression using vLLM base for version alignment
+ARG VERSION=v0.13.0
+FROM vllm/vllm-openai:${VERSION}
+
+# Install llmcompressor v0.8.1 WITHOUT upgrading deps (vLLM image has all required packages)
+# --no-deps prevents transformers upgrade which breaks torch/torchvision compatibility
+# Also install datasets for calibration data loading
+RUN pip install --no-cache-dir --no-deps llmcompressor==0.8.1 && \
+    pip install --no-cache-dir datasets
+
+WORKDIR /workspace
