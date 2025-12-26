@@ -476,6 +476,71 @@ def build_exl_docker_cmd(
     return cmd
 
 
+def build_ktransformers_docker_cmd(
+    image_name: str,
+    model_path: str,
+    host: str,
+    port: int,
+    tensor_parallel: int = 2,
+    cpu_threads: int | None = None,
+    numa_nodes: int | None = None,
+    kt_method: str | None = None,
+    max_new_tokens: int | None = None,
+    cache_lens: int | None = None,
+    extra_args: list[str] | None = None,
+) -> list[str]:
+    """Build Docker run command for KTransformers server.
+
+    Args:
+        image_name: Docker image to use
+        model_path: Path to safetensors model directory
+        host: Host to bind to
+        port: Port to expose
+        tensor_parallel: Number of GPUs for tensor parallelism
+        cpu_threads: CPU threads for inference (default: auto-detect)
+        numa_nodes: Number of NUMA nodes (default: 1)
+        kt_method: KTransformers method (e.g., "FP8" for native FP8 weights)
+        max_new_tokens: Maximum new tokens to generate
+        cache_lens: KV cache length in tokens
+        extra_args: Additional ktransformers arguments (optional)
+    """
+    model_path_resolved = str(Path(model_path).expanduser().resolve())
+
+    cmd = _docker_run_base(
+        "ktransformers",
+        image_name,
+        port,
+        [(model_path_resolved, model_path_resolved, "ro")],
+    )
+
+    # Use kt CLI with 'serve' subcommand for server mode
+    cmd += [
+        "serve",
+        "--model-path",
+        model_path_resolved,
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port),
+        "--tensor-parallel-size",
+        str(tensor_parallel),
+    ]
+
+    if cpu_threads is not None:
+        cmd += ["--kt-cpuinfer", str(cpu_threads)]
+    if numa_nodes is not None:
+        cmd += ["--kt-threadpool-count", str(numa_nodes)]
+    if kt_method is not None:
+        cmd += ["--kt-method", kt_method]
+    if max_new_tokens is not None:
+        cmd += ["--max-new-tokens", str(max_new_tokens)]
+    if cache_lens is not None:
+        cmd += ["--cache-lens", str(cache_lens)]
+    if extra_args:
+        cmd += extra_args
+    return cmd
+
+
 def generate_tabby_config(
     gpu_split_auto: bool = True,
     gpu_split: list[float] | None = None,

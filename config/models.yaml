@@ -72,9 +72,23 @@ defaults:
         cache_size: 32768
         gpu_split_auto: true   # Automatically split model across GPUs
         # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
+    # https://github.com/kvcache-ai/ktransformers
+    # CPU-GPU hybrid inference for models that don't fit in GPU memory
+    ktransformers:
+      version: main
+      image_type: build
+      args:
+        kt_method: FP8          # Use native FP8 weights (for M2.1, etc.)
+        cpu_threads: 16         # Physical CPU cores for inference
+        numa_nodes: 1           # NUMA node count (1 for desktop, 2+ for servers)
+        cache_lens: 32768       # KV cache length in tokens
 
 models:
   - repo_id: MiniMaxAI/MiniMax-M2.1
+    backends:
+      ktransformers:
+        args:
+          kt_method: FP8        # M2.1 uses native FP8 weights
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
