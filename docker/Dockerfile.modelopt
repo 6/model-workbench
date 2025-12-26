@@ -1,0 +1,9 @@
+# NVFP4 compression using NVIDIA Model Optimizer (modelopt)
+# Produces checkpoints compatible with TensorRT-LLM, vLLM, and SGLang
+ARG VERSION=1.2.0rc5
+FROM nvcr.io/nvidia/tensorrt-llm/release:${VERSION}
+
+# Upgrade modelopt to latest for NVFP4 support
+RUN pip install --no-cache-dir --upgrade nvidia-modelopt
+
+WORKDIR /workspace

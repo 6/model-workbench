@@ -122,6 +122,8 @@ models:
 
   - repo_id: google/gemma-3-1b-it
 
+  - repo_id: Qwen/Qwen3-0.6B
+
   #- repo_id: zai-org/GLM-4.6V-FP8
 
   - repo_id: unsloth/MiniMax-M2-GGUF
