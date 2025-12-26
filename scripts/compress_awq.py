@@ -36,7 +36,7 @@ DEFAULT_OUTPUT_BASE = Path.home() / "models-quantized"
 DEFAULT_CALIBRATION_SAMPLES = 512  # Higher for better quality
 DEFAULT_MAX_SEQ_LENGTH = 2048
 DEFAULT_GROUP_SIZE = 32  # Smaller = better quality (cyankiwi used 32)
-DEFAULT_VLLM_VERSION = "v0.13.0"
+DEFAULT_VLLM_VERSION = "nightly"
 CALIBRATION_DATASET = "nvidia/Llama-Nemotron-Post-Training-Dataset"
 CALIBRATION_CONFIG = "SFT"
 CALIBRATION_SPLIT = "code"
@@ -127,14 +127,59 @@ def build_image(version: str, force: bool = False) -> str:
         "build",
         "-f",
         str(DOCKERFILE),
-        "--build-arg",
-        f"VERSION={version}",
-        "-t",
-        image_name,
-        str(DOCKERFILE.parent.parent),
     ]
+    if force:
+        cmd.append("--no-cache")
+    cmd.extend(
+        [
+            "--build-arg",
+            f"VERSION={version}",
+            "-t",
+            image_name,
+            str(DOCKERFILE.parent.parent),
+        ]
+    )
     subprocess.run(cmd, check=True)
     return image_name
+
+
+def patch_minimax_model(model_path: Path) -> str | None:
+    """Remove decorators that break llmcompressor AST tracing.
+
+    MiniMax-M2.1's modeling code uses transformers decorators like
+    @check_model_inputs, @auto_docstring, @can_return_tuple that wrap
+    the forward() methods. llmcompressor's AST parser can't handle these
+    and fails with KeyError: 'forward' in ast_helpers.autowrap_forward().
+
+    This function patches the modeling file to remove these decorators,
+    allowing llmcompressor to trace the model correctly.
+
+    Returns the original content so it can be restored after quantization.
+    """
+    modeling_file = model_path / "modeling_minimax_m2.py"
+    if not modeling_file.exists():
+        return None
+
+    original = modeling_file.read_text()
+    content = original
+
+    # These decorators wrap forward() and break AST parsing
+    decorators = ["@check_model_inputs", "@auto_docstring", "@can_return_tuple"]
+    for d in decorators:
+        content = content.replace(f"    {d}\n", "")
+
+    if content != original:
+        modeling_file.write_text(content)
+        print(f"Patched {modeling_file.name}: removed AST-breaking decorators")
+        return original
+    return None
+
+
+def restore_minimax_model(model_path: Path, original_content: str):
+    """Restore original modeling file after patching."""
+    modeling_file = model_path / "modeling_minimax_m2.py"
+    modeling_file.write_text(original_content)
+    print(f"Restored {modeling_file.name}")
 
 
 def run_in_docker(args, model_path: Path, output_path: Path):
@@ -148,6 +193,10 @@ def run_in_docker(args, model_path: Path, output_path: Path):
 
     # Ensure output parent directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Patch MiniMax model to remove AST-breaking decorators (host-side)
+    # Model is mounted read-only in Docker, so patching must happen before
+    original_content = patch_minimax_model(model_path)
 
     cmd = [
         "docker",
@@ -187,7 +236,12 @@ def run_in_docker(args, model_path: Path, output_path: Path):
     if args.skip_test:
         cmd.append("--skip-test")
 
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True)
+    finally:
+        # Always restore the original file, even if Docker fails
+        if original_content:
+            restore_minimax_model(model_path, original_content)
 
 
 # ============================================================================
@@ -218,21 +272,158 @@ def get_moe_mappings():
         ),
         # Attention: v_proj -> o_proj
         AWQMapping("re:.*v_proj$", ["re:.*o_proj$"]),
-        # MLP/MoE: post_attention_layernorm -> expert gate/up projections
-        # MiniMax-specific: uses "block_sparse_moe.experts" not "mlp.experts"
+        # MLP/MoE: post_attention_layernorm -> expert w1/w3 (gate/up equivalents)
+        # MiniMax uses w1, w2, w3 instead of gate_proj, up_proj, down_proj
         AWQMapping(
             "re:.*post_attention_layernorm$",
             [
-                "re:.*block_sparse_moe.experts.*.gate_proj$",
-                "re:.*block_sparse_moe.experts.*.up_proj$",
+                "re:.*block_sparse_moe.experts.*.w1$",  # gate_proj equivalent
+                "re:.*block_sparse_moe.experts.*.w3$",  # up_proj equivalent
             ],
         ),
-        # MLP/MoE: up_proj -> down_proj
+        # MLP/MoE: w3 (up) -> w2 (down)
         AWQMapping(
-            "re:.*up_proj$",
-            ["re:.*down_proj$"],
+            "re:.*w3$",
+            ["re:.*w2$"],  # down_proj equivalent
         ),
     ]
+
+
+def create_clean_model_symlink(model_path: Path) -> tuple[Path, Path | None]:
+    """Create a temporary symlink with a clean name for torch.fx compatibility.
+
+    When using trust_remote_code=True, transformers registers custom modules
+    with names derived from the path. torch.fx then escapes special characters
+    (- → _hyphen_, . → _dot_), which causes issues during graph tracing.
+
+    This creates a temp symlink with a sanitized name so module registration
+    uses clean identifiers from the start.
+
+    Returns (load_path, cleanup_path) - cleanup_path is None if no symlink needed.
+    """
+    import re
+    import tempfile
+
+    model_name = model_path.name
+    # Check if name has problematic characters for torch.fx
+    if re.search(r"[-.]", model_name):
+        clean_name = re.sub(r"[-.]", "_", model_name)
+        temp_dir = Path(tempfile.mkdtemp(prefix="awq_"))
+        symlink_path = temp_dir / clean_name
+        symlink_path.symlink_to(model_path)
+        print(f"Created temp symlink: {symlink_path} -> {model_path}")
+        return symlink_path, temp_dir
+    return model_path, None
+
+
+def cleanup_model_symlink(temp_dir: Path | None):
+    """Remove temporary symlink directory created for model loading."""
+    if temp_dir and temp_dir.exists():
+        import shutil
+
+        shutil.rmtree(temp_dir)
+        print(f"Cleaned up temp symlink: {temp_dir}")
+
+
+def replace_fp8_with_bf16(model):
+    """Replace FP8Linear modules with dequantized nn.Linear for AWQ compatibility.
+
+    MiniMax-M2.1 uses fine-grained FP8 quantization with block-wise scale factors.
+    AWQ requires FP16/BF16 weights (abs_cuda not implemented for FP8), so we must:
+    1. Find all FP8Linear modules
+    2. Dequantize weights using scale factors: dequantized = fp8_weight * scale_inv
+    3. Replace with standard nn.Linear containing BF16 weights
+
+    Memory optimization: Process modules one at a time and free memory after each
+    to avoid OOM when converting large models (FP8→BF16 doubles memory).
+    """
+    import gc
+
+    import torch
+    import torch.nn as nn
+
+    try:
+        from transformers.integrations.finegrained_fp8 import FP8Linear
+    except ImportError:
+        print("FP8Linear not available, skipping FP8 conversion")
+        return model, 0
+
+    # First pass: collect all FP8Linear module paths
+    fp8_modules = []
+    for name, module in model.named_modules():
+        if isinstance(module, FP8Linear):
+            fp8_modules.append(name)
+
+    if not fp8_modules:
+        return model, 0
+
+    print(f"Found {len(fp8_modules)} FP8Linear modules to convert", flush=True)
+    replaced_count = 0
+
+    # Second pass: replace one at a time to minimize peak memory
+    for name in fp8_modules:
+        # Navigate to parent module
+        *parent_path, child_name = name.split(".")
+        parent = model
+        for p in parent_path:
+            parent = getattr(parent, p)
+        module = getattr(parent, child_name)
+
+        # Dequantize weight using block-wise scale factors
+        # weight: (out_features, in_features) in FP8
+        # scale_inv: (num_out_blocks, num_in_blocks) in float32
+        with torch.no_grad():
+            weight = module.weight.data
+            scale_inv = module.weight_scale_inv.data
+            block_h, block_w = module.block_size
+            out_features, in_features = weight.shape
+
+            # Convert FP8 to float32 for math
+            weight_float = weight.to(torch.float32)
+            del weight  # Free FP8 weight immediately
+
+            # Expand scale_inv to match weight shape
+            scale_expanded = scale_inv.repeat_interleave(block_h, dim=0).repeat_interleave(
+                block_w, dim=1
+            )
+            scale_expanded = scale_expanded[:out_features, :in_features]
+            del scale_inv  # Free scale factors
+
+            # Apply scale and convert to BF16
+            dequantized = (weight_float * scale_expanded).to(torch.bfloat16)
+            del weight_float, scale_expanded
+
+        # Create replacement nn.Linear (don't allocate new weights, reuse dequantized)
+        new_linear = nn.Linear(
+            module.in_features,
+            module.out_features,
+            bias=module.bias is not None,
+            device=dequantized.device,
+            dtype=torch.bfloat16,
+        )
+        # Directly assign dequantized tensor (avoid double allocation)
+        new_linear.weight = nn.Parameter(dequantized, requires_grad=False)
+        if module.bias is not None:
+            new_linear.bias = nn.Parameter(module.bias.data.to(torch.bfloat16), requires_grad=False)
+
+        # Replace module and free old one
+        setattr(parent, child_name, new_linear)
+        del module
+        replaced_count += 1
+
+        # Periodic memory cleanup
+        if replaced_count % 100 == 0:
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            print(f"  Converted {replaced_count}/{len(fp8_modules)} modules", flush=True)
+
+    # Final cleanup
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    return model, replaced_count
 
 
 def run_quantization(args, model_path: Path, output_path: Path):
@@ -248,140 +439,171 @@ def run_quantization(args, model_path: Path, output_path: Path):
     print(f"Calibration:  {args.samples} samples, max_seq_len={args.max_seq_len}")
     print(f"Group size:   {args.group_size}")
 
-    # Load model and tokenizer
-    print("\nLoading model...", flush=True)
-    model = AutoModelForCausalLM.from_pretrained(
-        str(model_path),
-        torch_dtype="auto",
-        trust_remote_code=True,
-    )
-    print("Model loaded successfully", flush=True)
-    tokenizer = AutoTokenizer.from_pretrained(
-        str(model_path),
-        trust_remote_code=True,
-    )
-    print("Tokenizer loaded", flush=True)
+    # Create temp symlink if model path has special chars (torch.fx compatibility)
+    load_path, temp_dir = create_clean_model_symlink(model_path)
 
-    # Detect if model is MoE by checking for block_sparse_moe layers
-    # (can be slow on large models - iterates all named_modules)
-    print("Detecting model architecture...", flush=True)
-    is_moe = any("block_sparse_moe" in name for name, _ in model.named_modules())
-    print(f"Model type:   {'MoE (MiniMax)' if is_moe else 'Dense'}", flush=True)
+    try:
+        # Load model and tokenizer
+        print("\nLoading model...", flush=True)
+        import torch
 
-    # Prepare calibration data
-    print(f"\nLoading {args.samples} samples from {CALIBRATION_DATASET}...", flush=True)
-    ds = load_dataset(
-        CALIBRATION_DATASET,
-        CALIBRATION_CONFIG,
-        split=f"{CALIBRATION_SPLIT}[:{args.samples}]",
-    )
-    print(f"Dataset loaded: {len(ds)} samples", flush=True)
-    ds = ds.shuffle(seed=42)
+        # Use BF16 instead of "auto" - MiniMax ships with FP8 weights, but AWQ
+        # requires FP16/BF16 for smoothing (abs_cuda not implemented for FP8)
+        model = AutoModelForCausalLM.from_pretrained(
+            str(load_path),
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
+        )
+        print("Model loaded successfully", flush=True)
 
-    def preprocess(example):
-        # Build conversation from input messages + output
-        messages = []
-        for msg in example.get("input", []):
-            messages.append({"role": msg["role"], "content": msg["content"]})
-        if example.get("output"):
-            messages.append({"role": "assistant", "content": example["output"]})
-        return {"text": tokenizer.apply_chat_template(messages, tokenize=False)}
+        # Replace FP8Linear modules with dequantized nn.Linear for AWQ compatibility
+        # MiniMax-M2.1 uses fine-grained FP8 with block-wise scale factors
+        model, fp8_count = replace_fp8_with_bf16(model)
+        if fp8_count > 0:
+            print(f"Replaced {fp8_count} FP8Linear modules with BF16 nn.Linear", flush=True)
 
-    print("Preprocessing calibration data...", flush=True)
-    ds = ds.map(preprocess)
-    print("Preprocessing complete", flush=True)
+        # Sanitize config for torch.fx compatibility
+        # The quantization_config may contain enum values (e.g., QuantizationMethod.FP8)
+        # that serialize to invalid Python syntax like <QuantizationMethod.FP8: 'fp8'>
+        # We remove quantization_config entirely since AWQ will re-quantize anyway
+        if hasattr(model.config, "quantization_config"):
+            # Delete the config entirely to prevent torch.fx serialization issues
+            delattr(model.config, "quantization_config")
+            print("Removed quantization_config from model config (will be replaced by AWQ)")
 
-    # Build AWQ recipe based on model type
-    # MoE models require special handling:
-    # - W4A16 (symmetric): vLLM doesn't support asymmetric for MoE models
-    # - Ignore MoE gates: routing accuracy is critical for model quality
-    # - Explicit MoE mappings: MiniMax isn't in llm-compressor's registry
-    if is_moe:
-        print("\nUsing MoE-optimized AWQ settings:")
-        print("  - W4A16 symmetric (required for MoE in vLLM)")
-        print("  - Preserving MoE gate layers in full precision")
-        print("  - Using MiniMax MoE-aware layer mappings")
+        tokenizer = AutoTokenizer.from_pretrained(
+            str(load_path),
+            trust_remote_code=True,
+        )
+        print("Tokenizer loaded", flush=True)
 
-        recipe = [
-            AWQModifier(
-                # Ignore lm_head (standard) + MoE gates (MiniMax-specific pattern)
-                # Keeping gates full precision preserves routing quality
-                ignore=["lm_head", "re:.*block_sparse_moe.gate$"],
-                # Explicit MoE mappings since MiniMax isn't in the registry
-                mappings=get_moe_mappings(),
-                # Config with symmetric=True (W4A16) - required for MoE in vLLM
-                # Note: can't use both scheme= and config_groups=
-                config_groups={
-                    "group_0": {
-                        "targets": ["Linear"],
-                        "weights": {
-                            "num_bits": 4,
-                            "type": "int",
-                            "symmetric": True,
-                            "strategy": "group",
-                            "group_size": args.group_size,
-                        },
-                    }
-                },
-            ),
-        ]
-    else:
-        # Dense model - can use asymmetric quantization
-        print("\nUsing standard dense model AWQ settings")
-        recipe = [
-            AWQModifier(
-                ignore=["lm_head"],
-                duo_scaling="both",
-                # Config with symmetric=False (W4A16_ASYM)
-                # Note: can't use both scheme= and config_groups=
-                config_groups={
-                    "group_0": {
-                        "targets": ["Linear"],
-                        "weights": {
-                            "num_bits": 4,
-                            "type": "int",
-                            "symmetric": False,
-                            "strategy": "group",
-                            "group_size": args.group_size,
-                        },
-                    }
-                },
-            ),
-        ]
+        # Detect if model is MoE by checking for block_sparse_moe layers
+        # (can be slow on large models - iterates all named_modules)
+        print("Detecting model architecture...", flush=True)
+        is_moe = any("block_sparse_moe" in name for name, _ in model.named_modules())
+        print(f"Model type:   {'MoE (MiniMax)' if is_moe else 'Dense'}", flush=True)
 
-    print("\nApplying AWQ 4-bit quantization...", flush=True)
-    print("(This may take 30-60+ minutes for large models)", flush=True)
-    oneshot(
-        model=model,
-        dataset=ds,
-        recipe=recipe,
-        max_seq_length=args.max_seq_len,
-        num_calibration_samples=args.samples,
-        trust_remote_code_model=True,  # Required for MiniMax custom code
-    )
+        # Prepare calibration data
+        print(f"\nLoading {args.samples} samples from {CALIBRATION_DATASET}...", flush=True)
+        ds = load_dataset(
+            CALIBRATION_DATASET,
+            CALIBRATION_CONFIG,
+            split=f"{CALIBRATION_SPLIT}[:{args.samples}]",
+        )
+        print(f"Dataset loaded: {len(ds)} samples", flush=True)
+        ds = ds.shuffle(seed=42)
 
-    print("Quantization complete!", flush=True)
+        def preprocess(example):
+            # Build conversation from input messages + output
+            messages = []
+            for msg in example.get("input", []):
+                messages.append({"role": msg["role"], "content": msg["content"]})
+            if example.get("output"):
+                messages.append({"role": "assistant", "content": example["output"]})
+            return {"text": tokenizer.apply_chat_template(messages, tokenize=False)}
 
-    # Test generation
-    if not args.skip_test:
-        print("\n" + "=" * 50, flush=True)
-        print("SAMPLE GENERATION TEST", flush=True)
-        print("=" * 50, flush=True)
-        dispatch_for_generation(model)
-        input_ids = tokenizer("Hello, my name is", return_tensors="pt").input_ids.to(model.device)
-        output = model.generate(input_ids, max_new_tokens=50)
-        print(tokenizer.decode(output[0]))
-        print("=" * 50 + "\n")
+        print("Preprocessing calibration data...", flush=True)
+        ds = ds.map(preprocess)
+        print("Preprocessing complete", flush=True)
 
-    # Save
-    print(f"\nSaving to {output_path}...", flush=True)
-    output_path.mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(str(output_path), save_compressed=True)
-    print("Model saved", flush=True)
-    tokenizer.save_pretrained(str(output_path))
-    print("Tokenizer saved", flush=True)
+        # Build AWQ recipe based on model type
+        # MoE models require special handling:
+        # - W4A16 (symmetric): vLLM doesn't support asymmetric for MoE models
+        # - Ignore MoE gates: routing accuracy is critical for model quality
+        # - Explicit MoE mappings: MiniMax isn't in llm-compressor's registry
+        if is_moe:
+            print("\nUsing MoE-optimized AWQ settings:")
+            print("  - W4A16 symmetric (required for MoE in vLLM)")
+            print("  - Preserving MoE gate layers in full precision")
+            print("  - Using MiniMax MoE-aware layer mappings")
 
-    print(f"\nDone! AWQ quantized model saved to: {output_path}", flush=True)
+            recipe = [
+                AWQModifier(
+                    # Ignore lm_head (standard) + MoE gates (MiniMax-specific pattern)
+                    # Keeping gates full precision preserves routing quality
+                    ignore=["lm_head", "re:.*block_sparse_moe.gate$"],
+                    # Explicit MoE mappings since MiniMax isn't in the registry
+                    mappings=get_moe_mappings(),
+                    # Config with symmetric=True (W4A16) - required for MoE in vLLM
+                    # Note: can't use both scheme= and config_groups=
+                    config_groups={
+                        "group_0": {
+                            "targets": ["Linear"],
+                            "weights": {
+                                "num_bits": 4,
+                                "type": "int",
+                                "symmetric": True,
+                                "strategy": "group",
+                                "group_size": args.group_size,
+                            },
+                        }
+                    },
+                ),
+            ]
+        else:
+            # Dense model - can use asymmetric quantization
+            print("\nUsing standard dense model AWQ settings")
+            recipe = [
+                AWQModifier(
+                    ignore=["lm_head"],
+                    duo_scaling="both",
+                    # Config with symmetric=False (W4A16_ASYM)
+                    # Note: can't use both scheme= and config_groups=
+                    config_groups={
+                        "group_0": {
+                            "targets": ["Linear"],
+                            "weights": {
+                                "num_bits": 4,
+                                "type": "int",
+                                "symmetric": False,
+                                "strategy": "group",
+                                "group_size": args.group_size,
+                            },
+                        }
+                    },
+                ),
+            ]
+
+        print("\nApplying AWQ 4-bit quantization...", flush=True)
+        print("(This may take 30-60+ minutes for large models)", flush=True)
+        oneshot(
+            model=model,
+            tokenizer=tokenizer,  # Pass explicitly to avoid re-loading from sanitized path
+            dataset=ds,
+            recipe=recipe,
+            max_seq_length=args.max_seq_len,
+            num_calibration_samples=args.samples,
+            trust_remote_code_model=True,  # Required for MiniMax custom code
+        )
+
+        print("Quantization complete!", flush=True)
+
+        # Test generation
+        if not args.skip_test:
+            print("\n" + "=" * 50, flush=True)
+            print("SAMPLE GENERATION TEST", flush=True)
+            print("=" * 50, flush=True)
+            dispatch_for_generation(model)
+            input_ids = tokenizer("Hello, my name is", return_tensors="pt").input_ids.to(
+                model.device
+            )
+            output = model.generate(input_ids, max_new_tokens=50)
+            print(tokenizer.decode(output[0]))
+            print("=" * 50 + "\n")
+
+        # Save
+        print(f"\nSaving to {output_path}...", flush=True)
+        output_path.mkdir(parents=True, exist_ok=True)
+        model.save_pretrained(str(output_path), save_compressed=True)
+        print("Model saved", flush=True)
+        tokenizer.save_pretrained(str(output_path))
+        print("Tokenizer saved", flush=True)
+
+        print(f"\nDone! AWQ quantized model saved to: {output_path}", flush=True)
+
+    finally:
+        # Clean up temp symlink if created
+        cleanup_model_symlink(temp_dir)
 
 
 def main():

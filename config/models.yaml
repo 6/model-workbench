@@ -135,10 +135,10 @@ models:
 
   #- repo_id: zai-org/GLM-4.6V-FP8
 
-  - repo_id: unsloth/MiniMax-M2-GGUF
-    include:
-      #- "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
+  #- repo_id: unsloth/MiniMax-M2-GGUF
+  #  include:
+  #    #- "UD-Q4_K_XL/*.gguf"
+  #    - "UD-Q5_K_XL/*.gguf"
 
   # Seems buggy
   #- repo_id: bartowski/cerebras_MiniMax-M2-REAP-139B-A10B-GGUF
@@ -149,9 +149,9 @@ models:
   #  include:
   #    - "cerebras_MiniMax-M2-REAP-162B-A10B-IQ4_XS/*.gguf"
 
-  - repo_id: bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF
-    include:
-      - "cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/*.gguf"
+  #- repo_id: bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF
+  #  include:
+  #    - "cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/*.gguf"
 
   - repo_id: unsloth/Qwen3-235B-A22B-Thinking-2507-GGUF
     include:
