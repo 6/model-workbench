@@ -1,0 +1,103 @@
+{
+  "timestamp": "2025-12-26T05:28:58.720961",
+  "repo_id": "Qwen/Qwen3-0.6B",
+  "model_ref": "~/models/Qwen/Qwen3-0.6B",
+  "engine": "trtllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 87737
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 4
+      }
+    ],
+    "memory_used_mib": 87741,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 1,
+    "image": "none",
+    "backend_version": "1.2.0rc5"
+  },
+  "iterations": [
+    {
+      "wall_s": 0.81100236400016,
+      "output_text": "<think>\nOkay, the user wants a concise technical overview of the KV cache and why it matters for long context. Let me start by recalling what a KV cache is. It's a key-value cache, right? So it's a data structure that stores frequently accessed keys and their corresponding values. \n\nNow, why is it important for long context? Well, when dealing with long sequences, like in text generation or NLP, the model needs to process a lot of information quickly. If the model has to process a long context, it's important to have a cache that can hold the most recent information. \n\nWait, but how exactly does the KV cache help here? Maybe it's used in models like BERT or GPT. They use a cache to store the previous tokens so that the model can reuse those tokens without reprocessing them. That way, the model can handle long sequences more efficiently. \n\nI should mention that the KV cache is part of the model's architecture, not just a data structure. Also, the importance of having a cache for long context is to avoid the computational overhead of reprocessing the entire context each time. \n\nLet me check if there are any other points. Maybe the cache helps in reducing memory usage by storing the most recent data. Also, it's crucial for maintaining the model's performance during training, especially when dealing with long sequences. \n\nI need to make sure the overview is concise, so I should avoid too much technical jargon. Keep it clear and focus on the key points: the role of the KV cache, its importance for long context processing, and how it contributes to model efficiency.\n</think>\n\nThe KV cache is a key-value cache used in models like BERT and GPT to store recently accessed key-value pairs, enabling efficient reuse of previously processed data. It is critical for long context processing because it reduces the computational burden of reprocessing the entire sequence, maintains model performance during training, and optimizes memory usage. By caching intermediate results, the model can handle long sequences more efficiently, ensuring scalability and speed.",
+      "prompt_tokens": 24,
+      "generated_tokens": 417,
+      "tok_per_s": 514.1785258716185,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 0.8098083740005677,
+      "output_text": "<think>\nOkay, the user wants a concise technical overview of the KV cache and why it matters for long context. Let me start by recalling what a KV cache is. It's a key-value cache, right? So it's a data structure that stores frequently accessed keys and their corresponding values. \n\nNow, why is it important for long context? Well, when dealing with long sequences, like in text generation or NLP, the model needs to process a lot of information quickly. If the model has to process a long context, it's important to have a cache that can hold the most recent information. \n\nWait, but how exactly does the KV cache help here? Maybe it's used in models like BERT or GPT. They use a cache to store the previous tokens so that the model can reuse those tokens without reprocessing them. That way, the model can handle long sequences more efficiently. \n\nI should mention that the KV cache is part of the model's architecture, not just a data structure. Also, the importance of having a cache for long context is to avoid the computational overhead of reprocessing the entire context each time. \n\nLet me check if there are any other points. Maybe the cache helps in reducing memory usage by storing the most recent data. Also, it's crucial for maintaining the model's performance during training, especially when dealing with long sequences. \n\nI need to make sure the overview is concise, so I should avoid too much technical jargon. Keep it clear and focus on the key points: the role of the KV cache, its importance for long context processing, and how it contributes to model efficiency.\n</think>\n\nThe KV cache is a key-value cache used in models like BERT and GPT to store recently accessed key-value pairs, enabling efficient reuse of previously processed data. It is critical for long context processing because it reduces the computational burden of reprocessing the entire sequence, maintains model performance during training, and optimizes memory usage. By caching intermediate results, the model can handle long sequences more efficiently, ensuring scalability and speed.",
+      "prompt_tokens": 24,
+      "generated_tokens": 417,
+      "tok_per_s": 514.9366361080722,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 0.8109483909993287,
+      "output_text": "<think>\nOkay, the user wants a concise technical overview of the KV cache and why it matters for long context. Let me start by recalling what a KV cache is. It's a key-value cache, right? So it's a data structure that stores frequently accessed keys and their corresponding values. \n\nNow, why is it important for long context? Well, when dealing with long sequences, like in text generation or NLP, the model needs to process a lot of information quickly. If the model has to process a long context, it's important to have a cache that can hold the most recent information. \n\nWait, but how exactly does the KV cache help here? Maybe it's used in models like BERT or GPT. They use a cache to store the previous tokens so that the model can reuse those tokens without reprocessing them. That way, the model can handle long sequences more efficiently. \n\nI should mention that the KV cache is part of the model's architecture, not just a data structure. Also, the importance of having a cache for long context is to avoid the computational overhead of reprocessing the entire context each time. \n\nLet me check if there are any other points. Maybe the cache helps in reducing memory usage by storing the most recent data. Also, it's crucial for maintaining the model's performance during training, especially when dealing with long sequences. \n\nI need to make sure the overview is concise, so I should avoid too much technical jargon. Keep it clear and focus on the key points: the role of the KV cache, its importance for long context processing, and how it contributes to model efficiency.\n</think>\n\nThe KV cache is a key-value cache used in models like BERT and GPT to store recently accessed key-value pairs, enabling efficient reuse of previously processed data. It is critical for long context processing because it reduces the computational burden of reprocessing the entire sequence, maintains model performance during training, and optimizes memory usage. By caching intermediate results, the model can handle long sequences more efficiently, ensuring scalability and speed.",
+      "prompt_tokens": 24,
+      "generated_tokens": 417,
+      "tok_per_s": 514.2127472330668,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 0.8103316619999532,
+      "output_text": "<think>\nOkay, the user wants a concise technical overview of the KV cache and why it matters for long context. Let me start by recalling what a KV cache is. It's a key-value cache, right? So it's a data structure that stores frequently accessed keys and their corresponding values. \n\nNow, why is it important for long context? Well, when dealing with long sequences, like in text generation or NLP, the model needs to process a lot of information quickly. If the model has to process a long context, it's important to have a cache that can hold the most recent information. \n\nWait, but how exactly does the KV cache help here? Maybe it's used in models like BERT or GPT. They use a cache to store the previous tokens so that the model can reuse those tokens without reprocessing them. That way, the model can handle long sequences more efficiently. \n\nI should mention that the KV cache is part of the model's architecture, not just a data structure. Also, the importance of having a cache for long context is to avoid the computational overhead of reprocessing the entire context each time. \n\nLet me check if there are any other points. Maybe the cache helps in reducing memory usage by storing the most recent data. Also, it's crucial for maintaining the model's performance during training, especially when dealing with long sequences. \n\nI need to make sure the overview is concise, so I should avoid too much technical jargon. Keep it clear and focus on the key points: the role of the KV cache, its importance for long context processing, and how it contributes to model efficiency.\n</think>\n\nThe KV cache is a key-value cache used in models like BERT and GPT to store recently accessed key-value pairs, enabling efficient reuse of previously processed data. It is critical for long context processing because it reduces the computational burden of reprocessing the entire sequence, maintains model performance during training, and optimizes memory usage. By caching intermediate results, the model can handle long sequences more efficiently, ensuring scalability and speed.",
+      "prompt_tokens": 24,
+      "generated_tokens": 417,
+      "tok_per_s": 514.604105399036,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    },
+    {
+      "wall_s": 0.810342077000314,
+      "output_text": "<think>\nOkay, the user wants a concise technical overview of the KV cache and why it matters for long context. Let me start by recalling what a KV cache is. It's a key-value cache, right? So it's a data structure that stores frequently accessed keys and their corresponding values. \n\nNow, why is it important for long context? Well, when dealing with long sequences, like in text generation or NLP, the model needs to process a lot of information quickly. If the model has to process a long context, it's important to have a cache that can hold the most recent information. \n\nWait, but how exactly does the KV cache help here? Maybe it's used in models like BERT or GPT. They use a cache to store the previous tokens so that the model can reuse those tokens without reprocessing them. That way, the model can handle long sequences more efficiently. \n\nI should mention that the KV cache is part of the model's architecture, not just a data structure. Also, the importance of having a cache for long context is to avoid the computational overhead of reprocessing the entire context each time. \n\nLet me check if there are any other points. Maybe the cache helps in reducing memory usage by storing the most recent data. Also, it's crucial for maintaining the model's performance during training, especially when dealing with long sequences. \n\nI need to make sure the overview is concise, so I should avoid too much technical jargon. Keep it clear and focus on the key points: the role of the KV cache, its importance for long context processing, and how it contributes to model efficiency.\n</think>\n\nThe KV cache is a key-value cache used in models like BERT and GPT to store recently accessed key-value pairs, enabling efficient reuse of previously processed data. It is critical for long context processing because it reduces the computational burden of reprocessing the entire sequence, maintains model performance during training, and optimizes memory usage. By caching intermediate results, the model can handle long sequences more efficiently, ensuring scalability and speed.",
+      "prompt_tokens": 24,
+      "generated_tokens": 417,
+      "tok_per_s": 514.5974913997196,
+      "generation_tok_per_s": null,
+      "ttft_ms": null,
+      "tpot_ms": null,
+      "e2e_latency_ms": null
+    }
+  ],
+  "summary": {
+    "median_wall_s": 0.810342077000314,
+    "median_tok_per_s": 514.5974913997196,
+    "median_ttft_ms": null,
+    "median_generation_tok_per_s": null,
+    "median_tpot_ms": null
+  }
+}
