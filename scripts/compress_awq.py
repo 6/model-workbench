@@ -307,13 +307,10 @@ def run_quantization(args, model_path: Path, output_path: Path):
                 # Ignore lm_head (standard) + MoE gates (MiniMax-specific pattern)
                 # Keeping gates full precision preserves routing quality
                 ignore=["lm_head", "re:.*block_sparse_moe.gate$"],
-                # W4A16 symmetric - required for MoE models in vLLM
-                # (vLLM doesn't support asymmetric quantization for MoE)
-                scheme="W4A16",
-                targets=["Linear"],
                 # Explicit MoE mappings since MiniMax isn't in the registry
                 mappings=get_moe_mappings(),
-                # Group size config - smaller = better quality
+                # Config with symmetric=True (W4A16) - required for MoE in vLLM
+                # Note: can't use both scheme= and config_groups=
                 config_groups={
                     "group_0": {
                         "targets": ["Linear"],
@@ -334,9 +331,9 @@ def run_quantization(args, model_path: Path, output_path: Path):
         recipe = [
             AWQModifier(
                 ignore=["lm_head"],
-                scheme="W4A16_ASYM",
-                targets=["Linear"],
                 duo_scaling="both",
+                # Config with symmetric=False (W4A16_ASYM)
+                # Note: can't use both scheme= and config_groups=
                 config_groups={
                     "group_0": {
                         "targets": ["Linear"],
@@ -360,6 +357,7 @@ def run_quantization(args, model_path: Path, output_path: Path):
         recipe=recipe,
         max_seq_length=args.max_seq_len,
         num_calibration_samples=args.samples,
+        trust_remote_code_model=True,  # Required for MiniMax custom code
     )
 
     print("Quantization complete!", flush=True)
