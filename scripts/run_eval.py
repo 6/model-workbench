@@ -266,8 +266,8 @@ def main():
     with server:
         # Start server if not already running
         if not server.is_running():
-            if backend in ("llama", "ik_llama"):
-                # llama.cpp or ik_llama.cpp backend for GGUF models
+            if backend == "llama":
+                # llama.cpp backend for GGUF models
                 server.start_gguf_backend(
                     engine=backend,
                     model_path=model_path,
@@ -296,7 +296,7 @@ def main():
         # Model name differs by backend:
         # - vLLM/trtllm: registers model under full path
         # - llama.cpp: uses "gpt-3.5-turbo" as default model name
-        model_name = "gpt-3.5-turbo" if backend in ("llama", "ik_llama") else model_path
+        model_name = "gpt-3.5-turbo" if backend == "llama" else model_path
 
         base_url = f"http://{args.host}:{args.port}/v1"
         model = LocalServerLLM(

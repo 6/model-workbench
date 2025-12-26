@@ -12,7 +12,7 @@ def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
     """Get Docker image name for an engine.
 
     Args:
-        engine: Backend name ('vllm', 'llama', 'ik_llama', 'trtllm')
+        engine: Backend name ('vllm', 'llama', 'trtllm', 'sglang', etc.)
         version: Version tag or commit SHA
         prebuilt: True for prebuilt registry images, False for local builds
 
@@ -87,7 +87,7 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
     """Build Docker image for engine and version.
 
     Args:
-        engine: 'vllm', 'llama', or 'ik_llama'
+        engine: 'vllm', 'llama', etc.
         version: Version tag or commit SHA
         force: If True, rebuild even if image exists
 
@@ -596,7 +596,7 @@ def ensure_image(
     """Ensure Docker image exists, building or pulling as needed.
 
     Args:
-        engine: 'vllm', 'llama', 'ik_llama', 'trtllm', or 'sglang'
+        engine: 'vllm', 'llama', 'trtllm', 'sglang', 'exl', etc.
         version: Version tag or commit SHA
         rebuild: Force rebuild/repull even if exists
         image_type: 'prebuilt' to use official images, 'build' to build from source
@@ -637,5 +637,5 @@ def ensure_image(
             log(f"Using existing prebuilt image: {image_name}")
         return image_name
 
-    # Build from source (default for llama/ik_llama, optional for vllm)
+    # Build from source (default for llama, optional for vllm)
     return _build_image(engine, version, force=rebuild)

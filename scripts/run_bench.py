@@ -26,9 +26,6 @@ Examples:
   # GGUF model -> llama.cpp (auto-detected)
   uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
 
-  # Explicitly use ik_llama.cpp for GGUF (ikawrakow's optimized fork)
-  uv run python scripts/run_bench.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
-
   # Override backend version
   uv run python scripts/run_bench.py --model ~/models/org/model --backend-version v0.8.0
 
@@ -1410,7 +1407,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
 def run_benchmark_gguf(
     args, model_path: str, image_path: str | None, image_label: str, backend: str
 ):
-    """Run benchmarks using GGUF backend (llama.cpp or ik_llama.cpp) via Docker."""
+    """Run benchmarks using GGUF backend (llama.cpp) via Docker."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
@@ -1577,14 +1574,11 @@ def run_benchmark_gguf(
             if mmproj_path:
                 config["mmproj"] = compact_path(str(mmproj_path))
 
-        # Use backend-specific engine name for results
-        engine_name = "ik_llama-server" if backend == "ik_llama" else "llama-server"
-
         write_benchmark_result(
             results_dir=RESULTS_ROOT,
             repo_id=extract_repo_id(model_path),
             model_ref=compact_path(str(gguf_path)),
-            engine=engine_name,
+            engine="llama-server",
             mode=mode,
             gpu_info=gpu_info,
             config=config,

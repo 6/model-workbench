@@ -58,7 +58,7 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
         backend_override: Explicit backend choice (or None for auto-detect)
 
     Returns:
-        Backend name ('vllm', 'llama', 'ik_llama')
+        Backend name ('vllm', 'llama', 'trtllm', etc.)
 
     Raises:
         SystemExit if backend incompatible with model format
@@ -614,7 +614,7 @@ def get_backend_config(engine: str) -> dict:
     Get full config dict for a backend from defaults.backends.{engine}.
 
     Args:
-        engine: 'vllm', 'llama', 'ik_llama', or 'trtllm'
+        engine: 'vllm', 'llama', 'trtllm', 'sglang', etc.
 
     Returns:
         Backend config dict with keys: version, image_type, args
@@ -865,7 +865,7 @@ def warmup_model(
     the model is fully loaded (not just partially cached).
 
     Args:
-        backend: Backend type ("vllm", "trtllm", "sglang", "exl", "llama", "ik_llama")
+        backend: Backend type ("vllm", "trtllm", "sglang", "exl", "llama")
         host: Server host
         port: Server port
         api_model: Model name for API requests
@@ -901,7 +901,7 @@ def warmup_model(
             log(f"Warmup generated {generated} characters")
             return True
 
-        elif backend in ("llama", "ik_llama"):
+        elif backend == "llama":
             # Use llama.cpp native /completion endpoint
             url = f"http://{host}:{port}/completion"
             payload = {

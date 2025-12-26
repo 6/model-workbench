@@ -36,12 +36,6 @@ defaults:
       image_type: build
       args:
         n_gpu_layers: 999
-    # https://github.com/ikawrakow/ik_llama.cpp (no releases; use main branch)
-    ik_llama:
-      version: main
-      image_type: build
-      args:
-        n_gpu_layers: 999
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
       version: 1.2.0rc5

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Standalone Server Runner - Start vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, SGLang, or ExLlamaV3 server.
+Standalone Server Runner - Start vLLM, llama.cpp, TensorRT-LLM, SGLang, or ExLlamaV3 server.
 
 Auto-detects backend from model format (GGUF -> llama, safetensors -> vLLM).
 Use --backend to explicitly select a backend.
@@ -24,9 +24,6 @@ Examples:
 
   # Start llama.cpp server (GGUF model, auto-detected)
   uv run python scripts/run_server.py --model ~/models/unsloth/GLM-4.5-Air-GGUF/UD-Q4_K_XL
-
-  # Explicitly use ik_llama.cpp for GGUF (ikawrakow's optimized fork)
-  uv run python scripts/run_server.py --model ~/models/unsloth/GLM-GGUF/UD-Q4_K_XL --backend ik_llama
 
   # Start and test the endpoint
   uv run python scripts/run_server.py --model ~/models/org/model --test
@@ -68,7 +65,7 @@ def test_chat_completion(host: str, port: int, model_name: str) -> bool:
 
 def main():
     ap = argparse.ArgumentParser(
-        description="Start a standalone vLLM, llama.cpp, ik_llama.cpp, TensorRT-LLM, or SGLang server",
+        description="Start a standalone vLLM, llama.cpp, TensorRT-LLM, SGLang, or ExLlamaV3 server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -202,7 +199,7 @@ def main():
     )
 
     # Model name for API (llama.cpp uses gpt-3.5-turbo, exl uses model dir name, others use full path)
-    if backend in ("llama", "ik_llama"):
+    if backend == "llama":
         api_model = "gpt-3.5-turbo"
     elif backend == "exl":
         api_model = Path(model_path).name  # TabbyAPI uses model_name (directory name)
@@ -256,7 +253,7 @@ def main():
             version=backend_version,
             rebuild=args.rebuild,
         )
-    elif backend in ("llama", "ik_llama"):
+    elif backend == "llama":
         mmproj_path = None
         if args.mmproj:
             mmproj_path = Path(args.mmproj).expanduser()

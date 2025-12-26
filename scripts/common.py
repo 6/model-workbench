@@ -48,15 +48,6 @@ BACKEND_REGISTRY = {
         "dockerfile": ROOT / "docker" / "Dockerfile.llama",
         "docker_base": ["--gpus", "all"],
     },
-    "ik_llama": {
-        "display_name": "ik_llama.cpp",
-        "formats": ["gguf"],
-        "default_port": 8080,
-        "image_prefix": "model-bench-ik-llama",
-        "prebuilt_image": None,
-        "dockerfile": ROOT / "docker" / "Dockerfile.ik_llama",
-        "docker_base": ["--gpus", "all"],
-    },
     "trtllm": {
         "display_name": "TensorRT-LLM",
         "formats": ["safetensors"],

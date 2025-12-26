@@ -318,10 +318,10 @@ class ServerManager:
         extra_args: list[str] | None = None,
         rebuild: bool = False,
     ) -> Path:
-        """Start a GGUF backend (llama.cpp or ik_llama.cpp) via Docker.
+        """Start a GGUF backend (llama.cpp) via Docker.
 
         Args:
-            engine: 'llama' or 'ik_llama'
+            engine: 'llama'
             model_path: Path to .gguf file or directory containing GGUF files
             version: Backend version (release tag or commit SHA)
             n_gpu_layers: GPU layers to offload (optional)
@@ -361,12 +361,10 @@ class ServerManager:
             extra_args=extra_args,
         )
 
-        # Label based on engine
-        label = "ik_llama.cpp" if engine == "ik_llama" else "llama.cpp"
         self.start(
             cmd,
             lambda: wait_for_llama_ready(self.host, self.port),
-            label=f"{label} (Docker {version})",
+            label=f"llama.cpp (Docker {version})",
         )
 
         return gguf_path

@@ -4,7 +4,7 @@ Add LiteLLM proxy support to expose standardized API endpoints across all backen
 
 ## Goal
 
-Run a LiteLLM proxy in front of any backend (vLLM, llama.cpp, ik_llama, TensorRT-LLM) to provide **two standardized API endpoints**:
+Run a LiteLLM proxy in front of any backend (vLLM, llama.cpp, TensorRT-LLM, SGLang) to provide **two standardized API endpoints**:
 
 1. **OpenAI Chat Completions** (`/v1/chat/completions`) - for OpenAI SDK compatibility
 2. **Anthropic Messages** (`/v1/messages`) - for Anthropic SDK compatibility
@@ -34,7 +34,7 @@ LiteLLM handles API translation, but **feature availability depends on the under
 
 ### Feature Matrix
 
-| Feature | vLLM | llama.cpp / ik_llama | TensorRT-LLM |
+| Feature | vLLM | llama.cpp | TensorRT-LLM |
 |---------|------|----------------------|--------------|
 | **Chat completions** | Yes | Yes | Yes |
 | **Streaming** | Yes | Yes | Yes |
@@ -50,7 +50,7 @@ All backends support streaming via Server-Sent Events (SSE). No special configur
 Tool calling support varies significantly:
 
 - **vLLM**: Native support for models trained with tool-calling capabilities (Llama 3.1+, Qwen 2.5, Mistral, etc.). Works out of the box with `--enable-auto-tool-choice`.
-- **llama.cpp / ik_llama**: Uses grammar-constrained generation to force JSON output. Works but may be less reliable than native support. Requires models fine-tuned for tool use.
+- **llama.cpp**: Uses grammar-constrained generation to force JSON output. Works but may be less reliable than native support. Requires models fine-tuned for tool use.
 - **TensorRT-LLM**: Limited support, depends on model and TRT-LLM version. Not all tool-calling models are supported.
 
 **Recommendation**: Use vLLM for agentic workloads requiring tool calling.
@@ -59,7 +59,7 @@ Tool calling support varies significantly:
 Vision support requires both a vision-capable model AND backend support:
 
 - **vLLM**: Best VLM support. Works with LLaVA, Qwen-VL, Pixtral, InternVL, GLM-4V, and other vision models. Pass images as base64 or URLs in the `content` array.
-- **llama.cpp / ik_llama**: Supports LLaVA and other GGUF vision models via `--mmproj` flag for the multimodal projector. Requires separate projector file.
+- **llama.cpp**: Supports LLaVA and other GGUF vision models via `--mmproj` flag for the multimodal projector. Requires separate projector file.
 - **TensorRT-LLM**: Limited vision model support. Check TRT-LLM docs for supported VLMs.
 
 **Recommendation**: Use vLLM for vision workloads. For GGUF vision models, use llama.cpp with the appropriate `--mmproj` projector.
@@ -251,7 +251,7 @@ def generate_litellm_config(
     Generate a LiteLLM config file for proxying to a local backend.
 
     Args:
-        backend: Backend type (vllm, llama, ik_llama, trtllm)
+        backend: Backend type (vllm, llama, trtllm, sglang)
         backend_port: Port the backend is listening on
         model_alias: Model name to expose via LiteLLM
         model_name: Actual model name/path used by backend
@@ -264,7 +264,7 @@ def generate_litellm_config(
         # OpenAI-compatible backends
         litellm_model = f"openai/{model_name}"
         api_base = f"http://localhost:{backend_port}/v1"
-    elif backend in ("llama", "ik_llama"):
+    elif backend == "llama":
         # llama.cpp uses custom endpoint, but LiteLLM supports it
         litellm_model = f"openai/{model_name}"
         api_base = f"http://localhost:{backend_port}/v1"
@@ -435,7 +435,7 @@ def main():
         # Start backend as usual
         if backend == "vllm":
             manager.start_vllm(...)
-        elif backend in ("llama", "ik_llama"):
+        elif backend == "llama":
             manager.start_gguf_backend(...)
         elif backend == "trtllm":
             manager.start_trtllm(...)
@@ -517,11 +517,6 @@ defaults:
         gpu_memory_utilization: 0.95
         max_model_len: 65536
     llama:
-      version: b7349
-      image_type: build
-      args:
-        n_gpu_layers: 999
-    ik_llama:
       version: b7349
       image_type: build
       args:
