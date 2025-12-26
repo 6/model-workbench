@@ -35,11 +35,14 @@ RUN git checkout ${VERSION}
 
 # Build llama.cpp with CUDA support
 # Using Release build for optimal performance
+# Note: GGML_NATIVE=OFF required because Docker build has no GPU for auto-detection
+# Note: For b7538+ use "120a-real" (Blackwell FP4 PTX), for older versions "120" works
 RUN cmake -B build \
     -DGGML_CUDA=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLAMA_CURL=OFF \
-    -DCMAKE_CUDA_ARCHITECTURES="89;90" \
+    -DGGML_NATIVE=OFF \
+    -DCMAKE_CUDA_ARCHITECTURES="120" \
     -G Ninja
 
 # Use CUDA stubs for build-time linking (real libcuda.so.1 injected at runtime by nvidia-container-toolkit)
