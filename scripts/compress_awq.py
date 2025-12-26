@@ -372,13 +372,16 @@ def replace_fp8_with_bf16(model):
         # Dequantize weight using block-wise scale factors
         # weight: (out_features, in_features) in FP8
         # scale_inv: (num_out_blocks, num_in_blocks) in float32
+        # Force CPU conversion to avoid GPU OOM (BF16 model is 2x FP8 size)
+        original_device = module.weight.device
         with torch.no_grad():
-            weight = module.weight.data
-            scale_inv = module.weight_scale_inv.data
+            # Move to CPU for conversion (GPU may be full with FP8 model)
+            weight = module.weight.data.to("cpu")
+            scale_inv = module.weight_scale_inv.data.to("cpu")
             block_h, block_w = module.block_size
             out_features, in_features = weight.shape
 
-            # Convert FP8 to float32 for math
+            # Convert FP8 to float32 for math (on CPU)
             weight_float = weight.to(torch.float32)
             del weight  # Free FP8 weight immediately
 
@@ -389,19 +392,20 @@ def replace_fp8_with_bf16(model):
             scale_expanded = scale_expanded[:out_features, :in_features]
             del scale_inv  # Free scale factors
 
-            # Apply scale and convert to BF16
+            # Apply scale and convert to BF16 (stay on CPU)
             dequantized = (weight_float * scale_expanded).to(torch.bfloat16)
             del weight_float, scale_expanded
 
-        # Create replacement nn.Linear (don't allocate new weights, reuse dequantized)
+        # Create replacement nn.Linear using device="meta" to avoid memory allocation
+        # during __init__, then materialize with our dequantized weights
         new_linear = nn.Linear(
             module.in_features,
             module.out_features,
             bias=module.bias is not None,
-            device=dequantized.device,
+            device="meta",  # Don't allocate physical memory
             dtype=torch.bfloat16,
         )
-        # Directly assign dequantized tensor (avoid double allocation)
+        # Materialize with our dequantized data (no double allocation)
         new_linear.weight = nn.Parameter(dequantized, requires_grad=False)
         if module.bias is not None:
             new_linear.bias = nn.Parameter(module.bias.data.to(torch.bfloat16), requires_grad=False)
@@ -411,9 +415,12 @@ def replace_fp8_with_bf16(model):
         del module
         replaced_count += 1
 
-        # Periodic memory cleanup
-        if replaced_count % 100 == 0:
+        # Memory cleanup every 10 modules (balance between speed and OOM prevention)
+        if replaced_count % 10 == 0:
             gc.collect()
+
+        # Periodic progress update and CUDA cache clear
+        if replaced_count % 500 == 0:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             print(f"  Converted {replaced_count}/{len(fp8_modules)} modules", flush=True)
@@ -449,10 +456,13 @@ def run_quantization(args, model_path: Path, output_path: Path):
 
         # Use BF16 instead of "auto" - MiniMax ships with FP8 weights, but AWQ
         # requires FP16/BF16 for smoothing (abs_cuda not implemented for FP8)
+        # Load on CPU: FP8→BF16 conversion doubles model size, won't fit on single GPU
+        # AWQ will handle GPU placement for calibration later
         model = AutoModelForCausalLM.from_pretrained(
             str(load_path),
             torch_dtype=torch.bfloat16,
             trust_remote_code=True,
+            device_map="cpu",
         )
         print("Model loaded successfully", flush=True)
 
