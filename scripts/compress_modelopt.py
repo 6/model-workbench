@@ -76,6 +76,20 @@ def parse_args():
         action="store_true",
         help="Force rebuild Docker image",
     )
+    parser.add_argument(
+        "--offload-folder",
+        default="/tmp/modelopt_offload",
+        help="Folder for disk offload of model layers (default: /tmp/modelopt_offload)",
+    )
+    parser.add_argument(
+        "--max-gpu-memory",
+        help="Max GPU memory to use (e.g., '80GiB'). Leaves headroom for quantization.",
+    )
+    parser.add_argument(
+        "--trust-remote-code",
+        action="store_true",
+        help="Trust remote code for custom models like MiniMax",
+    )
     return parser.parse_args()
 
 
@@ -143,6 +157,10 @@ def run_in_docker(args, model_path: Path, output_path: Path):
     # Ensure output parent directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Ensure offload folder exists
+    offload_path = Path(args.offload_folder)
+    offload_path.mkdir(parents=True, exist_ok=True)
+
     cmd = [
         "docker",
         "run",
@@ -165,6 +183,8 @@ def run_in_docker(args, model_path: Path, output_path: Path):
         f"{Path(__file__).resolve()}:/workspace/compress_modelopt.py:ro",
         "-v",
         f"{Path.home()}/.cache:/root/.cache:rw",
+        "-v",
+        f"{offload_path}:{offload_path}:rw",  # Mount offload folder
         image_name,
         "/workspace/compress_modelopt.py",
         "--model",
@@ -175,11 +195,17 @@ def run_in_docker(args, model_path: Path, output_path: Path):
         str(args.samples),
         "--max-seq-len",
         str(args.max_seq_len),
+        "--offload-folder",
+        str(offload_path),
     ]
     if args.auto_quantize:
         cmd.extend(["--auto-quantize", "--effective-bits", str(args.effective_bits)])
     if args.skip_test:
         cmd.append("--skip-test")
+    if args.max_gpu_memory:
+        cmd.extend(["--max-gpu-memory", args.max_gpu_memory])
+    if args.trust_remote_code:
+        cmd.append("--trust-remote-code")
 
     subprocess.run(cmd, check=True)
 
@@ -200,13 +226,47 @@ def run_quantization(args, model_path: Path, output_path: Path):
     print(f"Source model: {model_path}")
     print(f"Output path:  {output_path}")
     print(f"Calibration:  {args.samples} samples, max_seq_len={args.max_seq_len}")
+    if args.max_gpu_memory:
+        print(f"Max GPU mem:  {args.max_gpu_memory}")
+    print(f"Offload dir:  {args.offload_folder}")
 
-    # Load model and tokenizer
-    print("\nLoading model to GPU...")
-    model = AutoModelForCausalLM.from_pretrained(str(model_path), torch_dtype="auto")
-    model = model.cuda()
-    print(f"Model loaded on {model.device}")
-    tokenizer = AutoTokenizer.from_pretrained(str(model_path))
+    # Ensure offload folder exists
+    Path(args.offload_folder).mkdir(parents=True, exist_ok=True)
+
+    # Load model with device_map="auto" for large model support
+    # Note: FP8 models (like MiniMax-M2.1) must be loaded as BF16 because:
+    # 1. Disk offload doesn't support FP8 (numpy can't handle Float8_e4m3fn)
+    # 2. modelopt quantization works on FP16/BF16 weights
+    print("\nLoading model with auto device mapping...")
+    load_kwargs = {
+        "torch_dtype": torch.bfloat16,  # Force BF16 (required for FP8 models)
+        "device_map": "auto",
+        # Note: Don't use offload_folder for FP8 models - numpy can't handle FP8
+    }
+    if args.trust_remote_code:
+        load_kwargs["trust_remote_code"] = True
+    if args.max_gpu_memory:
+        # Detect all available GPUs and assign max_memory to each
+        num_gpus = torch.cuda.device_count()
+        max_memory = {i: args.max_gpu_memory for i in range(num_gpus)}
+        max_memory["cpu"] = "500GiB"
+        load_kwargs["max_memory"] = max_memory
+        print(f"  Max memory: {num_gpus} GPUs @ {args.max_gpu_memory} each, CPU = 500GiB")
+
+    model = AutoModelForCausalLM.from_pretrained(str(model_path), **load_kwargs)
+    print(
+        f"Model loaded. Device map: {model.hf_device_map if hasattr(model, 'hf_device_map') else 'N/A'}"
+    )
+
+    tokenizer_kwargs = {}
+    if args.trust_remote_code:
+        tokenizer_kwargs["trust_remote_code"] = True
+    tokenizer = AutoTokenizer.from_pretrained(str(model_path), **tokenizer_kwargs)
+
+    # Set pad_token if not present (required for calibration padding)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        print(f"Set pad_token to eos_token: {tokenizer.pad_token}")
 
     # Prepare calibration data
     print(f"\nLoading {args.samples} samples from {CALIBRATION_DATASET}...")
@@ -226,14 +286,30 @@ def run_quantization(args, model_path: Path, output_path: Path):
 
     calib_data = [tokenize(sample) for sample in ds]
 
+    # Get input device for device_map="auto" models (use embedding layer's device)
+    def get_input_device(m):
+        """Get the device for model inputs (first layer's device for device_map models)."""
+        if hasattr(m, "device"):
+            return m.device
+        # For device_map models, get the embedding layer's device
+        embed = m.get_input_embeddings()
+        if embed is not None:
+            return next(embed.parameters()).device
+        # Fallback to first parameter's device
+        return next(m.parameters()).device
+
+    input_device = get_input_device(model)
+    print(f"Input device: {input_device}")
+
     # Create forward loop for calibration
     def forward_loop(model):
         print("Running calibration...")
+        device = get_input_device(model)
         for i, batch in enumerate(calib_data):
             if i % 100 == 0:
                 print(f"  Calibration sample {i}/{len(calib_data)}")
-            input_ids = batch["input_ids"].to(model.device)
-            attention_mask = batch["attention_mask"].to(model.device)
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
             with torch.no_grad():
                 model(input_ids=input_ids, attention_mask=attention_mask)
 
@@ -242,8 +318,9 @@ def run_quantization(args, model_path: Path, output_path: Path):
         print(f"\nApplying AutoQuantize (effective_bits={args.effective_bits})...")
 
         def forward_step(model, data):
-            input_ids = data["input_ids"].to(model.device)
-            attention_mask = data["attention_mask"].to(model.device)
+            device = get_input_device(model)
+            input_ids = data["input_ids"].to(device)
+            attention_mask = data["attention_mask"].to(device)
             return model(input_ids=input_ids, attention_mask=attention_mask)
 
         def loss_func(output, data):
@@ -277,18 +354,43 @@ def run_quantization(args, model_path: Path, output_path: Path):
         print("\n" + "=" * 50)
         print("SAMPLE GENERATION TEST")
         print("=" * 50)
-        input_ids = tokenizer("Hello, my name is", return_tensors="pt").input_ids.to(model.device)
+        device = get_input_device(model)
+        input_ids = tokenizer("Hello, my name is", return_tensors="pt").input_ids.to(device)
         with torch.no_grad():
             output = model.generate(input_ids, max_new_tokens=50)
         print(tokenizer.decode(output[0]))
         print("=" * 50 + "\n")
 
-    # Export
+    # Export - try HF format first, fall back to TensorRT-LLM format
     print(f"Exporting to {output_path}...")
     output_path.mkdir(parents=True, exist_ok=True)
-    with torch.inference_mode():
-        export_hf_checkpoint(model=model, export_dir=str(output_path))
-    tokenizer.save_pretrained(str(output_path))
+
+    # Check if model has offloaded layers (meta device)
+    has_offloaded = any("cpu" in str(v) or v == "disk" for v in model.hf_device_map.values()) if hasattr(model, "hf_device_map") else False
+
+    if has_offloaded:
+        print("  Warning: Model has offloaded layers. Trying TensorRT-LLM export format...")
+        try:
+            from modelopt.torch.export import export_tensorrt_llm_checkpoint
+            with torch.inference_mode():
+                export_tensorrt_llm_checkpoint(
+                    model=model,
+                    decoder_type="llama",  # MiniMax uses similar architecture
+                    export_dir=str(output_path),
+                    dtype=torch.bfloat16,
+                )
+            tokenizer.save_pretrained(str(output_path))
+            print("  Exported using TensorRT-LLM format")
+        except Exception as e:
+            print(f"  TensorRT-LLM export failed: {e}")
+            print("  Falling back to HF export (may not preserve quantization)...")
+            with torch.inference_mode():
+                export_hf_checkpoint(model=model, export_dir=str(output_path))
+            tokenizer.save_pretrained(str(output_path))
+    else:
+        with torch.inference_mode():
+            export_hf_checkpoint(model=model, export_dir=str(output_path))
+        tokenizer.save_pretrained(str(output_path))
 
     print(f"\nDone! Quantized model saved to: {output_path}")
     print("\nTo benchmark with TensorRT-LLM:")
