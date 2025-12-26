@@ -531,6 +531,63 @@ class ServerManager:
             label=f"ExLlamaV3 (Docker {version})",
         )
 
+    def start_ktransformers(
+        self,
+        model_path: str,
+        tensor_parallel: int,
+        version: str,
+        cpu_threads: int | None = None,
+        numa_nodes: int | None = None,
+        kt_method: str | None = None,
+        max_new_tokens: int | None = None,
+        cache_lens: int | None = None,
+        rebuild: bool = False,
+        extra_args: list[str] | None = None,
+    ) -> None:
+        """Start KTransformers server via Docker for CPU-GPU hybrid inference.
+
+        Args:
+            model_path: Path to model directory (safetensors)
+            tensor_parallel: Tensor parallel size (number of GPUs)
+            version: KTransformers version (branch or commit SHA)
+            cpu_threads: CPU threads for inference (default: auto-detect)
+            numa_nodes: Number of NUMA nodes (default: 1)
+            kt_method: KTransformers method (e.g., "FP8" for native FP8 weights)
+            max_new_tokens: Maximum new tokens to generate
+            cache_lens: KV cache length in tokens
+            rebuild: Force rebuild image even if cached
+            extra_args: Additional ktransformers arguments (optional)
+        """
+        from docker_manager import (
+            build_ktransformers_docker_cmd,
+            ensure_image,
+        )
+
+        model_path_resolved = str(Path(model_path).expanduser().resolve())
+
+        # Ensure image exists (builds if needed) - KTransformers is build-from-source only
+        image_name = ensure_image("ktransformers", version, rebuild=rebuild)
+
+        cmd = build_ktransformers_docker_cmd(
+            image_name=image_name,
+            model_path=model_path_resolved,
+            host=self.host,
+            port=self.port,
+            tensor_parallel=tensor_parallel,
+            cpu_threads=cpu_threads,
+            numa_nodes=numa_nodes,
+            kt_method=kt_method,
+            max_new_tokens=max_new_tokens,
+            cache_lens=cache_lens,
+            extra_args=extra_args,
+        )
+
+        self.start(
+            cmd,
+            lambda: wait_for_openai_ready(self.host, self.port),  # KTransformers uses OpenAI API
+            label=f"KTransformers (Docker {version})",
+        )
+
 
 # ----------------------------
 # Readiness checks

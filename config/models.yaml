@@ -72,9 +72,23 @@ defaults:
         cache_size: 32768
         gpu_split_auto: true   # Automatically split model across GPUs
         # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
+    # https://github.com/kvcache-ai/ktransformers
+    # CPU-GPU hybrid inference for models that don't fit in GPU memory
+    ktransformers:
+      version: main
+      image_type: build
+      args:
+        kt_method: FP8          # Use native FP8 weights (for M2.1, etc.)
+        cpu_threads: 16         # Physical CPU cores for inference
+        numa_nodes: 1           # NUMA node count (1 for desktop, 2+ for servers)
+        cache_lens: 32768       # KV cache length in tokens
 
 models:
   - repo_id: MiniMaxAI/MiniMax-M2.1
+    backends:
+      ktransformers:
+        args:
+          kt_method: FP8        # M2.1 uses native FP8 weights
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
@@ -83,6 +97,7 @@ models:
 
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:
+      - 3.84bpw-tuned
       - 4bpw_H6
     backend: exl
 
@@ -135,10 +150,10 @@ models:
 
   #- repo_id: zai-org/GLM-4.6V-FP8
 
-  - repo_id: unsloth/MiniMax-M2-GGUF
-    include:
-      #- "UD-Q4_K_XL/*.gguf"
-      - "UD-Q5_K_XL/*.gguf"
+  #- repo_id: unsloth/MiniMax-M2-GGUF
+  #  include:
+  #    #- "UD-Q4_K_XL/*.gguf"
+  #    - "UD-Q5_K_XL/*.gguf"
 
   # Seems buggy
   #- repo_id: bartowski/cerebras_MiniMax-M2-REAP-139B-A10B-GGUF
@@ -149,13 +164,13 @@ models:
   #  include:
   #    - "cerebras_MiniMax-M2-REAP-162B-A10B-IQ4_XS/*.gguf"
 
-  - repo_id: bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF
-    include:
-      - "cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/*.gguf"
+  #- repo_id: bartowski/cerebras_MiniMax-M2-REAP-172B-A10B-GGUF
+  #  include:
+  #    - "cerebras_MiniMax-M2-REAP-172B-A10B-IQ4_XS/*.gguf"
 
   - repo_id: unsloth/Qwen3-235B-A22B-Thinking-2507-GGUF
     include:
-      - "UD-Q4_K_XL/*.gguf"
+      #- "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
 
   #- repo_id: unsloth/Qwen3-235B-A22B-Instruct-2507-GGUF
@@ -190,7 +205,7 @@ models:
 
   #- repo_id: Qwen/Qwen3-Next-80B-A3B-Thinking-FP8
 
-  - repo_id: Qwen/Qwen3-VL-8B-Instruct-FP8
+  #- repo_id: Qwen/Qwen3-VL-8B-Instruct-FP8
 
   # Small model to trial evals
   - repo_id: Qwen/Qwen3-VL-2B-Instruct
@@ -199,9 +214,9 @@ models:
 
   - repo_id: allenai/Olmo-3-32B-Think
 
-  - repo_id: unsloth/Olmo-3-32B-Think-GGUF
-    include:
-      - "Olmo-3-32B-Think-UD-Q4_K_XL.gguf"
+  #- repo_id: unsloth/Olmo-3-32B-Think-GGUF
+  #  include:
+  #    - "Olmo-3-32B-Think-UD-Q4_K_XL.gguf"
 
   #- repo_id: allenai/Olmo-3-7B-Think
 

@@ -100,4 +100,13 @@ BACKEND_REGISTRY = {
         "dockerfile": ROOT / "docker" / "Dockerfile.exl",
         "docker_base": ["--gpus", "all", "--ipc", "host"],
     },
+    "ktransformers": {
+        "display_name": "KTransformers",
+        "formats": ["safetensors"],  # FP8 safetensors for CPU-GPU hybrid
+        "default_port": 10002,
+        "image_prefix": "model-bench-ktransformers",
+        "prebuilt_image": None,  # Build-from-source only
+        "dockerfile": ROOT / "docker" / "Dockerfile.ktransformers",
+        "docker_base": ["--gpus", "all", "--ipc", "host"],
+    },
 }

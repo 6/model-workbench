@@ -1,0 +1,74 @@
+# KTransformers Server Docker Image
+# Build with: docker build -f docker/Dockerfile.ktransformers --build-arg VERSION=main -t model-bench-ktransformers:main .
+#
+# VERSION can be:
+#   - Branch: main
+#   - Commit SHA: abc123def
+
+ARG CUDA_VERSION=12.8.0
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
+
+# Required: version to checkout
+ARG VERSION=main
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    python3 \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+    build-essential \
+    cmake \
+    pkg-config \
+    libhwloc-dev \
+    numactl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+
+# Note: Skip pip/wheel/setuptools upgrade - Ubuntu 24.04 system packages are sufficient
+
+# Install PyTorch (CUDA 12.8)
+RUN pip3 install --no-cache-dir --break-system-packages \
+    torch==2.7.0 \
+    --index-url https://download.pytorch.org/whl/cu128
+
+# Install kt-kernel (pre-built wheels with AVX512/AMX support)
+RUN pip3 install --no-cache-dir --break-system-packages kt-kernel
+
+# Clone kvcache-ai's SGLang fork (required for ktransformers integration)
+WORKDIR /opt
+RUN git clone https://github.com/kvcache-ai/sglang.git
+
+# Checkout specific version
+WORKDIR /opt/sglang
+RUN git checkout ${VERSION} || git checkout main
+
+# Install SGLang with all extras
+RUN pip3 install --no-cache-dir --break-system-packages -e "python[all]"
+
+# Install additional dependencies
+RUN pip3 install --no-cache-dir --break-system-packages \
+    transformers \
+    tokenizers \
+    accelerate \
+    safetensors \
+    huggingface_hub
+
+# Verify installation
+RUN python -c "from kt_kernel import KTMoEWrapper; print('kt-kernel installed')" && \
+    kt version || echo "kt CLI not available, will use python entry"
+
+# Expose default port (ktransformers uses 10002)
+EXPOSE 10002
+
+# Set working directory
+WORKDIR /workspace
+
+# No default entrypoint - docker command specifies full command
+# (uses python -m sglang.launch_server with kt-kernel integration)

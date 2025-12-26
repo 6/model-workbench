@@ -302,6 +302,24 @@ def main():
             gpu_split=gpu_split,
             rebuild=args.rebuild,
         )
+    elif backend == "ktransformers":
+        # Get KTransformers-specific args from config
+        backend_args = backend_cfg.get("args", {})
+        cpu_threads = backend_args.get("cpu_threads")
+        numa_nodes = backend_args.get("numa_nodes")
+        kt_method = backend_args.get("kt_method")
+        cache_lens = backend_args.get("cache_lens")
+
+        server.start_ktransformers(
+            model_path=model_path,
+            tensor_parallel=args.tensor_parallel,
+            version=backend_version,
+            cpu_threads=cpu_threads,
+            numa_nodes=numa_nodes,
+            kt_method=kt_method,
+            cache_lens=cache_lens,
+            rebuild=args.rebuild,
+        )
 
     # Warmup model (preload into GPU memory by default)
     # Note: In the future, --model may be optional for dynamic loading
