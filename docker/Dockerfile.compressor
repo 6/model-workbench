@@ -1,8 +1,9 @@
 # NVFP4 compression using vLLM base for version alignment
-ARG VERSION=v0.13.0
+# NOTE: Must use nightly until vLLM release includes compressed-tensors>=0.13.0
+ARG VERSION=nightly
 FROM vllm/vllm-openai:${VERSION}
 
-# Install llm-compressor (uses same compressed-tensors as vLLM base)
+# Install llm-compressor (requires compressed-tensors>=0.13.0, available in nightly)
 RUN pip install --no-cache-dir llmcompressor
 
 WORKDIR /workspace

@@ -19,7 +19,7 @@ from pathlib import Path
 DEFAULT_OUTPUT_BASE = Path.home() / "models-quantized"
 DEFAULT_CALIBRATION_SAMPLES = 512
 DEFAULT_MAX_SEQ_LENGTH = 2048
-DEFAULT_VLLM_VERSION = "v0.13.0"
+DEFAULT_VLLM_VERSION = "nightly"  # Must use nightly until vLLM includes compressed-tensors>=0.13.0
 CALIBRATION_DATASET = "HuggingFaceH4/ultrachat_200k"
 CALIBRATION_SPLIT = "train_sft"
 IMAGE_PREFIX = "model-bench-compressor"
