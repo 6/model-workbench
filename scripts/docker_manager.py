@@ -256,6 +256,7 @@ def build_vllm_docker_cmd(
         str(tensor_parallel),
         "--max-model-len",
         str(max_model_len if max_model_len is not None else 10000),
+        "--trust-remote-code",
     ]
 
     if gpu_memory_utilization is not None:
