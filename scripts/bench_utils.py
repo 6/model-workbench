@@ -749,7 +749,7 @@ def resolve_run_config(args):
     # Apply config defaults for args not specified on CLI
     if getattr(args, "max_model_len", None) is None:
         config_default = backend_args.get("max_model_len", 65536)
-        if backend in ("vllm", "trtllm"):
+        if backend in ("vllm", "trtllm", "sglang"):
             detected = detect_max_position_embeddings(model_path)
             if detected:
                 args.max_model_len = min(config_default, detected)

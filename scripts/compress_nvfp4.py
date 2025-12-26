@@ -4,6 +4,11 @@
 Runs inside Docker using vLLM base image to ensure compressed-tensors version
 alignment between quantizer and runtime.
 
+WARNING: NVFP4 quantization may be SLOWER than BF16 on Blackwell workstation GPUs
+(RTX PRO 6000, RTX 5090 - SM120). As of Dec 2025, vLLM kernel optimization for
+SM120 is incomplete. See: https://github.com/vllm-project/vllm/issues/31085
+NVFP4 is designed for data center Blackwell (B200 - SM100).
+
 Usage:
     uv run python scripts/compress_nvfp4.py --model ~/models/google/gemma-3-1b-it
     uv run python scripts/compress_nvfp4.py --model ~/models/google/gemma-3-1b-it --vllm-version v0.13.0
