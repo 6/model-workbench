@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-27T23:26:14.676168",
+  "repo_id": "cyankiwi/MiniMax-M2.1-AWQ-4bit",
+  "model_ref": "~/models/cyankiwi/MiniMax-M2.1-AWQ-4bit",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 96158
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 96158
+      }
+    ],
+    "memory_used_mib": 192316,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "longctx",
+    "prompt": "Analyze this Python code and summarize the key data structures and their use cases:\n\n```python\n'''This module implements specialized container datatypes providing\nalternatives to Python's general purpose built-in containers, dict,\nlist, set, and tuple.\n\n* namedtuple   factory function for creating tuple subclasses with named fields\n* deque        list-like container with fast appends and pops on either end\n* ChainMap     dict-like class for creating a single view of multiple mappings\n* Counter  ... (51978 more chars)",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.98,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 5.19809799399809,
+      "output_text": "We are given a Python module that implements several specialized container datatypes. These are alternatives to Python's built-in containers like dict, list, set, and tuple. The module includes:\n\n1. namedtuple: A factory function for creating tuple subclasses with named fields.\n2. deque: A list-like container with fast appends and pops on either end.\n3. ChainMap: A dict-like class for creating a single view of multiple mappings.\n4. Counter: A dict subclass for counting hashable objects.\n5. OrderedDict: A dict subclass that remembers the order entry were added.\n6. defaultdict: A dict subclass that calls a factory function to supply missing value.\n7. UserDict: A wrapper around dictionary objects for easier dict subclassing.\n8. UserList: A wrapper around list objects for easier list subclassing.\n9. UserString: A wrapper around string objects for easier string subclassing.\n\nHowever, note that the provided code does not include the implementation of `deque` and `defaultdict` because they are imported from the C implementation in `_collections` if available. The code focuses on the pure Python implementations of the others.\n\nLet's break down the key data structures and their use cases:\n\n### 1. OrderedDict\n- **Purpose**: A dictionary that remembers the order in which items were inserted. In Python 3.7+, the built-in `dict` also preserves insertion order, but `OrderedDict` was introduced in earlier versions for this purpose and still provides some additional methods.\n- **Internal Structure**: Uses a doubly linked list to maintain order. Each key is associated with a link in the linked list, and the links are connected in a circular manner. The internal `__map` dictionary maps keys to their links.\n- **Key Methods**:\n  - `__iter__`: Iterates over keys in insertion order.\n  - `__reversed__`: Iterates over keys in reverse insertion order.\n  - `popitem(last=True)`: Removes and returns the last item (if `last=True`) or the first item (if `last=False`).\n  - `move_to_end(key, last=True)`: Moves an existing item to the end (or beginning if `last=False`).\n- **Use Case**: When you need to maintain the order of key-value pairs and also have the ability to move items to the end or pop from either end.\n\n### 2. namedtuple\n- **Purpose**: Creates a tuple subclass with named fields. It provides a convenient way to create lightweight",
+      "prompt_tokens": 12142,
+      "generated_tokens": 512,
+      "tok_per_s": 98.49756595415738,
+      "ttft_ms": 44.434309005737305,
+      "prefill_ms": 42.55385600117734,
+      "generation_ms": 5137.088452996977,
+      "generation_tok_per_s": 99.66735139654821
+    },
+    {
+      "wall_s": 5.180572627999936,
+      "output_text": "We are given a Python module that implements several specialized container datatypes. These are alternatives to Python's built-in containers like dict, list, set, and tuple. The module includes:\n\n1. namedtuple: A factory function for creating tuple subclasses with named fields.\n2. deque: A list-like container with fast appends and pops on either end.\n3. ChainMap: A dict-like class for creating a single view of multiple mappings.\n4. Counter: A dict subclass for counting hashable objects.\n5. OrderedDict: A dict subclass that remembers the order entry were added.\n6. defaultdict: A dict subclass that calls a factory function to supply missing value.\n7. UserDict: A wrapper around dictionary objects for easier dict subclassing.\n8. UserList: A wrapper around list objects for easier list subclassing.\n9. UserString: A wrapper around string objects for easier string subclassing.\n\nHowever, note that the provided code does not include the implementation of `deque` and `defaultdict` because they are imported from the C implementation in `_collections` if available. The code does include the pure Python implementations of `OrderedDict` (as a fallback) and the other classes-based containers.\n\nLet's summarize the key data structures and their use cases:\n\n### 1. OrderedDict\n- **Description**: A dictionary that remembers the order in which items were inserted. In Python 3.7+, the built-in `dict` also preserves insertion order, but `OrderedDict` provides additional methods like `move_to_end()` and `popitem(last=False)`.\n- **Use Case**: When you need to maintain the order of key-value pairs and also have the ability to move items to the end or pop from the beginning. Also useful for compatibility with older Python versions or when you need the specific methods of `OrderedDict`.\n- **Key Methods**:\n  - `popitem(last=True)`: Remove and return the last (or first if `last=False`) item.\n  - `move_to_end(key, last=True)`: Move an existing item to the end (or beginning if `last=False`).\n\n### 2. namedtuple\n- **Description**: A factory function that creates a tuple subclass with named fields. It provides a way to create lightweight, immutable structures with named fields.\n- **Use Case**: When you need a simple data structure with named fields, similar to a record or struct. It is useful for returning multiple values from a function, or for defining a simple class without methods.\n- **",
+      "prompt_tokens": 12142,
+      "generated_tokens": 512,
+      "tok_per_s": 98.8307735003549,
+      "ttft_ms": 44.92974281311035,
+      "prefill_ms": 42.87511800066568,
+      "generation_ms": 5118.344362999778,
+      "generation_tok_per_s": 100.0323471201389
+    },
+    {
+      "wall_s": 5.1778944059988135,
+      "output_text": "We are given a Python module that implements several specialized container datatypes. These are alternatives to Python's built-in containers like dict, list, set, and tuple. The module includes:\n\n1. namedtuple: A factory function for creating tuple subclasses with named fields.\n2. deque: A list-like container with fast appends and pops on either end.\n3. ChainMap: A dict-like class for creating a single view of multiple mappings.\n4. Counter: A dict subclass for counting hashable objects.\n5. OrderedDict: A dict subclass that remembers the order entry were added.\n6. defaultdict: A dict subclass that calls a factory function to supply missing value.\n7. UserDict: A wrapper around dictionary objects for easier dict subclassing.\n8. UserList: A wrapper around list objects for easier list subclassing.\n9. UserString: A wrapper around string objects for easier string subclassing.\n\nHowever, note that the code provided does not include the implementation of `deque` and `defaultdict` because they are imported from the C implementation in `_collections` if available. The pure Python versions of `OrderedDict` is provided, but if the C version is available, it is used.\n\nWe are to analyze the code and summarize the key data structures and their use cases.\n\nLet's break down each data structure:\n\n### 1. OrderedDict\n- **Purpose**: A dictionary that remembers the order in which items were inserted. In Python 3.7+, regular dicts also maintain insertion order, but OrderedDict was the way to do this before.\n- **Implementation**: \n  - Uses a doubly linked list to maintain order. Each key is associated with a link in the linked list.\n  - The linked list is circular and has a sentinel node to simplify the algorithm.\n  - The internal `__map` dictionary maps keys to links. The links are kept alive by the dictionary, and when a key is deleted, the link is removed.\n- **Key Methods**:\n  - `__setitem__`: Adds a new item at the end of the linked list and updates the dictionary.\n  - `__delitem__`: Removes the item and updates the linked list.\n  - `__iter__` and `__reversed__`: Traverse the linked list in order or reverse order.\n  - `popitem(last=True)`: Removes and returns the last item (or first if `last=False`).\n  - `move_to_end(key, last=True)`: Moves an existing item to the end",
+      "prompt_tokens": 12142,
+      "generated_tokens": 512,
+      "tok_per_s": 98.88189288040057,
+      "ttft_ms": 43.36714744567871,
+      "prefill_ms": 41.18466900399653,
+      "generation_ms": 5118.955895995896,
+      "generation_tok_per_s": 100.0203968157827
+    },
+    {
+      "wall_s": 5.177171115996316,
+      "output_text": "We are given a Python module that implements several specialized container datatypes. These are alternatives to Python's built-in containers like dict, list, set, and tuple. The module includes:\n\n1. namedtuple: A factory function for creating tuple subclasses with named fields.\n2. deque: A list-like container with fast appends and pops on either end.\n3. ChainMap: A dict-like class for creating a single view of multiple mappings.\n4. Counter: A dict subclass for counting hashable objects.\n5. OrderedDict: A dict subclass that remembers the order entry were added.\n6. defaultdict: A dict subclass that calls a factory function to supply missing value.\n7. UserDict: A wrapper around dictionary objects for easier dict subclassing.\n8. UserList: A wrapper around list objects for easier list subclassing.\n9. UserString: A wrapper around string objects for easier string subclassing.\n\nHowever, note that the code provided does not include the implementation of `deque` and `defaultdict` because they are imported from the C implementation in `_collections` if available. The pure Python versions of `OrderedDict` is provided, but if the C version is available, it is used.\n\nWe are to analyze the code and summarize the key data structures and their use cases.\n\nLet's break down each data structure:\n\n### 1. OrderedDict\n- **Purpose**: A dictionary that remembers the order in which items were inserted. In Python 3.7+, regular dicts also maintain insertion order, but OrderedDict was the way to do this before.\n- **Implementation**: \n  - Uses a doubly linked list to maintain order. Each key is associated with a link in the linked list.\n  - The linked list is circular and has a sentinel node to simplify the algorithm.\n  - The internal `__map` dictionary maps keys to links. The links are kept alive by the dictionary, and when a key is deleted, the link is removed.\n- **Key Methods**:\n  - `__setitem__`: Adds a new item at the end of the linked list and updates the dictionary.\n  - `__delitem__`: Removes the item and updates the linked list.\n  - `__iter__` and `__reversed__`: Traverse the linked list in order or reverse order.\n  - `popitem(last=True)`: Removes and returns the last item (or first if `last=False`).\n  - `move_to_end(key, last=True)`: Moves an existing item to the end",
+      "prompt_tokens": 12142,
+      "generated_tokens": 512,
+      "tok_per_s": 98.89570742949427,
+      "ttft_ms": 42.99592971801758,
+      "prefill_ms": 41.033105000678916,
+      "generation_ms": 5117.698835994815,
+      "generation_tok_per_s": 100.04496481873845
+    },
+    {
+      "wall_s": 5.179173213997274,
+      "output_text": "We are given a Python module that implements several specialized container datatypes. These are alternatives to Python's built-in containers like dict, list, set, and tuple. The module includes:\n\n1. namedtuple: A factory function for creating tuple subclasses with named fields.\n2. deque: A list-like container with fast appends and pops on either end.\n3. ChainMap: A dict-like class for creating a single view of multiple mappings.\n4. Counter: A dict subclass for counting hashable objects.\n5. OrderedDict: A dict subclass that remembers the order entry were added.\n6. defaultdict: A dict subclass that calls a factory function to supply missing value.\n7. UserDict: A wrapper around dictionary objects for easier dict subclassing.\n8. UserList: A wrapper around list objects for easier list subclassing.\n9. UserString: A wrapper around string objects for easier string subclassing.\n\nHowever, note that the provided code does not include the implementation of `deque` and `defaultdict` because they are imported from the C implementation in `_collections` if available. The code focuses on the pure Python implementations of the others.\n\nLet's break down the key data structures and their use cases:\n\n### 1. OrderedDict\n- **Purpose**: A dictionary that remembers the order in which items were added.\n- **Internal Structure**: \n  - Uses a doubly linked list (via `_Link` objects) to maintain order.\n  - Each key is associated with a link in the linked list, and the links are connected in a circular manner.\n  - The linked list is maintained by a separate internal dictionary (`__map`) that maps keys to their links.\n- **Use Case**: When the order of insertion matters (e.g., in configurations, LRU caches, etc.). In Python 3.7+, the built-in `dict` is ordered, but `OrderedDict` still provides additional methods like `move_to_end` and is more explicit about order.\n\n### 2. namedtuple\n- **Purpose**: Creates a tuple subclass with named fields. It is a factory function that returns a new class.\n- **Internal Structure**: \n  - The created class is a subclass of `tuple` and has named fields that are accessible via attribute access and indexing.\n  - It includes methods like `_asdict()`, `_replace()`, and `_make()`.\n- **Use Case**: When you need a lightweight, immutable structure with named fields (e.g., representing a point, a record, etc.). It is more memory",
+      "prompt_tokens": 12142,
+      "generated_tokens": 512,
+      "tok_per_s": 98.85747760207457,
+      "ttft_ms": 44.947147369384766,
+      "prefill_ms": 42.6913940027589,
+      "generation_ms": 5119.248545997834,
+      "generation_tok_per_s": 100.01467899039115
+    }
+  ],
+  "summary": {
+    "median_wall_s": 5.179173213997274,
+    "median_tok_per_s": 98.85747760207457,
+    "median_ttft_ms": 44.434309005737305,
+    "median_generation_tok_per_s": 100.0203968157827
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-12-27T22:43:57.942344",
+  "repo_id": "unsloth/MiniMax-M2.1-GGUF/UD-Q5_K_XL",
+  "model_ref": "/data/storage2/models/unsloth/MiniMax-M2.1-GGUF/UD-Q5_K_XL/MiniMax-M2.1-UD-Q5_K_XL-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 82594
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 81434
+      }
+    ],
+    "memory_used_mib": 164028,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "longctx",
+    "prompt": "Analyze this Python code and summarize the key data structures and their use cases:\n\n```python\n'''This module implements specialized container datatypes providing\nalternatives to Python's general purpose built-in containers, dict,\nlist, set, and tuple.\n\n* namedtuple   factory function for creating tuple subclasses with named fields\n* deque        list-like container with fast appends and pops on either end\n* ChainMap     dict-like class for creating a single view of multiple mappings\n* Counter  ... (51978 more chars)",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 6.6710757490000105,
+      "prompt_tokens": 12105,
+      "generated_tokens": 512,
+      "ttft_ms": 1.887,
+      "tok_per_s": 76.74924094164999,
+      "generation_tok_per_s": 77.196453968825,
+      "generation_ms": 6632.429,
+      "output_text": "\n\n\nThe code implements specialized container datatypes from Python's `collections` module. Here's a summary of the key data structures and their use cases:\n\n## 1. **OrderedDict**\n- **Purpose**: Dictionary that remembers insertion order\n- **Implementation**: Uses a doubly-linked list with sentinel nodes\n- **Use Cases**: \n  - When order of key insertion matters\n  - LIFO/FIFO item removal with `popitem()`\n  - Moving items to end with `move_to_end()`\n\n## 2. **namedtuple**\n- **Purpose**: Factory function creating tuple subclasses with named fields\n- **Implementation**: Dynamically creates classes with field accessors\n- **Use Cases**:\n  - Lightweight, immutable data structures\n  - Returning multiple values from functions\n  - Data validation and documentation\n\n## 3. **Counter**\n- **Purpose**: Dict subclass for counting hashable objects (multiset/bag)\n- **Implementation**: Extends dict with counting and mathematical operations\n- **Use Cases**:\n  - Counting occurrences in sequences\n  - Multiset operations (+, -, |, &)\n  - Finding most common elements\n\n## 4. **ChainMap**\n- **Purpose**: Groups multiple dicts into a single, updateable view\n- **Implementation**: Maintains list of underlying mappings\n- **Use Cases**:\n  - Multiple scopes/contexts (e.g., local + global variables)\n  - Search through multiple dictionaries\n  - Updates only affect first mapping\n\n## 5. **defaultdict**\n- **Purpose**: Dict subclass with factory function for missing values\n- **Implementation**: Overrides `__missing__()` method\n- **Use Cases**:\n  - Avoiding KeyError for missing keys\n  - Grouping data by key\n  - Default value initialization\n\n## 6. **UserDict, UserList, UserString**\n- **Purpose**: Wrapper classes for easier subclassing\n- **Implementation**: Delegate to internal `data` attribute\n- **Use Cases**:\n  - Creating custom dict/list/string subclasses\n  - Adding custom behavior to built-in types\n  - Easier than inheriting directly from built-ins\n\n## 7. **deque** (imported from C extension)\n- **Purpose**: Double-ended queue with fast appends/pops on both ends\n- **Implementation**: C-optimized doubly-linked list\n- **Use Cases**:\n  - FIFO/LIFO queues\n  - Sliding windows\n  - Fast append/pop from both ends"
+    },
+    {
+      "wall_s": 6.575726394999947,
+      "prompt_tokens": 12105,
+      "generated_tokens": 512,
+      "ttft_ms": 4.941,
+      "tok_per_s": 77.86212035666732,
+      "generation_tok_per_s": 78.34082697005375,
+      "generation_ms": 6535.545,
+      "output_text": "\n\n\nThe code implements specialized container datatypes from Python's `collections` module. Here's a summary of the key data structures and their use cases:\n\n## 1. **OrderedDict**\n- **Purpose**: Dictionary that remembers insertion order\n- **Implementation**: Uses a doubly-linked list with sentinel nodes\n- **Use Cases**: \n  - When order of key insertion matters\n  - LIFO/FIFO item removal with `popitem()`\n  - Moving items to end with `move_to_end()`\n\n## 2. **namedtuple**\n- **Purpose**: Factory function creating tuple subclasses with named fields\n- **Implementation**: Dynamically creates classes with field accessors\n- **Use Cases**:\n  - Lightweight, immutable data structures\n  - Returning multiple values from functions\n  - Data validation and documentation\n\n## 3. **Counter**\n- **Purpose**: Dict subclass for counting hashable objects (multiset/bag)\n- **Implementation**: Extends dict with counting and mathematical operations\n- **Use Cases**:\n  - Counting occurrences in sequences\n  - Multiset operations (+, -, |, &)\n  - Finding most common elements\n\n## 4. **ChainMap**\n- **Purpose**: Groups multiple dicts into a single, updateable view\n- **Implementation**: Maintains list of underlying mappings\n- **Use Cases**:\n  - Multiple scopes/contexts (e.g., local + global variables)\n  - Search through multiple dictionaries\n  - Updates only affect first mapping\n\n## 5. **defaultdict**\n- **Purpose**: Dict subclass with factory function for missing values\n- **Implementation**: Overrides `__missing__()` method\n- **Use Cases**:\n  - Avoiding KeyError for missing keys\n  - Grouping data by key\n  - Default value initialization\n\n## 6. **UserDict, UserList, UserString**\n- **Purpose**: Wrapper classes for easier subclassing\n- **Implementation**: Delegate to internal `data` attribute\n- **Use Cases**:\n  - Creating custom dict/list/string subclasses\n  - Adding custom behavior to built-in types\n  - Easier than inheriting directly from built-ins\n\n## 7. **deque** (imported from C extension)\n- **Purpose**: Double-ended queue with fast appends/pops on both ends\n- **Implementation**: C-optimized doubly-linked list\n- **Use Cases**:\n  - FIFO/LIFO queues\n  - Sliding windows\n  - Fast append/pop from both ends"
+    },
+    {
+      "wall_s": 6.5680676299962215,
+      "prompt_tokens": 12105,
+      "generated_tokens": 512,
+      "ttft_ms": 4.323,
+      "tok_per_s": 77.95291230889694,
+      "generation_tok_per_s": 78.42070502664465,
+      "generation_ms": 6528.888,
+      "output_text": "\n\n\nThe code implements specialized container datatypes from Python's `collections` module. Here's a summary of the key data structures and their use cases:\n\n## 1. **OrderedDict**\n- **Purpose**: Dictionary that remembers insertion order\n- **Implementation**: Uses a doubly-linked list with sentinel nodes\n- **Use Cases**: \n  - When order of key insertion matters\n  - LIFO/FIFO item removal with `popitem()`\n  - Moving items to end with `move_to_end()`\n\n## 2. **namedtuple**\n- **Purpose**: Factory function creating tuple subclasses with named fields\n- **Implementation**: Dynamically creates classes with field accessors\n- **Use Cases**:\n  - Lightweight, immutable data structures\n  - Returning multiple values from functions\n  - Data validation and documentation\n\n## 3. **Counter**\n- **Purpose**: Dict subclass for counting hashable objects (multiset/bag)\n- **Implementation**: Extends dict with counting and mathematical operations\n- **Use Cases**:\n  - Counting occurrences in sequences\n  - Multiset operations (+, -, |, &)\n  - Finding most common elements\n\n## 4. **ChainMap**\n- **Purpose**: Groups multiple dicts into a single, updateable view\n- **Implementation**: Maintains list of underlying mappings\n- **Use Cases**:\n  - Multiple scopes/contexts (e.g., local + global variables)\n  - Search through multiple dictionaries\n  - Updates only affect first mapping\n\n## 5. **defaultdict**\n- **Purpose**: Dict subclass with factory function for missing values\n- **Implementation**: Overrides `__missing__()` method\n- **Use Cases**:\n  - Avoiding KeyError for missing keys\n  - Grouping data by key\n  - Default value initialization\n\n## 6. **UserDict, UserList, UserString**\n- **Purpose**: Wrapper classes for easier subclassing\n- **Implementation**: Delegate to internal `data` attribute\n- **Use Cases**:\n  - Creating custom dict/list/string subclasses\n  - Adding custom behavior to built-in types\n  - Easier than inheriting directly from built-ins\n\n## 7. **deque** (imported from C extension)\n- **Purpose**: Double-ended queue with fast appends/pops on both ends\n- **Implementation**: C-optimized doubly-linked list\n- **Use Cases**:\n  - FIFO/LIFO queues\n  - Sliding windows\n  - Fast append/pop from both ends"
+    },
+    {
+      "wall_s": 6.5778578000026755,
+      "prompt_tokens": 12105,
+      "generated_tokens": 512,
+      "ttft_ms": 4.085,
+      "tok_per_s": 77.83689090995426,
+      "generation_tok_per_s": 78.43629884842645,
+      "generation_ms": 6527.59,
+      "output_text": "\n\n\nThe code implements specialized container datatypes from Python's `collections` module. Here's a summary of the key data structures and their use cases:\n\n## 1. **OrderedDict**\n- **Purpose**: Dictionary that remembers insertion order\n- **Implementation**: Uses a doubly-linked list with sentinel nodes\n- **Use Cases**: \n  - When order of key insertion matters\n  - LIFO/FIFO item removal with `popitem()`\n  - Moving items to end with `move_to_end()`\n\n## 2. **namedtuple**\n- **Purpose**: Factory function creating tuple subclasses with named fields\n- **Implementation**: Dynamically creates classes with field accessors\n- **Use Cases**:\n  - Lightweight, immutable data structures\n  - Returning multiple values from functions\n  - Data validation and documentation\n\n## 3. **Counter**\n- **Purpose**: Dict subclass for counting hashable objects (multiset/bag)\n- **Implementation**: Extends dict with counting and mathematical operations\n- **Use Cases**:\n  - Counting occurrences in sequences\n  - Multiset operations (+, -, |, &)\n  - Finding most common elements\n\n## 4. **ChainMap**\n- **Purpose**: Groups multiple dicts into a single, updateable view\n- **Implementation**: Maintains list of underlying mappings\n- **Use Cases**:\n  - Multiple scopes/contexts (e.g., local + global variables)\n  - Search through multiple dictionaries\n  - Updates only affect first mapping\n\n## 5. **defaultdict**\n- **Purpose**: Dict subclass with factory function for missing values\n- **Implementation**: Overrides `__missing__()` method\n- **Use Cases**:\n  - Avoiding KeyError for missing keys\n  - Grouping data by key\n  - Default value initialization\n\n## 6. **UserDict, UserList, UserString**\n- **Purpose**: Wrapper classes for easier subclassing\n- **Implementation**: Delegate to internal `data` attribute\n- **Use Cases**:\n  - Creating custom dict/list/string subclasses\n  - Adding custom behavior to built-in types\n  - Easier than inheriting directly from built-ins\n\n## 7. **deque** (imported from C extension)\n- **Purpose**: Double-ended queue with fast appends/pops on both ends\n- **Implementation**: C-optimized doubly-linked list\n- **Use Cases**:\n  - FIFO/LIFO queues\n  - Sliding windows\n  - Fast append/pop from both ends"
+    },
+    {
+      "wall_s": 6.566125628996815,
+      "prompt_tokens": 12105,
+      "generated_tokens": 512,
+      "ttft_ms": 4.544,
+      "tok_per_s": 77.97596770597036,
+      "generation_tok_per_s": 78.45462771210524,
+      "generation_ms": 6526.065,
+      "output_text": "\n\n\nThe code implements specialized container datatypes from Python's `collections` module. Here's a summary of the key data structures and their use cases:\n\n## 1. **OrderedDict**\n- **Purpose**: Dictionary that remembers insertion order\n- **Implementation**: Uses a doubly-linked list with sentinel nodes\n- **Use Cases**: \n  - When order of key insertion matters\n  - LIFO/FIFO item removal with `popitem()`\n  - Moving items to end with `move_to_end()`\n\n## 2. **namedtuple**\n- **Purpose**: Factory function creating tuple subclasses with named fields\n- **Implementation**: Dynamically creates classes with field accessors\n- **Use Cases**:\n  - Lightweight, immutable data structures\n  - Returning multiple values from functions\n  - Data validation and documentation\n\n## 3. **Counter**\n- **Purpose**: Dict subclass for counting hashable objects (multiset/bag)\n- **Implementation**: Extends dict with counting and mathematical operations\n- **Use Cases**:\n  - Counting occurrences in sequences\n  - Multiset operations (+, -, |, &)\n  - Finding most common elements\n\n## 4. **ChainMap**\n- **Purpose**: Groups multiple dicts into a single, updateable view\n- **Implementation**: Maintains list of underlying mappings\n- **Use Cases**:\n  - Multiple scopes/contexts (e.g., local + global variables)\n  - Search through multiple dictionaries\n  - Updates only affect first mapping\n\n## 5. **defaultdict**\n- **Purpose**: Dict subclass with factory function for missing values\n- **Implementation**: Overrides `__missing__()` method\n- **Use Cases**:\n  - Avoiding KeyError for missing keys\n  - Grouping data by key\n  - Default value initialization\n\n## 6. **UserDict, UserList, UserString**\n- **Purpose**: Wrapper classes for easier subclassing\n- **Implementation**: Delegate to internal `data` attribute\n- **Use Cases**:\n  - Creating custom dict/list/string subclasses\n  - Adding custom behavior to built-in types\n  - Easier than inheriting directly from built-ins\n\n## 7. **deque** (imported from C extension)\n- **Purpose**: Double-ended queue with fast appends/pops on both ends\n- **Implementation**: C-optimized doubly-linked list\n- **Use Cases**:\n  - FIFO/LIFO queues\n  - Sliding windows\n  - Fast append/pop from both ends"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 6.575726394999947,
+    "median_tok_per_s": 77.86212035666732,
+    "median_ttft_ms": 4.323,
+    "median_generation_tok_per_s": 78.42070502664465
+  },
+  "revision": "UD-Q5_K_XL"
+}

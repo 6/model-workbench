@@ -93,6 +93,10 @@ models:
           kt_method: FP8        # M2.1 uses native FP8 weights
 
   - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
+    backends:
+      vllm:
+        args:
+          max_num_seqs: 1  # Single-user benchmarking, allows full 65K context
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
@@ -137,13 +141,9 @@ models:
     include:
       - "GLM-4.7-IQ4_XS/*.gguf"
 
-  # Q3 fits with room for KV cache - no changes needed
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"
-
-  - repo_id: unsloth/GLM-4.7-GGUF
-    include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
       - "UD-Q6_K_XL/*.gguf"
