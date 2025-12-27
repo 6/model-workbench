@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-12-27T18:53:13.954013",
+  "repo_id": "unsloth/MiniMax-M2.1-GGUF/Q6_K",
+  "model_ref": "/data/storage2/models/unsloth/MiniMax-M2.1-GGUF/Q6_K/MiniMax-M2.1-Q6_K-00001-of-00004.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94074
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94482
+      }
+    ],
+    "memory_used_mib": 188556,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 6.4071866599988425,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 8.102,
+      "tok_per_s": 79.91026751202726,
+      "generation_tok_per_s": 80.22636369932538,
+      "generation_ms": 6381.942,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\nIn transformer-based language models, inference involves processing tokens sequentially. During each forward pass, the model computes **Key (K)** and **Value (V)** vectors for each token through attention projections. KV cache stores these computed K and V vectors from previous tokens, avoiding redundant recomputation during autoregressive generation.\n\n**Why It Matters for Long Context**\n\n1. **Computational Efficiency**: Without KV cache, each new token would require recomputing K/V for all prior tokens (O(n\u00b2) per step). KV cache reduces this to O(n) per token, making long-form generation feasible.\n\n2. **Memory Bottleneck**: KV cache grows linearly with context length and batch size. For a model with:\n   - Hidden dimension: 4096\n   - 32 attention heads\n   - 4096-token context\n   - FP16 precision\n   \n   Cache size \u2248 2 \u00d7 32 \u00d7 4096 \u00d7 4096 \u00d7 2 bytes \u2248 2GB per layer\n\n3. **Long Context Challenges**:\n   - **Memory pressure**: KV cache dominates memory at long contexts\n   - **Context eviction**: Cannot store infinite history\n   - **Attention complexity**: O(n) memory but O(n\u00b2) compute remains for full attention\n\n**Optimization Strategies**\n- **PagedAttention** (vLLM): Virtual memory paging for KV cache\n- **Continuous batching**: Dynamic batch scheduling\n- **Quantization**: 4-bit/8-bit KV cache to reduce memory\n- **Prefix caching**: Cache reusable prompt K/V\n- **Sliding window**: Limit attention to recent tokens\n- **Sparse attention**: Approximate full attention patterns\n\nKV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive"
+    },
+    {
+      "wall_s": 6.3622754069983785,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 8.72,
+      "tok_per_s": 80.47435347372891,
+      "generation_tok_per_s": 81.10523626177095,
+      "generation_ms": 6312.786,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\nIn transformer-based language models, inference involves processing tokens sequentially. During each forward pass, the model computes **Key (K)** and **Value (V)** vectors for each token through attention projections. KV cache stores these computed K and V vectors from previous tokens, avoiding redundant recomputation during autoregressive generation.\n\n**Why It Matters for Long Context**\n\n1. **Computational Efficiency**: Without KV cache, each new token would require recomputing K/V for all prior tokens (O(n\u00b2) per step). KV cache reduces this to O(n) per token, making long-form generation feasible.\n\n2. **Memory Bottleneck**: KV cache grows linearly with context length and batch size. For a model with:\n   - Hidden dimension: 4096\n   - 32 attention heads\n   - 4096-token context\n   - FP16 precision\n   \n   Cache size \u2248 2 \u00d7 32 \u00d7 4096 \u00d7 4096 \u00d7 2 bytes \u2248 2GB per layer\n\n3. **Long Context Challenges**:\n   - **Memory pressure**: KV cache dominates memory at long contexts\n   - **Context eviction**: Cannot store infinite history\n   - **Attention complexity**: O(n) memory but O(n\u00b2) compute remains for full attention\n\n**Optimization Strategies**\n- **PagedAttention** (vLLM): Virtual memory paging for KV cache\n- **Continuous batching**: Dynamic batch scheduling\n- **Quantization**: 4-bit/8-bit KV cache to reduce memory\n- **Prefix caching**: Cache reusable prompt K/V\n- **Sliding window**: Limit attention to recent tokens\n- **Sparse attention**: Approximate full attention patterns\n\nKV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive"
+    },
+    {
+      "wall_s": 6.324407123000128,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 8.514,
+      "tok_per_s": 80.9562050706693,
+      "generation_tok_per_s": 81.15465318907671,
+      "generation_ms": 6308.942,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\nIn transformer-based language models, inference involves processing tokens sequentially. During each forward pass, the model computes **Key (K)** and **Value (V)** vectors for each token through attention projections. KV cache stores these computed K and V vectors from previous tokens, avoiding redundant recomputation during autoregressive generation.\n\n**Why It Matters for Long Context**\n\n1. **Computational Efficiency**: Without KV cache, each new token would require recomputing K/V for all prior tokens (O(n\u00b2) per step). KV cache reduces this to O(n) per token, making long-form generation feasible.\n\n2. **Memory Bottleneck**: KV cache grows linearly with context length and batch size. For a model with:\n   - Hidden dimension: 4096\n   - 32 attention heads\n   - 4096-token context\n   - FP16 precision\n   \n   Cache size \u2248 2 \u00d7 32 \u00d7 4096 \u00d7 4096 \u00d7 2 bytes \u2248 2GB per layer\n\n3. **Long Context Challenges**:\n   - **Memory pressure**: KV cache dominates memory at long contexts\n   - **Context eviction**: Cannot store infinite history\n   - **Attention complexity**: O(n) memory but O(n\u00b2) compute remains for full attention\n\n**Optimization Strategies**\n- **PagedAttention** (vLLM): Virtual memory paging for KV cache\n- **Continuous batching**: Dynamic batch scheduling\n- **Quantization**: 4-bit/8-bit KV cache to reduce memory\n- **Prefix caching**: Cache reusable prompt K/V\n- **Sliding window**: Limit attention to recent tokens\n- **Sparse attention**: Approximate full attention patterns\n\nKV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive"
+    },
+    {
+      "wall_s": 6.329850414000248,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 8.725,
+      "tok_per_s": 80.8865875989056,
+      "generation_tok_per_s": 81.08107680104112,
+      "generation_ms": 6314.667,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\nIn transformer-based language models, inference involves processing tokens sequentially. During each forward pass, the model computes **Key (K)** and **Value (V)** vectors for each token through attention projections. KV cache stores these computed K and V vectors from previous tokens, avoiding redundant recomputation during autoregressive generation.\n\n**Why It Matters for Long Context**\n\n1. **Computational Efficiency**: Without KV cache, each new token would require recomputing K/V for all prior tokens (O(n\u00b2) per step). KV cache reduces this to O(n) per token, making long-form generation feasible.\n\n2. **Memory Bottleneck**: KV cache grows linearly with context length and batch size. For a model with:\n   - Hidden dimension: 4096\n   - 32 attention heads\n   - 4096-token context\n   - FP16 precision\n   \n   Cache size \u2248 2 \u00d7 32 \u00d7 4096 \u00d7 4096 \u00d7 2 bytes \u2248 2GB per layer\n\n3. **Long Context Challenges**:\n   - **Memory pressure**: KV cache dominates memory at long contexts\n   - **Context eviction**: Cannot store infinite history\n   - **Attention complexity**: O(n) memory but O(n\u00b2) compute remains for full attention\n\n**Optimization Strategies**\n- **PagedAttention** (vLLM): Virtual memory paging for KV cache\n- **Continuous batching**: Dynamic batch scheduling\n- **Quantization**: 4-bit/8-bit KV cache to reduce memory\n- **Prefix caching**: Cache reusable prompt K/V\n- **Sliding window**: Limit attention to recent tokens\n- **Sparse attention**: Approximate full attention patterns\n\nKV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive"
+    },
+    {
+      "wall_s": 6.323075090997008,
+      "prompt_tokens": 17,
+      "generated_tokens": 512,
+      "ttft_ms": 8.704,
+      "tok_per_s": 80.97325947132931,
+      "generation_tok_per_s": 81.17494389495455,
+      "generation_ms": 6307.365,
+      "output_text": " \n\n## KV Cache: Technical Overview\n\n**What is KV Cache?**\nIn transformer-based language models, inference involves processing tokens sequentially. During each forward pass, the model computes **Key (K)** and **Value (V)** vectors for each token through attention projections. KV cache stores these computed K and V vectors from previous tokens, avoiding redundant recomputation during autoregressive generation.\n\n**Why It Matters for Long Context**\n\n1. **Computational Efficiency**: Without KV cache, each new token would require recomputing K/V for all prior tokens (O(n\u00b2) per step). KV cache reduces this to O(n) per token, making long-form generation feasible.\n\n2. **Memory Bottleneck**: KV cache grows linearly with context length and batch size. For a model with:\n   - Hidden dimension: 4096\n   - 32 attention heads\n   - 4096-token context\n   - FP16 precision\n   \n   Cache size \u2248 2 \u00d7 32 \u00d7 4096 \u00d7 4096 \u00d7 2 bytes \u2248 2GB per layer\n\n3. **Long Context Challenges**:\n   - **Memory pressure**: KV cache dominates memory at long contexts\n   - **Context eviction**: Cannot store infinite history\n   - **Attention complexity**: O(n) memory but O(n\u00b2) compute remains for full attention\n\n**Optimization Strategies**\n- **PagedAttention** (vLLM): Virtual memory paging for KV cache\n- **Continuous batching**: Dynamic batch scheduling\n- **Quantization**: 4-bit/8-bit KV cache to reduce memory\n- **Prefix caching**: Cache reusable prompt K/V\n- **Sliding window**: Limit attention to recent tokens\n- **Sparse attention**: Approximate full attention patterns\n\nKV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive inference, but its linear memory growth remains the primary constraint on context length. KV cache is the fundamental mechanism enabling efficient autoregressive"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 6.329850414000248,
+    "median_tok_per_s": 80.8865875989056,
+    "median_ttft_ms": 8.704,
+    "median_generation_tok_per_s": 81.10523626177095
+  },
+  "revision": "Q6_K"
+}

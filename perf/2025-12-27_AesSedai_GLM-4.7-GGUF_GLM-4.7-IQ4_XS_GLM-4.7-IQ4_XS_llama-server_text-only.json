@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-12-27T18:50:07.613220",
+  "repo_id": "AesSedai/GLM-4.7-GGUF/GLM-4.7-IQ4_XS",
+  "model_ref": "/data/storage2/models/AesSedai/GLM-4.7-GGUF/GLM-4.7-IQ4_XS/GLM-4.7-IQ4_XS-00001-of-00005.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95402
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 93688
+      }
+    ],
+    "memory_used_mib": 189090,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 14.321325559001707,
+      "prompt_tokens": 16,
+      "generated_tokens": 512,
+      "ttft_ms": 19.42,
+      "tok_per_s": 35.75088059346441,
+      "generation_tok_per_s": 35.86225503960993,
+      "generation_ms": 14276.849,
+      "output_text": " KV cache is a standard technique in modern LLMs to avoid redundant computation during autoregressive generation. It stores Key and Value vectors for each token in the context window. During generation, instead of re-computing attention for all previous tokens at each step, the model retrieves the cached K and V for past tokens and only computes attention for the new token.\nMechanism:\n1.  **Initialization:** During the \"prefill\" phase (processing the prompt), the model computes K and V vectors for every token in the prompt and stores them in the cache.\n2.  **KV Cache Evolution:** As the model generates tokens one by one, the cache grows. For each new token, the model computes its K and V, appends them to the cache, and reuses the cached K and V for all previous tokens.\n2.  **Attention Calculation:** At each step, the model calculates the attention scores between the new token's Query (Q) vector and *all* Key vectors in the cache (past + new). The attention scores are used to weight the Value vectors to produce the output.\n(new token Q) $\\cdot$ (all cached K) $\\cdot$ (all cached V) $\\rightarrow$ output.\n3. computational complexity: Without KV cache, the complexity is $O(L^2)$ per generated token (where $L$ is the total sequence length). With KV cache, the complexity is reduced to $O(L)$ per generated token.\n3.  **Long Context Challenges:** As context windows grow (e.g., 128k, 1M tokens), the size of the KV cache grows linearly with sequence length. For long contexts, the memory footprint of the KV cache becomes the primary bottleneck, limiting batch size and throughput.\n3.  **KV Cache Compression:** Techniques like PagedAttention, quantization, and multi-query attention (MQA/GQA) are used to reduce the memory footprint of the KV cache to make long context feasible.\n```\n**Technical Overview: KV Cache**\n```\n**Technical Overview: KV Cache**\n\n**Definition & Purpose**\nThe KV (Key-Value) cache is a memory optimization technique used in autoregressive Large Language Models (LLMs). It stores the Key (K) and Value (V) vectors for previously processed tokens to eliminate redundant computation during text generation.\n\n**Mechanism**\n1.  **Prefill Phase:** During the processing of the input prompt, the model computes and caches the K and V vectors for every token.\n2. "
+    },
+    {
+      "wall_s": 14.239060599000368,
+      "prompt_tokens": 16,
+      "generated_tokens": 512,
+      "ttft_ms": 20.992,
+      "tok_per_s": 35.95742826152058,
+      "generation_tok_per_s": 36.17663041961429,
+      "generation_ms": 14152.783,
+      "output_text": " KV cache is a standard technique in modern LLMs to avoid redundant computation during autoregressive generation. It stores Key and Value vectors for each token in the context window. During generation, instead of re-computing attention for all previous tokens at each step, the model retrieves the cached K and V for past tokens and only computes attention for the new token.\nMechanism:\n1.  **Initialization:** During the \"prefill\" phase (processing the prompt), the model computes K and V vectors for every token in the prompt and stores them in the cache.\n2.  **KV Cache Evolution:** As the model generates tokens one by one, the cache grows. For each new token, the model computes its K and V, appends them to the cache, and reuses the cached K and V for all previous tokens.\n2.  **Attention Calculation:** At each step, the model calculates the attention scores between the new token's Query (Q) vector and *all* Key vectors in the cache (past + new). The attention scores are used to weight the Value vectors to produce the output.\n(new token Q) $\\cdot$ (all cached K) $\\cdot$ (all cached V) $\\rightarrow$ output.\n3. computational complexity: Without KV cache, the complexity is $O(L^2)$ per generated token (where $L$ is the total sequence length). With KV cache, the complexity is reduced to $O(L)$ per generated token.\n3.  **Long Context Challenges:** As context windows grow (e.g., 128k, 1M tokens), the size of the KV cache grows linearly with sequence length. For long contexts, the memory footprint of the KV cache becomes the primary bottleneck, limiting batch size and throughput.\n3.  **KV Cache Compression:** Techniques like PagedAttention, quantization, and multi-query attention (MQA/GQA) are used to reduce the memory footprint of the KV cache to make long context feasible.\n```\n**Technical Overview: KV Cache**\n```\n**Technical Overview: KV Cache**\n\n**Definition & Purpose**\nThe KV (Key-Value) cache is a memory optimization technique used in autoregressive Large Language Models (LLMs). It stores the Key (K) and Value (V) vectors for previously processed tokens to eliminate redundant computation during text generation.\n\n**Mechanism**\n1.  **Prefill Phase:** During the processing of the input prompt, the model computes and caches the K and V vectors for every token.\n2. "
+    },
+    {
+      "wall_s": 14.18967266799882,
+      "prompt_tokens": 16,
+      "generated_tokens": 512,
+      "ttft_ms": 20.051,
+      "tok_per_s": 36.082580055189375,
+      "generation_tok_per_s": 36.162280777650075,
+      "generation_ms": 14158.399,
+      "output_text": " KV cache is a standard technique in modern LLMs to avoid redundant computation during autoregressive generation. It stores Key and Value vectors for each token in the context window. During generation, instead of re-computing attention for all previous tokens at each step, the model retrieves the cached K and V for past tokens and only computes attention for the new token.\nMechanism:\n1.  **Initialization:** During the \"prefill\" phase (processing the prompt), the model computes K and V vectors for every token in the prompt and stores them in the cache.\n2.  **KV Cache Evolution:** As the model generates tokens one by one, the cache grows. For each new token, the model computes its K and V, appends them to the cache, and reuses the cached K and V for all previous tokens.\n2.  **Attention Calculation:** At each step, the model calculates the attention scores between the new token's Query (Q) vector and *all* Key vectors in the cache (past + new). The attention scores are used to weight the Value vectors to produce the output.\n(new token Q) $\\cdot$ (all cached K) $\\cdot$ (all cached V) $\\rightarrow$ output.\n3. computational complexity: Without KV cache, the complexity is $O(L^2)$ per generated token (where $L$ is the total sequence length). With KV cache, the complexity is reduced to $O(L)$ per generated token.\n3.  **Long Context Challenges:** As context windows grow (e.g., 128k, 1M tokens), the size of the KV cache grows linearly with sequence length. For long contexts, the memory footprint of the KV cache becomes the primary bottleneck, limiting batch size and throughput.\n3.  **KV Cache Compression:** Techniques like PagedAttention, quantization, and multi-query attention (MQA/GQA) are used to reduce the memory footprint of the KV cache to make long context feasible.\n```\n**Technical Overview: KV Cache**\n```\n**Technical Overview: KV Cache**\n\n**Definition & Purpose**\nThe KV (Key-Value) cache is a memory optimization technique used in autoregressive Large Language Models (LLMs). It stores the Key (K) and Value (V) vectors for previously processed tokens to eliminate redundant computation during text generation.\n\n**Mechanism**\n1.  **Prefill Phase:** During the processing of the input prompt, the model computes and caches the K and V vectors for every token.\n2. "
+    },
+    {
+      "wall_s": 14.175487253000028,
+      "prompt_tokens": 16,
+      "generated_tokens": 512,
+      "ttft_ms": 20.419,
+      "tok_per_s": 36.11868790553516,
+      "generation_tok_per_s": 36.223612036059194,
+      "generation_ms": 14134.427,
+      "output_text": " KV cache is a standard technique in modern LLMs to avoid redundant computation during autoregressive generation. It stores Key and Value vectors for each token in the context window. During generation, instead of re-computing attention for all previous tokens at each step, the model retrieves the cached K and V for past tokens and only computes attention for the new token.\nMechanism:\n1.  **Initialization:** During the \"prefill\" phase (processing the prompt), the model computes K and V vectors for every token in the prompt and stores them in the cache.\n2.  **KV Cache Evolution:** As the model generates tokens one by one, the cache grows. For each new token, the model computes its K and V, appends them to the cache, and reuses the cached K and V for all previous tokens.\n2.  **Attention Calculation:** At each step, the model calculates the attention scores between the new token's Query (Q) vector and *all* Key vectors in the cache (past + new). The attention scores are used to weight the Value vectors to produce the output.\n(new token Q) $\\cdot$ (all cached K) $\\cdot$ (all cached V) $\\rightarrow$ output.\n3. computational complexity: Without KV cache, the complexity is $O(L^2)$ per generated token (where $L$ is the total sequence length). With KV cache, the complexity is reduced to $O(L)$ per generated token.\n3.  **Long Context Challenges:** As context windows grow (e.g., 128k, 1M tokens), the size of the KV cache grows linearly with sequence length. For long contexts, the memory footprint of the KV cache becomes the primary bottleneck, limiting batch size and throughput.\n3.  **KV Cache Compression:** Techniques like PagedAttention, quantization, and multi-query attention (MQA/GQA) are used to reduce the memory footprint of the KV cache to make long context feasible.\n```\n**Technical Overview: KV Cache**\n```\n**Technical Overview: KV Cache**\n\n**Definition & Purpose**\nThe KV (Key-Value) cache is a memory optimization technique used in autoregressive Large Language Models (LLMs). It stores the Key (K) and Value (V) vectors for previously processed tokens to eliminate redundant computation during text generation.\n\n**Mechanism**\n1.  **Prefill Phase:** During the processing of the input prompt, the model computes and caches the K and V vectors for every token.\n2. "
+    },
+    {
+      "wall_s": 14.174395402998925,
+      "prompt_tokens": 16,
+      "generated_tokens": 512,
+      "ttft_ms": 22.132,
+      "tok_per_s": 36.12147011869546,
+      "generation_tok_per_s": 36.230430348872865,
+      "generation_ms": 14131.767,
+      "output_text": " KV cache is a standard technique in modern LLMs to avoid redundant computation during autoregressive generation. It stores Key and Value vectors for each token in the context window. During generation, instead of re-computing attention for all previous tokens at each step, the model retrieves the cached K and V for past tokens and only computes attention for the new token.\nMechanism:\n1.  **Initialization:** During the \"prefill\" phase (processing the prompt), the model computes K and V vectors for every token in the prompt and stores them in the cache.\n2.  **KV Cache Evolution:** As the model generates tokens one by one, the cache grows. For each new token, the model computes its K and V, appends them to the cache, and reuses the cached K and V for all previous tokens.\n2.  **Attention Calculation:** At each step, the model calculates the attention scores between the new token's Query (Q) vector and *all* Key vectors in the cache (past + new). The attention scores are used to weight the Value vectors to produce the output.\n(new token Q) $\\cdot$ (all cached K) $\\cdot$ (all cached V) $\\rightarrow$ output.\n3. computational complexity: Without KV cache, the complexity is $O(L^2)$ per generated token (where $L$ is the total sequence length). With KV cache, the complexity is reduced to $O(L)$ per generated token.\n3.  **Long Context Challenges:** As context windows grow (e.g., 128k, 1M tokens), the size of the KV cache grows linearly with sequence length. For long contexts, the memory footprint of the KV cache becomes the primary bottleneck, limiting batch size and throughput.\n3.  **KV Cache Compression:** Techniques like PagedAttention, quantization, and multi-query attention (MQA/GQA) are used to reduce the memory footprint of the KV cache to make long context feasible.\n```\n**Technical Overview: KV Cache**\n```\n**Technical Overview: KV Cache**\n\n**Definition & Purpose**\nThe KV (Key-Value) cache is a memory optimization technique used in autoregressive Large Language Models (LLMs). It stores the Key (K) and Value (V) vectors for previously processed tokens to eliminate redundant computation during text generation.\n\n**Mechanism**\n1.  **Prefill Phase:** During the processing of the input prompt, the model computes and caches the K and V vectors for every token.\n2. "
+    }
+  ],
+  "summary": {
+    "median_wall_s": 14.18967266799882,
+    "median_tok_per_s": 36.082580055189375,
+    "median_ttft_ms": 20.419,
+    "median_generation_tok_per_s": 36.17663041961429
+  },
+  "revision": "GLM-4.7-IQ4_XS"
+}

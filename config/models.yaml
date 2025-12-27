@@ -95,6 +95,7 @@ models:
     include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
+      - "Q6_K/*.gguf"
     backends:
       llama:
         args:
@@ -129,12 +130,20 @@ models:
       - 4bpw_H6
     backend: exl
 
+  - repo_id: AesSedai/GLM-4.7-GGUF
+    include:
+      - "GLM-4.7-IQ4_XS/*.gguf"
+
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"
+      - "UD-Q4_K_XL/*.gguf"
+      - "UD-Q5_K_XL/*.gguf"
+      - "UD-Q6_K_XL/*.gguf"
 
   - repo_id: ubergarm/GLM-4.7-GGUF
     include:
+      - "IQ3_KS/*.gguf"
       - "big-IQ3_KS/*.gguf"
 
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
