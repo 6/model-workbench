@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-12-27T22:24:45.543384",
+  "repo_id": "unsloth/GLM-4.7-GGUF/UD-Q4_K_XL",
+  "model_ref": "/data/storage2/models/unsloth/GLM-4.7-GGUF/UD-Q4_K_XL/GLM-4.7-UD-Q4_K_XL-00001-of-00005.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 96044
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 96058
+      }
+    ],
+    "memory_used_mib": 192102,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "longctx",
+    "prompt": "Analyze this Python code and summarize the key data structures and their use cases:\n\n```python\n'''This module implements specialized container datatypes providing\nalternatives to Python's general purpose built-in containers, dict,\nlist, set, and tuple.\n\n* namedtuple   factory function for creating tuple subclasses with named fields\n* deque        list-like container with fast appends and pops on either end\n* ChainMap     dict-like class for creating a single view of multiple mappings\n* Counter  ... (51978 more chars)",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 22.762005321004835,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 46.875,
+      "tok_per_s": 22.493624475499313,
+      "generation_tok_per_s": 22.565199543795128,
+      "generation_ms": 22689.806,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. `namedtuple`\n*   **Description:** A factory function that creates subclasses of the standard `tuple`. Unlike a regular tuple, fields can be accessed by name in addition to index.\n*   **Use Case:** Ideal for creating simple, lightweight data structures where you want to improve code readability by accessing fields via descriptive names (e.g., `Point(x, y)` instead of `point[0], point[1]`). It is memory-efficient like a tuple but offers the convenience of an object.\n\n### 2. `deque` (Double-Ended Queue)\n*   **Description:** A list-like container optimized for appending and popping items from both ends (left and right) with O(1) complexity.\n*   **Use Case:** Best suited for implementing queues or stacks where you need fast additions and removals from both ends. It is more efficient than a standard list for operations at the beginning of the sequence.\n\n### 3. `ChainMap`\n*   **Description:** A class that groups multiple dictionaries (or other mappings) into a single, updateable view. Lookups search the underlying mappings successively.\n*   **Use Case:** Useful for managing nested scopes or configurations (e.g., command-line arguments, environment variables, and default settings). It allows you to treat multiple dictionaries as one without copying data, and updates only affect the first dictionary in the chain.\n\n### 4. `Counter`\n*   **Description:** A dictionary subclass specifically designed for counting hashable objects. Elements are stored as keys, and their counts are stored as values.\n*   **Use Case:** Perfect for tallying occurrences of items in an iterable (e.g., counting word frequencies in a text). It also provides mathematical operations like addition, subtraction, union, and intersection for combining counts.\n\n### 5. `OrderedDict`\n*   **Description:** A dictionary subclass that remembers the order in which keys were inserted. (Note: Since Python 3.7, standard `dict` preserves insertion order, but `OrderedDict` offers additional methods.)\n*   **Use Case:** Essential when the order of elements matters, such as maintaining the order of settings or implementing LRU (Least Recently Used) caches. It provides methods like `move_to_end` to efficiently reorder elements.\n\n### 6. `defaultdict`\n*   **Description:** A dictionary subclass that calls a factory function (provided by the user"
+    },
+    {
+      "wall_s": 22.547233502999006,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 46.666,
+      "tok_per_s": 22.707885645123554,
+      "generation_tok_per_s": 22.771992886065007,
+      "generation_ms": 22483.759,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. `namedtuple`\n*   **Description:** A factory function that creates subclasses of the standard `tuple`. Unlike a regular tuple, fields can be accessed by name in addition to index.\n*   **Use Case:** Ideal for creating simple, lightweight data structures where you want to improve code readability by accessing fields via descriptive names (e.g., `Point(x, y)` instead of `point[0], point[1]`). It is memory-efficient like a tuple but offers the convenience of an object.\n\n### 2. `deque` (Double-Ended Queue)\n*   **Description:** A list-like container optimized for appending and popping items from both ends (left and right) with O(1) complexity.\n*   **Use Case:** Best suited for implementing queues or stacks where you need fast additions and removals from both ends. It is more efficient than a standard list for operations at the beginning of the sequence.\n\n### 3. `ChainMap`\n*   **Description:** A class that groups multiple dictionaries (or other mappings) into a single, updateable view. Lookups search the underlying mappings successively.\n*   **Use Case:** Useful for managing nested scopes or configurations (e.g., command-line arguments, environment variables, and default settings). It allows you to treat multiple dictionaries as one without copying data, and updates only affect the first dictionary in the chain.\n\n### 4. `Counter`\n*   **Description:** A dictionary subclass specifically designed for counting hashable objects. Elements are stored as keys, and their counts are stored as values.\n*   **Use Case:** Perfect for tallying occurrences of items in an iterable (e.g., counting word frequencies in a text). It also provides mathematical operations like addition, subtraction, union, and intersection for combining counts.\n\n### 5. `OrderedDict`\n*   **Description:** A dictionary subclass that remembers the order in which keys were inserted. (Note: Since Python 3.7, standard `dict` preserves insertion order, but `OrderedDict` offers additional methods.)\n*   **Use Case:** Essential when the order of elements matters, such as maintaining the order of settings or implementing LRU (Least Recently Used) caches. It provides methods like `move_to_end` to efficiently reorder elements.\n\n### 6. `defaultdict`\n*   **Description:** A dictionary subclass that calls a factory function (provided by the user"
+    },
+    {
+      "wall_s": 22.5363092300031,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 46.978,
+      "tok_per_s": 22.71889308824192,
+      "generation_tok_per_s": 22.78190561385311,
+      "generation_ms": 22473.976,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. `namedtuple`\n*   **Description:** A factory function that creates subclasses of the standard `tuple`. Unlike a regular tuple, fields can be accessed by name in addition to index.\n*   **Use Case:** Ideal for creating simple, lightweight data structures where you want to improve code readability by accessing fields via descriptive names (e.g., `Point(x, y)` instead of `point[0], point[1]`). It is memory-efficient like a tuple but offers the convenience of an object.\n\n### 2. `deque` (Double-Ended Queue)\n*   **Description:** A list-like container optimized for appending and popping items from both ends (left and right) with O(1) complexity.\n*   **Use Case:** Best suited for implementing queues or stacks where you need fast additions and removals from both ends. It is more efficient than a standard list for operations at the beginning of the sequence.\n\n### 3. `ChainMap`\n*   **Description:** A class that groups multiple dictionaries (or other mappings) into a single, updateable view. Lookups search the underlying mappings successively.\n*   **Use Case:** Useful for managing nested scopes or configurations (e.g., command-line arguments, environment variables, and default settings). It allows you to treat multiple dictionaries as one without copying data, and updates only affect the first dictionary in the chain.\n\n### 4. `Counter`\n*   **Description:** A dictionary subclass specifically designed for counting hashable objects. Elements are stored as keys, and their counts are stored as values.\n*   **Use Case:** Perfect for tallying occurrences of items in an iterable (e.g., counting word frequencies in a text). It also provides mathematical operations like addition, subtraction, union, and intersection for combining counts.\n\n### 5. `OrderedDict`\n*   **Description:** A dictionary subclass that remembers the order in which keys were inserted. (Note: Since Python 3.7, standard `dict` preserves insertion order, but `OrderedDict` offers additional methods.)\n*   **Use Case:** Essential when the order of elements matters, such as maintaining the order of settings or implementing LRU (Least Recently Used) caches. It provides methods like `move_to_end` to efficiently reorder elements.\n\n### 6. `defaultdict`\n*   **Description:** A dictionary subclass that calls a factory function (provided by the user"
+    },
+    {
+      "wall_s": 22.563638579995313,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 46.357,
+      "tok_per_s": 22.69137569212502,
+      "generation_tok_per_s": 22.76382944876587,
+      "generation_ms": 22491.822,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. `namedtuple`\n*   **Description:** A factory function that creates subclasses of the standard `tuple`. Unlike a regular tuple, fields can be accessed by name in addition to index.\n*   **Use Case:** Ideal for creating simple, lightweight data structures where you want to improve code readability by accessing fields via descriptive names (e.g., `Point(x, y)` instead of `point[0], point[1]`). It is memory-efficient like a tuple but offers the convenience of an object.\n\n### 2. `deque` (Double-Ended Queue)\n*   **Description:** A list-like container optimized for appending and popping items from both ends (left and right) with O(1) complexity.\n*   **Use Case:** Best suited for implementing queues or stacks where you need fast additions and removals from both ends. It is more efficient than a standard list for operations at the beginning of the sequence.\n\n### 3. `ChainMap`\n*   **Description:** A class that groups multiple dictionaries (or other mappings) into a single, updateable view. Lookups search the underlying mappings successively.\n*   **Use Case:** Useful for managing nested scopes or configurations (e.g., command-line arguments, environment variables, and default settings). It allows you to treat multiple dictionaries as one without copying data, and updates only affect the first dictionary in the chain.\n\n### 4. `Counter`\n*   **Description:** A dictionary subclass specifically designed for counting hashable objects. Elements are stored as keys, and their counts are stored as values.\n*   **Use Case:** Perfect for tallying occurrences of items in an iterable (e.g., counting word frequencies in a text). It also provides mathematical operations like addition, subtraction, union, and intersection for combining counts.\n\n### 5. `OrderedDict`\n*   **Description:** A dictionary subclass that remembers the order in which keys were inserted. (Note: Since Python 3.7, standard `dict` preserves insertion order, but `OrderedDict` offers additional methods.)\n*   **Use Case:** Essential when the order of elements matters, such as maintaining the order of settings or implementing LRU (Least Recently Used) caches. It provides methods like `move_to_end` to efficiently reorder elements.\n\n### 6. `defaultdict`\n*   **Description:** A dictionary subclass that calls a factory function (provided by the user"
+    },
+    {
+      "wall_s": 22.527263599004073,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 46.422,
+      "tok_per_s": 22.72801566643165,
+      "generation_tok_per_s": 22.790148975909965,
+      "generation_ms": 22465.847,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. `namedtuple`\n*   **Description:** A factory function that creates subclasses of the standard `tuple`. Unlike a regular tuple, fields can be accessed by name in addition to index.\n*   **Use Case:** Ideal for creating simple, lightweight data structures where you want to improve code readability by accessing fields via descriptive names (e.g., `Point(x, y)` instead of `point[0], point[1]`). It is memory-efficient like a tuple but offers the convenience of an object.\n\n### 2. `deque` (Double-Ended Queue)\n*   **Description:** A list-like container optimized for appending and popping items from both ends (left and right) with O(1) complexity.\n*   **Use Case:** Best suited for implementing queues or stacks where you need fast additions and removals from both ends. It is more efficient than a standard list for operations at the beginning of the sequence.\n\n### 3. `ChainMap`\n*   **Description:** A class that groups multiple dictionaries (or other mappings) into a single, updateable view. Lookups search the underlying mappings successively.\n*   **Use Case:** Useful for managing nested scopes or configurations (e.g., command-line arguments, environment variables, and default settings). It allows you to treat multiple dictionaries as one without copying data, and updates only affect the first dictionary in the chain.\n\n### 4. `Counter`\n*   **Description:** A dictionary subclass specifically designed for counting hashable objects. Elements are stored as keys, and their counts are stored as values.\n*   **Use Case:** Perfect for tallying occurrences of items in an iterable (e.g., counting word frequencies in a text). It also provides mathematical operations like addition, subtraction, union, and intersection for combining counts.\n\n### 5. `OrderedDict`\n*   **Description:** A dictionary subclass that remembers the order in which keys were inserted. (Note: Since Python 3.7, standard `dict` preserves insertion order, but `OrderedDict` offers additional methods.)\n*   **Use Case:** Essential when the order of elements matters, such as maintaining the order of settings or implementing LRU (Least Recently Used) caches. It provides methods like `move_to_end` to efficiently reorder elements.\n\n### 6. `defaultdict`\n*   **Description:** A dictionary subclass that calls a factory function (provided by the user"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 22.547233502999006,
+    "median_tok_per_s": 22.707885645123554,
+    "median_ttft_ms": 46.666,
+    "median_generation_tok_per_s": 22.771992886065007
+  },
+  "revision": "UD-Q4_K_XL"
+}
