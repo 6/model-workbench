@@ -96,7 +96,9 @@ models:
     backends:
       vllm:
         args:
-          max_num_seqs: 1  # Single-user benchmarking, allows full 65K context
+          # KV cache: ~7.8 GiB/req at 65K ctx, 24.68 GiB available → max 3 concurrent
+          # Using 2 for headroom (activations, CUDA graphs, etc.)
+          max_num_seqs: 2
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
