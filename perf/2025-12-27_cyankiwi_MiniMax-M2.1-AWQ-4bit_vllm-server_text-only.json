@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-12-27T13:07:37.986708",
+  "repo_id": "cyankiwi/MiniMax-M2.1-AWQ-4bit",
+  "model_ref": "~/models/cyankiwi/MiniMax-M2.1-AWQ-4bit",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95494
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95494
+      }
+    ],
+    "memory_used_mib": 190988,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 4.594620610999982,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context. This is a technical documentation request that requires:\n\n1. **Writing Type**: Technical overview/documentation\n2. **Style**: Semi-formal, technical but accessible, informative\n3. **Audience**: Likely developers, ML engineers, or technical users who want to understand the concept\n4. **Structure**: Should be concise but cover the key aspects - what it is, how it works, and why it matters for long context\n\nGiven the request for \"concise,\" I should keep this focused and not overly long. A few well-structured paragraphs or sections would work well.\n\nLet me plan the content:\n- What is KV cache (the technical concept)\n- How it works (the mechanism)\n- Why it matters for long context (the importance/problem it solves)\n\nI'll use minimal lists, mostly prose with perhaps one or two small lists if truly needed. Let me write this in a way that explains the concept clearly.\n</think>\n\n# KV Cache: Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models inference, the model processes tokens sequentially to generate output. During this process, each token position must calculate attention scores against all previous positions to determine which tokens to attend to. The key (K) and value (V) matrices from attention layers represent the information each token contributes to the context. KV cache is an optimization technique that stores these computed K and V matrices from previous tokens positions, so they don't need to be recalculated from scratch for each new token generated.\n\nWithout KV cache, generating a sequence of N tokens requires O(N\u00b2) computations at each step because the model reprocesses all previous tokens. With KV cache, the model only computes attention for the new token against the cached keys and values, reducing the per-token cost to O(N) and dramatically improving inference efficiency.\n\n## Why It Matters for Long Context\n\nLong context windows present a fundamental challenge for transformer inference. As context length grows, the memory required to store KV caches scales linearly with sequence length and the number of attention heads. For a model with 32 attention heads, each producing 128-dimensional vectors per token, a 128K context window requires storing approximately 1GB of KV data per token batch. This memory pressure forces practitioners to either truncate context, use expensive memory-saving techniques like context compression, or face degraded throughput.\n\nKV cache optimization directly addresses this bottleneck. Techniques such as KV cache eviction (discarding less relevant tokens), grouped-query attention (sharing K",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 111.43466313066648,
+      "ttft_ms": 16.70217514038086,
+      "prefill_ms": 15.918797000040286,
+      "generation_ms": 4572.476861999917,
+      "generation_tok_per_s": 111.97432276913932
+    },
+    {
+      "wall_s": 4.592306321000024,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context. This is a technical documentation request that requires:\n\n1. **Writing Type**: Technical overview/documentation\n2. **Style**: Semi-formal, technical but accessible, informative\n3. **Audience**: Likely developers, ML engineers, or technical users who want to understand the concept\n4. **Structure**: Should be concise but cover the key aspects - what it is, how it works, and why it matters for long context\n\nGiven the request for \"concise,\" I should keep this focused and not overly long. A few well-structured paragraphs or sections would work well.\n\nLet me plan the content:\n- What is KV cache (the technical concept)\n- How it works (the mechanism)\n- Why it matters for long context (the importance/problem it solves)\n\nI'll use minimal lists, mostly prose with perhaps one or two small lists if truly needed. Let me write this in a way that explains the concept clearly.\n</think>\n\n# KV Cache: Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models inference, the model processes tokens sequentially to generate output. During this process, each token position must calculate attention scores against all previous positions to determine which tokens to attend to. The key (K) and value (V) matrices from attention layers represent the information each token contributes to the context. KV cache is an optimization technique that stores these computed K and V matrices from previous tokens positions, so they don't need to be recalculated from scratch for each new token generated.\n\nWithout KV cache, generating a sequence of N tokens requires O(N\u00b2) computations at each step because the model reprocesses all previous tokens. With KV cache, the model only computes attention for the new token against the cached keys and values, reducing the per-token cost to O(N) and dramatically improving inference efficiency.\n\n## Why It Matters for Long Context\n\nLong context windows present a fundamental challenge for transformer inference. As context length grows, the memory required to store KV caches scales linearly with sequence length and the number of attention heads. For a model with 32 attention heads, each producing 128-dimensional vectors per token, a 128K context window requires storing approximately 1GB of KV data per token batch. This memory pressure forces practitioners to either truncate context, use expensive memory-saving techniques like context compression, or face degraded throughput.\n\nKV cache optimization directly addresses this bottleneck. Techniques such as KV cache eviction (discarding less relevant tokens), grouped-query attention (sharing K",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 111.49082056192334,
+      "ttft_ms": 15.858888626098633,
+      "prefill_ms": 15.364900000008674,
+      "generation_ms": 4571.796371000005,
+      "generation_tok_per_s": 111.99098963543918
+    },
+    {
+      "wall_s": 4.592697105999946,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context. This is a technical documentation request that requires:\n\n1. **Writing Type**: Technical overview/documentation\n2. **Style**: Semi-formal, technical but accessible, informative\n3. **Audience**: Likely developers, ML engineers, or technical users who want to understand the concept\n4. **Structure**: Should be concise but cover the key aspects - what it is, how it works, and why it matters for long context\n\nGiven the request for \"concise,\" I should keep this focused and not overly long. A few well-structured paragraphs or sections would work well.\n\nLet me plan the content:\n- What is KV cache (the technical concept)\n- How it works (the mechanism)\n- Why it matters for long context (the importance/problem it solves)\n\nI'll use minimal lists, mostly prose with perhaps one or two small lists if truly needed. Let me write this in a way that explains the concept clearly.\n</think>\n\n# KV Cache: Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models inference, the model processes tokens sequentially to generate output. During this process, each token position must calculate attention scores against all previous positions to determine which tokens to attend to. The key (K) and value (V) matrices from attention layers represent the information each token contributes to the context. KV cache is an optimization technique that stores these computed K and V matrices from previous tokens positions, so they don't need to be recalculated from scratch for each new token generated.\n\nWithout KV cache, generating a sequence of N tokens requires O(N\u00b2) computations at each step because the model reprocesses all previous tokens. With KV cache, the model only computes attention for the new token against the cached keys and values, reducing the per-token cost to O(N) and dramatically improving inference efficiency.\n\n## Why It Matters for Long Context\n\nLong context windows present a fundamental challenge for transformer inference. As context length grows, the memory required to store KV caches scales linearly with sequence length and the number of attention heads. For a model with 32 attention heads, each producing 128-dimensional vectors per token, a 128K context window requires storing approximately 1GB of KV data per token batch. This memory pressure forces practitioners to either truncate context, use expensive memory-saving techniques like context compression, or face degraded throughput.\n\nKV cache optimization directly addresses this bottleneck. Techniques such as KV cache eviction (discarding less relevant tokens), grouped-query attention (sharing K",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 111.48133399241983,
+      "ttft_ms": 16.08729362487793,
+      "prefill_ms": 15.413660999911372,
+      "generation_ms": 4571.4793790000385,
+      "generation_tok_per_s": 111.99875522833364
+    },
+    {
+      "wall_s": 4.60303431300008,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context. This is a technical documentation request that requires:\n\n1. **Writing Type**: Technical overview/documentation\n2. **Style**: Semi-formal, technical but accessible, informative\n3. **Audience**: Likely developers, ML engineers, or technical users who want to understand the concept\n4. **Structure**: Should be concise but cover the key aspects - what it is, how it works, and why it matters for long context\n\nGiven the request for \"concise,\" I should keep this focused and not overly long. A few well-structured paragraphs or sections would work well.\n\nLet me plan the content:\n- What is KV cache (the technical concept)\n- How it works (the mechanism)\n- Why it matters for long context (the importance/problem it solves)\n\nI'll use minimal lists, mostly prose with perhaps one or two small lists if truly needed. Let me write this in a way that explains the concept clearly.\n</think>\n\n# KV Cache: Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models inference, the model processes tokens sequentially to generate output. During this process, each token position must calculate attention scores against all previous positions to determine which tokens to attend to. The key (K) and value (V) matrices from attention layers represent the information each token contributes to the context. KV cache is an optimization technique that stores these computed K and V matrices from previous tokens positions, so they don't need to be recalculated from scratch for each new token generated.\n\nWithout KV cache, generating a sequence of N tokens requires O(N\u00b2) computations at each step because the model reprocesses all previous tokens. With KV cache, the model only computes attention for the new token against the cached keys and values, reducing the per-token cost to O(N) and dramatically improving inference efficiency.\n\n## Why It Matters for Long Context\n\nLong context windows present a fundamental challenge for transformer inference. As context length grows, the memory required to store KV caches scales linearly with sequence length and the number of attention heads. For a model with 32 attention heads, each producing 128-dimensional vectors per token, a 128K context window requires storing approximately 1GB of KV data per token batch. This memory pressure forces practitioners to either truncate context, use expensive memory-saving techniques like context compression, or face degraded throughput.\n\nKV cache optimization directly addresses this bottleneck. Techniques such as KV cache eviction (discarding less relevant tokens), grouped-query attention (sharing K",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 111.23097617456129,
+      "ttft_ms": 15.901327133178711,
+      "prefill_ms": 15.37021100000402,
+      "generation_ms": 4582.375011999943,
+      "generation_tok_per_s": 111.73245285669918
+    },
+    {
+      "wall_s": 4.586529318000089,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context. This is a technical documentation request that requires:\n\n1. **Writing Type**: Technical overview/documentation\n2. **Style**: Semi-formal, technical but accessible, informative\n3. **Audience**: Likely developers, ML engineers, or technical users who want to understand the concept\n4. **Structure**: Should be concise but cover the key aspects - what it is, how it works, and why it matters for long context\n\nGiven the request for \"concise,\" I should keep this focused and not overly long. A few well-structured paragraphs or sections would work well.\n\nLet me plan the content:\n- What is KV cache (the technical concept)\n- How it works (the mechanism)\n- Why it matters for long context (the importance/problem it solves)\n\nI'll use minimal lists, mostly prose with perhaps one or two small lists if truly needed. Let me write this in a way that explains the concept clearly.\n</think>\n\n# KV Cache: Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models inference, the model processes tokens sequentially to generate output. During this process, each token position must calculate attention scores against all previous positions to determine which tokens to attend to. The key (K) and value (V) matrices from attention layers represent the information each token contributes to the context. KV cache is an optimization technique that stores these computed K and V matrices from previous tokens positions, so they don't need to be recalculated from scratch for each new token generated.\n\nWithout KV cache, generating a sequence of N tokens requires O(N\u00b2) computations at each step because the model reprocesses all previous tokens. With KV cache, the model only computes attention for the new token against the cached keys and values, reducing the per-token cost to O(N) and dramatically improving inference efficiency.\n\n## Why It Matters for Long Context\n\nLong context windows present a fundamental challenge for transformer inference. As context length grows, the memory required to store KV caches scales linearly with sequence length and the number of attention heads. For a model with 32 attention heads, each producing 128-dimensional vectors per token, a 128K context window requires storing approximately 1GB of KV data per token batch. This memory pressure forces practitioners to either truncate context, use expensive memory-saving techniques like context compression, or face degraded throughput.\n\nKV cache optimization directly addresses this bottleneck. Techniques such as KV cache eviction (discarding less relevant tokens), grouped-query attention (sharing K",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 111.63124979723285,
+      "ttft_ms": 15.916824340820312,
+      "prefill_ms": 15.355902999999671,
+      "generation_ms": 4565.796599000009,
+      "generation_tok_per_s": 112.13815352881403
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.592697105999946,
+    "median_tok_per_s": 111.48133399241983,
+    "median_ttft_ms": 15.916824340820312,
+    "median_generation_tok_per_s": 111.99098963543918
+  }
+}

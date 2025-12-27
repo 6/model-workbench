@@ -84,6 +84,8 @@ models:
         args:
           kt_method: FP8        # M2.1 uses native FP8 weights
 
+  - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
+
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
