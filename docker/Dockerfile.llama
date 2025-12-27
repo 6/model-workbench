@@ -37,8 +37,10 @@ RUN git checkout ${VERSION}
 # Using Release build for optimal performance
 # Note: GGML_NATIVE=OFF required because Docker build has no GPU for auto-detection
 # Note: For b7538+ use "120a-real" (Blackwell FP4 PTX), for older versions "120" works
+# Note: GGML_CUDA_FA_ALL_QUANTS=ON enables V cache quantization with Flash Attention
 RUN cmake -B build \
     -DGGML_CUDA=ON \
+    -DGGML_CUDA_FA_ALL_QUANTS=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DLLAMA_CURL=OFF \
     -DGGML_NATIVE=OFF \

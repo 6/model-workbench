@@ -349,13 +349,14 @@ def main():
         n_gpu_layers = args.n_gpu_layers or backend_args.get("n_gpu_layers")
         repeat_penalty = backend_args.get("repeat_penalty")
         repeat_last_n = backend_args.get("repeat_last_n")
+        ctx = args.ctx or backend_args.get("ctx")
 
         server.start_gguf_backend(
             engine=backend,
             model_path=model_path,
             version=backend_version,
             n_gpu_layers=n_gpu_layers,
-            ctx=args.ctx,
+            ctx=ctx,
             parallel=args.parallel,
             mmproj_path=mmproj_path,
             repeat_penalty=repeat_penalty,

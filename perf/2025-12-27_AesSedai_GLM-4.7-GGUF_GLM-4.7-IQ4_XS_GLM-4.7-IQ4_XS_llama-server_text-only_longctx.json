@@ -1,0 +1,101 @@
+{
+  "timestamp": "2025-12-27T22:19:40.765884",
+  "repo_id": "AesSedai/GLM-4.7-GGUF/GLM-4.7-IQ4_XS",
+  "model_ref": "/data/storage2/models/AesSedai/GLM-4.7-GGUF/GLM-4.7-IQ4_XS/GLM-4.7-IQ4_XS-00001-of-00005.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88834
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 90204
+      }
+    ],
+    "memory_used_mib": 179038,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "longctx",
+    "prompt": "Analyze this Python code and summarize the key data structures and their use cases:\n\n```python\n'''This module implements specialized container datatypes providing\nalternatives to Python's general purpose built-in containers, dict,\nlist, set, and tuple.\n\n* namedtuple   factory function for creating tuple subclasses with named fields\n* deque        list-like container with fast appends and pops on either end\n* ChainMap     dict-like class for creating a single view of multiple mappings\n* Counter  ... (51978 more chars)",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 14.476860472001135,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 6.656,
+      "tok_per_s": 35.36678418571691,
+      "generation_tok_per_s": 35.4873828145279,
+      "generation_ms": 14427.663,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. **namedtuple**\n   - **Description**: A factory function for creating tuple subclasses with named fields.\n   - **Use Case**: Useful when you need a simple, lightweight data structure where fields are accessible by name (e.g., `Point(x, y)`). It combines the immutability and memory efficiency of tuples with the readability of named attributes.\n\n### 2. **deque**\n   - **Description**: A list-like container with fast appends and pops on either end.\n   - **Use Case**: Ideal for implementing queues or stacks where you need efficient insertion and deletion at both ends (O(1) time complexity).\n\n### 3. **ChainMap**\n   - **Description**: A dict-like class that creates a single view of multiple mappings.\n   - **Use Case**: Useful for managing layered configurations (e.g., combining user settings, default settings, and system settings) where lookups search through multiple dictionaries in order.\n\n### 4. **Counter**\n   - **Description**: A dict subclass for counting hashable objects.\n   - **Use Case**: Perfect for tallying occurrences of elements in an iterable (e.g., counting word frequencies in a text). It also supports multiset operations like addition, subtraction, and intersection.\n\n### 5. **OrderedDict**\n   - **Description**: A dict subclass that remembers the order entries were added.\n   - **Use Case**: Useful when you need to preserve insertion order (e.g., maintaining the order of keys in a JSON response). Note: As of Python 3.7, built-in `dict` preserves insertion order, but `OrderedDict` provides additional methods like `move_to_end`.\n\n### 6. **defaultdict**\n   - **Description**: A dict subclass that calls a factory function to supply missing values.\n   - **Use Case**: Handy for grouping items or building dictionaries where missing keys should default to a specific value (e.g., `defaultdict(list)` for grouping items into lists).\n\n### 7. **UserDict**\n   - **Description**: A wrapper around dictionary objects for easier dict subclassing.\n   - **Use Case**: Useful when you want to create a custom dictionary-like class without dealing with the complexities of directly subclassing `dict`.\n\n### 8. **UserList**\n   - **Description**: A wrapper around list objects for easier list subclassing.\n   - **Use Case**: Helpful when you need"
+    },
+    {
+      "wall_s": 14.343895711004734,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 6.486,
+      "tok_per_s": 35.69462650283982,
+      "generation_tok_per_s": 35.81859337585485,
+      "generation_ms": 14294.252,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. **namedtuple**\n   - **Description**: A factory function for creating tuple subclasses with named fields.\n   - **Use Case**: Useful when you need a simple, lightweight data structure where fields are accessible by name (e.g., `Point(x, y)`). It combines the immutability and memory efficiency of tuples with the readability of named attributes.\n\n### 2. **deque**\n   - **Description**: A list-like container with fast appends and pops on either end.\n   - **Use Case**: Ideal for implementing queues or stacks where you need efficient insertion and deletion at both ends (O(1) time complexity).\n\n### 3. **ChainMap**\n   - **Description**: A dict-like class that creates a single view of multiple mappings.\n   - **Use Case**: Useful for managing layered configurations (e.g., combining user settings, default settings, and system settings) where lookups search through multiple dictionaries in order.\n\n### 4. **Counter**\n   - **Description**: A dict subclass for counting hashable objects.\n   - **Use Case**: Perfect for tallying occurrences of elements in an iterable (e.g., counting word frequencies in a text). It also supports multiset operations like addition, subtraction, and intersection.\n\n### 5. **OrderedDict**\n   - **Description**: A dict subclass that remembers the order entries were added.\n   - **Use Case**: Useful when you need to preserve insertion order (e.g., maintaining the order of keys in a JSON response). Note: As of Python 3.7, built-in `dict` preserves insertion order, but `OrderedDict` provides additional methods like `move_to_end`.\n\n### 6. **defaultdict**\n   - **Description**: A dict subclass that calls a factory function to supply missing values.\n   - **Use Case**: Handy for grouping items or building dictionaries where missing keys should default to a specific value (e.g., `defaultdict(list)` for grouping items into lists).\n\n### 7. **UserDict**\n   - **Description**: A wrapper around dictionary objects for easier dict subclassing.\n   - **Use Case**: Useful when you want to create a custom dictionary-like class without dealing with the complexities of directly subclassing `dict`.\n\n### 8. **UserList**\n   - **Description**: A wrapper around list objects for easier list subclassing.\n   - **Use Case**: Helpful when you need"
+    },
+    {
+      "wall_s": 14.295048914995277,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 6.284,
+      "tok_per_s": 35.81659657442096,
+      "generation_tok_per_s": 35.939327676258536,
+      "generation_ms": 14246.232,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. **namedtuple**\n   - **Description**: A factory function for creating tuple subclasses with named fields.\n   - **Use Case**: Useful when you need a simple, lightweight data structure where fields are accessible by name (e.g., `Point(x, y)`). It combines the immutability and memory efficiency of tuples with the readability of named attributes.\n\n### 2. **deque**\n   - **Description**: A list-like container with fast appends and pops on either end.\n   - **Use Case**: Ideal for implementing queues or stacks where you need efficient insertion and deletion at both ends (O(1) time complexity).\n\n### 3. **ChainMap**\n   - **Description**: A dict-like class that creates a single view of multiple mappings.\n   - **Use Case**: Useful for managing layered configurations (e.g., combining user settings, default settings, and system settings) where lookups search through multiple dictionaries in order.\n\n### 4. **Counter**\n   - **Description**: A dict subclass for counting hashable objects.\n   - **Use Case**: Perfect for tallying occurrences of elements in an iterable (e.g., counting word frequencies in a text). It also supports multiset operations like addition, subtraction, and intersection.\n\n### 5. **OrderedDict**\n   - **Description**: A dict subclass that remembers the order entries were added.\n   - **Use Case**: Useful when you need to preserve insertion order (e.g., maintaining the order of keys in a JSON response). Note: As of Python 3.7, built-in `dict` preserves insertion order, but `OrderedDict` provides additional methods like `move_to_end`.\n\n### 6. **defaultdict**\n   - **Description**: A dict subclass that calls a factory function to supply missing values.\n   - **Use Case**: Handy for grouping items or building dictionaries where missing keys should default to a specific value (e.g., `defaultdict(list)` for grouping items into lists).\n\n### 7. **UserDict**\n   - **Description**: A wrapper around dictionary objects for easier dict subclassing.\n   - **Use Case**: Useful when you want to create a custom dictionary-like class without dealing with the complexities of directly subclassing `dict`.\n\n### 8. **UserList**\n   - **Description**: A wrapper around list objects for easier list subclassing.\n   - **Use Case**: Helpful when you need"
+    },
+    {
+      "wall_s": 14.317019797003013,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 6.605,
+      "tok_per_s": 35.761632466777556,
+      "generation_tok_per_s": 35.908347589718794,
+      "generation_ms": 14258.523,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. **namedtuple**\n   - **Description**: A factory function for creating tuple subclasses with named fields.\n   - **Use Case**: Useful when you need a simple, lightweight data structure where fields are accessible by name (e.g., `Point(x, y)`). It combines the immutability and memory efficiency of tuples with the readability of named attributes.\n\n### 2. **deque**\n   - **Description**: A list-like container with fast appends and pops on either end.\n   - **Use Case**: Ideal for implementing queues or stacks where you need efficient insertion and deletion at both ends (O(1) time complexity).\n\n### 3. **ChainMap**\n   - **Description**: A dict-like class that creates a single view of multiple mappings.\n   - **Use Case**: Useful for managing layered configurations (e.g., combining user settings, default settings, and system settings) where lookups search through multiple dictionaries in order.\n\n### 4. **Counter**\n   - **Description**: A dict subclass for counting hashable objects.\n   - **Use Case**: Perfect for tallying occurrences of elements in an iterable (e.g., counting word frequencies in a text). It also supports multiset operations like addition, subtraction, and intersection.\n\n### 5. **OrderedDict**\n   - **Description**: A dict subclass that remembers the order entries were added.\n   - **Use Case**: Useful when you need to preserve insertion order (e.g., maintaining the order of keys in a JSON response). Note: As of Python 3.7, built-in `dict` preserves insertion order, but `OrderedDict` provides additional methods like `move_to_end`.\n\n### 6. **defaultdict**\n   - **Description**: A dict subclass that calls a factory function to supply missing values.\n   - **Use Case**: Handy for grouping items or building dictionaries where missing keys should default to a specific value (e.g., `defaultdict(list)` for grouping items into lists).\n\n### 7. **UserDict**\n   - **Description**: A wrapper around dictionary objects for easier dict subclassing.\n   - **Use Case**: Useful when you want to create a custom dictionary-like class without dealing with the complexities of directly subclassing `dict`.\n\n### 8. **UserList**\n   - **Description**: A wrapper around list objects for easier list subclassing.\n   - **Use Case**: Helpful when you need"
+    },
+    {
+      "wall_s": 14.321043878997443,
+      "prompt_tokens": 11924,
+      "generated_tokens": 512,
+      "ttft_ms": 6.968,
+      "tok_per_s": 35.75158377601752,
+      "generation_tok_per_s": 35.87742840963979,
+      "generation_ms": 14270.811,
+      "output_text": "\nBased on the provided Python code, here is a summary of the key data structures and their use cases:\n\n### 1. **namedtuple**\n   - **Description**: A factory function for creating tuple subclasses with named fields.\n   - **Use Case**: Useful when you need a simple, lightweight data structure where fields are accessible by name (e.g., `Point(x, y)`). It combines the immutability and memory efficiency of tuples with the readability of named attributes.\n\n### 2. **deque**\n   - **Description**: A list-like container with fast appends and pops on either end.\n   - **Use Case**: Ideal for implementing queues or stacks where you need efficient insertion and deletion at both ends (O(1) time complexity).\n\n### 3. **ChainMap**\n   - **Description**: A dict-like class that creates a single view of multiple mappings.\n   - **Use Case**: Useful for managing layered configurations (e.g., combining user settings, default settings, and system settings) where lookups search through multiple dictionaries in order.\n\n### 4. **Counter**\n   - **Description**: A dict subclass for counting hashable objects.\n   - **Use Case**: Perfect for tallying occurrences of elements in an iterable (e.g., counting word frequencies in a text). It also supports multiset operations like addition, subtraction, and intersection.\n\n### 5. **OrderedDict**\n   - **Description**: A dict subclass that remembers the order entries were added.\n   - **Use Case**: Useful when you need to preserve insertion order (e.g., maintaining the order of keys in a JSON response). Note: As of Python 3.7, built-in `dict` preserves insertion order, but `OrderedDict` provides additional methods like `move_to_end`.\n\n### 6. **defaultdict**\n   - **Description**: A dict subclass that calls a factory function to supply missing values.\n   - **Use Case**: Handy for grouping items or building dictionaries where missing keys should default to a specific value (e.g., `defaultdict(list)` for grouping items into lists).\n\n### 7. **UserDict**\n   - **Description**: A wrapper around dictionary objects for easier dict subclassing.\n   - **Use Case**: Useful when you want to create a custom dictionary-like class without dealing with the complexities of directly subclassing `dict`.\n\n### 8. **UserList**\n   - **Description**: A wrapper around list objects for easier list subclassing.\n   - **Use Case**: Helpful when you need"
+    }
+  ],
+  "summary": {
+    "median_wall_s": 14.321043878997443,
+    "median_tok_per_s": 35.75158377601752,
+    "median_ttft_ms": 6.605,
+    "median_generation_tok_per_s": 35.87742840963979
+  },
+  "revision": "GLM-4.7-IQ4_XS"
+}

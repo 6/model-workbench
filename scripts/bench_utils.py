@@ -8,6 +8,7 @@ import re
 import socket
 import statistics
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -16,24 +17,24 @@ import yaml
 from common import ALL_MODEL_ROOTS, BACKEND_REGISTRY, CONFIG_PATH, ROOT, log
 from openai import OpenAI
 
-# ----------------------------
-# Benchmark prompts
-# ----------------------------
+# Add project root to path for prompts import
+sys.path.insert(0, str(ROOT))
+from prompts import (
+    ALL_PROMPTS,
+    BUILTIN_IMAGES,
+    TEXT_PROMPTS,
+    VISION_PROMPTS,
+    get_longctx_prompt,
+)
 
-TEXT_PROMPTS = {
-    "short": "Explain speculative decoding in 2 sentences.",
-    "medium": "Summarize key tradeoffs between tensor parallelism and pipeline parallelism.",
-    "long": "Write a concise technical overview of KV cache and why it matters for long context.",
-}
-
-VISION_PROMPTS = {
-    "describe": "Describe this image in detail.",
-    "analyze": "Analyze this image and explain what you see.",
-    "caption": "Provide a brief caption for this image.",
-}
-
-# Combined prompts for CLI choices
-ALL_PROMPTS = {**TEXT_PROMPTS, **VISION_PROMPTS}
+# Re-export for backwards compatibility
+__all__ = [
+    "ALL_PROMPTS",
+    "BUILTIN_IMAGES",
+    "TEXT_PROMPTS",
+    "VISION_PROMPTS",
+    "get_longctx_prompt",
+]
 
 
 def get_compatible_backends(model_format: str) -> list[str]:
@@ -90,12 +91,6 @@ def resolve_backend(model_arg: str, backend_override: str | None) -> str:
     return get_default_backend(fmt)
 
 
-# Built-in test images
-BUILTIN_IMAGES = {
-    "example": ROOT / "config" / "example.jpg",
-    "grayscale": "https://upload.wikimedia.org/wikipedia/commons/f/fa/Grayscale_8bits_palette_sample_image.png",
-}
-
 # ----------------------------
 # String utilities
 # ----------------------------
@@ -104,6 +99,21 @@ BUILTIN_IMAGES = {
 def sanitize(s: str) -> str:
     """Sanitize a string for use in filenames."""
     return re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
+
+
+# ----------------------------
+# HTTP utilities
+# ----------------------------
+
+
+def raise_for_status_verbose(response: requests.Response) -> None:
+    """Raise HTTPError with response body included in logs."""
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        log(f"HTTP error: {e}")
+        log(f"Response body: {response.text[:2000]}")
+        raise
 
 
 # ----------------------------
@@ -853,6 +863,7 @@ def write_benchmark_result(
     summary: dict,
     extra: dict | None = None,
     revision: str | None = None,
+    prompt_set: str | None = None,
 ) -> Path:
     """Write benchmark results with consistent format and naming.
 
@@ -868,6 +879,7 @@ def write_benchmark_result(
         summary: Summary statistics (median_wall_s, etc.)
         extra: Optional extra fields to include at top level
         revision: Optional model revision/branch (e.g., "4bpw_H6")
+        prompt_set: Optional prompt set name; added to filename if non-default
 
     Returns:
         Path to written results file
@@ -894,16 +906,25 @@ def write_benchmark_result(
     if extra:
         payload.update(extra)
 
-    # Generate filename: DATE_REPO-ID_[REVISION_]ENGINE_MODE.json
+    # Generate filename: DATE_REPO-ID_[REVISION_]ENGINE_MODE[_PROMPT].json
+    # prompt_set is added only when non-default ("long" for text, "describe" for vision)
     date_str = datetime.now().strftime("%Y-%m-%d")
     safe_repo = sanitize(repo_id)
     safe_engine = sanitize(engine)
     safe_mode = sanitize(mode)
+
+    # Determine if prompt_set should be included in filename
+    default_prompt = "describe" if mode == "vision" else "long"
+    include_prompt = prompt_set and prompt_set != default_prompt
+
+    # Build filename parts
+    parts = [date_str, safe_repo]
     if revision:
-        safe_revision = sanitize(revision)
-        filename = f"{date_str}_{safe_repo}_{safe_revision}_{safe_engine}_{safe_mode}.json"
-    else:
-        filename = f"{date_str}_{safe_repo}_{safe_engine}_{safe_mode}.json"
+        parts.append(sanitize(revision))
+    parts.extend([safe_engine, safe_mode])
+    if include_prompt:
+        parts.append(sanitize(prompt_set))
+    filename = "_".join(parts) + ".json"
 
     out_path = results_dir / filename
     with open(out_path, "w") as f:
@@ -1090,7 +1111,7 @@ def warmup_model(
             }
 
             r = requests.post(url, json=payload, timeout=timeout)
-            r.raise_for_status()
+            raise_for_status_verbose(r)
 
             # Validate response contains completion
             data = r.json()

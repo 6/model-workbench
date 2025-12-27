@@ -41,6 +41,7 @@ defaults:
       image_type: build
       args:
         n_gpu_layers: 999
+        ctx: 32768          # Default context for benchmarks (override with --ctx)
         jinja: true         # Enable Jinja template engine (required for most models)
         flash_attn: "on"    # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
@@ -136,13 +137,22 @@ models:
     include:
       - "GLM-4.7-IQ4_XS/*.gguf"
 
-  # All tested quants fit in 192GB VRAM with global defaults (jinja + flash_attn)
+  # Q3 fits with room for KV cache - no changes needed
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"
+
+  # Q4+ need KV cache quantization for long context (model fills VRAM)
+  - repo_id: unsloth/GLM-4.7-GGUF
+    include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
       - "UD-Q6_K_XL/*.gguf"
+    backends:
+      llama:
+        args:
+          cache_type_k: q8_0
+          cache_type_v: q8_0
 
   - repo_id: ubergarm/GLM-4.7-GGUF
     include:

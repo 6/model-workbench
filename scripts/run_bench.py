@@ -30,7 +30,7 @@ Examples:
   uv run python scripts/run_bench.py --model ~/models/org/model --backend-version v0.8.0
 
   # Vision benchmark
-  uv run python scripts/run_bench.py --model ~/models/org/model --image config/example.jpg
+  uv run python scripts/run_bench.py --model ~/models/org/model --image prompts/example.jpg
 
   # Force rebuild Docker image
   uv run python scripts/run_bench.py --model ~/models/org/model --rebuild
@@ -53,9 +53,12 @@ from bench_utils import (
     extract_revision_from_path,
     find_mmproj,
     get_gpu_info,
+    get_longctx_prompt,
+    get_model_backend_config,
     get_model_backend_version,
     handle_container_cleanup,
     med,
+    raise_for_status_verbose,
     resolve_image_source,
     resolve_local_gguf,
     resolve_run_config,
@@ -65,6 +68,29 @@ from bench_utils import (
 from common import BACKEND_REGISTRY, RESULTS_ROOT, log
 from openai import OpenAI
 from server_manager import ServerManager
+
+
+def resolve_prompt(args, is_vision: bool) -> str:
+    """Resolve prompt text from args.
+
+    Handles special 'longctx' prompt which loads from file.
+    """
+    if args.prompt:
+        return args.prompt
+    if is_vision:
+        return VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
+    if args.prompt_set == "longctx":
+        return get_longctx_prompt()
+    return TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["long"])
+
+
+def truncate_prompt_for_storage(prompt: str, max_chars: int = 500) -> str:
+    """Truncate long prompts for storage in results JSON."""
+    if len(prompt) <= max_chars:
+        return prompt
+    remaining = len(prompt) - max_chars
+    return f"{prompt[:max_chars]}... ({remaining} more chars)"
+
 
 # ----------------------------
 # Prometheus metrics scraping (shared for vLLM and TensorRT-LLM)
@@ -101,7 +127,7 @@ def scrape_prometheus_metrics(host: str, port: int, backend: str) -> dict[str, f
 
     try:
         resp = requests.get(f"http://{host}:{port}{cfg['path']}", timeout=5)
-        resp.raise_for_status()
+        raise_for_status_verbose(resp)
     except Exception:
         return None
 
@@ -277,7 +303,7 @@ def bench_once_llama(
 
         t0 = time.perf_counter()
         r = requests.post(url, json=payload, timeout=300)
-        r.raise_for_status()
+        raise_for_status_verbose(r)
         t1 = time.perf_counter()
 
         data = r.json()
@@ -316,7 +342,7 @@ def bench_once_llama(
 
         t0 = time.perf_counter()
         r = requests.post(url, json=payload, timeout=300)
-        r.raise_for_status()
+        raise_for_status_verbose(r)
         t1 = time.perf_counter()
 
         data = r.json()
@@ -381,12 +407,7 @@ def run_benchmark_vllm(
         )
 
     # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+    prompt_text = resolve_prompt(args, is_vision)
 
     print("\n== vLLM Benchmark ==")
     print(f"model:           {model_path}")
@@ -504,7 +525,7 @@ def run_benchmark_vllm(
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
-                "prompt": prompt_text,
+                "prompt": truncate_prompt_for_storage(prompt_text),
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
@@ -517,6 +538,7 @@ def run_benchmark_vllm(
             iterations=results,
             summary=summary,
             revision=extract_revision_from_path(args.model),
+            prompt_set=args.prompt_set,
         )
 
 
@@ -536,12 +558,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         )
 
     # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+    prompt_text = resolve_prompt(args, is_vision)
 
     print("\n== TensorRT-LLM Benchmark ==")
     print(f"model:           {model_path}")
@@ -651,7 +668,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
-                "prompt": prompt_text,
+                "prompt": truncate_prompt_for_storage(prompt_text),
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
@@ -661,6 +678,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
             iterations=results,
             summary=summary,
             revision=extract_revision_from_path(args.model),
+            prompt_set=args.prompt_set,
         )
 
 
@@ -673,8 +691,6 @@ def run_benchmark_sglang(
     docker_image: str | None = None,
 ):
     """Run benchmarks using SGLang backend (Docker)."""
-    from bench_utils import get_model_backend_config
-
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
@@ -694,12 +710,7 @@ def run_benchmark_sglang(
     max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
 
     # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+    prompt_text = resolve_prompt(args, is_vision)
 
     print("\n== SGLang Benchmark ==")
     print(f"model:           {model_path}")
@@ -801,7 +812,7 @@ def run_benchmark_sglang(
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
-                "prompt": prompt_text,
+                "prompt": truncate_prompt_for_storage(prompt_text),
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
@@ -813,13 +824,12 @@ def run_benchmark_sglang(
             iterations=results,
             summary=summary,
             revision=extract_revision_from_path(args.model),
+            prompt_set=args.prompt_set,
         )
 
 
 def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label: str):
     """Run benchmarks using ExLlamaV3/TabbyAPI backend (Docker)."""
-    from bench_utils import get_model_backend_config
-
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
@@ -842,12 +852,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
     gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
     # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+    prompt_text = resolve_prompt(args, is_vision)
 
     print("\n== ExLlamaV3 Benchmark ==")
     print(f"model:           {model_path}")
@@ -949,7 +954,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
-                "prompt": prompt_text,
+                "prompt": truncate_prompt_for_storage(prompt_text),
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
                 "cache_size": cache_size,
@@ -960,13 +965,12 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
             iterations=results,
             summary=summary,
             revision=extract_revision_from_path(args.model),
+            prompt_set=args.prompt_set,
         )
 
 
 def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, image_label: str):
     """Run benchmarks using KTransformers backend (Docker) for CPU-GPU hybrid inference."""
-    from bench_utils import get_model_backend_config
-
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
@@ -989,12 +993,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
     cache_lens = backend_args.get("cache_lens")
 
     # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
+    prompt_text = resolve_prompt(args, is_vision)
 
     print("\n== KTransformers Benchmark ==")
     print(f"model:           {model_path}")
@@ -1098,7 +1097,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
             gpu_info=gpu_info,
             config={
                 "prompt_set": args.prompt_set,
-                "prompt": prompt_text,
+                "prompt": truncate_prompt_for_storage(prompt_text),
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
                 "tensor_parallel_size": args.tensor_parallel,
@@ -1112,6 +1111,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
             iterations=results,
             summary=summary,
             revision=extract_revision_from_path(args.model),
+            prompt_set=args.prompt_set,
         )
 
 
@@ -1121,6 +1121,10 @@ def run_benchmark_gguf(
     """Run benchmarks using GGUF backend (llama.cpp) via Docker."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
+
+    # Get backend config for llama-specific settings
+    backend_cfg = get_model_backend_config(args.model, backend)
+    backend_args = backend_cfg.get("args", {})
 
     # Resolve backend version from config or CLI
     backend_version = args.backend_version or get_model_backend_version(args.model, backend)
@@ -1161,10 +1165,7 @@ def run_benchmark_gguf(
                 )
 
     # Select prompt
-    if is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set) or VISION_PROMPTS["describe"]
-    else:
-        prompt_text = TEXT_PROMPTS[args.prompt_set]
+    prompt_text = resolve_prompt(args, is_vision)
 
     backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
@@ -1193,12 +1194,15 @@ def run_benchmark_gguf(
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
         if not server.is_running():
+            # Get ctx from config, allow CLI override
+            ctx = args.ctx or backend_args.get("ctx")
+
             gguf_path = server.start_gguf_backend(
                 engine=backend,
                 model_path=model_path,
                 version=backend_version,
                 n_gpu_layers=args.n_gpu_layers,
-                ctx=args.ctx,
+                ctx=ctx,
                 parallel=args.parallel,
                 mmproj_path=mmproj_path,
                 jinja=args.jinja,
@@ -1257,7 +1261,7 @@ def run_benchmark_gguf(
 
         config = {
             "prompt_set": args.prompt_set,
-            "prompt": prompt_text,
+            "prompt": truncate_prompt_for_storage(prompt_text),
             "max_tokens": args.max_tokens,
             "temperature": args.temperature,
             "backend_version": backend_version,
@@ -1283,6 +1287,7 @@ def run_benchmark_gguf(
             iterations=results,
             summary=summary,
             revision=extract_revision_from_path(model_path),
+            prompt_set=args.prompt_set,
         )
 
 
