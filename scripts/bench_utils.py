@@ -13,7 +13,7 @@ from pathlib import Path
 
 import requests
 import yaml
-from common import BACKEND_REGISTRY, CONFIG_PATH, MODELS_ROOT, ROOT, log
+from common import ALL_MODEL_ROOTS, BACKEND_REGISTRY, CONFIG_PATH, ROOT, log
 from openai import OpenAI
 
 # ----------------------------
@@ -227,22 +227,26 @@ def extract_repo_id(path: str) -> str:
         ~/models/org/repo -> org/repo
     """
     p = Path(path).expanduser()
-    try:
-        rel = p.relative_to(MODELS_ROOT)
-        parts = rel.parts
 
-        if p.is_dir():
-            # Directory: include up to 3 parts (org/repo/quant)
-            n = min(len(parts), 3)
-            return "/".join(parts[:n])
-        else:
-            # GGUF file: just return org/repo (quant variant captured in revision)
-            if len(parts) >= 2:
-                return f"{parts[0]}/{parts[1]}"
-            elif len(parts) == 1:
-                return p.stem
-    except ValueError:
-        pass
+    # Try each storage root
+    for root in ALL_MODEL_ROOTS:
+        try:
+            rel = p.relative_to(root)
+            parts = rel.parts
+
+            if p.is_dir():
+                # Directory: include up to 3 parts (org/repo/quant)
+                n = min(len(parts), 3)
+                return "/".join(parts[:n])
+            else:
+                # GGUF file: just return org/repo (quant variant captured in revision)
+                if len(parts) >= 2:
+                    return f"{parts[0]}/{parts[1]}"
+                elif len(parts) == 1:
+                    return p.stem
+        except ValueError:
+            continue
+
     # Fallback: return compacted path
     return compact_path(path)
 
@@ -260,18 +264,22 @@ def extract_revision_from_path(path: str) -> str | None:
         ~/models/mratsim/GLM-4.7-EXL3 -> None
     """
     p = Path(path).expanduser()
-    try:
-        rel = p.relative_to(MODELS_ROOT)
-        parts = rel.parts
-        # If we have 3+ parts (org/repo/revision[/...]), the 3rd is revision
-        if len(parts) >= 3:
-            revision = parts[2]
-            # Strip .gguf extension if present (quant variant without extension)
-            if revision.endswith(".gguf"):
-                revision = revision[:-5]
-            return revision
-    except ValueError:
-        pass
+
+    # Try each storage root
+    for root in ALL_MODEL_ROOTS:
+        try:
+            rel = p.relative_to(root)
+            parts = rel.parts
+            # If we have 3+ parts (org/repo/revision[/...]), the 3rd is revision
+            if len(parts) >= 3:
+                revision = parts[2]
+                # Strip .gguf extension if present (quant variant without extension)
+                if revision.endswith(".gguf"):
+                    revision = revision[:-5]
+                return revision
+        except ValueError:
+            continue
+
     return None
 
 
@@ -536,7 +544,7 @@ def find_mmproj(gguf_path: Path) -> Path | None:
     Searches in:
       1. Same directory as the GGUF file
       2. Parent directory (for quant subfolders like UD-Q4_K_XL/)
-      3. Up to MODELS_ROOT
+      3. Up to any storage root
 
     Args:
         gguf_path: Path to the main GGUF model file
@@ -547,8 +555,11 @@ def find_mmproj(gguf_path: Path) -> Path | None:
     # Start from the directory containing the GGUF
     search_dir = gguf_path.parent if gguf_path.is_file() else gguf_path
 
-    # Search up to MODELS_ROOT
-    while search_dir != MODELS_ROOT.parent and search_dir != search_dir.parent:
+    # Get parents of all storage roots (stop conditions)
+    stop_dirs = {root.parent for root in ALL_MODEL_ROOTS}
+
+    # Search up to any storage root
+    while search_dir not in stop_dirs and search_dir != search_dir.parent:
         mmproj_files = list(search_dir.glob("mmproj-*.gguf"))
         if mmproj_files:
             # If multiple, prefer F16 over lower precision

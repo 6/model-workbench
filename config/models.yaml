@@ -1,6 +1,11 @@
 # Backend configuration
 # Models without explicit overrides use these defaults
 defaults:
+  # Storage paths by model format
+  storage:
+    primary: ~/models              # Default for safetensors/EXL3/MLX
+    gguf: /data/storage2/models    # GGUF models (slower NVMe, more space)
+
   backends:
     # https://github.com/vllm-project/vllm/releases
     vllm:

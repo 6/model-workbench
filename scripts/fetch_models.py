@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 import yaml
-from common import CONFIG_PATH, MODELS_ROOT
+from common import CONFIG_PATH, GGUF_MODELS_ROOT, MODELS_ROOT
 
 
 def run(cmd):
@@ -16,9 +16,37 @@ def expand(p: str) -> Path:
     return Path(os.path.expandvars(os.path.expanduser(p))).resolve()
 
 
-def local_dir_for_repo(repo_id: str) -> Path:
-    # Mirror HF structure under ~/models/<org>/<repo>
-    return MODELS_ROOT / repo_id
+def is_gguf_model(item: dict) -> bool:
+    """Detect if model config indicates GGUF format.
+
+    A model is GGUF if:
+    1. Repo ID contains "GGUF" (case-insensitive) - e.g., unsloth/Model-GGUF
+    2. Include patterns contain .gguf files
+    3. Explicit format: gguf in config
+    """
+    # Check explicit format
+    if item.get("format", "").lower() == "gguf":
+        return True
+
+    # Check repo name
+    repo_id = item.get("repo_id", "").lower()
+    if "gguf" in repo_id:
+        return True
+
+    # Check include patterns for .gguf files
+    include = item.get("include", [])
+    if isinstance(include, str):
+        include = [include]
+    if any(".gguf" in p.lower() for p in include):
+        return True
+
+    return False
+
+
+def local_dir_for_repo(repo_id: str, is_gguf: bool = False) -> Path:
+    """Get storage path, routing GGUF to secondary storage."""
+    root = GGUF_MODELS_ROOT if is_gguf else MODELS_ROOT
+    return root / repo_id
 
 
 def normalize_to_list(val):
@@ -33,7 +61,9 @@ def main():
     if not CONFIG_PATH.exists():
         raise SystemExit(f"Missing config: {CONFIG_PATH}")
 
+    # Ensure storage directories exist
     MODELS_ROOT.mkdir(parents=True, exist_ok=True)
+    GGUF_MODELS_ROOT.mkdir(parents=True, exist_ok=True)
 
     data = yaml.safe_load(CONFIG_PATH.read_text()) or {}
     items = data.get("models") or []
@@ -48,8 +78,13 @@ def main():
         if not repo_id or "REPLACE_ME" in repo_id:
             continue
 
+        # Determine storage location based on format
         out_dir = item.get("local_dir")
-        out_path = expand(out_dir) if out_dir else local_dir_for_repo(repo_id)
+        if out_dir:
+            out_path = expand(out_dir)
+        else:
+            gguf = is_gguf_model(item)
+            out_path = local_dir_for_repo(repo_id, is_gguf=gguf)
 
         hf_models.append((item, repo_id, out_path))
 

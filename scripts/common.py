@@ -1,17 +1,49 @@
 """Shared constants and utility functions for the model workbench."""
 
+import os
 from datetime import datetime
 from pathlib import Path
+
+import yaml
 
 # ----------------------------
 # Path Constants
 # ----------------------------
 
 ROOT = Path(__file__).resolve().parents[1]
-MODELS_ROOT = Path.home() / "models"
 RESULTS_ROOT = ROOT / "perf"
 EVAL_RESULTS_ROOT = ROOT / "evals"
 CONFIG_PATH = ROOT / "config" / "models.yaml"
+
+
+def _expand_path(p: str) -> Path:
+    """Expand ~ and env vars in path string."""
+    return Path(os.path.expandvars(os.path.expanduser(p))).resolve()
+
+
+def _load_storage_config() -> dict:
+    """Load storage paths from config with fallbacks."""
+    defaults = {
+        "primary": Path.home() / "models",
+        "gguf": Path.home() / "models",  # Same as primary if not configured
+    }
+    if CONFIG_PATH.exists():
+        try:
+            data = yaml.safe_load(CONFIG_PATH.read_text()) or {}
+            storage = data.get("defaults", {}).get("storage", {})
+            if "primary" in storage:
+                defaults["primary"] = _expand_path(storage["primary"])
+            if "gguf" in storage:
+                defaults["gguf"] = _expand_path(storage["gguf"])
+        except Exception:
+            pass  # Use defaults on any error
+    return defaults
+
+
+_storage = _load_storage_config()
+MODELS_ROOT = _storage["primary"]
+GGUF_MODELS_ROOT = _storage["gguf"]
+ALL_MODEL_ROOTS = list({MODELS_ROOT, GGUF_MODELS_ROOT})  # Deduplicated list
 
 
 # ----------------------------
