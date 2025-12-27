@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-27T19:28:22.691201",
+  "timestamp": "2025-12-27T20:36:37.574740",
   "repo_id": "unsloth/GLM-4.7-GGUF/UD-Q5_K_XL",
   "model_ref": "/data/storage2/models/unsloth/GLM-4.7-GGUF/UD-Q5_K_XL/GLM-4.7-UD-Q5_K_XL-00001-of-00006.gguf",
   "engine": "llama-server",
@@ -41,61 +41,61 @@
   },
   "iterations": [
     {
-      "wall_s": 38.39795441699971,
+      "wall_s": 38.36704710699996,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 73.045,
-      "tok_per_s": 13.33404364304691,
-      "generation_tok_per_s": 13.369135111221151,
-      "generation_ms": 38297.167,
+      "ttft_ms": 73.195,
+      "tok_per_s": 13.34478513741515,
+      "generation_tok_per_s": 13.379825788919083,
+      "generation_ms": 38266.567,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key (K) and Value (V) vectors for each token in the input sequence, allowing the model to reuse these vectors when processing subsequent tokens. This is crucial because the self-attention mechanism requires computing attention scores between the current token and all previous tokens. Without KV cache, the model would need to re-compute the K and V vectors for all previous tokens at every generation step, leading to quadratic time complexity $O(n^2)$ in terms of sequence length $n$.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This makes generating text with long contexts feasible.\n*   **Memory:** It enables handling of long sequences by trading compute for memory. The memory footprint grows linearly with sequence length $O(n)$, which is manageable compared to the quadratic compute cost.\n*   **Prefill vs. Decode:** It distinguishes between the \"prefill\" phase (processing the prompt) and the \"decode\" phase (generating tokens). The prefill phase is compute-bound, while the decode phase is memory-bandwidth-bound. This distinction is critical for optimizing LLM inference systems.\n Prefill vs. Decode distinction is critical for optimizing LLM inference systems.\n*   **Techniques like PagedAttention:** To manage the growing memory footprint of KV cache for long contexts, techniques like PagedAttention (used in vLLM) have been developed. They treat KV cache as pages of memory, allowing for more efficient memory management and reducing fragmentation.\n PagedAttention (used in vLLM) have been near-universally adopted in production systems.\n*   **Streaming:** KV cache enables streaming applications where the context grows indefinitely. As new tokens arrive, their K and V vectors are appended to the cache, and the model can continue generating without reprocessing the entire history.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This latency reduction is vital for long contexts, as the cost of re-computing attention over long histories would otherwise be prohibitive.\n*   books"
     },
     {
-      "wall_s": 37.72809540900198,
+      "wall_s": 37.730380109998805,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 74.38,
-      "tok_per_s": 13.570788412442257,
-      "generation_tok_per_s": 13.618037558866758,
-      "generation_ms": 37597.194,
+      "ttft_ms": 74.51,
+      "tok_per_s": 13.56996665571139,
+      "generation_tok_per_s": 13.620397034041497,
+      "generation_ms": 37590.681,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key (K) and Value (V) vectors for each token in the input sequence, allowing the model to reuse these vectors when processing subsequent tokens. This is crucial because the self-attention mechanism requires computing attention scores between the current token and all previous tokens. Without KV cache, the model would need to re-compute the K and V vectors for all previous tokens at every generation step, leading to quadratic time complexity $O(n^2)$ in terms of sequence length $n$.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This makes generating text with long contexts feasible.\n*   **Memory:** It enables handling of long sequences by trading compute for memory. The memory footprint grows linearly with sequence length $O(n)$, which is manageable compared to the quadratic compute cost.\n*   **Prefill vs. Decode:** It distinguishes between the \"prefill\" phase (processing the prompt) and the \"decode\" phase (generating tokens). The prefill phase is compute-bound, while the decode phase is memory-bandwidth-bound. This distinction is critical for optimizing LLM inference systems.\n Prefill vs. Decode distinction is critical for optimizing LLM inference systems.\n*   **Techniques like PagedAttention:** To manage the growing memory footprint of KV cache for long contexts, techniques like PagedAttention (used in vLLM) have been developed. They treat KV cache as pages of memory, allowing for more efficient memory management and reducing fragmentation.\n PagedAttention (used in vLLM) have been near-universally adopted in production systems.\n*   **Streaming:** KV cache enables streaming applications where the context grows indefinitely. As new tokens arrive, their K and V vectors are appended to the cache, and the model can continue generating without reprocessing the entire history.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This latency reduction is vital for long contexts, as the cost of re-computing attention over long histories would otherwise be prohibitive.\n*   books"
     },
     {
-      "wall_s": 37.594057849997625,
+      "wall_s": 37.6081362570003,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 74.54,
-      "tok_per_s": 13.619173595010903,
-      "generation_tok_per_s": 13.647148081898669,
-      "generation_ms": 37516.996,
+      "ttft_ms": 75.105,
+      "tok_per_s": 13.61407532936965,
+      "generation_tok_per_s": 13.642287082534024,
+      "generation_ms": 37530.364,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key (K) and Value (V) vectors for each token in the input sequence, allowing the model to reuse these vectors when processing subsequent tokens. This is crucial because the self-attention mechanism requires computing attention scores between the current token and all previous tokens. Without KV cache, the model would need to re-compute the K and V vectors for all previous tokens at every generation step, leading to quadratic time complexity $O(n^2)$ in terms of sequence length $n$.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This makes generating text with long contexts feasible.\n*   **Memory:** It enables handling of long sequences by trading compute for memory. The memory footprint grows linearly with sequence length $O(n)$, which is manageable compared to the quadratic compute cost.\n*   **Prefill vs. Decode:** It distinguishes between the \"prefill\" phase (processing the prompt) and the \"decode\" phase (generating tokens). The prefill phase is compute-bound, while the decode phase is memory-bandwidth-bound. This distinction is critical for optimizing LLM inference systems.\n Prefill vs. Decode distinction is critical for optimizing LLM inference systems.\n*   **Techniques like PagedAttention:** To manage the growing memory footprint of KV cache for long contexts, techniques like PagedAttention (used in vLLM) have been developed. They treat KV cache as pages of memory, allowing for more efficient memory management and reducing fragmentation.\n PagedAttention (used in vLLM) have been near-universally adopted in production systems.\n*   **Streaming:** KV cache enables streaming applications where the context grows indefinitely. As new tokens arrive, their K and V vectors are appended to the cache, and the model can continue generating without reprocessing the entire history.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This latency reduction is vital for long contexts, as the cost of re-computing attention over long histories would otherwise be prohibitive.\n*   books"
     },
     {
-      "wall_s": 37.64490976900197,
+      "wall_s": 37.5759543560016,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 74.416,
-      "tok_per_s": 13.600776390267702,
-      "generation_tok_per_s": 13.628636426976128,
-      "generation_ms": 37567.955,
+      "ttft_ms": 74.849,
+      "tok_per_s": 13.62573509508811,
+      "generation_tok_per_s": 13.653874026744793,
+      "generation_ms": 37498.515,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key (K) and Value (V) vectors for each token in the input sequence, allowing the model to reuse these vectors when processing subsequent tokens. This is crucial because the self-attention mechanism requires computing attention scores between the current token and all previous tokens. Without KV cache, the model would need to re-compute the K and V vectors for all previous tokens at every generation step, leading to quadratic time complexity $O(n^2)$ in terms of sequence length $n$.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This makes generating text with long contexts feasible.\n*   **Memory:** It enables handling of long sequences by trading compute for memory. The memory footprint grows linearly with sequence length $O(n)$, which is manageable compared to the quadratic compute cost.\n*   **Prefill vs. Decode:** It distinguishes between the \"prefill\" phase (processing the prompt) and the \"decode\" phase (generating tokens). The prefill phase is compute-bound, while the decode phase is memory-bandwidth-bound. This distinction is critical for optimizing LLM inference systems.\n Prefill vs. Decode distinction is critical for optimizing LLM inference systems.\n*   **Techniques like PagedAttention:** To manage the growing memory footprint of KV cache for long contexts, techniques like PagedAttention (used in vLLM) have been developed. They treat KV cache as pages of memory, allowing for more efficient memory management and reducing fragmentation.\n PagedAttention (used in vLLM) have been near-universally adopted in production systems.\n*   **Streaming:** KV cache enables streaming applications where the context grows indefinitely. As new tokens arrive, their K and V vectors are appended to the cache, and the model can continue generating without reprocessing the entire history.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This latency reduction is vital for long contexts, as the cost of re-computing attention over long histories would otherwise be prohibitive.\n*   books"
     },
     {
-      "wall_s": 38.11605069000143,
+      "wall_s": 37.56694117599909,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 74.533,
-      "tok_per_s": 13.432661325909807,
-      "generation_tok_per_s": 13.459821656837272,
-      "generation_ms": 38039.137,
+      "ttft_ms": 74.383,
+      "tok_per_s": 13.629004224786566,
+      "generation_tok_per_s": 13.660447694492625,
+      "generation_ms": 37480.47,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key (K) and Value (V) vectors for each token in the input sequence, allowing the model to reuse these vectors when processing subsequent tokens. This is crucial because the self-attention mechanism requires computing attention scores between the current token and all previous tokens. Without KV cache, the model would need to re-compute the K and V vectors for all previous tokens at every generation step, leading to quadratic time complexity $O(n^2)$ in terms of sequence length $n$.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This makes generating text with long contexts feasible.\n*   **Memory:** It enables handling of long sequences by trading compute for memory. The memory footprint grows linearly with sequence length $O(n)$, which is manageable compared to the quadratic compute cost.\n*   **Prefill vs. Decode:** It distinguishes between the \"prefill\" phase (processing the prompt) and the \"decode\" phase (generating tokens). The prefill phase is compute-bound, while the decode phase is memory-bandwidth-bound. This distinction is critical for optimizing LLM inference systems.\n Prefill vs. Decode distinction is critical for optimizing LLM inference systems.\n*   **Techniques like PagedAttention:** To manage the growing memory footprint of KV cache for long contexts, techniques like PagedAttention (used in vLLM) have been developed. They treat KV cache as pages of memory, allowing for more efficient memory management and reducing fragmentation.\n PagedAttention (used in vLLM) have been near-universally adopted in production systems.\n*   **Streaming:** KV cache enables streaming applications where the context grows indefinitely. As new tokens arrive, their K and V vectors are appended to the cache, and the model can continue generating without reprocessing the entire history.\n\n**Why it matters for long context:**\n*   **Speed:** It reduces the computational complexity of the attention mechanism from $O(n^2)$ to $O(n)$ per generated token. This latency reduction is vital for long contexts, as the cost of re-computing attention over long histories would otherwise be prohibitive.\n*   books"
     }
   ],
   "summary": {
-    "median_wall_s": 37.72809540900198,
-    "median_tok_per_s": 13.570788412442257,
-    "median_ttft_ms": 74.416,
-    "median_generation_tok_per_s": 13.618037558866758
+    "median_wall_s": 37.6081362570003,
+    "median_tok_per_s": 13.61407532936965,
+    "median_ttft_ms": 74.51,
+    "median_generation_tok_per_s": 13.642287082534024
   },
   "revision": "UD-Q5_K_XL"
 }

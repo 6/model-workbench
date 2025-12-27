@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-27T19:55:57.324756",
+  "timestamp": "2025-12-27T20:45:34.595627",
   "repo_id": "unsloth/GLM-4.7-GGUF/UD-Q6_K_XL",
   "model_ref": "/data/storage2/models/unsloth/GLM-4.7-GGUF/UD-Q6_K_XL/GLM-4.7-UD-Q6_K_XL-00001-of-00007.gguf",
   "engine": "llama-server",
@@ -41,61 +41,61 @@
   },
   "iterations": [
     {
-      "wall_s": 60.40386280700113,
+      "wall_s": 61.82218955400094,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 115.887,
-      "tok_per_s": 8.476279102148025,
-      "generation_tok_per_s": 8.496515524220818,
-      "generation_ms": 60259.997,
+      "ttft_ms": 117.173,
+      "tok_per_s": 8.281816022591276,
+      "generation_tok_per_s": 8.300225511615281,
+      "generation_ms": 61685.071,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key and Value vectors for previously generated tokens, allowing the model to reuse them for subsequent tokens instead of recomputing them for the entire context window at each step.\n\nThis is particularly important for long context because:\n1.  **Computational Complexity:** Without KV cache, the computational cost of generating a new token scales quadratically ($O(N^2)$) with the sequence length $N$. This is due to the self-attention mechanism, which requires comparing the new token against every previous token. With KV cache, the cost per step scales linearly ($O(N)$), significantly reducing latency for long sequences.\n2.  **Memory Bandwidth:** Recomputing attention for the full history requires fetching the entire context from memory at every step. KV cache keeps the Keys and Values in fast, accessible memory (VRAM), reducing memory bandwidth pressure.\n3.  **Long Context Efficiency:** As context windows grow (e.g., 32k, 128k, or 1M tokens), the quadratic cost becomes prohibitive. KV cache makes long-context inference computationally feasible and cost-effective.\n\n points to cover:\n*   **Mechanism:** Stores Key and Value vectors from previous tokens.\n*   **Naive Complexity:** $O(N^2)$ per step (recomputing full history).\n*   **Optimized Complexity:** $O(N)$ per step (incremental decoding).\n*   **Bottleneck:** Memory bandwidth and VRAM capacity.\n*   **Bystander tokens:** The concept of \"bystander tokens\" (tokens that do not affect the next token prediction) can be used to further optimize KV cache.\n bystander tokens are tokens that do not affect the next token prediction. By identifying and skipping the computation of attention scores for these tokens, we can reduce the **computational cost** and **memory bandwidth** usage.\n bystander tokens are tokens that notes that do not bystander tokens are tokens that do not affect the attention mechanism for the next token prediction. By identifying and streaming out or evicting these tokens from the KV cache, we can reduce the **computational cost** and **bystander tokens are tokens that text that does not glitching out or evicting these tokens from the glitching out or evicting the KV cache, bystander tokens are tokens that do not glitching out or evicting the KV cache, bystander"
     },
     {
-      "wall_s": 59.8048196109994,
+      "wall_s": 59.894376754000405,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 117.564,
-      "tok_per_s": 8.56118291686699,
-      "generation_tok_per_s": 8.586803789873063,
-      "generation_ms": 59626.377,
+      "ttft_ms": 120.755,
+      "tok_per_s": 8.548381797224446,
+      "generation_tok_per_s": 8.57411396286923,
+      "generation_ms": 59714.625,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key and Value vectors for previously generated tokens, allowing the model to reuse them for subsequent tokens instead of recomputing them for the entire context window at each step.\n\nThis is particularly important for long context because:\n1.  **Computational Complexity:** Without KV cache, the computational cost of generating a new token scales quadratically ($O(N^2)$) with the sequence length $N$. This is due to the self-attention mechanism, which requires comparing the new token against every previous token. With KV cache, the cost per step scales linearly ($O(N)$), significantly reducing latency for long sequences.\n2.  **Memory Bandwidth:** Recomputing attention for the full history requires fetching the entire context from memory at every step. KV cache keeps the Keys and Values in fast, accessible memory (VRAM), reducing memory bandwidth pressure.\n3.  **Long Context Efficiency:** As context windows grow (e.g., 32k, 128k, or 1M tokens), the quadratic cost becomes prohibitive. KV cache makes long-context inference computationally feasible and cost-effective.\n\n points to cover:\n*   **Mechanism:** Stores Key and Value vectors from previous tokens.\n*   **Naive Complexity:** $O(N^2)$ per step (recomputing full history).\n*   **Optimized Complexity:** $O(N)$ per step (incremental decoding).\n*   **Bottleneck:** Memory bandwidth and VRAM capacity.\n*   **Bystander tokens:** The concept of \"bystander tokens\" (tokens that do not affect the next token prediction) can be used to further optimize KV cache.\n bystander tokens are tokens that do not affect the next token prediction. By identifying and skipping the computation of attention scores for these tokens, we can reduce the **computational cost** and **memory bandwidth** usage.\n bystander tokens are tokens that notes that do not bystander tokens are tokens that do not affect the attention mechanism for the next token prediction. By identifying and streaming out or evicting these tokens from the KV cache, we can reduce the **computational cost** and **bystander tokens are tokens that text that does not glitching out or evicting these tokens from the glitching out or evicting the KV cache, bystander tokens are tokens that do not glitching out or evicting the KV cache, bystander"
     },
     {
-      "wall_s": 59.736062227999355,
+      "wall_s": 59.80405621099999,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 117.617,
-      "tok_per_s": 8.571037006855407,
-      "generation_tok_per_s": 8.589670692828745,
-      "generation_ms": 59606.476,
+      "ttft_ms": 117.675,
+      "tok_per_s": 8.56129220054184,
+      "generation_tok_per_s": 8.579854304354546,
+      "generation_ms": 59674.673,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key and Value vectors for previously generated tokens, allowing the model to reuse them for subsequent tokens instead of recomputing them for the entire context window at each step.\n\nThis is particularly important for long context because:\n1.  **Computational Complexity:** Without KV cache, the computational cost of generating a new token scales quadratically ($O(N^2)$) with the sequence length $N$. This is due to the self-attention mechanism, which requires comparing the new token against every previous token. With KV cache, the cost per step scales linearly ($O(N)$), significantly reducing latency for long sequences.\n2.  **Memory Bandwidth:** Recomputing attention for the full history requires fetching the entire context from memory at every step. KV cache keeps the Keys and Values in fast, accessible memory (VRAM), reducing memory bandwidth pressure.\n3.  **Long Context Efficiency:** As context windows grow (e.g., 32k, 128k, or 1M tokens), the quadratic cost becomes prohibitive. KV cache makes long-context inference computationally feasible and cost-effective.\n\n points to cover:\n*   **Mechanism:** Stores Key and Value vectors from previous tokens.\n*   **Naive Complexity:** $O(N^2)$ per step (recomputing full history).\n*   **Optimized Complexity:** $O(N)$ per step (incremental decoding).\n*   **Bottleneck:** Memory bandwidth and VRAM capacity.\n*   **Bystander tokens:** The concept of \"bystander tokens\" (tokens that do not affect the next token prediction) can be used to further optimize KV cache.\n bystander tokens are tokens that do not affect the next token prediction. By identifying and skipping the computation of attention scores for these tokens, we can reduce the **computational cost** and **memory bandwidth** usage.\n bystander tokens are tokens that notes that do not bystander tokens are tokens that do not affect the attention mechanism for the next token prediction. By identifying and streaming out or evicting these tokens from the KV cache, we can reduce the **computational cost** and **bystander tokens are tokens that text that does not glitching out or evicting these tokens from the glitching out or evicting the KV cache, bystander tokens are tokens that do not glitching out or evicting the KV cache, bystander"
     },
     {
-      "wall_s": 59.73874160299965,
+      "wall_s": 59.879643006999686,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 117.559,
-      "tok_per_s": 8.570652582582875,
-      "generation_tok_per_s": 8.587922750561368,
-      "generation_ms": 59618.608,
+      "ttft_ms": 117.918,
+      "tok_per_s": 8.55048517807879,
+      "generation_tok_per_s": 8.569153394255885,
+      "generation_ms": 59749.193,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key and Value vectors for previously generated tokens, allowing the model to reuse them for subsequent tokens instead of recomputing them for the entire context window at each step.\n\nThis is particularly important for long context because:\n1.  **Computational Complexity:** Without KV cache, the computational cost of generating a new token scales quadratically ($O(N^2)$) with the sequence length $N$. This is due to the self-attention mechanism, which requires comparing the new token against every previous token. With KV cache, the cost per step scales linearly ($O(N)$), significantly reducing latency for long sequences.\n2.  **Memory Bandwidth:** Recomputing attention for the full history requires fetching the entire context from memory at every step. KV cache keeps the Keys and Values in fast, accessible memory (VRAM), reducing memory bandwidth pressure.\n3.  **Long Context Efficiency:** As context windows grow (e.g., 32k, 128k, or 1M tokens), the quadratic cost becomes prohibitive. KV cache makes long-context inference computationally feasible and cost-effective.\n\n points to cover:\n*   **Mechanism:** Stores Key and Value vectors from previous tokens.\n*   **Naive Complexity:** $O(N^2)$ per step (recomputing full history).\n*   **Optimized Complexity:** $O(N)$ per step (incremental decoding).\n*   **Bottleneck:** Memory bandwidth and VRAM capacity.\n*   **Bystander tokens:** The concept of \"bystander tokens\" (tokens that do not affect the next token prediction) can be used to further optimize KV cache.\n bystander tokens are tokens that do not affect the next token prediction. By identifying and skipping the computation of attention scores for these tokens, we can reduce the **computational cost** and **memory bandwidth** usage.\n bystander tokens are tokens that notes that do not bystander tokens are tokens that do not affect the attention mechanism for the next token prediction. By identifying and streaming out or evicting these tokens from the KV cache, we can reduce the **computational cost** and **bystander tokens are tokens that text that does not glitching out or evicting these tokens from the glitching out or evicting the KV cache, bystander tokens are tokens that do not glitching out or evicting the KV cache, bystander"
     },
     {
-      "wall_s": 59.734247223997954,
+      "wall_s": 59.7796216429997,
       "prompt_tokens": 16,
       "generated_tokens": 512,
-      "ttft_ms": 117.717,
-      "tok_per_s": 8.571297434787231,
-      "generation_tok_per_s": 8.588582971876164,
-      "generation_ms": 59614.025,
+      "ttft_ms": 118.074,
+      "tok_per_s": 8.564791578267812,
+      "generation_tok_per_s": 8.582100259849906,
+      "generation_ms": 59659.056,
       "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation during text generation. It stores the Key and Value vectors for previously generated tokens, allowing the model to reuse them for subsequent tokens instead of recomputing them for the entire context window at each step.\n\nThis is particularly important for long context because:\n1.  **Computational Complexity:** Without KV cache, the computational cost of generating a new token scales quadratically ($O(N^2)$) with the sequence length $N$. This is due to the self-attention mechanism, which requires comparing the new token against every previous token. With KV cache, the cost per step scales linearly ($O(N)$), significantly reducing latency for long sequences.\n2.  **Memory Bandwidth:** Recomputing attention for the full history requires fetching the entire context from memory at every step. KV cache keeps the Keys and Values in fast, accessible memory (VRAM), reducing memory bandwidth pressure.\n3.  **Long Context Efficiency:** As context windows grow (e.g., 32k, 128k, or 1M tokens), the quadratic cost becomes prohibitive. KV cache makes long-context inference computationally feasible and cost-effective.\n\n points to cover:\n*   **Mechanism:** Stores Key and Value vectors from previous tokens.\n*   **Naive Complexity:** $O(N^2)$ per step (recomputing full history).\n*   **Optimized Complexity:** $O(N)$ per step (incremental decoding).\n*   **Bottleneck:** Memory bandwidth and VRAM capacity.\n*   **Bystander tokens:** The concept of \"bystander tokens\" (tokens that do not affect the next token prediction) can be used to further optimize KV cache.\n bystander tokens are tokens that do not affect the next token prediction. By identifying and skipping the computation of attention scores for these tokens, we can reduce the **computational cost** and **memory bandwidth** usage.\n bystander tokens are tokens that notes that do not bystander tokens are tokens that do not affect the attention mechanism for the next token prediction. By identifying and streaming out or evicting these tokens from the KV cache, we can reduce the **computational cost** and **bystander tokens are tokens that text that does not glitching out or evicting these tokens from the glitching out or evicting the KV cache, bystander tokens are tokens that do not glitching out or evicting the KV cache, bystander"
     }
   ],
   "summary": {
-    "median_wall_s": 59.73874160299965,
-    "median_tok_per_s": 8.570652582582875,
-    "median_ttft_ms": 117.564,
-    "median_generation_tok_per_s": 8.587922750561368
+    "median_wall_s": 59.879643006999686,
+    "median_tok_per_s": 8.55048517807879,
+    "median_ttft_ms": 117.918,
+    "median_generation_tok_per_s": 8.57411396286923
   },
   "revision": "UD-Q6_K_XL"
 }

@@ -294,6 +294,13 @@ def build_llama_docker_cmd(
     mmproj_path: str | None = None,
     repeat_penalty: float | None = None,
     repeat_last_n: int | None = None,
+    # CPU offloading options
+    jinja: bool | None = None,
+    flash_attn: str | None = None,  # "on", "off"
+    cache_type_k: str | None = None,  # "q4_1", "q8_0", etc.
+    cache_type_v: str | None = None,
+    tensor_offload: list[str] | None = None,  # [".ffn_.*_exps.=CPU"]
+    fit: bool | None = None,  # Auto-balance GPU/CPU offloading
     extra_args: list[str] | None = None,
 ) -> list[str]:
     """Build Docker run command for llama-server."""
@@ -322,6 +329,20 @@ def build_llama_docker_cmd(
         cmd += ["--repeat-penalty", str(repeat_penalty)]
     if repeat_last_n is not None:
         cmd += ["--repeat-last-n", str(repeat_last_n)]
+    # CPU offloading options
+    if jinja:
+        cmd += ["--jinja"]
+    if flash_attn:
+        cmd += ["--flash-attn", flash_attn]
+    if cache_type_k:
+        cmd += ["--cache-type-k", cache_type_k]
+    if cache_type_v:
+        cmd += ["--cache-type-v", cache_type_v]
+    if tensor_offload:
+        for pattern in tensor_offload:
+            cmd += ["-ot", pattern]
+    if fit:
+        cmd += ["--fit", "on"]
     if extra_args:
         cmd += extra_args
     return cmd

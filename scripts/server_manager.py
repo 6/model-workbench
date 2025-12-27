@@ -329,6 +329,13 @@ class ServerManager:
         mmproj_path: Path | None = None,
         repeat_penalty: float | None = None,
         repeat_last_n: int | None = None,
+        # CPU offloading options
+        jinja: bool | None = None,
+        flash_attn: str | None = None,
+        cache_type_k: str | None = None,
+        cache_type_v: str | None = None,
+        tensor_offload: list[str] | None = None,
+        fit: bool | None = None,
         extra_args: list[str] | None = None,
         rebuild: bool = False,
     ) -> Path:
@@ -344,6 +351,12 @@ class ServerManager:
             mmproj_path: Path to multimodal projector (optional)
             repeat_penalty: Repetition penalty (optional, default 1.0)
             repeat_last_n: Tokens to consider for repetition penalty (optional)
+            jinja: Enable Jinja template engine (optional)
+            flash_attn: Flash attention mode "on" or "off" (optional)
+            cache_type_k: KV cache K quantization type (optional)
+            cache_type_v: KV cache V quantization type (optional)
+            tensor_offload: List of tensor offload patterns (optional)
+            fit: Enable auto-fit mode for GPU/CPU balancing (optional)
             extra_args: Extra raw args (optional)
             rebuild: Force rebuild image even if cached
 
@@ -376,6 +389,12 @@ class ServerManager:
             mmproj_path=str(mmproj_path) if mmproj_path else None,
             repeat_penalty=repeat_penalty,
             repeat_last_n=repeat_last_n,
+            jinja=jinja,
+            flash_attn=flash_attn,
+            cache_type_k=cache_type_k,
+            cache_type_v=cache_type_v,
+            tensor_offload=tensor_offload,
+            fit=fit,
             extra_args=extra_args,
         )
 

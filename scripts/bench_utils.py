@@ -605,6 +605,9 @@ def get_model_config(model_arg: str) -> dict | None:
     """
     Find model config entry matching the given model argument.
 
+    When multiple entries share the same repo_id but have different 'include' patterns,
+    this function matches both the repo_id AND the include patterns against the model path.
+
     Args:
         model_arg: Model path or repo_id (e.g., "zai-org/GLM-4.6V-FP8")
 
@@ -612,13 +615,30 @@ def get_model_config(model_arg: str) -> dict | None:
         Model config dict if found, None otherwise
     """
     models = load_models_config()
-    # Normalize model_arg for matching
     model_lower = model_arg.lower()
 
+    # First pass: match repo_id AND include patterns (most specific match)
+    for m in models:
+        repo_id = m.get("repo_id", "")
+        if repo_id.lower() in model_lower or model_lower in repo_id.lower():
+            include_patterns = m.get("include", [])
+            if include_patterns:
+                # Check if any include pattern matches the model path
+                for pattern in include_patterns:
+                    # Extract the quant folder name from pattern (e.g., "UD-Q4_K_XL" from "UD-Q4_K_XL/*.gguf")
+                    pattern_base = pattern.split("/")[0].lower()
+                    if pattern_base in model_lower:
+                        return m
+            else:
+                # No include patterns = matches all variants of this repo_id
+                return m
+
+    # Second pass: fallback to repo_id-only match (backwards compatibility)
     for m in models:
         repo_id = m.get("repo_id", "")
         if repo_id.lower() in model_lower or model_lower in repo_id.lower():
             return m
+
     return None
 
 
@@ -797,6 +817,21 @@ def resolve_run_config(args):
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
     if getattr(args, "frequency_penalty", None) is None:
         args.frequency_penalty = backend_args.get("frequency_penalty", 0.0)
+
+    # llama.cpp CPU offloading args
+    if backend == "llama":
+        if getattr(args, "jinja", None) is None:
+            args.jinja = backend_args.get("jinja", True)  # Enabled by default
+        if getattr(args, "flash_attn", None) is None:
+            args.flash_attn = backend_args.get("flash_attn", "on")  # Enabled by default
+        if getattr(args, "cache_type_k", None) is None:
+            args.cache_type_k = backend_args.get("cache_type_k")
+        if getattr(args, "cache_type_v", None) is None:
+            args.cache_type_v = backend_args.get("cache_type_v")
+        if getattr(args, "tensor_offload", None) is None:
+            args.tensor_offload = backend_args.get("tensor_offload", [])
+        if getattr(args, "fit", None) is None:
+            args.fit = backend_args.get("fit", False)
 
     return backend, model_path, backend_cfg
 

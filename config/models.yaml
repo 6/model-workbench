@@ -41,6 +41,8 @@ defaults:
       image_type: build
       args:
         n_gpu_layers: 999
+        jinja: true         # Enable Jinja template engine (required for most models)
+        flash_attn: "on"    # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
       version: 1.2.0rc5
@@ -134,6 +136,7 @@ models:
     include:
       - "GLM-4.7-IQ4_XS/*.gguf"
 
+  # All tested quants fit in 192GB VRAM with global defaults (jinja + flash_attn)
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"

@@ -177,6 +177,46 @@ def main():
     llama_group.add_argument(
         "--mmproj", default=None, help="Multimodal projector path (auto-detected if not specified)"
     )
+    # CPU offloading options
+    llama_group.add_argument(
+        "--jinja",
+        action="store_true",
+        default=None,
+        help="Enable Jinja template engine (default: on)",
+    )
+    llama_group.add_argument(
+        "--no-jinja", action="store_true", dest="no_jinja", help="Disable Jinja template engine"
+    )
+    llama_group.add_argument(
+        "--flash-attn",
+        choices=["on", "off"],
+        default=None,
+        help="Flash attention mode (default: on)",
+    )
+    llama_group.add_argument(
+        "--cache-type-k",
+        default=None,
+        help="KV cache K quantization (f16, q8_0, q4_0, q4_1, etc.)",
+    )
+    llama_group.add_argument(
+        "--cache-type-v",
+        default=None,
+        help="KV cache V quantization (requires flash-attn)",
+    )
+    llama_group.add_argument(
+        "--tensor-offload",
+        "-ot",
+        action="append",
+        default=None,
+        dest="tensor_offload",
+        help="Tensor offload pattern (e.g., '.ffn_.*_exps.=CPU'). Can be repeated.",
+    )
+    llama_group.add_argument(
+        "--fit",
+        action="store_true",
+        default=None,
+        help="Enable auto-fit mode for GPU/CPU balancing (--fit on)",
+    )
 
     # Warmup options
     ap.add_argument(
@@ -205,6 +245,14 @@ def main():
     )
 
     args = ap.parse_args()
+
+    # Resolve --jinja / --no-jinja into single value (CLI overrides config)
+    if getattr(args, "no_jinja", False):
+        args.jinja = False
+    elif getattr(args, "jinja", None) is True:
+        args.jinja = True
+    else:
+        args.jinja = None  # Will be resolved from config
 
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)
@@ -312,6 +360,12 @@ def main():
             mmproj_path=mmproj_path,
             repeat_penalty=repeat_penalty,
             repeat_last_n=repeat_last_n,
+            jinja=args.jinja,
+            flash_attn=args.flash_attn,
+            cache_type_k=args.cache_type_k,
+            cache_type_v=args.cache_type_v,
+            tensor_offload=args.tensor_offload,
+            fit=args.fit,
             rebuild=args.rebuild,
         )
     elif backend == "sglang":
