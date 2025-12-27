@@ -142,17 +142,11 @@ models:
     include:
       - "UD-Q3_K_XL/*.gguf"
 
-  # Q4+ need KV cache quantization for long context (model fills VRAM)
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
       - "UD-Q6_K_XL/*.gguf"
-    backends:
-      llama:
-        args:
-          cache_type_k: q8_0
-          cache_type_v: q8_0
 
   - repo_id: ubergarm/GLM-4.7-GGUF
     include:
