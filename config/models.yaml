@@ -12,7 +12,7 @@ defaults:
       version: v0.13.0
       image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
       args:
-        gpu_memory_utilization: 0.95
+        gpu_memory_utilization: 0.98  # Dedicated inference GPUs, no display
         max_model_len: 65536
       # Model-specific CLI args (pattern is regex matched against model path)
       model_patterns:
@@ -50,7 +50,7 @@ defaults:
       version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
       image_type: prebuilt
       args:
-        mem_fraction_static: 0.9
+        mem_fraction_static: 0.98  # Dedicated inference GPUs, no display
         max_model_len: 65536
       model_patterns:
         - pattern: "mimo"
@@ -100,6 +100,28 @@ models:
         args:
           repeat_penalty: 1.15      # Prevent repetition loops in thinking
           repeat_last_n: 128        # Consider last 128 tokens for penalty
+
+  - repo_id: QuantTrio/GLM-4.7-AWQ
+    backends:
+      vllm:
+        args:
+          cpu_offload_gb: 15
+          max_model_len: 8192
+
+  # DOES NOT FIT: GLM-4.7 Compressed-Tensors W4A16 (189GB) on 2x RTX PRO 6000 (192GB)
+  # - Model uses 88+ GiB per GPU (~93% of 94.97 GiB VRAM)
+  # - cpu_offload_gb doesn't work with MoE models (vllm-project/vllm#15196)
+  # - No vLLM memory optimization can free enough headroom for KV cache
+  # Use EXL3 or GGUF quantizations instead (see below)
+  #- repo_id: TheHouseOfTheDude/GLM-4.7_Compressed-Tensors
+  #  revisions:
+  #    - W4A16_GS128
+  #  backends:
+  #    vllm:
+  #      docker_image: vllm-ct:v0.13.0
+  #      args:
+  #        gpu_memory_utilization: 0.99
+  #        max_model_len: 1024
 
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:

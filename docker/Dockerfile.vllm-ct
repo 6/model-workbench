@@ -1,0 +1,8 @@
+# vLLM with upgraded compressed-tensors for newer quantization configs
+ARG VERSION=v0.13.0
+FROM vllm/vllm-openai:${VERSION}
+
+# Upgrade compressed-tensors to support scale_dtype/zp_dtype fields
+RUN pip install --no-cache-dir --upgrade compressed-tensors>=0.13.0
+
+WORKDIR /workspace

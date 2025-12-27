@@ -359,7 +359,12 @@ def bench_once_llama(
 
 
 def run_benchmark_vllm(
-    args, model_path: str, image_path: str | None, image_label: str, image_type: str = "build"
+    args,
+    model_path: str,
+    image_path: str | None,
+    image_label: str,
+    image_type: str = "build",
+    docker_image: str | None = None,
 ):
     """Run benchmarks using vLLM backend (Docker-only)."""
     is_vision = image_path is not None
@@ -415,9 +420,13 @@ def run_benchmark_vllm(
                 max_model_len=args.max_model_len,
                 gpu_memory_utilization=args.gpu_memory_utilization,
                 max_num_batched_tokens=args.max_num_batched_tokens,
+                cpu_offload_gb=args.cpu_offload_gb,
+                max_num_seqs=args.max_num_seqs,
+                env_vars=args.env_vars,
+                extra_vllm_args=args.extra_vllm_args,
                 rebuild=args.rebuild,
                 image_type=image_type,
-                image_override=args.docker_image,
+                image_override=docker_image,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -656,7 +665,12 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
 
 
 def run_benchmark_sglang(
-    args, model_path: str, image_path: str | None, image_label: str, image_type: str = "build"
+    args,
+    model_path: str,
+    image_path: str | None,
+    image_label: str,
+    image_type: str = "build",
+    docker_image: str | None = None,
 ):
     """Run benchmarks using SGLang backend (Docker)."""
     from bench_utils import get_model_backend_config
@@ -719,7 +733,7 @@ def run_benchmark_sglang(
                 mem_fraction_static=mem_fraction,
                 max_model_len=max_model_len,
                 rebuild=args.rebuild,
-                image_override=args.docker_image,
+                image_override=docker_image,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -1382,6 +1396,18 @@ def main():
     vllm_group.add_argument(
         "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
     )
+    vllm_group.add_argument(
+        "--cpu-offload-gb",
+        type=float,
+        default=None,
+        help="CPU offload in GB per GPU (default: none)",
+    )
+    vllm_group.add_argument(
+        "--max-num-seqs",
+        type=int,
+        default=None,
+        help="Max concurrent sequences (default: from config or vLLM default)",
+    )
 
     # llama.cpp-specific options (defaults from config, CLI overrides)
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
@@ -1411,6 +1437,9 @@ def main():
     # Resolve image type (from CLI, model config, or backend defaults)
     image_type = args.image_type or backend_cfg.get("image_type", "build")
 
+    # Resolve Docker image (CLI overrides config)
+    docker_image = args.docker_image or backend_cfg.get("docker_image")
+
     # Resolve image (for vision benchmark, not Docker image)
     image_path, image_label = resolve_image_source(args.image)
 
@@ -1430,7 +1459,7 @@ def main():
             version,
             rebuild=args.rebuild,
             image_type=image_type,
-            image_override=args.docker_image,
+            image_override=docker_image,
         )
         log(f"Image ready: {image_name}")
         return
@@ -1444,11 +1473,11 @@ def main():
         log(f"Auto-detected model format -> {backend_label} backend")
 
     if backend == "vllm":
-        run_benchmark_vllm(args, model_path, image_path, image_label, image_type)
+        run_benchmark_vllm(args, model_path, image_path, image_label, image_type, docker_image)
     elif backend == "trtllm":
         run_benchmark_trtllm(args, model_path, image_path, image_label)
     elif backend == "sglang":
-        run_benchmark_sglang(args, model_path, image_path, image_label, image_type)
+        run_benchmark_sglang(args, model_path, image_path, image_label, image_type, docker_image)
     elif backend == "exl":
         run_benchmark_exl(args, model_path, image_path, image_label)
     elif backend == "ktransformers":

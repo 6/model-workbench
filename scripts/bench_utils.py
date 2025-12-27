@@ -679,9 +679,15 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
             result["version"] = model_backend_cfg["version"]
         if model_backend_cfg.get("image_type"):
             result["image_type"] = model_backend_cfg["image_type"]
+        if model_backend_cfg.get("docker_image"):
+            result["docker_image"] = model_backend_cfg["docker_image"]
         if model_backend_cfg.get("args"):
             # Merge args (model-specific overrides defaults)
             result["args"] = {**result["args"], **model_backend_cfg["args"]}
+        if model_backend_cfg.get("env"):
+            result["env"] = model_backend_cfg["env"]
+        if model_backend_cfg.get("extra_args"):
+            result["extra_args"] = model_backend_cfg["extra_args"]
 
     return result
 
@@ -717,6 +723,7 @@ def resolve_run_config(args):
             - tensor_parallel (optional, for vLLM/trtllm)
             - max_model_len (optional)
             - gpu_memory_utilization (optional)
+            - cpu_offload_gb (optional, for vLLM)
             - n_gpu_layers (optional, for llama.cpp)
             - image_type (optional)
             - backend_version (optional)
@@ -733,6 +740,7 @@ def resolve_run_config(args):
             - tensor_parallel (for vLLM/trtllm)
             - max_model_len
             - gpu_memory_utilization
+            - cpu_offload_gb
             - n_gpu_layers
     """
     from common import BACKEND_REGISTRY
@@ -776,6 +784,15 @@ def resolve_run_config(args):
             args.max_model_len = config_default
     if getattr(args, "gpu_memory_utilization", None) is None:
         args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
+    if getattr(args, "cpu_offload_gb", None) is None:
+        args.cpu_offload_gb = backend_args.get("cpu_offload_gb")
+    if getattr(args, "max_num_seqs", None) is None:
+        args.max_num_seqs = backend_args.get("max_num_seqs")
+    # Resolve env vars and extra args from config (no CLI override)
+    if not hasattr(args, "env_vars") or args.env_vars is None:
+        args.env_vars = backend_cfg.get("env")
+    if not hasattr(args, "extra_vllm_args") or args.extra_vllm_args is None:
+        args.extra_vllm_args = backend_cfg.get("extra_args")
     if getattr(args, "n_gpu_layers", None) is None:
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
     if getattr(args, "frequency_penalty", None) is None:

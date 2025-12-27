@@ -180,6 +180,7 @@ def _docker_run_base(
     image_name: str,
     port: int,
     mounts: list[tuple[str, str, str]],
+    env_vars: dict[str, str] | None = None,
 ) -> list[str]:
     """Build common Docker run prefix.
 
@@ -188,6 +189,7 @@ def _docker_run_base(
         image_name: Docker image to use
         port: Port to expose
         mounts: List of (host_path, container_path, mode) tuples
+        env_vars: Environment variables to set in container
 
     Returns:
         Docker run command prefix (up to and including image name)
@@ -198,6 +200,8 @@ def _docker_run_base(
     cmd.extend(["-p", f"{port}:{port}"])
     for host_path, container_path, mode in mounts:
         cmd.extend(["-v", f"{host_path}:{container_path}:{mode}"])
+    for key, val in (env_vars or {}).items():
+        cmd.extend(["-e", f"{key}={val}"])
     cmd.append(image_name)
     return cmd
 
@@ -234,6 +238,9 @@ def build_vllm_docker_cmd(
     max_model_len: int | None = None,
     gpu_memory_utilization: float | None = None,
     max_num_batched_tokens: int | None = None,
+    cpu_offload_gb: float | None = None,
+    max_num_seqs: int | None = None,
+    env_vars: dict[str, str] | None = None,
     extra_vllm_args: list[str] | None = None,
 ) -> list[str]:
     """Build Docker run command for vLLM server."""
@@ -244,6 +251,7 @@ def build_vllm_docker_cmd(
         image_name,
         port,
         [(model_path_resolved, model_path_resolved, "ro")],
+        env_vars=env_vars,
     )
     cmd += [
         "--model",
@@ -263,6 +271,10 @@ def build_vllm_docker_cmd(
         cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]
     if max_num_batched_tokens is not None:
         cmd += ["--max-num-batched-tokens", str(max_num_batched_tokens)]
+    if cpu_offload_gb is not None:
+        cmd += ["--cpu-offload-gb", str(cpu_offload_gb)]
+    if max_num_seqs is not None:
+        cmd += ["--max-num-seqs", str(max_num_seqs)]
 
     # Model-specific flags from config
     cmd += _get_model_specific_args(model_path)

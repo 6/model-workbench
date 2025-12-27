@@ -248,6 +248,10 @@ class ServerManager:
         max_model_len: int | None = None,
         gpu_memory_utilization: float | None = None,
         max_num_batched_tokens: int | None = None,
+        cpu_offload_gb: float | None = None,
+        max_num_seqs: int | None = None,
+        env_vars: dict[str, str] | None = None,
+        extra_vllm_args: list[str] | None = None,
         rebuild: bool = False,
         image_type: str = "build",
         image_override: str | None = None,
@@ -261,6 +265,10 @@ class ServerManager:
             max_model_len: Max context length (optional)
             gpu_memory_utilization: GPU memory fraction (optional)
             max_num_batched_tokens: Max batched tokens (optional)
+            cpu_offload_gb: CPU offload in GB per GPU (optional)
+            max_num_seqs: Max concurrent sequences (optional)
+            env_vars: Environment variables for Docker container (optional)
+            extra_vllm_args: Extra vLLM CLI arguments (optional)
             rebuild: Force rebuild image even if cached
             image_type: 'prebuilt' to use official images, 'build' to build from source
             image_override: Direct image name to use (highest priority)
@@ -290,6 +298,10 @@ class ServerManager:
             max_model_len=max_model_len,
             gpu_memory_utilization=gpu_memory_utilization,
             max_num_batched_tokens=max_num_batched_tokens,
+            cpu_offload_gb=cpu_offload_gb,
+            max_num_seqs=max_num_seqs,
+            env_vars=env_vars,
+            extra_vllm_args=extra_vllm_args,
         )
 
         # Label based on image source

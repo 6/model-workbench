@@ -197,6 +197,18 @@ def main():
         default=None,
         help="GPU memory fraction (default: from config or 0.95)",
     )
+    parser.add_argument(
+        "--cpu-offload-gb",
+        type=float,
+        default=None,
+        help="CPU offload in GB per GPU for vLLM (default: none)",
+    )
+    parser.add_argument(
+        "--max-num-seqs",
+        type=int,
+        default=None,
+        help="Max concurrent sequences for vLLM (default: from config or vLLM default)",
+    )
 
     # llama.cpp server options (defaults from config, CLI overrides)
     parser.add_argument(
@@ -224,6 +236,12 @@ def main():
         default=None,
         help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)",
     )
+    parser.add_argument(
+        "--docker-image",
+        default=None,
+        dest="docker_image",
+        help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
+    )
 
     args = parser.parse_args()
 
@@ -241,6 +259,9 @@ def main():
             f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
+
+    # Resolve docker_image (CLI override takes precedence over config)
+    docker_image = args.docker_image or backend_cfg.get("docker_image")
 
     backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
@@ -291,6 +312,9 @@ def main():
                     version=backend_version,
                     max_model_len=args.max_model_len,
                     gpu_memory_utilization=args.gpu_memory_utilization,
+                    cpu_offload_gb=args.cpu_offload_gb,
+                    max_num_seqs=args.max_num_seqs,
+                    image_override=docker_image,
                 )
 
         # Model name differs by backend:

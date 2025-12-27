@@ -149,6 +149,18 @@ def main():
     vllm_group.add_argument(
         "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
     )
+    vllm_group.add_argument(
+        "--cpu-offload-gb",
+        type=float,
+        default=None,
+        help="CPU offload in GB per GPU (default: none)",
+    )
+    vllm_group.add_argument(
+        "--max-num-seqs",
+        type=int,
+        default=None,
+        help="Max concurrent sequences (default: from config or vLLM default)",
+    )
 
     # llama.cpp-specific options (defaults from config, CLI overrides)
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
@@ -210,6 +222,9 @@ def main():
     # Resolve image type (from CLI, model config, or backend defaults)
     image_type = args.image_type or backend_cfg.get("image_type", "build")
 
+    # Resolve docker_image (CLI override takes precedence over config)
+    docker_image = args.docker_image or backend_cfg.get("docker_image")
+
     # Create server manager
     server = ServerManager(
         host=args.host,
@@ -249,8 +264,8 @@ def main():
     log(f"  Backend: {backend}")
     log(f"  Backend version: {backend_version}")
     log(f"  Image type: {image_type}")
-    if args.docker_image:
-        log(f"  Image override: {args.docker_image}")
+    if docker_image:
+        log(f"  Image override: {docker_image}")
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
     if backend == "vllm":
@@ -261,9 +276,13 @@ def main():
             max_model_len=args.max_model_len,
             gpu_memory_utilization=args.gpu_memory_utilization,
             max_num_batched_tokens=args.max_num_batched_tokens,
+            cpu_offload_gb=args.cpu_offload_gb,
+            max_num_seqs=args.max_num_seqs,
+            env_vars=args.env_vars,
+            extra_vllm_args=args.extra_vllm_args,
             rebuild=args.rebuild,
             image_type=image_type,
-            image_override=args.docker_image,
+            image_override=docker_image,
         )
     elif backend == "trtllm":
         server.start_trtllm(
@@ -307,7 +326,7 @@ def main():
             mem_fraction_static=mem_fraction,
             max_model_len=max_model_len,
             rebuild=args.rebuild,
-            image_override=args.docker_image,
+            image_override=docker_image,
         )
     elif backend == "exl":
         # Get ExLlamaV3-specific args from config
