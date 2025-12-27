@@ -280,6 +280,8 @@ def build_llama_docker_cmd(
     ctx: int | None = None,
     parallel: int | None = None,
     mmproj_path: str | None = None,
+    repeat_penalty: float | None = None,
+    repeat_last_n: int | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
     """Build Docker run command for llama-server."""
@@ -304,6 +306,10 @@ def build_llama_docker_cmd(
         cmd += ["-np", str(parallel)]
     if mmproj_path:
         cmd += ["--mmproj", str(Path(mmproj_path).expanduser().resolve())]
+    if repeat_penalty is not None:
+        cmd += ["--repeat-penalty", str(repeat_penalty)]
+    if repeat_last_n is not None:
+        cmd += ["--repeat-last-n", str(repeat_last_n)]
     if extra_args:
         cmd += extra_args
     return cmd

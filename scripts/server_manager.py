@@ -315,6 +315,8 @@ class ServerManager:
         ctx: int | None = None,
         parallel: int | None = None,
         mmproj_path: Path | None = None,
+        repeat_penalty: float | None = None,
+        repeat_last_n: int | None = None,
         extra_args: list[str] | None = None,
         rebuild: bool = False,
     ) -> Path:
@@ -328,6 +330,8 @@ class ServerManager:
             ctx: Context length (optional)
             parallel: Parallel sequences (optional)
             mmproj_path: Path to multimodal projector (optional)
+            repeat_penalty: Repetition penalty (optional, default 1.0)
+            repeat_last_n: Tokens to consider for repetition penalty (optional)
             extra_args: Extra raw args (optional)
             rebuild: Force rebuild image even if cached
 
@@ -358,6 +362,8 @@ class ServerManager:
             ctx=ctx,
             parallel=parallel,
             mmproj_path=str(mmproj_path) if mmproj_path else None,
+            repeat_penalty=repeat_penalty,
+            repeat_last_n=repeat_last_n,
             extra_args=extra_args,
         )
 
@@ -613,3 +619,102 @@ def wait_for_llama_ready(host: str, port: int) -> bool:
         return r.status_code == 200 and r.json().get("status") == "ok"
     except Exception:
         return False
+
+
+# ----------------------------
+# Open WebUI helpers
+# ----------------------------
+
+
+def start_open_webui(
+    backend_port: int,
+    webui_port: int = 3000,
+    image: str = "ghcr.io/open-webui/open-webui:main",
+    timeout: int = 60,
+) -> str | None:
+    """Start Open WebUI container connected to backend.
+
+    Args:
+        backend_port: Backend server port (OpenAI-compatible API)
+        webui_port: Port for Open WebUI (default: 3000)
+        image: Docker image for Open WebUI
+        timeout: Startup timeout in seconds
+
+    Returns:
+        Container ID if started successfully, None otherwise
+    """
+    # Build OpenAI base URL for the backend
+    openai_base_url = f"http://localhost:{backend_port}/v1"
+
+    cmd = [
+        "docker",
+        "run",
+        "-d",  # Detached mode
+        "--rm",
+        "--network",
+        "host",  # Share host network for localhost access
+        "-e",
+        f"PORT={webui_port}",  # Set port (default is 8080, we want webui_port)
+        "-e",
+        "HOST=0.0.0.0",  # Listen on all interfaces for external access
+        "-e",
+        f"OPENAI_API_BASE_URL={openai_base_url}",
+        "-e",
+        "OPENAI_API_KEY=dummy",  # Required but not used for local backends
+        "-e",
+        "WEBUI_AUTH=false",  # Disable auth for local dev
+        "-v",
+        "open-webui:/app/backend/data",  # Persist data
+        image,
+    ]
+
+    log("Starting Open WebUI...")
+    log(f"+ {' '.join(cmd)}")
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            log(f"Failed to start Open WebUI: {result.stderr}")
+            return None
+
+        container_id = result.stdout.strip()
+
+        # Wait for Open WebUI to be ready
+        log(f"Waiting for Open WebUI to be ready (timeout: {timeout}s)...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if port_open("localhost", webui_port):
+                return container_id
+            time.sleep(1)
+
+        # Timeout - cleanup
+        log("Open WebUI timed out during startup")
+        stop_container(container_id, label="Open WebUI")
+        return None
+
+    except Exception as e:
+        log(f"Error starting Open WebUI: {e}")
+        return None
+
+
+def stop_container(container_id: str, label: str = "container") -> None:
+    """Stop a Docker container by ID.
+
+    Args:
+        container_id: Container ID to stop
+        label: Label for log messages
+    """
+    try:
+        log(f"Stopping {label} ({container_id[:12]})...")
+        subprocess.run(
+            ["docker", "stop", container_id],
+            timeout=30,
+            capture_output=True,
+        )
+    except Exception as e:
+        log(f"Warning: Failed to stop {label}: {e}")

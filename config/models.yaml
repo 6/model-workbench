@@ -88,6 +88,11 @@ models:
     include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
+    backends:
+      llama:
+        args:
+          repeat_penalty: 1.15      # Prevent repetition loops in thinking
+          repeat_last_n: 128        # Consider last 128 tokens for penalty
 
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:
@@ -98,6 +103,10 @@ models:
   - repo_id: unsloth/GLM-4.7-GGUF
     include:
       - "UD-Q3_K_XL/*.gguf"
+
+  - repo_id: ubergarm/GLM-4.7-GGUF
+    include:
+      - "big-IQ3_KS/*.gguf"
 
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
     backend: sglang           # Only SGLang supports this model

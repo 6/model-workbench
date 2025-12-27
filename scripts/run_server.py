@@ -40,7 +40,7 @@ from pathlib import Path
 
 from bench_utils import resolve_run_config, warmup_model
 from common import BACKEND_REGISTRY, log
-from server_manager import ServerManager
+from server_manager import ServerManager, start_open_webui, stop_container
 
 
 def test_chat_completion(host: str, port: int, model_name: str) -> bool:
@@ -173,6 +173,25 @@ def main():
         help="Skip model preloading (warmup request). By default, models are preloaded into GPU memory on startup.",
     )
 
+    # Open WebUI options (enabled by default for OpenAI-compatible backends)
+    webui_group = ap.add_argument_group("Open WebUI options")
+    webui_group.add_argument(
+        "--no-webui",
+        action="store_true",
+        help="Don't launch Open WebUI (default: WebUI is launched for OpenAI-compatible backends)",
+    )
+    webui_group.add_argument(
+        "--webui-port",
+        type=int,
+        default=8080,
+        help="Port for Open WebUI (default: 8080)",
+    )
+    webui_group.add_argument(
+        "--webui-image",
+        default="ghcr.io/open-webui/open-webui:main",
+        help="Open WebUI Docker image (default: ghcr.io/open-webui/open-webui:main)",
+    )
+
     args = ap.parse_args()
 
     # Resolve backend config and apply defaults
@@ -258,14 +277,22 @@ def main():
         if args.mmproj:
             mmproj_path = Path(args.mmproj).expanduser()
 
+        # Get llama-specific args from config
+        backend_args = backend_cfg.get("args", {})
+        n_gpu_layers = args.n_gpu_layers or backend_args.get("n_gpu_layers")
+        repeat_penalty = backend_args.get("repeat_penalty")
+        repeat_last_n = backend_args.get("repeat_last_n")
+
         server.start_gguf_backend(
             engine=backend,
             model_path=model_path,
             version=backend_version,
-            n_gpu_layers=args.n_gpu_layers,
+            n_gpu_layers=n_gpu_layers,
             ctx=args.ctx,
             parallel=args.parallel,
             mmproj_path=mmproj_path,
+            repeat_penalty=repeat_penalty,
+            repeat_last_n=repeat_last_n,
             rebuild=args.rebuild,
         )
     elif backend == "sglang":
@@ -345,12 +372,30 @@ def main():
         log("Running endpoint test...")
         test_chat_completion(args.host, args.port, api_model)
 
+    # Start Open WebUI by default (except for llama.cpp which has built-in UI)
+    webui_container_id = None
+    should_start_webui = not args.no_webui and backend != "llama"
+    if should_start_webui:
+        webui_container_id = start_open_webui(
+            backend_port=args.port,
+            webui_port=args.webui_port,
+            image=args.webui_image,
+        )
+        if webui_container_id:
+            log(f"Open WebUI available at http://localhost:{args.webui_port}")
+        else:
+            log("WARNING: Failed to start Open WebUI")
+
     # Keep server running until Ctrl+C
     log(f"\nServer running at http://{args.host}:{args.port}/v1")
+    if webui_container_id:
+        log(f"Open WebUI running at http://localhost:{args.webui_port}")
     log("Press Ctrl+C to stop...")
 
     def signal_handler(sig, frame):
         log("\nShutting down...")
+        if webui_container_id:
+            stop_container(webui_container_id, label="Open WebUI")
         server.stop()
         sys.exit(0)
 
@@ -363,6 +408,8 @@ def main():
         # Check if server process died
         if server.proc and server.proc.poll() is not None:
             log("Server process exited unexpectedly")
+            if webui_container_id:
+                stop_container(webui_container_id, label="Open WebUI")
             sys.exit(1)
 
 
