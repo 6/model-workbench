@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-12-27T19:32:40.433729",
+  "repo_id": "unsloth/GLM-4.7-GGUF/UD-Q4_K_XL",
+  "model_ref": "/data/storage2/models/unsloth/GLM-4.7-GGUF/UD-Q4_K_XL/GLM-4.7-UD-Q4_K_XL-00001-of-00005.gguf",
+  "engine": "llama-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95638
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 96240
+      }
+    ],
+    "memory_used_mib": 191878,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "backend_version": "b7531",
+    "ctx": null,
+    "n_gpu_layers": 999,
+    "parallel": 1,
+    "seed": 0,
+    "jinja": true,
+    "flash_attn": "on",
+    "cache_type_k": null,
+    "cache_type_v": null,
+    "tensor_offload": [],
+    "CUDA_VISIBLE_DEVICES": ""
+  },
+  "iterations": [
+    {
+      "wall_s": 10.12588304000019,
+      "prompt_tokens": 16,
+      "generated_tokens": 341,
+      "ttft_ms": 29.377,
+      "tok_per_s": 33.67607532626543,
+      "generation_tok_per_s": 33.833490214233464,
+      "generation_ms": 10078.771,
+      "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation. During inference, the model generates tokens one by one. For each new token, the model attends to all previous tokens. Without KV cache, the model would re-compute the Key and Value vectors for all previous tokens at every step, leading to quadratic time complexity. With KV cache, we store the Key and Value vectors of previous tokens in memory (GPU VRAM). When generating the next token, we only compute the Key and Value for the new token and reuse the cached vectors for the past tokens. This reduces the per-step complexity from quadratic to linear.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications."
+    },
+    {
+      "wall_s": 10.007538855999883,
+      "prompt_tokens": 16,
+      "generated_tokens": 341,
+      "ttft_ms": 30.466,
+      "tok_per_s": 34.07431186695399,
+      "generation_tok_per_s": 34.33912046536054,
+      "generation_ms": 9930.365,
+      "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation. During inference, the model generates tokens one by one. For each new token, the model attends to all previous tokens. Without KV cache, the model would re-compute the Key and Value vectors for all previous tokens at every step, leading to quadratic time complexity. With KV cache, we store the Key and Value vectors of previous tokens in memory (GPU VRAM). When generating the next token, we only compute the Key and Value for the new token and reuse the cached vectors for the past tokens. This reduces the per-step complexity from quadratic to linear.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications."
+    },
+    {
+      "wall_s": 9.963765347001754,
+      "prompt_tokens": 16,
+      "generated_tokens": 341,
+      "ttft_ms": 30.732,
+      "tok_per_s": 34.224009510883555,
+      "generation_tok_per_s": 34.33750220147696,
+      "generation_ms": 9930.833,
+      "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation. During inference, the model generates tokens one by one. For each new token, the model attends to all previous tokens. Without KV cache, the model would re-compute the Key and Value vectors for all previous tokens at every step, leading to quadratic time complexity. With KV cache, we store the Key and Value vectors of previous tokens in memory (GPU VRAM). When generating the next token, we only compute the Key and Value for the new token and reuse the cached vectors for the past tokens. This reduces the per-step complexity from quadratic to linear.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications."
+    },
+    {
+      "wall_s": 9.973338031999447,
+      "prompt_tokens": 16,
+      "generated_tokens": 341,
+      "ttft_ms": 30.549,
+      "tok_per_s": 34.19116036234827,
+      "generation_tok_per_s": 34.36910320426879,
+      "generation_ms": 9921.702,
+      "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation. During inference, the model generates tokens one by one. For each new token, the model attends to all previous tokens. Without KV cache, the model would re-compute the Key and Value vectors for all previous tokens at every step, leading to quadratic time complexity. With KV cache, we store the Key and Value vectors of previous tokens in memory (GPU VRAM). When generating the next token, we only compute the Key and Value for the new token and reuse the cached vectors for the past tokens. This reduces the per-step complexity from quadratic to linear.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications."
+    },
+    {
+      "wall_s": 9.951470609998069,
+      "prompt_tokens": 16,
+      "generated_tokens": 341,
+      "ttft_ms": 30.457,
+      "tok_per_s": 34.26629222593526,
+      "generation_tok_per_s": 34.3803476689973,
+      "generation_ms": 9918.457,
+      "output_text": " KV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation.\nKV cache is a standard technique used in autoregressive language models (LLMs) to avoid redundant computation. During inference, the model generates tokens one by one. For each new token, the model attends to all previous tokens. Without KV cache, the model would re-compute the Key and Value vectors for all previous tokens at every step, leading to quadratic time complexity. With KV cache, we store the Key and Value vectors of previous tokens in memory (GPU VRAM). When generating the next token, we only compute the Key and Value for the new token and reuse the cached vectors for the past tokens. This reduces the per-step complexity from quadratic to linear.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications.\nHowever, this optimization comes at a cost: memory. The size of the KV cache grows linearly with the sequence length. For long contexts (e.g., 128k tokens), the cache can consume tens of gigabytes of VRAM, potentially exceeding the memory capacity of a single GPU and requiring model parallelism or quantization.\nTherefore, KV cache is a critical component for efficient inference, but it also presents a significant memory bottleneck for long-context applications."
+    }
+  ],
+  "summary": {
+    "median_wall_s": 9.973338031999447,
+    "median_tok_per_s": 34.19116036234827,
+    "median_ttft_ms": 30.466,
+    "median_generation_tok_per_s": 34.33912046536054
+  },
+  "revision": "UD-Q4_K_XL"
+}
