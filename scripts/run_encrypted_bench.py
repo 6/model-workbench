@@ -11,6 +11,7 @@ Results are stored in perf/encrypted_results.yaml with partial encryption:
 """
 
 import argparse
+import re
 import subprocess
 import sys
 import time
@@ -78,6 +79,7 @@ def run_single_prompt(
     prompt_text: str,
     max_tokens: int,
     temperature: float,
+    frequency_penalty: float,
     host: str,
     port: int,
 ) -> dict:
@@ -90,6 +92,7 @@ def run_single_prompt(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature if temperature > 0 else 0.0,
+        frequency_penalty=frequency_penalty,
         seed=0,
     )
     t1 = time.perf_counter()
@@ -97,8 +100,23 @@ def run_single_prompt(
 
     # Extract reasoning and answer SEPARATELY
     msg = response.choices[0].message
-    reasoning_content = getattr(msg, "reasoning_content", None) or None
+    reasoning_content = getattr(msg, "reasoning_content", None) or getattr(msg, "reasoning", None)
     answer_content = msg.content or ""
+
+    # If no explicit reasoning field, try to parse thinking from content
+    if not reasoning_content:
+        # Format 1: <think>reasoning</think>answer (MiniMax, Qwen, etc.)
+        # Use regex to handle optional leading whitespace
+        match = re.match(r"\s*<think>(.*?)</think>\s*(.*)", answer_content, re.DOTALL)
+        if match:
+            reasoning_content = match.group(1).strip()
+            answer_content = match.group(2).strip()
+        # Format 2: reasoning</think>answer (GLM-4.7 - no opening tag)
+        elif "</think>" in answer_content:
+            parts = answer_content.split("</think>", 1)
+            if len(parts) == 2:
+                reasoning_content = parts[0].strip()
+                answer_content = parts[1].strip()
 
     # Extract token counts
     prompt_tokens = None
@@ -139,8 +157,11 @@ Examples:
         choices=["vllm", "sglang", "trtllm"],
         help="Backend to use (default: vllm)",
     )
-    ap.add_argument("--max-tokens", type=int, default=4096, help="Max tokens (default: 4096)")
+    ap.add_argument("--max-tokens", type=int, default=50000, help="Max tokens (default: 50000)")
     ap.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
+    ap.add_argument(
+        "--frequency-penalty", type=float, default=0.2, help="Frequency penalty (default: 0.2)"
+    )
     ap.add_argument("--host", default="127.0.0.1", help="Server host")
     ap.add_argument("--port", type=int, default=8000, help="Server port")
     ap.add_argument("--server-timeout", type=int, default=600, help="Server startup timeout")
@@ -192,6 +213,10 @@ Examples:
 
     # Auto-detect tensor parallel from GPU count if not specified
     tensor_parallel = args.tensor_parallel or get_gpu_count()
+
+    # Ensure max_model_len is sufficient for max_tokens + input headroom
+    if args.max_model_len is None or args.max_model_len < args.max_tokens:
+        args.max_model_len = max(args.max_tokens + 5000, 65536)
 
     # Setup server
     server = ServerManager(
@@ -279,6 +304,7 @@ Examples:
                     prompt_text=prompt_text,
                     max_tokens=args.max_tokens,
                     temperature=args.temperature,
+                    frequency_penalty=args.frequency_penalty,
                     host=args.host,
                     port=args.port,
                 )
@@ -317,6 +343,7 @@ Examples:
     save_results(results)
     print(f"Results saved to {RESULTS_FILE}")
     print(f"View with: sops {RESULTS_FILE}")
+    print(f"Decrypt to stdout: sops -d {RESULTS_FILE}")
 
 
 if __name__ == "__main__":
