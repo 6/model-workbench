@@ -103,7 +103,8 @@ models:
           # KV cache: ~7.8 GiB/req at 65K ctx, 24.68 GiB available → max 3 concurrent
           # Using 2 for headroom (activations, CUDA graphs, etc.)
           max_num_seqs: 2
-          frequency_penalty: 0.2  # Prevent repetition loops with AWQ quant
+          frequency_penalty: 0.2   # Prevent repetition loops with AWQ quant
+          repetition_penalty: 1.15  # Match GGUF settings (multiplicative penalty)
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:

@@ -195,6 +195,7 @@ def bench_once_openai(
     max_tokens: int,
     temperature: float,
     frequency_penalty: float,
+    repetition_penalty: float,
     backend: str,
     host: str = "127.0.0.1",
     port: int = 8000,
@@ -211,6 +212,7 @@ def bench_once_openai(
         max_tokens: Max tokens to generate
         temperature: Sampling temperature
         frequency_penalty: Frequency penalty
+        repetition_penalty: Repetition penalty (1.0=off, vLLM-specific)
         backend: Backend name ("vllm", "trtllm", "sglang", "exl", "ktransformers")
         host: Server host (for metrics scraping)
         port: Server port (for metrics scraping)
@@ -225,6 +227,11 @@ def bench_once_openai(
     if backend in ("vllm", "trtllm"):
         metrics_before = scrape_prometheus_metrics(host, port, backend)
 
+    # Build extra_body for vLLM-specific params
+    extra_body = {}
+    if repetition_penalty != 1.0:
+        extra_body["repetition_penalty"] = repetition_penalty
+
     t0 = time.perf_counter()
     response = client.chat.completions.create(
         model=model,
@@ -233,6 +240,7 @@ def bench_once_openai(
         temperature=temperature if temperature > 0 else 0.0,
         frequency_penalty=frequency_penalty,
         seed=0,
+        extra_body=extra_body if extra_body else None,
     )
     t1 = time.perf_counter()
     wall = t1 - t0
@@ -497,6 +505,7 @@ def run_benchmark_vllm(
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                args.repetition_penalty,
                 backend="vllm",
                 host=args.host,
                 port=args.port,
@@ -637,6 +646,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                args.repetition_penalty,
                 backend="trtllm",
                 host=args.host,
                 port=args.port,
@@ -794,6 +804,7 @@ def run_benchmark_sglang(
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                args.repetition_penalty,
                 backend="sglang",
             )
             tok_s = r.get("tok_per_s")
@@ -936,6 +947,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                args.repetition_penalty,
                 backend="exl",
             )
             tok_s = r.get("tok_per_s")
@@ -1079,6 +1091,7 @@ def run_benchmark_ktransformers(args, model_path: str, image_path: str | None, i
                 args.max_tokens,
                 args.temperature,
                 args.frequency_penalty,
+                args.repetition_penalty,
                 backend="ktransformers",
             )
             tok_s = r.get("tok_per_s")
@@ -1338,6 +1351,12 @@ def main():
         type=float,
         default=None,
         help="Frequency penalty (0.0-2.0) to reduce repetition. Default: from config or 0.0",
+    )
+    ap.add_argument(
+        "--repetition-penalty",
+        type=float,
+        default=None,
+        help="Repetition penalty (1.0=off, 1.15=mild). vLLM-specific. Default: from config or 1.0",
     )
     ap.add_argument("--iterations", type=int, default=5, help="Number of benchmark iterations")
     ap.add_argument(

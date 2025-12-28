@@ -15,7 +15,8 @@ creation_rules:
     # ^^^ Replace with your age public key from: age-keygen
 
   # Encrypted results (only reasoning and answer fields encrypted)
-  - path_regex: perf/encrypted_results\.yaml$
+  # Matches: perf/2025-12-28_org_model_backend_encrypted.yaml
+  - path_regex: perf/.*_encrypted\.yaml$
     age: age1w9ggad5u74naq4nglacthcrzhgz7zygeeefrdfj78g23ugdhzqeqwjsnj2
     # ^^^ Replace with your age public key from: age-keygen
     encrypted_regex: "^(reasoning|answer)$"

@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from bench_utils import (
     build_chat_messages,
+    detect_model_format,
     extract_repo_id,
     get_gpu_count,
     get_gpu_info,
@@ -38,33 +39,25 @@ from server_manager import ServerManager
 
 from prompts.secret import SecretPromptError, get_secret_prompt, list_secret_prompts
 
-RESULTS_FILE = ROOT / "perf" / "encrypted_results.yaml"
+
+def get_results_filename(repo_id: str, backend: str) -> Path:
+    """Generate results filename matching other benchmark patterns."""
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    # Sanitize repo_id: unsloth/Model-Name -> unsloth_Model-Name
+    safe_repo = repo_id.replace("/", "_")
+    filename = f"{date_str}_{safe_repo}_{backend}_encrypted.yaml"
+    return ROOT / "perf" / filename
 
 
-def load_results() -> dict:
-    """Load existing results (decrypted via SOPS)."""
-    if not RESULTS_FILE.exists():
-        return {"results": []}
-    result = subprocess.run(
-        ["sops", "--decrypt", str(RESULTS_FILE)],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        # File exists but can't decrypt - might be first run or corrupted
-        return {"results": []}
-    return yaml.safe_load(result.stdout) or {"results": []}
-
-
-def save_results(data: dict) -> None:
+def save_results(results_file: Path, data: dict) -> None:
     """Save results with partial encryption (only reasoning/answer fields)."""
-    RESULTS_FILE.parent.mkdir(exist_ok=True)
+    results_file.parent.mkdir(exist_ok=True)
     # Write plaintext first
-    with open(RESULTS_FILE, "w") as f:
+    with open(results_file, "w") as f:
         yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
     # Encrypt in-place (uses .sops.yaml rules for partial encryption)
     result = subprocess.run(
-        ["sops", "--encrypt", "--in-place", str(RESULTS_FILE)],
+        ["sops", "--encrypt", "--in-place", str(results_file)],
         capture_output=True,
         text=True,
     )
@@ -80,11 +73,17 @@ def run_single_prompt(
     max_tokens: int,
     temperature: float,
     frequency_penalty: float,
+    repetition_penalty: float,
     host: str,
     port: int,
 ) -> dict:
     """Run a single prompt and return result with reasoning/answer separated."""
     messages = build_chat_messages(prompt_text, None)  # No image for encrypted prompts
+
+    # Build extra_body for vLLM-specific params
+    extra_body = {}
+    if repetition_penalty != 1.0:
+        extra_body["repetition_penalty"] = repetition_penalty
 
     t0 = time.perf_counter()
     response = client.chat.completions.create(
@@ -94,6 +93,7 @@ def run_single_prompt(
         temperature=temperature if temperature > 0 else 0.0,
         frequency_penalty=frequency_penalty,
         seed=0,
+        extra_body=extra_body if extra_body else None,
     )
     t1 = time.perf_counter()
     wall = t1 - t0
@@ -154,13 +154,19 @@ Examples:
     ap.add_argument(
         "--backend",
         default="vllm",
-        choices=["vllm", "sglang", "trtllm"],
-        help="Backend to use (default: vllm)",
+        choices=["vllm", "sglang", "trtllm", "llama", "exl"],
+        help="Backend to use (default: vllm, auto-detects GGUF->llama)",
     )
     ap.add_argument("--max-tokens", type=int, default=50000, help="Max tokens (default: 50000)")
     ap.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")
     ap.add_argument(
         "--frequency-penalty", type=float, default=0.2, help="Frequency penalty (default: 0.2)"
+    )
+    ap.add_argument(
+        "--repetition-penalty",
+        type=float,
+        default=1.15,
+        help="Repetition penalty (1.0=off, 1.15=mild, default: 1.15)",
     )
     ap.add_argument("--host", default="127.0.0.1", help="Server host")
     ap.add_argument("--port", type=int, default=8000, help="Server port")
@@ -181,6 +187,16 @@ Examples:
     if model_path is None:
         print(f"Model not found: {args.model}")
         sys.exit(1)
+
+    # Auto-detect backend based on model format
+    model_format = detect_model_format(model_path)
+    if args.backend == "vllm":  # Default, may need override
+        if model_format == "gguf":
+            args.backend = "llama"
+            log("Auto-detected GGUF -> using llama.cpp backend")
+        elif model_format == "exl3":
+            args.backend = "exl"
+            log("Auto-detected EXL3 -> using ExLlamaV3 backend")
 
     repo_id = extract_repo_id(model_path)
 
@@ -229,9 +245,21 @@ Examples:
         print(f"Server not running on {args.host}:{args.port} and --no-autostart was set.")
         sys.exit(1)
 
-    # Load existing results
-    results = load_results()
+    # Generate results filename and create fresh results structure
+    results_file = get_results_filename(repo_id, args.backend)
     run_timestamp = datetime.now().isoformat()
+    results = {
+        "timestamp": run_timestamp,
+        "model": repo_id,
+        "backend": args.backend,
+        "config": {
+            "max_tokens": args.max_tokens,
+            "frequency_penalty": args.frequency_penalty,
+            "repetition_penalty": args.repetition_penalty,
+            "temperature": args.temperature,
+        },
+        "prompts": [],
+    }
 
     with server:
         # Start server if needed
@@ -263,6 +291,16 @@ Examples:
                     rebuild=args.rebuild,
                     image_type=image_type,
                 )
+            elif args.backend == "llama":
+                server.start_gguf_backend(
+                    engine=args.backend,
+                    model_path=model_path,
+                    version=backend_version,
+                    rebuild=args.rebuild,
+                )
+            elif args.backend == "exl":
+                print("ExLlamaV3 backend not yet supported in encrypted bench")
+                sys.exit(1)
 
         gpu_info = get_gpu_info(include_memory=True)
         log(
@@ -305,6 +343,7 @@ Examples:
                     max_tokens=args.max_tokens,
                     temperature=args.temperature,
                     frequency_penalty=args.frequency_penalty,
+                    repetition_penalty=args.repetition_penalty,
                     host=args.host,
                     port=args.port,
                 )
@@ -322,11 +361,9 @@ Examples:
             print(f"  answer: {len(result['answer'])} chars")
 
             # Append result
-            results["results"].append(
+            results["prompts"].append(
                 {
-                    "prompt_key": key,
-                    "model": repo_id,
-                    "timestamp": run_timestamp,
+                    "key": key,
                     "stats": {
                         "wall_s": result["wall_s"],
                         "input_tokens": result["input_tokens"],
@@ -340,10 +377,10 @@ Examples:
 
     # Save results
     print()
-    save_results(results)
-    print(f"Results saved to {RESULTS_FILE}")
-    print(f"View with: sops {RESULTS_FILE}")
-    print(f"Decrypt to stdout: sops -d {RESULTS_FILE}")
+    save_results(results_file, results)
+    print(f"Results saved to {results_file}")
+    print(f"View with: sops {results_file}")
+    print(f"Decrypt to stdout: sops -d {results_file}")
 
 
 if __name__ == "__main__":

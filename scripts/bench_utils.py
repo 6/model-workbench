@@ -827,6 +827,8 @@ def resolve_run_config(args):
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
     if getattr(args, "frequency_penalty", None) is None:
         args.frequency_penalty = backend_args.get("frequency_penalty", 0.0)
+    if getattr(args, "repetition_penalty", None) is None:
+        args.repetition_penalty = backend_args.get("repetition_penalty", 1.0)
 
     # llama.cpp CPU offloading args
     if backend == "llama":
