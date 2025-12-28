@@ -44,7 +44,6 @@ from pathlib import Path
 
 import requests
 from bench_utils import (
-    ALL_PROMPTS,
     TEXT_PROMPTS,
     VISION_PROMPTS,
     build_chat_messages,
@@ -73,10 +72,21 @@ from server_manager import ServerManager
 def resolve_prompt(args, is_vision: bool) -> str:
     """Resolve prompt text from args.
 
-    Handles special 'longctx' prompt which loads from file.
+    Handles:
+      - Custom --prompt text
+      - Named prompt sets (short, medium, long, describe, etc.)
+      - Special 'longctx' which loads from file
     """
     if args.prompt:
         return args.prompt
+
+    # Reject encrypted prompts - must use dedicated script
+    if args.prompt_set.startswith("secret:"):
+        raise SystemExit(
+            "Encrypted prompts must be run with run_encrypted_bench.py (runs all prompts together).\n"
+            "Usage: uv run python scripts/run_encrypted_bench.py --model ~/models/..."
+        )
+
     if is_vision:
         return VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
     if args.prompt_set == "longctx":
@@ -1318,8 +1328,8 @@ def main():
     ap.add_argument(
         "--prompt-set",
         default="long",
-        choices=list(ALL_PROMPTS.keys()),
-        help="Prompt set to use (default: long)",
+        help="Prompt set: short, medium, long, describe, analyze, caption, longctx, "
+        "or secret:KEY_NAME for encrypted prompts (default: long)",
     )
     ap.add_argument("--max-tokens", type=int, default=512, help="Max tokens to generate")
     ap.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature")

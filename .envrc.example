@@ -4,3 +4,11 @@ export DEEPEVAL_TELEMETRY_OPT_OUT=YES
 # Hugging Face token for gated models (e.g., Gemma, Llama)
 # Get your token at: https://huggingface.co/settings/tokens
 export HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx
+
+# SOPS age key for encrypted benchmark prompts
+# Setup:
+#   1. Install: brew install sops age
+#   2. Generate key: age-keygen -o ~/.config/sops/age/keys.txt
+#   3. Update .sops.yaml with your public key (age1...)
+#   4. Uncomment the line below
+export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"

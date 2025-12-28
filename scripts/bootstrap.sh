@@ -78,6 +78,52 @@ else
   fi
 fi
 
+# ============================================================================
+# SOPS + age (optional, for encrypted benchmarks)
+# ============================================================================
+# Encrypted prompts prevent training data contamination.
+# Skip this section if you don't need encrypted benchmarks.
+# ============================================================================
+
+SOPS_OK=false
+AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+
+if command -v sops >/dev/null 2>&1 && command -v age >/dev/null 2>&1; then
+  echo "SOPS + age: installed"
+
+  # Check if age key exists
+  if [[ -f "$AGE_KEY_FILE" ]]; then
+    echo "Age key: $AGE_KEY_FILE"
+    SOPS_OK=true
+
+    # Extract public key and check if .sops.yaml is configured
+    AGE_PUBLIC_KEY=$(grep -o 'age1[a-z0-9]*' "$AGE_KEY_FILE" | head -1)
+    if grep -q "age1xxxx" "$ROOT_DIR/.sops.yaml" 2>/dev/null; then
+      echo
+      echo "NOTE: .sops.yaml has placeholder key. Update it with your public key:"
+      echo "  Public key: $AGE_PUBLIC_KEY"
+      echo "  Edit .sops.yaml and replace 'age1xxxx...' with the above key"
+      echo
+    fi
+  else
+    echo "Age key: not found"
+    echo
+    echo "Generate an age key with:"
+    echo "  mkdir -p ~/.config/sops/age"
+    echo "  age-keygen -o ~/.config/sops/age/keys.txt"
+    echo
+    echo "Then add to .envrc:"
+    echo "  export SOPS_AGE_KEY_FILE=\"\$HOME/.config/sops/age/keys.txt\""
+    echo
+  fi
+else
+  echo "SOPS + age: not installed (optional, for encrypted benchmarks)"
+  echo
+  echo "To enable encrypted benchmarks, install sops and age:"
+  echo "  brew install sops age"
+  echo
+fi
+
 echo "[1/2] Syncing Python environment..."
 uv sync --all-extras
 
@@ -90,6 +136,11 @@ echo
 echo "Run benchmarks with:"
 echo "  uv run python scripts/run_bench.py --model ~/models/..."
 echo
+if $SOPS_OK; then
+echo "Run encrypted benchmarks with:"
+echo "  uv run python scripts/run_encrypted_bench.py --model ~/models/..."
+echo
+fi
 echo "Backend versions are configured in config/models.yaml:"
 echo "  defaults.vllm_version  - for safetensors models"
 echo "  defaults.llama_version - for GGUF models"

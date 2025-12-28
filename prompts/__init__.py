@@ -59,3 +59,18 @@ def get_longctx_prompt() -> str:
         )
     code = code_file.read_text()
     return f"Analyze this Python code and summarize the key data structures and their use cases:\n\n```python\n{code}\n```"
+
+
+# ----------------------------
+# Secret (encrypted) prompts
+# ----------------------------
+
+from prompts.secret import (
+    get_secret_prompt as get_secret_prompt,
+)
+from prompts.secret import (
+    list_secret_prompts as list_secret_prompts,
+)
+from prompts.secret import (
+    prompt_hash as prompt_hash,
+)
