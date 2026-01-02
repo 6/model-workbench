@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-01-02T19:38:22.734553",
+  "repo_id": "cyankiwi/IQuest-Coder-V1-40B-Instruct-AWQ-8bit",
+  "model_ref": "~/models/cyankiwi/IQuest-Coder-V1-40B-Instruct-AWQ-8bit",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94910
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94910
+      }
+    ],
+    "memory_used_mib": 189820,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 65536,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "pr-31575"
+  },
+  "iterations": [
+    {
+      "wall_s": 4.5903318449991275,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache (Key-Value cache) stores previously computed attention key-value pairs during autoregressive generation, avoiding recomputation for tokens already processed.\n\n## Why It Matters for Long Context\n\n**Without KV Cache:**\n- O(n\u00b2) memory for n tokens\n- Must recompute all attention for each new token\n- Impossible to process documents > few thousand tokens\n\n**With KV Cache:**\n- O(n) memory growth\n- Constant-time lookup for cached positions\n- Enables processing of documents with 100K+ tokens\n\n## Key Benefits\n1. **Memory efficiency**: Stores only incremental state\n2. **Computational savings**: Avoids redundant attention computation\n3. **Enables long-context models**: Makes 100K+ token contexts practical\n\n## Trade-offs\n- Increases inference latency (cache management overhead)\n- Requires careful implementation for variable-length sequences\n- Memory fragmentation with many short requests\n\nKV cache is essential infrastructure for scaling language models to real-world document processing.",
+      "prompt_tokens": 46,
+      "generated_tokens": 249,
+      "tok_per_s": 54.244444281576186,
+      "ttft_ms": 21.439552307128906,
+      "prefill_ms": 20.620068999960495,
+      "generation_ms": 4563.433846999942,
+      "generation_tok_per_s": 54.56417433632695
+    },
+    {
+      "wall_s": 4.586723996000728,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache (Key-Value cache) stores previously computed attention key-value pairs during autoregressive generation, avoiding recomputation for tokens already processed.\n\n## Why It Matters for Long Context\n\n**Without KV Cache:**\n- O(n\u00b2) memory for n tokens\n- Must recompute all attention for each new token\n- Impossible to process documents > few thousand tokens\n\n**With KV Cache:**\n- O(n) memory growth\n- Constant-time lookup for cached positions\n- Enables processing of documents with 100K+ tokens\n\n## Key Benefits\n1. **Memory efficiency**: Stores only incremental state\n2. **Computational savings**: Avoids redundant attention computation\n3. **Enables long-context models**: Makes 100K+ token contexts practical\n\n## Trade-offs\n- Increases inference latency (cache management overhead)\n- Requires careful implementation for variable-length sequences\n- Memory fragmentation with many short requests\n\nKV cache is essential infrastructure for scaling language models to real-world document processing.",
+      "prompt_tokens": 46,
+      "generated_tokens": 249,
+      "tok_per_s": 54.28711215610726,
+      "ttft_ms": 20.784854888916016,
+      "prefill_ms": 20.281202000660414,
+      "generation_ms": 4561.077149000084,
+      "generation_tok_per_s": 54.59236751884097
+    },
+    {
+      "wall_s": 4.586600940999233,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache (Key-Value cache) stores previously computed attention key-value pairs during autoregressive generation, avoiding recomputation for tokens already processed.\n\n## Why It Matters for Long Context\n\n**Without KV Cache:**\n- O(n\u00b2) memory for n tokens\n- Must recompute all attention for each new token\n- Impossible to process documents > few thousand tokens\n\n**With KV Cache:**\n- O(n) memory growth\n- Constant-time lookup for cached positions\n- Enables processing of documents with 100K+ tokens\n\n## Key Benefits\n1. **Memory efficiency**: Stores only incremental state\n2. **Computational savings**: Avoids redundant attention computation\n3. **Enables long-context models**: Makes 100K+ token contexts practical\n\n## Trade-offs\n- Increases inference latency (cache management overhead)\n- Requires careful implementation for variable-length sequences\n- Memory fragmentation with many short requests\n\nKV cache is essential infrastructure for scaling language models to real-world document processing.",
+      "prompt_tokens": 46,
+      "generated_tokens": 249,
+      "tok_per_s": 54.28856863787959,
+      "ttft_ms": 20.847558975219727,
+      "prefill_ms": 20.291982000344433,
+      "generation_ms": 4561.052678999658,
+      "generation_tok_per_s": 54.5926604063278
+    },
+    {
+      "wall_s": 4.586593134000395,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache (Key-Value cache) stores previously computed attention key-value pairs during autoregressive generation, avoiding recomputation for tokens already processed.\n\n## Why It Matters for Long Context\n\n**Without KV Cache:**\n- O(n\u00b2) memory for n tokens\n- Must recompute all attention for each new token\n- Impossible to process documents > few thousand tokens\n\n**With KV Cache:**\n- O(n) memory growth\n- Constant-time lookup for cached positions\n- Enables processing of documents with 100K+ tokens\n\n## Key Benefits\n1. **Memory efficiency**: Stores only incremental state\n2. **Computational savings**: Avoids redundant attention computation\n3. **Enables long-context models**: Makes 100K+ token contexts practical\n\n## Trade-offs\n- Increases inference latency (cache management overhead)\n- Requires careful implementation for variable-length sequences\n- Memory fragmentation with many short requests\n\nKV cache is essential infrastructure for scaling language models to real-world document processing.",
+      "prompt_tokens": 46,
+      "generated_tokens": 249,
+      "tok_per_s": 54.28866104433028,
+      "ttft_ms": 20.88308334350586,
+      "prefill_ms": 20.31929399981891,
+      "generation_ms": 4560.950586000217,
+      "generation_tok_per_s": 54.593882416595896
+    },
+    {
+      "wall_s": 4.588165965999906,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache (Key-Value cache) stores previously computed attention key-value pairs during autoregressive generation, avoiding recomputation for tokens already processed.\n\n## Why It Matters for Long Context\n\n**Without KV Cache:**\n- O(n\u00b2) memory for n tokens\n- Must recompute all attention for each new token\n- Impossible to process documents > few thousand tokens\n\n**With KV Cache:**\n- O(n) memory growth\n- Constant-time lookup for cached positions\n- Enables processing of documents with 100K+ tokens\n\n## Key Benefits\n1. **Memory efficiency**: Stores only incremental state\n2. **Computational savings**: Avoids redundant attention computation\n3. **Enables long-context models**: Makes 100K+ token contexts practical\n\n## Trade-offs\n- Increases inference latency (cache management overhead)\n- Requires careful implementation for variable-length sequences\n- Memory fragmentation with many short requests\n\nKV cache is essential infrastructure for scaling language models to real-world document processing.",
+      "prompt_tokens": 46,
+      "generated_tokens": 249,
+      "tok_per_s": 54.270050788307756,
+      "ttft_ms": 21.09980583190918,
+      "prefill_ms": 20.2854600001956,
+      "generation_ms": 4562.48976400002,
+      "generation_tok_per_s": 54.57546490618251
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.586723996000728,
+    "median_tok_per_s": 54.28711215610726,
+    "median_ttft_ms": 20.88308334350586,
+    "median_generation_tok_per_s": 54.59236751884097
+  }
+}

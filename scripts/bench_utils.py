@@ -708,6 +708,10 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
             result["env"] = model_backend_cfg["env"]
         if model_backend_cfg.get("extra_args"):
             result["extra_args"] = model_backend_cfg["extra_args"]
+        if model_backend_cfg.get("pr_number"):
+            result["pr_number"] = model_backend_cfg["pr_number"]
+        if model_backend_cfg.get("pr_overlay"):
+            result["pr_overlay"] = model_backend_cfg["pr_overlay"]
 
     return result
 

@@ -273,6 +273,10 @@ def main():
     # Resolve docker_image (CLI override takes precedence over config)
     docker_image = args.docker_image or backend_cfg.get("docker_image")
 
+    # Resolve PR number and PR overlay for unmerged PRs
+    pr_number = backend_cfg.get("pr_number")
+    pr_overlay = backend_cfg.get("pr_overlay", False)
+
     # Create server manager
     server = ServerManager(
         host=args.host,
@@ -326,11 +330,11 @@ def main():
             max_num_batched_tokens=args.max_num_batched_tokens,
             cpu_offload_gb=args.cpu_offload_gb,
             max_num_seqs=args.max_num_seqs,
-            env_vars=args.env_vars,
-            extra_vllm_args=args.extra_vllm_args,
             rebuild=args.rebuild,
             image_type=image_type,
             image_override=docker_image,
+            pr_number=pr_number,
+            pr_overlay=pr_overlay,
         )
     elif backend == "trtllm":
         server.start_trtllm(

@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-01-02T19:50:03.149816",
+  "repo_id": "Firworks/IQuest-Coder-V1-40B-Instruct-nvfp4",
+  "model_ref": "~/models/Firworks/IQuest-Coder-V1-40B-Instruct-nvfp4",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94720
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94720
+      }
+    ],
+    "memory_used_mib": 189440,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": 32768,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "pr-31575"
+  },
+  "iterations": [
+    {
+      "wall_s": 5.264615580000282,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache stores **key-value pairs from previous token computations** to avoid recomputing attention for already-processed tokens. Instead of recalculating attention for all N tokens every new token, the model only computes for the new token against cached KVs.\n\n## Why It Matters for Long Context\n\n**Without KV cache:**\n- O(N\u00b2) memory for attention matrices\n- O(N\u00b2) computation per new token\n- Impossible to scale beyond ~1,000 tokens\n\n**With KV cache:**\n- O(N) memory (store only KV pairs)\n- O(N) computation per new token\n- Enables 100K+ token contexts\n\n## Key Insight\nAttention is **associative**: Q @ K\u1d40 doesn't need recomputation if K,V unchanged. KV cache exploits this to make LLM inference tractable for long contexts.\n\nIt's essentially **memoizing attention computations**, turning quadratic scaling into linear.",
+      "prompt_tokens": 46,
+      "generated_tokens": 239,
+      "tok_per_s": 45.39742671961382,
+      "ttft_ms": 23.69546890258789,
+      "prefill_ms": 22.94018100019457,
+      "generation_ms": 5235.758136999721,
+      "generation_tok_per_s": 45.64763951013132
+    },
+    {
+      "wall_s": 5.260000082000261,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache stores **key-value pairs from previous token computations** to avoid recomputing attention for already-processed tokens. Instead of recalculating attention for all N tokens every new token, the model only computes for the new token against cached KVs.\n\n## Why It Matters for Long Context\n\n**Without KV cache:**\n- O(N\u00b2) memory for attention matrices\n- O(N\u00b2) computation per new token\n- Impossible to scale beyond ~1,000 tokens\n\n**With KV cache:**\n- O(N) memory (store only KV pairs)\n- O(N) computation per new token\n- Enables 100K+ token contexts\n\n## Key Insight\nAttention is **associative**: Q @ K\u1d40 doesn't need recomputation if K,V unchanged. KV cache exploits this to make LLM inference tractable for long contexts.\n\nIt's essentially **memoizing attention computations**, turning quadratic scaling into linear.",
+      "prompt_tokens": 46,
+      "generated_tokens": 239,
+      "tok_per_s": 45.43726164907466,
+      "ttft_ms": 23.07415008544922,
+      "prefill_ms": 22.640568000497296,
+      "generation_ms": 5232.140882999374,
+      "generation_tok_per_s": 45.679198122622225
+    },
+    {
+      "wall_s": 5.258387898999899,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache stores **key-value pairs from previous token computations** to avoid recomputing attention for already-processed tokens. Instead of recalculating attention for all N tokens every new token, the model only computes for the new token against cached KVs.\n\n## Why It Matters for Long Context\n\n**Without KV cache:**\n- O(N\u00b2) memory for attention matrices\n- O(N\u00b2) computation per new token\n- Impossible to scale beyond ~1,000 tokens\n\n**With KV cache:**\n- O(N) memory (store only KV pairs)\n- O(N) computation per new token\n- Enables 100K+ token contexts\n\n## Key Insight\nAttention is **associative**: Q @ K\u1d40 doesn't need recomputation if K,V unchanged. KV cache exploits this to make LLM inference tractable for long contexts.\n\nIt's essentially **memoizing attention computations**, turning quadratic scaling into linear.",
+      "prompt_tokens": 46,
+      "generated_tokens": 239,
+      "tok_per_s": 45.45119237883834,
+      "ttft_ms": 23.168563842773438,
+      "prefill_ms": 22.62949799933267,
+      "generation_ms": 5230.324977000237,
+      "generation_tok_per_s": 45.69505739145761
+    },
+    {
+      "wall_s": 5.257300492000468,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache stores **key-value pairs from previous token computations** to avoid recomputing attention for already-processed tokens. Instead of recalculating attention for all N tokens every new token, the model only computes for the new token against cached KVs.\n\n## Why It Matters for Long Context\n\n**Without KV cache:**\n- O(N\u00b2) memory for attention matrices\n- O(N\u00b2) computation per new token\n- Impossible to scale beyond ~1,000 tokens\n\n**With KV cache:**\n- O(N) memory (store only KV pairs)\n- O(N) computation per new token\n- Enables 100K+ token contexts\n\n## Key Insight\nAttention is **associative**: Q @ K\u1d40 doesn't need recomputation if K,V unchanged. KV cache exploits this to make LLM inference tractable for long contexts.\n\nIt's essentially **memoizing attention computations**, turning quadratic scaling into linear.",
+      "prompt_tokens": 46,
+      "generated_tokens": 239,
+      "tok_per_s": 45.46059339078363,
+      "ttft_ms": 23.220300674438477,
+      "prefill_ms": 22.654995000266354,
+      "generation_ms": 5229.381500000272,
+      "generation_tok_per_s": 45.703301623717365
+    },
+    {
+      "wall_s": 5.254959362000591,
+      "output_text": "# KV Cache: Technical Overview\n\n## What It Is\nKV cache stores **key-value pairs from previous token computations** to avoid recomputing attention for already-processed tokens. Instead of recalculating attention for all N tokens every new token, the model only computes for the new token against cached KVs.\n\n## Why It Matters for Long Context\n\n**Without KV cache:**\n- O(N\u00b2) memory for attention matrices\n- O(N\u00b2) computation per new token\n- Impossible to scale beyond ~1,000 tokens\n\n**With KV cache:**\n- O(N) memory (store only KV pairs)\n- O(N) computation per new token\n- Enables 100K+ token contexts\n\n## Key Insight\nAttention is **associative**: Q @ K\u1d40 doesn't need recomputation if K,V unchanged. KV cache exploits this to make LLM inference tractable for long contexts.\n\nIt's essentially **memoizing attention computations**, turning quadratic scaling into linear.",
+      "prompt_tokens": 46,
+      "generated_tokens": 239,
+      "tok_per_s": 45.480846479659824,
+      "ttft_ms": 23.160696029663086,
+      "prefill_ms": 22.61365700087481,
+      "generation_ms": 5227.082609999343,
+      "generation_tok_per_s": 45.723402102502845
+    }
+  ],
+  "summary": {
+    "median_wall_s": 5.258387898999899,
+    "median_tok_per_s": 45.45119237883834,
+    "median_ttft_ms": 23.168563842773438,
+    "median_generation_tok_per_s": 45.69505739145761
+  }
+}

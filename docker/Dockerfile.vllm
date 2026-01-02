@@ -1,67 +1,131 @@
 # vLLM Server Docker Image
-# Build with: docker build -f docker/Dockerfile.vllm --build-arg VERSION=v0.12.0 -t model-bench-vllm:v0.12.0 .
 #
-# VERSION can be:
-#   - Release tag: v0.12.0, v0.11.0, v0.8.0
-#   - Commit SHA: abc123def (7+ hex chars)
+# Two build modes:
+#
+# 1. FULL BUILD (default, ~20 min):
+#    docker build -f docker/Dockerfile.vllm --build-arg VERSION=v0.13.0 -t model-bench-vllm:v0.13.0 .
+#
+# 2. PR OVERLAY (fast, ~30 sec) - for Python-only PRs:
+#    docker build -f docker/Dockerfile.vllm \
+#      --build-arg BASE_IMAGE=vllm/vllm-openai:nightly \
+#      --build-arg PR_OVERLAY_ONLY=true \
+#      --build-arg PR_NUMBER=31575 \
+#      --build-arg VERSION=pr-31575 \
+#      -t model-bench-vllm:pr-31575 .
+#
+# VERSION can be: release tag (v0.13.0), commit SHA (abc123def), or PR ref (pr-31575)
 
-ARG CUDA_VERSION=12.8.0
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04
+# === Build args for mode selection ===
+ARG BASE_IMAGE=nvidia/cuda:12.8.0-devel-ubuntu24.04
+ARG PR_OVERLAY_ONLY=false
 
-# Required: version to checkout (release tag or commit SHA)
+FROM ${BASE_IMAGE}
+
+# Re-declare args after FROM
 ARG VERSION
+ARG PR_NUMBER
+ARG PR_OVERLAY_ONLY
+
+# Validate VERSION is provided
 RUN test -n "$VERSION" || (echo "ERROR: VERSION build-arg is required" && exit 1)
 
 # Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    python3 \
-    python3-pip \
-    python3-dev \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# =============================================================================
+# PR OVERLAY MODE (fast path)
+# =============================================================================
+# When PR_OVERLAY_ONLY=true, BASE_IMAGE should be vllm/vllm-openai:nightly
+# which has vLLM pre-installed at /usr/local/lib/python3.12/dist-packages/vllm/
+# We fetch PR files and overlay them onto the installed package.
 
-# Create symlink for python
-RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN if [ "$PR_OVERLAY_ONLY" = "true" ] && [ -n "$PR_NUMBER" ]; then \
+      echo "=== PR OVERLAY MODE ===" && \
+      echo "Overlaying PR #${PR_NUMBER} onto prebuilt vLLM..." && \
+      apt-get update && apt-get install -y --no-install-recommends git && \
+      rm -rf /var/lib/apt/lists/* && \
+      cd /tmp && \
+      git init vllm-pr && cd vllm-pr && \
+      git remote add origin https://github.com/vllm-project/vllm.git && \
+      git fetch origin pull/${PR_NUMBER}/head:pr --depth=1 && \
+      git checkout pr -- vllm/model_executor/models/ && \
+      cp -rv vllm/model_executor/models/* \
+        /usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/ && \
+      cd / && rm -rf /tmp/vllm-pr && \
+      echo "PR overlay complete."; \
+    fi
 
-# Upgrade pip
-RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+# =============================================================================
+# FULL BUILD MODE (slow path)
+# =============================================================================
+# When PR_OVERLAY_ONLY is false (default), do full compilation from source.
 
-# Install PyTorch (CUDA 12.8)
-RUN pip3 install --no-cache-dir \
-    torch==2.5.1 \
-    --index-url https://download.pytorch.org/whl/cu128
+# Install system dependencies (full build only)
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        python3 \
+        python3-pip \
+        python3-dev \
+        build-essential \
+      && rm -rf /var/lib/apt/lists/*; \
+    fi
 
-# Clone vLLM repository
-WORKDIR /opt
-RUN git clone https://github.com/vllm-project/vllm.git
+# Create symlink for python (full build only)
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      ln -sf /usr/bin/python3 /usr/bin/python; \
+    fi
 
-# Checkout specific version
-WORKDIR /opt/vllm
-RUN git checkout ${VERSION}
+# Note: Don't upgrade pip/setuptools/wheel - they're installed by apt and can't be
+# uninstalled by pip (RECORD file not found). System versions are sufficient.
 
-# Install vLLM from source
+# Install PyTorch (full build only)
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      pip3 install --no-cache-dir --break-system-packages \
+        torch==2.9.1 \
+        --index-url https://download.pytorch.org/whl/cu128; \
+    fi
+
+# Clone vLLM repository (full build only)
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      cd /opt && git clone https://github.com/vllm-project/vllm.git; \
+    fi
+
+# Checkout specific version or fetch PR ref (full build only)
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      cd /opt/vllm && \
+      if [ -n "$PR_NUMBER" ]; then \
+        echo "Fetching PR #${PR_NUMBER}..." && \
+        git fetch origin pull/${PR_NUMBER}/head:pr-${PR_NUMBER} && \
+        git checkout pr-${PR_NUMBER}; \
+      else \
+        git checkout ${VERSION}; \
+      fi; \
+    fi
+
+# Install vLLM from source (full build only)
 # Note: This takes a while due to CUDA kernel compilation
-RUN pip3 install --no-cache-dir -e .
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      cd /opt/vllm && \
+      pip3 install --no-cache-dir --break-system-packages -e .; \
+    fi
 
-# Install additional dependencies for benchmarking
-RUN pip3 install --no-cache-dir \
-    transformers \
-    tokenizers \
-    accelerate \
-    safetensors
+# Install additional dependencies for benchmarking (full build only)
+RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
+      pip3 install --no-cache-dir --break-system-packages \
+        transformers \
+        tokenizers \
+        accelerate \
+        safetensors; \
+    fi
 
-# Expose default port
+# =============================================================================
+# Common configuration
+# =============================================================================
+
 EXPOSE 8000
-
-# Set working directory
 WORKDIR /workspace
 
 # Default entrypoint: vLLM OpenAI-compatible server
-ENTRYPOINT ["python", "-m", "vllm.entrypoints.openai.api_server"]
-
-# Default arguments (can be overridden)
+ENTRYPOINT ["python3", "-m", "vllm.entrypoints.openai.api_server"]
 CMD ["--host", "0.0.0.0", "--port", "8000"]

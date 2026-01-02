@@ -83,13 +83,21 @@ def _image_exists_local(image_name: str) -> bool:
         return False
 
 
-def _build_image(engine: str, version: str, force: bool = False) -> str:
+def _build_image(
+    engine: str,
+    version: str,
+    force: bool = False,
+    pr_number: int | None = None,
+    pr_overlay: bool = False,
+) -> str:
     """Build Docker image for engine and version.
 
     Args:
         engine: 'vllm', 'llama', etc.
         version: Version tag or commit SHA
         force: If True, rebuild even if image exists
+        pr_number: Optional PR number for unmerged PRs (fetches PR ref)
+        pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
 
     Returns:
         Image name that was built
@@ -127,6 +135,17 @@ def _build_image(engine: str, version: str, force: bool = False) -> str:
         [
             "--build-arg",
             f"VERSION={version}",
+        ]
+    )
+    # PR overlay mode: use prebuilt nightly image + overlay PR files (fast)
+    if pr_overlay and pr_number:
+        cmd.extend(["--build-arg", "BASE_IMAGE=vllm/vllm-openai:nightly"])
+        cmd.extend(["--build-arg", "PR_OVERLAY_ONLY=true"])
+        log("Using PR overlay mode (fast): nightly base + PR files")
+    if pr_number:
+        cmd.extend(["--build-arg", f"PR_NUMBER={pr_number}"])
+    cmd.extend(
+        [
             "-t",
             image_name,
             str(ROOT),
@@ -631,6 +650,8 @@ def ensure_image(
     rebuild: bool = False,
     image_type: str = "build",
     image_override: str | None = None,
+    pr_number: int | None = None,
+    pr_overlay: bool = False,
 ) -> str:
     """Ensure Docker image exists, building or pulling as needed.
 
@@ -640,6 +661,8 @@ def ensure_image(
         rebuild: Force rebuild/repull even if exists
         image_type: 'prebuilt' to use official images, 'build' to build from source
         image_override: Direct image name to use (highest priority, skips build/prebuilt logic)
+        pr_number: Optional PR number for unmerged PRs (fetches PR ref)
+        pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
 
     Returns:
         Image name
@@ -677,4 +700,4 @@ def ensure_image(
         return image_name
 
     # Build from source (default for llama, optional for vllm)
-    return _build_image(engine, version, force=rebuild)
+    return _build_image(engine, version, force=rebuild, pr_number=pr_number, pr_overlay=pr_overlay)

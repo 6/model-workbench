@@ -12,7 +12,7 @@ defaults:
       version: v0.13.0
       image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
       args:
-        gpu_memory_utilization: 0.98  # Dedicated inference GPUs, no display
+        gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
         max_model_len: 65536
       # Model-specific CLI args (pattern is regex matched against model path)
       model_patterns:
@@ -337,3 +337,24 @@ models:
   #- repo_id: unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF
   #  include:
   #    - "Qwen3-Coder-30B-A3B-Instruct-UD-Q4_K_XL.gguf"
+
+  # IQuest-Coder models - require vLLM PR #31575 (not yet merged)
+  # https://github.com/vllm-project/vllm/pull/31575
+  # Uses PR overlay mode: nightly vLLM + PR files (~30s build vs ~20min full)
+  - repo_id: cyankiwi/IQuest-Coder-V1-40B-Instruct-AWQ-8bit
+    backends:
+      vllm:
+        version: pr-31575
+        pr_number: 31575
+        pr_overlay: true  # Fast mode: overlay PR files onto nightly image
+        image_type: build
+
+  - repo_id: Firworks/IQuest-Coder-V1-40B-Instruct-nvfp4
+    backends:
+      vllm:
+        version: pr-31575
+        pr_number: 31575
+        pr_overlay: true  # Fast mode: overlay PR files onto nightly image
+        image_type: build
+        args:
+          max_model_len: 32768  # Per model card recommendation

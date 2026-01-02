@@ -53,6 +53,7 @@ from bench_utils import (
     extract_revision_from_path,
     find_mmproj,
     get_gpu_info,
+    get_model_backend_config,
     get_model_backend_version,
     handle_container_cleanup,
     med,
@@ -370,8 +371,11 @@ def run_benchmark_vllm(
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, "vllm")
+    # Resolve backend version, PR number, and PR overlay from config or CLI
+    backend_cfg = get_model_backend_config(args.model, "vllm")
+    backend_version = args.backend_version or backend_cfg.get("version")
+    pr_number = backend_cfg.get("pr_number")
+    pr_overlay = backend_cfg.get("pr_overlay", False)
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
@@ -427,6 +431,8 @@ def run_benchmark_vllm(
                 rebuild=args.rebuild,
                 image_type=image_type,
                 image_override=docker_image,
+                pr_number=pr_number,
+                pr_overlay=pr_overlay,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
