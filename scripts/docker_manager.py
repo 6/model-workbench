@@ -240,6 +240,8 @@ def build_vllm_docker_cmd(
     max_num_batched_tokens: int | None = None,
     cpu_offload_gb: float | None = None,
     max_num_seqs: int | None = None,
+    enable_expert_parallel: bool = False,
+    enforce_eager: bool = False,
     env_vars: dict[str, str] | None = None,
     extra_vllm_args: list[str] | None = None,
 ) -> list[str]:
@@ -275,6 +277,10 @@ def build_vllm_docker_cmd(
         cmd += ["--cpu-offload-gb", str(cpu_offload_gb)]
     if max_num_seqs is not None:
         cmd += ["--max-num-seqs", str(max_num_seqs)]
+    if enable_expert_parallel:
+        cmd += ["--enable-expert-parallel"]
+    if enforce_eager:
+        cmd += ["--enforce-eager"]
 
     # Model-specific flags from config
     cmd += _get_model_specific_args(model_path)

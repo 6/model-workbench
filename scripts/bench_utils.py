@@ -808,6 +808,11 @@ def resolve_run_config(args):
         args.cpu_offload_gb = backend_args.get("cpu_offload_gb")
     if getattr(args, "max_num_seqs", None) is None:
         args.max_num_seqs = backend_args.get("max_num_seqs")
+    # For boolean flags, CLI takes priority; if not set, check config
+    if not getattr(args, "enable_expert_parallel", False):
+        args.enable_expert_parallel = backend_args.get("enable_expert_parallel", False)
+    if not getattr(args, "enforce_eager", False):
+        args.enforce_eager = backend_args.get("enforce_eager", False)
     # Resolve env vars and extra args from config (no CLI override)
     if not hasattr(args, "env_vars") or args.env_vars is None:
         args.env_vars = backend_cfg.get("env")

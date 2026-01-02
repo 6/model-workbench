@@ -422,6 +422,8 @@ def run_benchmark_vllm(
                 max_num_batched_tokens=args.max_num_batched_tokens,
                 cpu_offload_gb=args.cpu_offload_gb,
                 max_num_seqs=args.max_num_seqs,
+                enable_expert_parallel=args.enable_expert_parallel,
+                enforce_eager=args.enforce_eager,
                 env_vars=args.env_vars,
                 extra_vllm_args=args.extra_vllm_args,
                 rebuild=args.rebuild,
@@ -1413,6 +1415,16 @@ def main():
         type=int,
         default=None,
         help="Max concurrent sequences (default: from config or vLLM default)",
+    )
+    vllm_group.add_argument(
+        "--enable-expert-parallel",
+        action="store_true",
+        help="Enable expert parallelism for MoE models (e.g., MiniMax M2)",
+    )
+    vllm_group.add_argument(
+        "--enforce-eager",
+        action="store_true",
+        help="Disable CUDA graphs (slower but more compatible)",
     )
 
     # llama.cpp-specific options (defaults from config, CLI overrides)

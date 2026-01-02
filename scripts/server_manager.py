@@ -250,6 +250,8 @@ class ServerManager:
         max_num_batched_tokens: int | None = None,
         cpu_offload_gb: float | None = None,
         max_num_seqs: int | None = None,
+        enable_expert_parallel: bool = False,
+        enforce_eager: bool = False,
         env_vars: dict[str, str] | None = None,
         extra_vllm_args: list[str] | None = None,
         rebuild: bool = False,
@@ -267,6 +269,8 @@ class ServerManager:
             max_num_batched_tokens: Max batched tokens (optional)
             cpu_offload_gb: CPU offload in GB per GPU (optional)
             max_num_seqs: Max concurrent sequences (optional)
+            enable_expert_parallel: Enable expert parallelism for MoE models (optional)
+            enforce_eager: Disable CUDA graphs for compatibility (optional)
             env_vars: Environment variables for Docker container (optional)
             extra_vllm_args: Extra vLLM CLI arguments (optional)
             rebuild: Force rebuild image even if cached
@@ -300,6 +304,8 @@ class ServerManager:
             max_num_batched_tokens=max_num_batched_tokens,
             cpu_offload_gb=cpu_offload_gb,
             max_num_seqs=max_num_seqs,
+            enable_expert_parallel=enable_expert_parallel,
+            enforce_eager=enforce_eager,
             env_vars=env_vars,
             extra_vllm_args=extra_vllm_args,
         )

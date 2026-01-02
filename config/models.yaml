@@ -92,6 +92,18 @@ models:
           kt_method: FP8        # M2.1 uses native FP8 weights
 
   - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
+    backends:
+      vllm:
+        args:
+          max_model_len: 50000
+          max_num_seqs: 2
+
+  - repo_id: QuantTrio/MiniMax-M2.1-AWQ
+    backends:
+      vllm:
+        args:
+          max_num_seqs: 2
+          max_model_len: 50000
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
