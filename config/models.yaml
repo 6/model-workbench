@@ -6,12 +6,12 @@ defaults:
     primary: ~/models              # Default for safetensors/EXL3/MLX
     gguf: /data/storage2/models    # GGUF models (slower NVMe, more space)
 
-  # Backend defaults: version, args, extra_args, model_patterns, env_vars
+  # Backend defaults: version, extra_args, model_patterns, env_vars
   # Resolution priority (highest to lowest):
   #   1. CLI override (--backend-version, --gpu-memory-utilization, etc.)
   #   2. Model-specific config (models[].backends.{engine}.*)
   #   3. Global defaults below (defaults.backends.{engine}.*)
-  # For extra_args: global extra_args applied first, then model_patterns (allows overrides)
+  # Model-specific extra_args fully replaces global (no merge)
   backends:
     # https://github.com/vllm-project/vllm/releases
     vllm:
@@ -19,13 +19,13 @@ defaults:
       # Use /update-vllm-nightly skill to list available builds and update this
       # For stable Docker Hub image instead: --image-type prebuilt --backend-version v0.13.0
       backend_version: da6709c9fe6965b7348692576ffadeee8439388e
-      args:
-        gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
-        # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
       env_vars:
         # Prevent vLLM from spinning at 100% CPU when idle (blocks scheduling)
         VLLM_SLEEP_WHEN_IDLE: "1"
       extra_args:
+        # 0.98 causes OOM during vLLM sampler warmup
+        - "--gpu-memory-utilization"
+        - "0.95"
         # GPU Direct Storage for faster model loading (requires NVMe + GDS support)
         # See: https://docs.vllm.ai/en/latest/models/extensions/fastsafetensor.html
         - "--load-format"
@@ -90,10 +90,12 @@ defaults:
     llama:
       backend_version: b7531
       image_type: build
-      args:
-        n_gpu_layers: 999
-        jinja: true         # Enable Jinja template engine (required for most models)
-        flash_attn: "on"    # Enable flash attention for Blackwell GPUs
+      extra_args:
+        - "-ngl"
+        - "999"
+        - "--jinja"           # Enable Jinja template engine (required for most models)
+        - "--flash-attn"
+        - "on"                # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
       backend_version: 1.2.0rc7
@@ -102,9 +104,11 @@ defaults:
     sglang:
       backend_version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
       image_type: prebuilt
-      args:
-        mem_fraction_static: 0.98  # Dedicated inference GPUs, no display
-        max_model_len: 65536
+      extra_args:
+        - "--mem-fraction-static"
+        - "0.98"                # Dedicated inference GPUs, no display
+        - "--max-model-len"
+        - "65536"
       model_patterns:
         - pattern: "mimo"
           args:
@@ -120,10 +124,11 @@ defaults:
       backend_version: v0.0.18
       tabby_version: 84bb1ce   # TabbyAPI commit (pinned in Dockerfile default)
       image_type: build
-      args:
-        cache_size: 32768
-        gpu_split_auto: true   # Automatically split model across GPUs
-        # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
+      extra_args:
+        - "--cache-size"
+        - "32768"
+        - "--gpu-split-auto"     # Automatically split model across GPUs
+        # --gpu-split 24,24      # Explicit split in GB per GPU (overrides gpu_split_auto)
 models:
   - repo_id: MiniMaxAI/MiniMax-M2.1
 
@@ -133,10 +138,11 @@ models:
     backend: vllm
     backends:
       vllm:
-        args:
+        extra_args:
           # cu130 devel image has slightly higher memory overhead than cu129
           # 0.91 fits full 196k context (~7GB free per GPU, ~14GB total); 0.90 falls 0.12 GiB short for full context
-          gpu_memory_utilization: 0.91
+          - "--gpu-memory-utilization"
+          - "0.91"
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
@@ -145,16 +151,20 @@ models:
       - "Q6_K/*.gguf"
     backends:
       llama:
-        args:
-          repeat_penalty: 1.15      # Prevent repetition loops in thinking
-          repeat_last_n: 128        # Consider last 128 tokens for penalty
+        extra_args:
+          - "--repeat-penalty"
+          - "1.15"                  # Prevent repetition loops in thinking
+          - "--repeat-last-n"
+          - "128"                   # Consider last 128 tokens for penalty
 
   - repo_id: QuantTrio/GLM-4.7-AWQ
     backends:
       vllm:
-        args:
-          cpu_offload_gb: 15
-          max_model_len: 8192
+        extra_args:
+          - "--cpu-offload-gb"
+          - "15"
+          - "--max-model-len"
+          - "8192"
 
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:
@@ -183,8 +193,9 @@ models:
     backend: sglang           # Only SGLang supports this model
     backends:
       sglang:
-        args:
-          frequency_penalty: 0.2   # Prevent repetition loops with AWQ quant
+        extra_args:
+          - "--frequency-penalty"
+          - "0.2"               # Prevent repetition loops with AWQ quant
 
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 
@@ -245,13 +256,14 @@ models:
     backends:
       vllm:
         # Uses default v0.13.0 (nightly broken: https://github.com/vllm-project/vllm/issues/31957)
-        args:
-          max_num_seqs: 8           # Model card recommendation for stability
-          max_model_len: 262144     # 256K context window
         env_vars:
           # FlashInfer MoE kernel optimized for FP8 - improves throughput
           VLLM_USE_FLASHINFER_MOE_FP8: "1"
         extra_args:
+          - "--max-num-seqs"
+          - "8"                     # Model card recommendation for stability
+          - "--max-model-len"
+          - "262144"                # 256K context window
           # NOTE: --trust-remote-code already added automatically by docker_manager.py
           # Tool calling support (adds overhead, needed for agentic use)
           - "--enable-auto-tool-choice"

@@ -326,6 +326,8 @@ def main():
             max_num_batched_tokens=args.max_num_batched_tokens,
             cpu_offload_gb=args.cpu_offload_gb,
             max_num_seqs=args.max_num_seqs,
+            env_vars=args.env_vars,
+            extra_vllm_args=args.extra_vllm_args,
             rebuild=args.rebuild,
             image_type=image_type,
             image_override=docker_image,

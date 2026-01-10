@@ -642,6 +642,75 @@ def get_model_config(model_arg: str) -> dict | None:
     return None
 
 
+# Mapping of extra_args CLI flags to their parsed dict keys and value types
+# Format: flag -> (dict_key, value_type, takes_value)
+# value_type: "float", "int", "str", "bool" (bool = flag only, no value)
+_EXTRA_ARGS_SPEC = {
+    # vllm/sglang
+    "--gpu-memory-utilization": ("gpu_memory_utilization", "float", True),
+    "--max-model-len": ("max_model_len", "int", True),
+    "--cpu-offload-gb": ("cpu_offload_gb", "float", True),
+    "--max-num-seqs": ("max_num_seqs", "int", True),
+    "--mem-fraction-static": ("mem_fraction_static", "float", True),
+    "--frequency-penalty": ("frequency_penalty", "float", True),
+    # llama.cpp
+    "-ngl": ("n_gpu_layers", "int", True),
+    "--repeat-penalty": ("repeat_penalty", "float", True),
+    "--repeat-last-n": ("repeat_last_n", "int", True),
+    "--jinja": ("jinja", "bool", False),
+    "--flash-attn": ("flash_attn", "str", True),
+    "--cache-type-k": ("cache_type_k", "str", True),
+    "--cache-type-v": ("cache_type_v", "str", True),
+    "--fit": ("fit", "bool", False),
+    # exl
+    "--cache-size": ("cache_size", "int", True),
+    "--gpu-split-auto": ("gpu_split_auto", "bool", False),
+}
+
+
+def _parse_extra_args(extra_args: list[str]) -> tuple[dict, list[str]]:
+    """Parse known args from extra_args list.
+
+    Args:
+        extra_args: List of CLI arguments (e.g., ["--gpu-memory-utilization", "0.95", "--load-format", "fastsafetensors"])
+
+    Returns:
+        Tuple of (known_args_dict, remaining_extra_args) where:
+        - known_args_dict: Dict of parsed known args (e.g., {"gpu_memory_utilization": 0.95})
+        - remaining_extra_args: List of args not in _EXTRA_ARGS_SPEC (e.g., ["--load-format", "fastsafetensors"])
+    """
+    if not extra_args:
+        return {}, []
+
+    known = {}
+    remaining = []
+    i = 0
+    while i < len(extra_args):
+        arg = extra_args[i]
+        if arg in _EXTRA_ARGS_SPEC:
+            key, vtype, takes_value = _EXTRA_ARGS_SPEC[arg]
+            if takes_value:
+                if i + 1 < len(extra_args):
+                    value_str = extra_args[i + 1]
+                    if vtype == "float":
+                        known[key] = float(value_str)
+                    elif vtype == "int":
+                        known[key] = int(value_str)
+                    else:
+                        known[key] = value_str
+                    i += 2
+                    continue
+            else:
+                # Boolean flag (no value)
+                known[key] = True
+                i += 1
+                continue
+        remaining.append(arg)
+        i += 1
+
+    return known, remaining
+
+
 def get_backend_config(engine: str) -> dict:
     """
     Get full config dict for a backend from defaults.backends.{engine}.
@@ -650,7 +719,7 @@ def get_backend_config(engine: str) -> dict:
         engine: 'vllm', 'llama', 'trtllm', 'sglang', etc.
 
     Returns:
-        Backend config dict with keys: version, image_type, args
+        Backend config dict with keys: version, image_type, extra_args, model_patterns, env_vars
     """
     config = _load_config()
     defaults = config.get("defaults", {})
@@ -661,7 +730,6 @@ def get_backend_config(engine: str) -> dict:
         return {
             "backend_version": backend_cfg.get("backend_version"),
             "image_type": backend_cfg.get("image_type", "build"),
-            "args": backend_cfg.get("args", {}),
             "model_patterns": backend_cfg.get("model_patterns", []),
             "env_vars": backend_cfg.get("env_vars", {}),
             "extra_args": backend_cfg.get("extra_args", []),
@@ -670,7 +738,6 @@ def get_backend_config(engine: str) -> dict:
     return {
         "backend_version": None,
         "image_type": "build",
-        "args": {},
         "model_patterns": [],
         "env_vars": {},
         "extra_args": [],
@@ -685,12 +752,14 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
     1. Global backend defaults (defaults.backends.{engine})
     2. Model-specific overrides (model.backends.{engine})
 
+    Model-specific extra_args fully replaces global defaults (no merge).
+
     Args:
         model_arg: Model path or repo_id
         engine: Backend name
 
     Returns:
-        Merged config dict with keys: version, image_type, args
+        Merged config dict with keys: version, image_type, extra_args, model_patterns, env_vars
     """
     # Start with backend defaults
     result = get_backend_config(engine)
@@ -705,17 +774,15 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
     if engine in model_backends:
         model_backend_cfg = model_backends[engine]
         if model_backend_cfg.get("backend_version"):
-            result["version"] = model_backend_cfg["version"]
+            result["backend_version"] = model_backend_cfg["backend_version"]
         if model_backend_cfg.get("image_type"):
             result["image_type"] = model_backend_cfg["image_type"]
         if model_backend_cfg.get("docker_image"):
             result["docker_image"] = model_backend_cfg["docker_image"]
-        if model_backend_cfg.get("args"):
-            # Merge args (model-specific overrides defaults)
-            result["args"] = {**result["args"], **model_backend_cfg["args"]}
-        if model_backend_cfg.get("env"):
-            result["env"] = model_backend_cfg["env"]
+        if model_backend_cfg.get("env_vars"):
+            result["env_vars"] = model_backend_cfg["env_vars"]
         if model_backend_cfg.get("extra_args"):
+            # Model-specific extra_args fully replaces global defaults
             result["extra_args"] = model_backend_cfg["extra_args"]
 
     return result
@@ -780,7 +847,11 @@ def resolve_run_config(args):
 
     # Get merged config for this model + backend
     backend_cfg = get_model_backend_config(args.model, backend)
-    backend_args = backend_cfg.get("args", {})
+
+    # Parse extra_args to extract known args (for CLI override logic)
+    # Remaining args (unknown to us) are passed through to the backend
+    extra_args = backend_cfg.get("extra_args", [])
+    backend_args, remaining_extra_args = _parse_extra_args(extra_args)
 
     # Set default port based on backend
     if getattr(args, "port", None) is None:
@@ -821,9 +892,10 @@ def resolve_run_config(args):
         args.max_num_seqs = backend_args.get("max_num_seqs")
     # Resolve env vars and extra args from config (no CLI override)
     if not hasattr(args, "env_vars") or args.env_vars is None:
-        args.env_vars = backend_cfg.get("env")
+        args.env_vars = backend_cfg.get("env_vars")
     if not hasattr(args, "extra_vllm_args") or args.extra_vllm_args is None:
-        args.extra_vllm_args = backend_cfg.get("extra_args")
+        # Use remaining_extra_args (known args already extracted to backend_args)
+        args.extra_vllm_args = remaining_extra_args if remaining_extra_args else None
     if getattr(args, "n_gpu_layers", None) is None:
         args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
     if getattr(args, "frequency_penalty", None) is None:
