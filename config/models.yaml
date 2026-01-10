@@ -134,9 +134,10 @@ models:
   - repo_id: mratsim/MiniMax-M2.1-FP8-INT4-AWQ
     backends:
       vllm:
-        docker_image: vllm/vllm-openai:nightly
+        docker_image: vllm/vllm-openai:nightly  # nightly gives 96 tok/s vs 87 on v0.13.0
         args:
-          gpu_memory_utilization: 0.93
+          # 0.90 leaves ~10GB per GPU for running small models alongside (VL, Whisper, etc.)
+          gpu_memory_utilization: 0.90
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
