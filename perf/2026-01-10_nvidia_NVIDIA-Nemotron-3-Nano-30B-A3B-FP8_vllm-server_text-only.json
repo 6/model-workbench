@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-01-10T15:16:59.760576",
+  "repo_id": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "model_ref": "~/models/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94728
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 94728
+      }
+    ],
+    "memory_used_mib": 189456,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "max_model_len": null,
+    "gpu_memory_utilization": 0.95,
+    "max_num_batched_tokens": null,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 1.7267061959992134,
+      "output_text": "We need to write a concise technical overview of KV cache and why it matters for long context. Should be concise, technical, explain key-value cache in transformer inference, its role in attention, memory, speed, handling long contexts, etc. Probably bullet points or short paragraphs. Should be clear.\n</think>\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each transformer layer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing them for the entire sequence on each new token. The cache is updated incrementally: when a new token is generated, its K\u2011V pair is appended to the cache, and the attention computation only attends to the *expanded* prefix (cached keys/values + the new token). | 1. **Linear\u2011time attention** \u2013 each new token only attends to O(N) cached vectors, where N is the current length, rather than O(N\u00b2) recomputation of all pairwise attentions. <br>2. **Constant\u2011time per token** \u2013 the cost of generating token *t* is O(1) w.r.t. the number of previously generated tokens, enabling real\u2011time streaming of very long outputs. <br>3. **Memory\u2011efficient** \u2013 the cache stores only two vectors per token per head (\u2248 2\u202f\u00d7\u202fd_model\u202f\u00d7\u202fh\u202f\u00d7\u202fN bytes), which is far smaller than recomputing full attention matrices. <br>4. **Scalable to thousands of tokens** \u2013 because the per\u2011step compute does not grow quadratically, models can maintain context windows of 8\u202fk\u201332\u202fk tokens (or more) without a prohibitive slowdown. |\n| **Technical details** | \u2022 **Cache layout** \u2013 typically a 3\u2011D tensor of shape *(seq_len, heads, d_k)* for keys and a matching tensor for values. <br>\u2022 **Implementation** \u2013 in libraries such as \ud83e\udd17\u202fTransformers, `past_key_values` is passed through the model\u2019s forward graph; during inference the `use_cache=True` flag triggers the cache\u2011reuse path. <br>\u2022 **",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 296.51830820223296,
+      "ttft_ms": 14.238595962524414,
+      "prefill_ms": 13.338844000827521,
+      "generation_ms": 1708.108748000086,
+      "generation_tok_per_s": 299.74672315182954
+    },
+    {
+      "wall_s": 1.7255319859996234,
+      "output_text": "We need to write a concise technical overview of KV cache and why it matters for long context. Should be concise, technical, explain key-value cache in transformer inference, its role in attention, memory, speed, handling long contexts, etc. Probably bullet points or short paragraphs. Should be clear.\n</think>\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each transformer layer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing them for the entire sequence on each new token. The cache is updated incrementally: when a new token is generated, its K\u2011V pair is appended to the cache, and the attention computation only attends to the *expanded* prefix (cached keys/values + the new token). | 1. **Linear\u2011time attention** \u2013 each new token only attends to O(N) cached vectors, where N is the current length, rather than O(N\u00b2) recomputation of all pairwise attentions. <br>2. **Constant\u2011time per token** \u2013 the cost of generating token *t* is O(1) w.r.t. the number of previously generated tokens, enabling real\u2011time streaming of very long outputs. <br>3. **Memory\u2011efficient** \u2013 the cache stores only two vectors per token per head (\u2248 2\u202f\u00d7\u202fd_model\u202f\u00d7\u202fh\u202f\u00d7\u202fN bytes), which is far smaller than recomputing full attention matrices. <br>4. **Scalable to thousands of tokens** \u2013 because the per\u2011step compute does not grow quadratically, models can maintain context windows of 8\u202fk\u201332\u202fk tokens (or more) without a prohibitive slowdown. |\n| **Technical details** | \u2022 **Cache layout** \u2013 typically a 3\u2011D tensor of shape *(seq_len, heads, d_k)* for keys and a matching tensor for values. <br>\u2022 **Implementation** \u2013 in libraries such as \ud83e\udd17\u202fTransformers, `past_key_values` is passed through the model\u2019s forward graph; during inference the `use_cache=True` flag triggers the cache\u2011reuse path. <br>\u2022 **",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 296.7200864163591,
+      "ttft_ms": 13.593196868896484,
+      "prefill_ms": 13.065943001492997,
+      "generation_ms": 1706.8197529988538,
+      "generation_tok_per_s": 299.97309270672815
+    },
+    {
+      "wall_s": 1.7309046819991636,
+      "output_text": "We need to write a concise technical overview of KV cache and why it matters for long context. Should be concise, technical, explain key-value cache in transformer inference, its role in attention, memory, speed, handling long contexts, etc. Probably bullet points or short paragraphs. Should be clear.\n</think>\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each transformer layer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing them for the entire sequence on each new token. The cache is updated incrementally: when a new token is generated, its K\u2011V pair is appended to the cache, and the attention computation only attends to the *expanded* prefix (cached keys/values + the new token). | 1. **Linear\u2011time attention** \u2013 each new token only attends to O(N) cached vectors, where N is the current length, rather than O(N\u00b2) recomputation of all pairwise attentions. <br>2. **Constant\u2011time per token** \u2013 the cost of generating token *t* is O(1) w.r.t. the number of previously generated tokens, enabling real\u2011time streaming of very long outputs. <br>3. **Memory\u2011efficient** \u2013 the cache stores only two vectors per token per head (\u2248 2\u202f\u00d7\u202fd_model\u202f\u00d7\u202fh\u202f\u00d7\u202fN bytes), which is far smaller than recomputing full attention matrices. <br>4. **Scalable to thousands of tokens** \u2013 because the per\u2011step compute does not grow quadratically, models can maintain context windows of 8\u202fk\u201332\u202fk tokens (or more) without a prohibitive slowdown. |\n| **Technical details** | \u2022 **Cache layout** \u2013 typically a 3\u2011D tensor of shape *(seq_len, heads, d_k)* for keys and a matching tensor for values. <br>\u2022 **Implementation** \u2013 in libraries such as \ud83e\udd17\u202fTransformers, `past_key_values` is passed through the model\u2019s forward graph; during inference the `use_cache=True` flag triggers the cache\u2011reuse path. <br>\u2022 **",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 295.79907277658367,
+      "ttft_ms": 13.430118560791016,
+      "prefill_ms": 13.000580998777878,
+      "generation_ms": 1712.968454001384,
+      "generation_tok_per_s": 298.8963391614136
+    },
+    {
+      "wall_s": 1.7238376810000773,
+      "output_text": "We need to write a concise technical overview of KV cache and why it matters for long context. Should be concise, technical, explain key-value cache in transformer inference, its role in attention, memory, speed, handling long contexts, etc. Probably bullet points or short paragraphs. Should be clear.\n</think>\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each transformer layer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing them for the entire sequence on each new token. The cache is updated incrementally: when a new token is generated, its K\u2011V pair is appended to the cache, and the attention computation only attends to the *expanded* prefix (cached keys/values + the new token). | 1. **Linear\u2011time attention** \u2013 each new token only attends to O(N) cached vectors, where N is the current length, rather than O(N\u00b2) recomputation of all pairwise attentions. <br>2. **Constant\u2011time per token** \u2013 the cost of generating token *t* is O(1) w.r.t. the number of previously generated tokens, enabling real\u2011time streaming of very long outputs. <br>3. **Memory\u2011efficient** \u2013 the cache stores only two vectors per token per head (\u2248 2\u202f\u00d7\u202fd_model\u202f\u00d7\u202fh\u202f\u00d7\u202fN bytes), which is far smaller than recomputing full attention matrices. <br>4. **Scalable to thousands of tokens** \u2013 because the per\u2011step compute does not grow quadratically, models can maintain context windows of 8\u202fk\u201332\u202fk tokens (or more) without a prohibitive slowdown. |\n| **Technical details** | \u2022 **Cache layout** \u2013 typically a 3\u2011D tensor of shape *(seq_len, heads, d_k)* for keys and a matching tensor for values. <br>\u2022 **Implementation** \u2013 in libraries such as \ud83e\udd17\u202fTransformers, `past_key_values` is passed through the model\u2019s forward graph; during inference the `use_cache=True` flag triggers the cache\u2011reuse path. <br>\u2022 **",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 297.01172311244835,
+      "ttft_ms": 13.422250747680664,
+      "prefill_ms": 12.99860699873534,
+      "generation_ms": 1705.8903310007736,
+      "generation_tok_per_s": 300.13652735790544
+    },
+    {
+      "wall_s": 1.7237740410000697,
+      "output_text": "We need to write a concise technical overview of KV cache and why it matters for long context. Should be concise, technical, explain key-value cache in transformer inference, its role in attention, memory, speed, handling long contexts, etc. Probably bullet points or short paragraphs. Should be clear.\n</think>\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each transformer layer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing them for the entire sequence on each new token. The cache is updated incrementally: when a new token is generated, its K\u2011V pair is appended to the cache, and the attention computation only attends to the *expanded* prefix (cached keys/values + the new token). | 1. **Linear\u2011time attention** \u2013 each new token only attends to O(N) cached vectors, where N is the current length, rather than O(N\u00b2) recomputation of all pairwise attentions. <br>2. **Constant\u2011time per token** \u2013 the cost of generating token *t* is O(1) w.r.t. the number of previously generated tokens, enabling real\u2011time streaming of very long outputs. <br>3. **Memory\u2011efficient** \u2013 the cache stores only two vectors per token per head (\u2248 2\u202f\u00d7\u202fd_model\u202f\u00d7\u202fh\u202f\u00d7\u202fN bytes), which is far smaller than recomputing full attention matrices. <br>4. **Scalable to thousands of tokens** \u2013 because the per\u2011step compute does not grow quadratically, models can maintain context windows of 8\u202fk\u201332\u202fk tokens (or more) without a prohibitive slowdown. |\n| **Technical details** | \u2022 **Cache layout** \u2013 typically a 3\u2011D tensor of shape *(seq_len, heads, d_k)* for keys and a matching tensor for values. <br>\u2022 **Implementation** \u2013 in libraries such as \ud83e\udd17\u202fTransformers, `past_key_values` is passed through the model\u2019s forward graph; during inference the `use_cache=True` flag triggers the cache\u2011reuse path. <br>\u2022 **",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 297.0226884858741,
+      "ttft_ms": 13.478994369506836,
+      "prefill_ms": 13.013525000133086,
+      "generation_ms": 1705.3517809999903,
+      "generation_tok_per_s": 300.2313104571138
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.7255319859996234,
+    "median_tok_per_s": 296.7200864163591,
+    "median_ttft_ms": 13.478994369506836,
+    "median_generation_tok_per_s": 299.97309270672815
+  }
+}
