@@ -159,7 +159,7 @@ def bench_once_openai(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
-    frequency_penalty: float,
+    frequency_penalty: float | None,
     backend: str,
     host: str = "127.0.0.1",
     port: int = 8000,
@@ -191,14 +191,16 @@ def bench_once_openai(
         metrics_before = scrape_prometheus_metrics(host, port, backend)
 
     t0 = time.perf_counter()
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature if temperature > 0 else 0.0,
-        frequency_penalty=frequency_penalty,
-        seed=0,
-    )
+    request_kwargs = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature if temperature > 0 else 0.0,
+        "seed": 0,
+    }
+    if frequency_penalty is not None:
+        request_kwargs["frequency_penalty"] = frequency_penalty
+    response = client.chat.completions.create(**request_kwargs)
     t1 = time.perf_counter()
     wall = t1 - t0
 
@@ -1133,7 +1135,9 @@ def main():
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
-    ap.add_argument("--profile", default=None, help="Model profile from config (default: auto-select)")
+    ap.add_argument(
+        "--profile", default=None, help="Model profile from config (default: auto-select)"
+    )
 
     # Backend selection
     ap.add_argument(

@@ -133,6 +133,16 @@ models:
   - repo_id: MiniMaxAI/MiniMax-M2.1
 
   - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
+    profiles:
+      default:
+        backend: vllm              # Keep vLLM as default
+      sglang:
+        backend: sglang
+        extra_args:
+          - "--attention-backend"
+          - "flashinfer"           # Better for MoE models
+          - "--frequency-penalty"
+          - "0.2"                  # Prevent repetition (like MiMo AWQ)
 
   - repo_id: mratsim/MiniMax-M2.1-FP8-INT4-AWQ
     profiles:
