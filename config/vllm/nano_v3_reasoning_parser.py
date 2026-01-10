@@ -1,3 +1,4 @@
+# Source: https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8/blob/main/nano_v3_reasoning_parser.py
 from vllm.reasoning.abs_reasoning_parsers import ReasoningParserManager
 from vllm.reasoning.deepseek_r1_reasoning_parser import DeepSeekR1ReasoningParser
 

@@ -232,19 +232,23 @@ models:
       vllm:
         # Uses default v0.13.0 (nightly broken: https://github.com/vllm-project/vllm/issues/31957)
         args:
-          max_num_seqs: 8
-          max_model_len: 262144
+          max_num_seqs: 8           # Model card recommendation for stability
+          max_model_len: 262144     # 256K context window
         env_vars:
+          # FlashInfer MoE kernel optimized for FP8 - improves throughput
           VLLM_USE_FLASHINFER_MOE_FP8: "1"
         extra_args:
-          - "--trust-remote-code"
+          # NOTE: --trust-remote-code already added automatically by docker_manager.py
+          # Tool calling support (adds overhead, needed for agentic use)
           - "--enable-auto-tool-choice"
           - "--tool-call-parser"
           - "qwen3_coder"
+          # Reasoning trace parsing (adds overhead, extracts thinking from output)
           - "--reasoning-parser-plugin"
           - "/config/nano_v3_reasoning_parser.py"
           - "--reasoning-parser"
           - "nano_v3"
+          # FP8 KV cache - reduces memory, slightly improves throughput
           - "--kv-cache-dtype"
           - "fp8"
       trtllm:
