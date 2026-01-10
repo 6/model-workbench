@@ -255,8 +255,8 @@ def main():
 
     # Test-only mode
     if args.test_only:
-        if not server.is_running():
-            raise SystemExit(f"No server running on {args.host}:{args.port}")
+        if not server.is_backend_running(backend):
+            raise SystemExit(f"No {backend} server running on {args.host}:{args.port}")
         if test_chat_completion(args.host, args.port, api_model):
             log("Server is working!")
         else:
@@ -264,7 +264,7 @@ def main():
         return
 
     # Check if server already running
-    if server.is_running():
+    if server.is_backend_running(backend):
         log(f"Server already running on {args.host}:{args.port}")
         if args.test:
             test_chat_completion(args.host, args.port, api_model)
@@ -366,7 +366,7 @@ def main():
 
     if should_warmup:
         # Extra verification: ensure server is truly ready
-        if not server.is_running():
+        if not server.is_backend_running(backend):
             log("ERROR: Server not running, skipping warmup")
         else:
             log("Preloading model into GPU memory...")

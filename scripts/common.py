@@ -74,7 +74,7 @@ BACKEND_REGISTRY = {
     "llama": {
         "display_name": "llama.cpp",
         "formats": ["gguf"],
-        "default_port": 8080,
+        "default_port": 8000,
         "image_prefix": "model-bench-llama",
         "prebuilt_image": None,
         "dockerfile": ROOT / "docker" / "Dockerfile.llama",

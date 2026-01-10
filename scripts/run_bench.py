@@ -404,7 +404,7 @@ def run_benchmark_vllm(
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("vllm") and args.no_autostart:
         raise SystemExit(
             f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -412,7 +412,7 @@ def run_benchmark_vllm(
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("vllm"):
             server.start_vllm(
                 model_path=model_path,
                 version=backend_version,
@@ -548,7 +548,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("trtllm") and args.no_autostart:
         raise SystemExit(
             f"TensorRT-LLM server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -556,7 +556,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("trtllm"):
             server.start_trtllm(
                 model_path=model_path,
                 tensor_parallel=args.tensor_parallel,
@@ -706,7 +706,7 @@ def run_benchmark_sglang(
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("sglang") and args.no_autostart:
         raise SystemExit(
             f"SGLang server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -714,7 +714,7 @@ def run_benchmark_sglang(
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("sglang"):
             server.start_sglang(
                 model_path=model_path,
                 tensor_parallel=args.tensor_parallel,
@@ -850,7 +850,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("exl") and args.no_autostart:
         raise SystemExit(
             f"ExLlamaV3 server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -858,7 +858,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("exl"):
             server.start_exl(
                 model_path=model_path,
                 version=backend_version,
@@ -1018,7 +1018,7 @@ def run_benchmark_gguf(
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running(backend) and args.no_autostart:
         raise SystemExit(
             f"{backend_label} server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -1026,7 +1026,7 @@ def run_benchmark_gguf(
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running(backend):
             gguf_path = server.start_gguf_backend(
                 engine=backend,
                 model_path=model_path,

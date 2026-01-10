@@ -7,6 +7,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+import requests
 from bench_utils import port_open, resolve_local_gguf
 from common import log
 
@@ -65,6 +66,54 @@ class ServerManager:
         """Check if server is already running on port."""
         return port_open(self.host, self.port)
 
+    def is_backend_running(self, backend: str) -> bool:
+        """Check if the correct backend service is running on port.
+
+        Unlike is_running() which only checks if port is open, this verifies
+        the actual service type by probing backend-specific endpoints.
+
+        Args:
+            backend: Backend type ('vllm', 'llama', 'trtllm', 'sglang', 'exl')
+
+        Returns:
+            True if the correct backend is running, False otherwise.
+        """
+        if not port_open(self.host, self.port):
+            return False
+
+        try:
+            if backend == "llama":
+                # llama.cpp /health returns {"status":"ok"} when healthy
+                # Other services (like Open WebUI) may return different formats
+                resp = requests.get(
+                    f"http://{self.host}:{self.port}/health",
+                    timeout=2,
+                )
+                if resp.status_code != 200:
+                    return False
+                try:
+                    data = resp.json()
+                    # llama.cpp returns {"status":"ok"} or {"status":"no slot available"}
+                    return data.get("status") in ("ok", "no slot available", "error")
+                except ValueError:
+                    return False
+            else:
+                # OpenAI-compatible backends (vllm, trtllm, sglang, exl) have /v1/models
+                # Must return JSON with "data" array
+                resp = requests.get(
+                    f"http://{self.host}:{self.port}/v1/models",
+                    timeout=2,
+                )
+                if resp.status_code != 200:
+                    return False
+                try:
+                    data = resp.json()
+                    return "data" in data  # OpenAI format has "data" array
+                except ValueError:
+                    return False
+        except requests.exceptions.RequestException:
+            return False
+
     def _get_container_id(self) -> str | None:
         """Extract Docker container ID for the port we're using.
 
@@ -106,14 +155,23 @@ class ServerManager:
             term_wait: Seconds to wait after terminate before kill
 
         Returns:
-            True if we started the server, False if already running
+            True if we started the server, False if port is already in use
 
         Raises:
             SystemExit if server fails to start or times out
         """
         if self.is_running():
-            log(f"{label} already running on {self.host}:{self.port}")
-            return False
+            # Port is in use - caller should have checked is_backend_running() first
+            # to determine if the correct backend is running
+            log(f"ERROR: Port {self.port} is already in use by another service")
+            # Check if it's a Docker container
+            container_id = self._get_container_id()
+            if container_id:
+                log(f"Stop it with: docker stop {container_id[:12]}")
+            else:
+                log(f"Find what's using the port: lsof -i :{self.port}")
+            log("Or use a different port with --port")
+            raise SystemExit(1)
 
         log(f"Starting {label}")
         log(f"+ {' '.join(cmd)}")

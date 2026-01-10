@@ -250,7 +250,7 @@ def main():
     )
 
     # Check if we need to start the server
-    if not server.is_running():
+    if not server.is_backend_running(backend):
         if args.no_autostart:
             raise SystemExit(
                 f"Server not running on {args.host}:{args.port} and --no-autostart was set.\n"
@@ -259,7 +259,7 @@ def main():
 
     with server:
         # Start server if not already running
-        if not server.is_running():
+        if not server.is_backend_running(backend):
             if backend == "llama":
                 # llama.cpp backend for GGUF models
                 server.start_gguf_backend(
