@@ -133,6 +133,11 @@ def main():
         help="Path to model",
     )
     parser.add_argument(
+        "--profile",
+        default=None,
+        help="Model profile from config (default: auto-select)",
+    )
+    parser.add_argument(
         "--benchmark",
         nargs="+",
         choices=["ifeval", "gsm8k"],
@@ -211,8 +216,7 @@ def main():
         help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
-    args, unknown = parser.parse_known_args()
-    args.extra_backend_args = unknown  # Pass unknown args to backend
+    args = parser.parse_args()
 
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)

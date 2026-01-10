@@ -395,10 +395,8 @@ def run_benchmark_vllm(
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
     print(f"image_type:      {image_type}")
-    print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
-    print(f"max_model_len:   {args.max_model_len}")
 
     server = ServerManager(
         host=args.host,
@@ -503,10 +501,6 @@ def run_benchmark_vllm(
                 "prompt": prompt_text,
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
-                "tensor_parallel_size": args.tensor_parallel,
-                "max_model_len": args.max_model_len,
-                "gpu_memory_utilization": args.gpu_memory_utilization,
-                "max_num_batched_tokens": args.max_num_batched_tokens,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -545,7 +539,6 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
-    print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
 
@@ -653,7 +646,6 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 "prompt": prompt_text,
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
-                "tensor_parallel_size": args.tensor_parallel,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -690,7 +682,7 @@ def run_benchmark_sglang(
     # Get SGLang-specific args from config
     backend_cfg = get_model_backend_config(args.model, "sglang")
     mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
-    max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
+    max_model_len = backend_cfg.get("args", {}).get("max_model_len")
 
     # Select prompt
     if args.prompt:
@@ -705,10 +697,8 @@ def run_benchmark_sglang(
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
     print(f"image_type:      {image_type}")
-    print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
-    print(f"max_model_len:   {max_model_len}")
 
     server = ServerManager(
         host=args.host,
@@ -803,9 +793,6 @@ def run_benchmark_sglang(
                 "prompt": prompt_text,
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
-                "tensor_parallel_size": args.tensor_parallel,
-                "max_model_len": max_model_len,
-                "mem_fraction_static": mem_fraction,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -836,7 +823,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
     backend_cfg = get_model_backend_config(args.model, "exl")
     backend_args = backend_cfg.get("args", {})
     cache_size = backend_args.get("cache_size")
-    max_seq_len = args.max_model_len or backend_args.get("max_seq_len")
+    max_seq_len = backend_args.get("max_seq_len")
     gpu_split_auto = backend_args.get("gpu_split_auto", True)
     gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
@@ -1146,6 +1133,7 @@ def main():
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
+    ap.add_argument("--profile", default=None, help="Model profile from config (default: auto-select)")
 
     # Backend selection
     ap.add_argument(
@@ -1286,8 +1274,7 @@ def main():
         "--extra-args", nargs=argparse.REMAINDER, help="Extra args passed to llama-server"
     )
 
-    args, unknown = ap.parse_known_args()
-    args.extra_backend_args = unknown  # Pass unknown args to backend
+    args = ap.parse_args()
 
     # Resolve --jinja / --no-jinja into single value (CLI overrides config)
     if getattr(args, "no_jinja", False):

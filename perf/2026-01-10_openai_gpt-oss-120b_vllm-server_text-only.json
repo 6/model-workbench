@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-10T19:35:27.474526",
+  "timestamp": "2026-01-10T22:42:01.042717",
   "repo_id": "openai/gpt-oss-120b",
   "model_ref": "~/models/openai/gpt-oss-120b",
   "engine": "vllm-server",
@@ -13,7 +13,7 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 95036
+        "memory_used_mib": 95259
       },
       {
         "index": 1,
@@ -21,10 +21,10 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 95038
+        "memory_used_mib": 95261
       }
     ],
-    "memory_used_mib": 190074,
+    "memory_used_mib": 190520,
     "memory_total_mib": 195774
   },
   "config": {
@@ -32,74 +32,70 @@
     "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
     "max_tokens": 512,
     "temperature": 0.0,
-    "tensor_parallel_size": 2,
-    "max_model_len": null,
-    "gpu_memory_utilization": 0.95,
-    "max_num_batched_tokens": null,
     "image": "none",
     "backend_version": "da6709c9fe6965b7348692576ffadeee8439388e"
   },
   "iterations": [
     {
-      "wall_s": 2.105950254999925,
-      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, not in the model weights. Each transformer layer keeps its own KV buffer of shape **(seq_len, num_heads, head_dim)** (or a packed variant). |\n| **How it is built** | During autoregressive generation the model processes a new token *t*. For each layer *\u2113*: <br>1. Compute Q\u209c, K\u209c, V\u209c = Linear\u208d\u2113\u208e(h\u209c). <br>2. Append K\u209c, V\u209c to the KV cache of layer \u2113. <br>3. Compute attention using Q\u209c against **all** cached K/V (including the new pair). |\n| **Why it works** | The attention formula `Attention(Q, K, V) = softmax(QK\u1d40/\u221ad) V` only needs the *new* query Q\u209c; the K/V for previous tokens never change. Caching them avoids recomputing the expensive linear projections and the K\u00b7K\u1d40 term for the past context. |\n| **Complexity impact** | <br>\u2022 **Without KV cache**: each generation step costs O(N\u00b2\u00b7d) where N = current sequence length. <br>\u2022 **With KV cache**: cost per step drops to O(N\u00b7d) for the attention score (Q\u00b7K\u1d40) plus O(d) for the linear projections. The quadratic term is eliminated for the already\u2011seen tokens.",
+      "wall_s": 2.10840854900016,
+      "output_text": "**KV\u2011Cache: Technical Overview & Its Role in Long\u2011Context Transformers**\n\n| Aspect | What it is | Why it matters for long context |\n|--------|------------|--------------------------------|\n| **Definition** | In autoregressive transformer inference, each self\u2011attention layer computes *keys* (K) and *values* (V) for every token. The **KV\u2011cache** stores the K\u2011V pairs of all previously generated tokens so they can be reused when the next token is produced. | Without a cache the model would recompute K and V for the entire prefix on every step, turning a single\u2011token generation from **O(L\u00b7d)** to **O(L\u00b2\u00b7d)** (L = current length, d = hidden dim). |\n| **Computation pattern** | For a new token *t*: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current token only.<br>2. Append K\u209c, V\u209c to the cached matrices K\u2081\u2026K\u209c\u208b\u2081, V\u2081\u2026V\u209c\u208b\u2081.<br>3. Perform attention:  `Attention(Q\u209c, K_{1:t}, V_{1:t})`. | The cost per step becomes **O(t\u00b7d)** (linear in length) instead of quadratic, enabling real\u2011time generation even when *t* reaches tens of thousands of tokens. |\n| **Memory layout** | For a model with *L* layers,",
       "prompt_tokens": 81,
       "generated_tokens": 512,
-      "tok_per_s": 243.12065243916135,
-      "ttft_ms": 5.35893440246582,
-      "prefill_ms": 4.592271999854347,
-      "generation_ms": 2096.634166000058,
-      "generation_tok_per_s": 244.20092370086172
+      "tok_per_s": 242.83718648494306,
+      "ttft_ms": 5.457878112792969,
+      "prefill_ms": 4.703472999608493,
+      "generation_ms": 2098.4988099990005,
+      "generation_tok_per_s": 243.98393630742342
     },
     {
-      "wall_s": 2.1063629059999585,
-      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, not in the model weights. Each transformer layer keeps its own KV buffer of shape **(seq_len, num_heads, head_dim)** (or a packed variant). |\n| **How it is built** | During autoregressive generation the model processes a new token *t*. For each layer *\u2113*: <br>1. Compute Q\u209c, K\u209c, V\u209c = Linear\u208d\u2113\u208e(h\u209c). <br>2. Append K\u209c, V\u209c to the KV cache of layer \u2113. <br>3. Compute attention using Q\u209c against **all** cached K/V (including the new pair). |\n| **Why it works** | The attention formula `Attention(Q, K, V) = softmax(QK\u1d40/\u221ad) V` only needs the *new* query Q\u209c; the K/V for previous tokens never change. Caching them avoids recomputing the expensive linear projections and the K\u00b7K\u1d40 term for the past context. |\n| **Complexity impact** | <br>\u2022 **Without KV cache**: each generation step costs O(N\u00b2\u00b7d) where N = current sequence length. <br>\u2022 **With KV cache**: cost per step drops to O(N\u00b7d) for the attention score (Q\u00b7K\u1d40) plus O(d) for the linear projections. The quadratic term is eliminated for the already\u2011seen tokens.",
+      "wall_s": 2.1046226260004914,
+      "output_text": "**KV\u2011Cache: Technical Overview & Its Role in Long\u2011Context Transformers**\n\n| Aspect | What it is | Why it matters for long context |\n|--------|------------|--------------------------------|\n| **Definition** | In autoregressive transformer inference, each self\u2011attention layer computes *keys* (K) and *values* (V) for every token. The **KV\u2011cache** stores the K\u2011V pairs of all previously generated tokens so they can be reused when the next token is produced. | Without a cache the model would recompute K and V for the entire prefix on every step, turning a single\u2011token generation from **O(L\u00b7d)** to **O(L\u00b2\u00b7d)** (L = current length, d = hidden dim). |\n| **Computation pattern** | For a new token *t*: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current token only.<br>2. Append K\u209c, V\u209c to the cached matrices K\u2081\u2026K\u209c\u208b\u2081, V\u2081\u2026V\u209c\u208b\u2081.<br>3. Perform attention:  `Attention(Q\u209c, K_{1:t}, V_{1:t})`. | The cost per step becomes **O(t\u00b7d)** (linear in length) instead of quadratic, enabling real\u2011time generation even when *t* reaches tens of thousands of tokens. |\n| **Memory layout** | For a model with *L* layers,",
       "prompt_tokens": 81,
       "generated_tokens": 512,
-      "tok_per_s": 243.07302342895042,
-      "ttft_ms": 5.618810653686523,
-      "prefill_ms": 4.8041789998478635,
-      "generation_ms": 2096.7552290001095,
-      "generation_tok_per_s": 244.1868239642641
+      "tok_per_s": 243.27401676421988,
+      "ttft_ms": 5.159139633178711,
+      "prefill_ms": 4.570965000311844,
+      "generation_ms": 2096.12910100077,
+      "generation_tok_per_s": 244.25976422709468
     },
     {
-      "wall_s": 2.104611772999988,
-      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, not in the model weights. Each transformer layer keeps its own KV buffer of shape **(seq_len, num_heads, head_dim)** (or a packed variant). |\n| **How it is built** | During autoregressive generation the model processes a new token *t*. For each layer *\u2113*: <br>1. Compute Q\u209c, K\u209c, V\u209c = Linear\u208d\u2113\u208e(h\u209c). <br>2. Append K\u209c, V\u209c to the KV cache of layer \u2113. <br>3. Compute attention using Q\u209c against **all** cached K/V (including the new pair). |\n| **Why it works** | The attention formula `Attention(Q, K, V) = softmax(QK\u1d40/\u221ad) V` only needs the *new* query Q\u209c; the K/V for previous tokens never change. Caching them avoids recomputing the expensive linear projections and the K\u00b7K\u1d40 term for the past context. |\n| **Complexity impact** | <br>\u2022 **Without KV cache**: each generation step costs O(N\u00b2\u00b7d) where N = current sequence length. <br>\u2022 **With KV cache**: cost per step drops to O(N\u00b7d) for the attention score (Q\u00b7K\u1d40) plus O(d) for the linear projections. The quadratic term is eliminated for the already\u2011seen tokens.",
+      "wall_s": 2.1068408729988732,
+      "output_text": "**KV\u2011Cache: Technical Overview & Its Role in Long\u2011Context Transformers**\n\n| Aspect | What it is | Why it matters for long context |\n|--------|------------|--------------------------------|\n| **Definition** | In autoregressive transformer inference, each self\u2011attention layer computes *keys* (K) and *values* (V) for every token. The **KV\u2011cache** stores the K\u2011V pairs of all previously generated tokens so they can be reused when the next token is produced. | Without a cache the model would recompute K and V for the entire prefix on every step, turning a single\u2011token generation from **O(L\u00b7d)** to **O(L\u00b2\u00b7d)** (L = current length, d = hidden dim). |\n| **Computation pattern** | For a new token *t*: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current token only.<br>2. Append K\u209c, V\u209c to the cached matrices K\u2081\u2026K\u209c\u208b\u2081, V\u2081\u2026V\u209c\u208b\u2081.<br>3. Perform attention:  `Attention(Q\u209c, K_{1:t}, V_{1:t})`. | The cost per step becomes **O(t\u00b7d)** (linear in length) instead of quadratic, enabling real\u2011time generation even when *t* reaches tens of thousands of tokens. |\n| **Memory layout** | For a model with *L* layers,",
       "prompt_tokens": 81,
       "generated_tokens": 512,
-      "tok_per_s": 243.27527127256215,
-      "ttft_ms": 5.13458251953125,
-      "prefill_ms": 4.556455000056303,
-      "generation_ms": 2095.8792679998623,
-      "generation_tok_per_s": 244.2888804795571
+      "tok_per_s": 243.0178788354434,
+      "ttft_ms": 5.10406494140625,
+      "prefill_ms": 4.579480999382213,
+      "generation_ms": 2098.1899439993867,
+      "generation_tok_per_s": 244.01985218939245
     },
     {
-      "wall_s": 2.1061523099999704,
-      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, not in the model weights. Each transformer layer keeps its own KV buffer of shape **(seq_len, num_heads, head_dim)** (or a packed variant). |\n| **How it is built** | During autoregressive generation the model processes a new token *t*. For each layer *\u2113*: <br>1. Compute Q\u209c, K\u209c, V\u209c = Linear\u208d\u2113\u208e(h\u209c). <br>2. Append K\u209c, V\u209c to the KV cache of layer \u2113. <br>3. Compute attention using Q\u209c against **all** cached K/V (including the new pair). |\n| **Why it works** | The attention formula `Attention(Q, K, V) = softmax(QK\u1d40/\u221ad) V` only needs the *new* query Q\u209c; the K/V for previous tokens never change. Caching them avoids recomputing the expensive linear projections and the K\u00b7K\u1d40 term for the past context. |\n| **Complexity impact** | <br>\u2022 **Without KV cache**: each generation step costs O(N\u00b2\u00b7d) where N = current sequence length. <br>\u2022 **With KV cache**: cost per step drops to O(N\u00b7d) for the attention score (Q\u00b7K\u1d40) plus O(d) for the linear projections. The quadratic term is eliminated for the already\u2011seen tokens.",
+      "wall_s": 2.107271270999263,
+      "output_text": "**KV\u2011Cache: Technical Overview & Its Role in Long\u2011Context Transformers**\n\n| Aspect | What it is | Why it matters for long context |\n|--------|------------|--------------------------------|\n| **Definition** | In autoregressive transformer inference, each self\u2011attention layer computes *keys* (K) and *values* (V) for every token. The **KV\u2011cache** stores the K\u2011V pairs of all previously generated tokens so they can be reused when the next token is produced. | Without a cache the model would recompute K and V for the entire prefix on every step, turning a single\u2011token generation from **O(L\u00b7d)** to **O(L\u00b2\u00b7d)** (L = current length, d = hidden dim). |\n| **Computation pattern** | For a new token *t*: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current token only.<br>2. Append K\u209c, V\u209c to the cached matrices K\u2081\u2026K\u209c\u208b\u2081, V\u2081\u2026V\u209c\u208b\u2081.<br>3. Perform attention:  `Attention(Q\u209c, K_{1:t}, V_{1:t})`. | The cost per step becomes **O(t\u00b7d)** (linear in length) instead of quadratic, enabling real\u2011time generation even when *t* reaches tens of thousands of tokens. |\n| **Memory layout** | For a model with *L* layers,",
       "prompt_tokens": 81,
       "generated_tokens": 512,
-      "tok_per_s": 243.09732851182412,
-      "ttft_ms": 10.303974151611328,
-      "prefill_ms": 9.593861999974251,
-      "generation_ms": 2091.8992409999646,
-      "generation_tok_per_s": 244.75366211006175
+      "tok_per_s": 242.96824383564572,
+      "ttft_ms": 5.253314971923828,
+      "prefill_ms": 4.648068999813404,
+      "generation_ms": 2098.4561440000107,
+      "generation_tok_per_s": 243.98889701075277
     },
     {
-      "wall_s": 2.1039242019999165,
-      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, not in the model weights. Each transformer layer keeps its own KV buffer of shape **(seq_len, num_heads, head_dim)** (or a packed variant). |\n| **How it is built** | During autoregressive generation the model processes a new token *t*. For each layer *\u2113*: <br>1. Compute Q\u209c, K\u209c, V\u209c = Linear\u208d\u2113\u208e(h\u209c). <br>2. Append K\u209c, V\u209c to the KV cache of layer \u2113. <br>3. Compute attention using Q\u209c against **all** cached K/V (including the new pair). |\n| **Why it works** | The attention formula `Attention(Q, K, V) = softmax(QK\u1d40/\u221ad) V` only needs the *new* query Q\u209c; the K/V for previous tokens never change. Caching them avoids recomputing the expensive linear projections and the K\u00b7K\u1d40 term for the past context. |\n| **Complexity impact** | <br>\u2022 **Without KV cache**: each generation step costs O(N\u00b2\u00b7d) where N = current sequence length. <br>\u2022 **With KV cache**: cost per step drops to O(N\u00b7d) for the attention score (Q\u00b7K\u1d40) plus O(d) for the linear projections. The quadratic term is eliminated for the already\u2011seen tokens.",
+      "wall_s": 2.105889082000431,
+      "output_text": "**KV\u2011Cache: Technical Overview & Its Role in Long\u2011Context Transformers**\n\n| Aspect | What it is | Why it matters for long context |\n|--------|------------|--------------------------------|\n| **Definition** | In autoregressive transformer inference, each self\u2011attention layer computes *keys* (K) and *values* (V) for every token. The **KV\u2011cache** stores the K\u2011V pairs of all previously generated tokens so they can be reused when the next token is produced. | Without a cache the model would recompute K and V for the entire prefix on every step, turning a single\u2011token generation from **O(L\u00b7d)** to **O(L\u00b2\u00b7d)** (L = current length, d = hidden dim). |\n| **Computation pattern** | For a new token *t*: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current token only.<br>2. Append K\u209c, V\u209c to the cached matrices K\u2081\u2026K\u209c\u208b\u2081, V\u2081\u2026V\u209c\u208b\u2081.<br>3. Perform attention:  `Attention(Q\u209c, K_{1:t}, V_{1:t})`. | The cost per step becomes **O(t\u00b7d)** (linear in length) instead of quadratic, enabling real\u2011time generation even when *t* reaches tens of thousands of tokens. |\n| **Memory layout** | For a model with *L* layers,",
       "prompt_tokens": 81,
       "generated_tokens": 512,
-      "tok_per_s": 243.35477462225626,
-      "ttft_ms": 5.203962326049805,
-      "prefill_ms": 4.638056999965556,
-      "generation_ms": 2095.1665510001476,
-      "generation_tok_per_s": 244.37198071704225
+      "tok_per_s": 243.1277147387268,
+      "ttft_ms": 5.24139404296875,
+      "prefill_ms": 4.618353999831015,
+      "generation_ms": 2097.1293990005506,
+      "generation_tok_per_s": 244.1432561309802
     }
   ],
   "summary": {
-    "median_wall_s": 2.105950254999925,
-    "median_tok_per_s": 243.12065243916135,
-    "median_ttft_ms": 5.35893440246582,
-    "median_generation_tok_per_s": 244.2888804795571
+    "median_wall_s": 2.1068408729988732,
+    "median_tok_per_s": 243.0178788354434,
+    "median_ttft_ms": 5.24139404296875,
+    "median_generation_tok_per_s": 244.01985218939245
   }
 }

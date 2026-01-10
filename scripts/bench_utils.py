@@ -737,6 +737,66 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
     return get_model_backend_config(model_arg, engine).get("backend_version")
 
 
+def get_model_profile_config(model_arg: str, profile: str | None) -> dict | None:
+    """Get config for a model profile.
+
+    Profiles allow multiple named run configurations per model.
+
+    Resolution order:
+    1. If --profile specified -> use that profile
+    2. Else if profiles.default exists -> use it
+    3. Else if exactly 1 profile -> use it
+    4. Else if >1 profiles -> error (must specify)
+    5. Else if no profiles -> return None (use global defaults)
+
+    Args:
+        model_arg: Model path or repo_id
+        profile: Profile name from CLI, or None for auto-select
+
+    Returns:
+        Dict with backend, extra_args, env_vars, backend_version, image_type
+        or None if no profiles defined (caller uses global defaults)
+
+    Raises:
+        SystemExit if profile not found or ambiguous selection
+    """
+    model_cfg = get_model_config(model_arg)
+    profiles = model_cfg.get("profiles", {}) if model_cfg else {}
+
+    # Resolve profile name
+    if profile:
+        if profile not in profiles:
+            available = list(profiles.keys()) if profiles else ["(none defined)"]
+            raise SystemExit(f"Profile '{profile}' not found. Available: {available}")
+        profile_name = profile
+    elif "default" in profiles:
+        profile_name = "default"
+    elif len(profiles) == 1:
+        profile_name = list(profiles.keys())[0]
+    elif len(profiles) > 1:
+        raise SystemExit(f"Multiple profiles available. Specify --profile: {list(profiles.keys())}")
+    else:
+        # No profiles - return None, caller uses global defaults
+        return None
+
+    profile_cfg = profiles[profile_name]
+    backend = profile_cfg.get("backend") or resolve_backend(model_arg, None)
+
+    # Get global defaults for this backend
+    global_cfg = get_backend_config(backend)
+
+    # Profile extra_args replaces global (no merge)
+    return {
+        "backend": backend,
+        "profile_name": profile_name,
+        "backend_version": profile_cfg.get("backend_version") or global_cfg.get("backend_version"),
+        "extra_args": profile_cfg.get("extra_args") or global_cfg.get("extra_args", []),
+        "env_vars": profile_cfg.get("env_vars") or global_cfg.get("env_vars", {}),
+        "image_type": profile_cfg.get("image_type") or global_cfg.get("image_type", "build"),
+        "docker_image": profile_cfg.get("docker_image") or global_cfg.get("docker_image"),
+    }
+
+
 def _set_arg(args_list: list[str], name: str, value: str) -> None:
     """Set arg value in list, replacing existing or appending if not found."""
     try:
@@ -751,43 +811,55 @@ def resolve_run_config(args):
 
     This centralizes the common setup pattern used by run_bench, run_server, run_eval.
 
+    Config resolution order:
+    1. Profile config (if --profile specified or profiles defined in model config)
+    2. Global backend defaults (if no profiles)
+
     Args:
         args: Parsed argparse namespace with:
             - model (required)
-            - backend (optional)
+            - profile (optional)
             - port (optional)
-            - tensor_parallel (optional, for vLLM/trtllm)
-            - image_type (optional)
-            - backend_version (optional)
 
     Returns:
         Tuple of (backend, model_path, backend_cfg) where:
             - backend: Resolved backend name
             - model_path: Resolved model path (safetensors get expanded, GGUF stays as-is)
-            - backend_cfg: Full config dict with merged defaults and model-specific settings
+            - backend_cfg: Full config dict
 
     Side effects:
         Modifies args in place to fill in defaults for:
             - port
-            - tensor_parallel (for vLLM/trtllm)
-            - extra_vllm_args (config extra_args + CLI overrides)
+            - tensor_parallel (for trtllm only - uses named param)
+            - extra_vllm_args (from config extra_args)
             - env_vars
     """
     from common import BACKEND_REGISTRY
 
-    # Resolve backend (auto-detect or explicit)
-    backend = resolve_backend(args.model, getattr(args, "backend", None))
-    backend_info = BACKEND_REGISTRY[backend]
+    # Try profile-based config first
+    profile_cfg = get_model_profile_config(args.model, getattr(args, "profile", None))
 
-    # Get merged config for this model + backend
-    backend_cfg = get_model_backend_config(args.model, backend)
+    if profile_cfg:
+        # Profile found - use its values
+        backend = profile_cfg["backend"]
+        backend_cfg = profile_cfg
+        extra_args = list(profile_cfg.get("extra_args", []))
+        env_vars = profile_cfg.get("env_vars")
+    else:
+        # No profile - use global backend defaults (current behavior)
+        backend = resolve_backend(args.model, getattr(args, "backend", None))
+        backend_cfg = get_model_backend_config(args.model, backend)
+        extra_args = list(backend_cfg.get("extra_args", []))
+        env_vars = backend_cfg.get("env_vars")
+
+    backend_info = BACKEND_REGISTRY[backend]
 
     # Set default port based on backend
     if getattr(args, "port", None) is None:
         args.port = backend_info["default_port"]
 
-    # Auto-detect tensor parallel for trtllm (uses named param, not extra_args)
-    if backend == "trtllm" and getattr(args, "tensor_parallel", None) is None:
+    # Auto-detect tensor parallel for trtllm/sglang (uses named param, not extra_args)
+    if backend in ("trtllm", "sglang") and getattr(args, "tensor_parallel", None) is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
@@ -796,31 +868,15 @@ def resolve_run_config(args):
     else:
         model_path = args.model
 
-    # Build extra_args from config
-    extra_args = list(backend_cfg.get("extra_args", []))  # Copy to avoid mutating config
-
-    # Auto-detect tensor_parallel if not in config
+    # Auto-detect tensor_parallel if not in config (vllm/sglang)
     if backend in ("vllm", "sglang") and "--tensor-parallel-size" not in extra_args:
         _set_arg(extra_args, "--tensor-parallel-size", str(get_gpu_count()))
-
-    # Merge CLI passthrough args (unknown args from parse_known_args)
-    # CLI args override config values using _set_arg replacement
-    passthrough = getattr(args, "extra_backend_args", None) or []
-    i = 0
-    while i < len(passthrough):
-        arg = passthrough[i]
-        if arg.startswith("--") and i + 1 < len(passthrough) and not passthrough[i + 1].startswith("--"):
-            _set_arg(extra_args, arg, passthrough[i + 1])
-            i += 2
-        else:
-            extra_args.append(arg)
-            i += 1
 
     args.extra_vllm_args = extra_args if extra_args else None
 
     # Resolve env vars from config
     if not hasattr(args, "env_vars") or args.env_vars is None:
-        args.env_vars = backend_cfg.get("env_vars")
+        args.env_vars = env_vars
 
     return backend, model_path, backend_cfg
 

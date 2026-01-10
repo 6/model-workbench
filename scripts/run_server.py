@@ -72,6 +72,7 @@ def main():
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
+    ap.add_argument("--profile", default=None, help="Model profile from config (default: auto-select)")
 
     # Backend selection
     ap.add_argument(
@@ -208,8 +209,7 @@ def main():
         help="Open WebUI Docker image (default: ghcr.io/open-webui/open-webui:main)",
     )
 
-    args, unknown = ap.parse_known_args()
-    args.extra_backend_args = unknown  # Pass unknown args to backend
+    args = ap.parse_args()
 
     # Resolve --jinja / --no-jinja into single value (CLI overrides config)
     if getattr(args, "no_jinja", False):
@@ -332,7 +332,7 @@ def main():
     elif backend == "sglang":
         # Get SGLang-specific args from config
         mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
-        max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
+        max_model_len = backend_cfg.get("args", {}).get("max_model_len")
 
         server.start_sglang(
             model_path=model_path,
@@ -347,7 +347,7 @@ def main():
         # Get ExLlamaV3-specific args from config
         backend_args = backend_cfg.get("args", {})
         cache_size = backend_args.get("cache_size")
-        max_seq_len = args.max_model_len or backend_args.get("max_seq_len")
+        max_seq_len = backend_args.get("max_seq_len")
         gpu_split_auto = backend_args.get("gpu_split_auto", True)
         gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
