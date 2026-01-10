@@ -437,9 +437,12 @@ def build_trtllm_docker_cmd(
         "0.0.0.0",
         "--port",
         str(port),
-        "--tp_size",
-        str(tensor_parallel),
     ]
+
+    # Auto-deploy handles parallelism automatically, skip --tp_size
+    uses_autodeploy = extra_args and any(arg == "_autodeploy" for arg in extra_args)
+    if not uses_autodeploy:
+        cmd += ["--tp_size", str(tensor_parallel)]
 
     if max_batch_size is not None:
         cmd += ["--max_batch_size", str(max_batch_size)]
