@@ -9,8 +9,8 @@ defaults:
   backends:
     # https://github.com/vllm-project/vllm/releases
     vllm:
-      version: v0.13.0
-      image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
+      version: da6709c9fe6965b7348692576ffadeee8439388e
+      image_type: cu130    # "prebuilt" (Docker Hub), "build" (from source), or "cu130" (Blackwell GPUs)
       args:
         gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
         # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
@@ -120,9 +120,6 @@ models:
     backend: vllm
     backends:
       vllm:
-        # cu130 variant for Blackwell GPUs (uses Dockerfile.vllm-cu130)
-        image_type: cu130
-        version: nightly
         args:
           # cu130 devel image has slightly higher memory overhead than cu129
           # 0.91 fits full 196k context (~7GB free per GPU, ~14GB total); 0.90 falls 0.12 GiB short for full context

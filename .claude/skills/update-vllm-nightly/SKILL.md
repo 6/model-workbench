@@ -8,39 +8,34 @@ user-invocable: true
 
 This skill lists available vLLM nightly builds and helps pin a specific version in `config/models.yaml`.
 
-## Step 1: Fetch Available Nightlies
+## Step 1: Fetch Top 5 Docker Tags
 
-Query Docker Hub API for recent nightly tags:
-
+```bash
+curl -s 'https://hub.docker.com/v2/repositories/vllm/vllm-openai/tags?page_size=10&name=nightly-' | \
+  jq -r '.results[] | select(.name | test("^nightly-[a-f0-9]{40}$")) | [(.name | ltrimstr("nightly-")), (.last_updated | split("T")[0])] | @tsv' | head -5
 ```
-GET https://hub.docker.com/v2/repositories/vllm/vllm-openai/tags?page_size=15&name=nightly-
-```
+This outputs: `{commit_hash}\t{push_date}` for the 5 most recent nightly builds.
 
-Filter results to only include tags matching pattern `nightly-{40-character-hex}` (exclude `nightly`, `nightly-x86_64`, `nightly-aarch64`).
+## Step 2: Fetch Commit Details via gh CLI
 
-Extract the commit hash from each tag name (everything after `nightly-`).
+For each of the 5 commit hashes, fetch the commit message using `gh` (authenticated, handles pagination):
 
-## Step 2: Get Commit Details
-
-For each commit hash, query GitHub API:
-
-```
-GET https://api.github.com/repos/vllm-project/vllm/commits/{full_commit_hash}
+```bash
+gh api repos/vllm-project/vllm/commits/{COMMIT_HASH} --jq '[.sha[0:8], (.commit.author.date | split("T")[0]), (.commit.message | split("\n")[0] | .[0:60])] | @tsv'
 ```
 
-Extract:
-- `commit.message` (first line only)
-- `commit.author.date` (format as YYYY-MM-DD)
+Run these 5 requests in parallel. Each returns: `{short_sha}\t{date}\t{message}`
 
 ## Step 3: Check cu130 Availability
 
-For each commit, check if cu130 wheels are available by fetching:
+Only check the top 5 commits (the ones most likely to be selected). Make these requests in parallel:
 
 ```
-GET https://wheels.vllm.ai/{full_commit_hash}/cu130/
+GET https://wheels.vllm.ai/{commit_hash}/cu130/
 ```
 
-If returns 200, mark as available. If 404, mark as unavailable.
+If returns 200, mark as "Y". If 404 or error, mark as "N".
+For commits not checked, mark as "?" (can check on demand if user selects).
 
 ## Step 4: Display Results
 
