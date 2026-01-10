@@ -800,17 +800,19 @@ def resolve_run_config(args):
 
     # Apply config defaults for args not specified on CLI
     if getattr(args, "max_model_len", None) is None:
-        config_default = backend_args.get("max_model_len", 65536)
+        config_default = backend_args.get("max_model_len")  # None if not in config
         if backend in ("vllm", "trtllm", "sglang"):
             detected = detect_max_position_embeddings(model_path)
-            if detected:
+            if config_default is not None and detected:
+                # Cap at config default if specified
                 args.max_model_len = min(config_default, detected)
                 if args.max_model_len < config_default:
                     log(
                         f"Capping max_model_len to {args.max_model_len} (model's max_position_embeddings)"
                     )
-            else:
+            elif config_default is not None:
                 args.max_model_len = config_default
+            # else: Leave as None - let vLLM auto-detect from model config
         else:
             args.max_model_len = config_default
     if getattr(args, "gpu_memory_utilization", None) is None:

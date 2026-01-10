@@ -13,7 +13,7 @@ defaults:
       image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
       args:
         gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
-        max_model_len: 65536
+        # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
       env_vars:
         # Prevent vLLM from spinning at 100% CPU when idle (blocks scheduling)
         VLLM_SLEEP_WHEN_IDLE: "1"

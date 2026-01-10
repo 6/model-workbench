@@ -311,10 +311,12 @@ def build_vllm_docker_cmd(
         str(port),
         "--tensor-parallel-size",
         str(tensor_parallel),
-        "--max-model-len",
-        str(max_model_len if max_model_len is not None else 10000),
         "--trust-remote-code",
     ]
+
+    # Only set max-model-len if explicitly specified (let vLLM auto-detect otherwise)
+    if max_model_len is not None:
+        cmd += ["--max-model-len", str(max_model_len)]
 
     if gpu_memory_utilization is not None:
         cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]
