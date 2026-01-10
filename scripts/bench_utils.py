@@ -663,9 +663,16 @@ def get_backend_config(engine: str) -> dict:
             "image_type": backend_cfg.get("image_type", "build"),
             "args": backend_cfg.get("args", {}),
             "model_patterns": backend_cfg.get("model_patterns", []),
+            "env_vars": backend_cfg.get("env_vars", {}),
         }
 
-    return {"version": None, "image_type": "build", "args": {}, "model_patterns": []}
+    return {
+        "version": None,
+        "image_type": "build",
+        "args": {},
+        "model_patterns": [],
+        "env_vars": {},
+    }
 
 
 def get_model_backend_config(model_arg: str, engine: str) -> dict:

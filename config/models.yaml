@@ -38,6 +38,15 @@ defaults:
             - "mistral"
         - pattern: "minimax.*m2\\.1"  # MiniMax M2.1 models (FP8, AWQ, etc.)
           args:
+            # FlashInfer is better optimized for MoE and mixed-precision models
+            - "--attention-backend"
+            - "flashinfer"
+            # Limit cudagraph compilation to 64 batch sizes (default 512 wastes memory)
+            # max-num-seqs should match to ensure all requests get cudagraph acceleration
+            - "--max-num-seqs"
+            - "64"
+            - "--max-cudagraph-capture-size"
+            - "64"
             - "--enable-auto-tool-choice"
             - "--tool-call-parser"
             - "minimax_m2"

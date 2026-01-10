@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-10T13:05:44.064912",
+  "timestamp": "2026-01-10T13:31:42.193094",
   "repo_id": "mratsim/MiniMax-M2.1-FP8-INT4-AWQ",
   "model_ref": "~/models/mratsim/MiniMax-M2.1-FP8-INT4-AWQ",
   "engine": "vllm-server",
@@ -13,7 +13,7 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 93810
+        "memory_used_mib": 92670
       },
       {
         "index": 1,
@@ -21,10 +21,10 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 93810
+        "memory_used_mib": 92670
       }
     ],
-    "memory_used_mib": 187620,
+    "memory_used_mib": 185340,
     "memory_total_mib": 195774
   },
   "config": {
@@ -41,65 +41,65 @@
   },
   "iterations": [
     {
-      "wall_s": 5.910315447999892,
-      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models, inference requires computing token representations at every forward pass. During autoregressive generation, each new token depends on all previously generated tokens. The Key-Value (KV) cache is an optimization that stores the computed keys and values from attention computations so they don't need to be recalculated for every new token.\n\nWhen processing a sequence, the model computes query (Q), key (K), and value (V) matrices for each token. For token generation beyond the first, only the current token produces a new query, while all prior tokens' keys and values remain unchanged. Without caching, the system would recompute K and V for the entire context length at each step\u2014a quadratic cost in sequence length. With KV caching, each step incurs only linear compute relative to the single new token's projections plus the attention operation itself.\n\n## Why It Matters for Long Context\n\nLong context inference exposes fundamental scaling challenges in transformers. Consider generating 1,000 tokens with a 128,000-token context window: without caching, each step processes all 128,000 tokens twice (once for K, once for V), resulting in approximately 256 million operations per token\u2014prohibitively expensive. KV caching reduces this to roughly 128,000 operations per token, a 2,000\u00d7 improvement.\n\nBeyond raw performance, KV caching enables practical applications that require extended context. Document summarization across lengthy inputs, multi-turn conversations spanning thousands of messages, code repositories analyzed as cohesive units, and retrieval-augmented generation over extensive knowledge bases all depend on efficient long-context handling. The cache transforms these use cases from theoretical possibilities into deployable systems.\n\nHowever, KV caching introduces memory tradeoffs. Storing keys and values for long contexts consumes significant GPU memory\u2014each layer in a typical",
+      "wall_s": 5.878520120999838,
+      "output_text": "\n\n# KV Cache: Technical Overview\n\n## What It Is\n\nKV cache is a memory optimization technique used in transformer-based language models during autoregressive generation. When a model processes text, each token position produces two critical values: a Key vector and a Value vector. These vectors are computed through matrix multiplications involving the token's embedding and the model's weight matrices. The KV cache stores these computed Key and Value tensors so they don't need to be recalculated from scratch for every new token generated.\n\nDuring standard inference, a model processes an input prompt by computing attention across all tokens simultaneously. For autoregressive generation\u2014where tokens are produced one at a time\u2014the previously computed keys and values remain relevant because future tokens attend to all preceding positions. Without caching, the model would recompute the entire forward pass for every single token output, dramatically increasing computational cost.\n\n## How It Works\n\nAt each generation step, the model receives the newly emitted token and computes its Query, Key, and Value projections. Rather than discarding the Key and Value after computing attention for that step, the system appends them to persistent caches stored in GPU memory. Subsequent steps retrieve these cached tensors alongside the new computation, allowing attention mechanisms to reference all prior context without redundant work.\n\nThis mechanism transforms the computational complexity of sequence generation. A naive approach scales as O(n\u00b2 \u00d7 d) for n tokens and hidden dimension d, since each new token attends to all previous tokens and requires full reprocessing. With KV caching, the cost reduces to approximately O(n \u00d7 d) for the incremental computation, plus O(n \u00d7 d) for storing the cache\u2014a substantial improvement that",
       "prompt_tokens": 54,
       "generated_tokens": 512,
-      "tok_per_s": 86.62820191319327,
-      "ttft_ms": 19.284486770629883,
-      "prefill_ms": 18.536644000050728,
-      "generation_ms": 5885.72609300013,
-      "generation_tok_per_s": 86.99011675193643
+      "tok_per_s": 87.09675045101613,
+      "ttft_ms": 20.09272575378418,
+      "prefill_ms": 19.42604499981826,
+      "generation_ms": 5853.376239000227,
+      "generation_tok_per_s": 87.47088502335039
     },
     {
-      "wall_s": 5.905239791999975,
-      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models, inference requires computing token representations at every forward pass. During autoregressive generation, each new token depends on all previously generated tokens. The Key-Value (KV) cache is an optimization that stores the computed keys and values from attention computations so they don't need to be recalculated for every new token.\n\nWhen processing a sequence, the model computes query (Q), key (K), and value (V) matrices for each token. For token generation beyond the first, only the current token produces a new query, while all prior tokens' keys and values remain unchanged. Without caching, the system would recompute K and V for the entire context length at each step\u2014a quadratic cost in sequence length. With KV caching, each step incurs only linear compute relative to the single new token's projections plus the attention operation itself.\n\n## Why It Matters for Long Context\n\nLong context inference exposes fundamental scaling challenges in transformers. Consider generating 1,000 tokens with a 128,000-token context window: without caching, each step processes all 128,000 tokens twice (once for K, once for V), resulting in approximately 256 million operations per token\u2014prohibitively expensive. KV caching reduces this to roughly 128,000 operations per token, a 2,000\u00d7 improvement.\n\nBeyond raw performance, KV caching enables practical applications that require extended context. Document summarization across lengthy inputs, multi-turn conversations spanning thousands of messages, code repositories analyzed as cohesive units, and retrieval-augmented generation over extensive knowledge bases all depend on efficient long-context handling. The cache transforms these use cases from theoretical possibilities into deployable systems.\n\nHowever, KV caching introduces memory tradeoffs. Storing keys and values for long contexts consumes significant GPU memory\u2014each layer in a typical",
+      "wall_s": 5.825110226000106,
+      "output_text": "\n\n# KV Cache: Enabling Efficient Long-Context Inference\n\n## What Is KV Cache?\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens during generation. For every output token, the model computes attention scores between the current position and all prior positions, retrieving the corresponding key (K) and value (V) vectors from each earlier token. Without caching, these K and V vectors would need to be recomputed from scratch at every decoding step\u2014an expensive operation that scales quadratically with sequence length.\n\nKV cache solves this by storing the computed key and value vectors for all previously processed tokens in memory after their initial forward pass. During autoregressive generation, new tokens only need to compute their own K/V projections once, then append them to the existing cache. Subsequent tokens retrieve pre-computed values rather than recalculating them, reducing per-token computation from O(n\u00b7d) to O(d), where n is context length and d is the hidden dimension.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward 128K tokens and beyond, the computational savings from KV caching become critical. Without caching, inference time grows prohibitively slow because each generated token must reprocess the entire prefix. KV caching transforms this relationship, making longer contexts computationally viable by ensuring that past tokens are processed exactly once while future tokens are generated efficiently.\n\nBeyond raw performance, KV caching enables several architectural innovations. Techniques like grouped-query attention (GQA) and multi-head latent attention reduce the number of unique K/V pairs stored without sacrificing quality, further improving efficiency. Sliding window attention and persistent cache strategies build on KV caching foundations to handle effectively infinite contexts within bounded memory budgets.\n\nFor applications requiring extended reasoning\u2014document summarization, multi-turn conversations, code analysis with large repositories\u2014KV caching is what makes real-time interaction with lengthy contexts achievable.",
       "prompt_tokens": 54,
-      "generated_tokens": 512,
-      "tok_per_s": 86.7026603548976,
-      "ttft_ms": 18.629789352416992,
-      "prefill_ms": 18.019406000121307,
-      "generation_ms": 5882.005673999856,
-      "generation_tok_per_s": 87.04513874632697
+      "generated_tokens": 506,
+      "tok_per_s": 86.86530904453838,
+      "ttft_ms": 18.518686294555664,
+      "prefill_ms": 17.985216999932163,
+      "generation_ms": 5801.87353600013,
+      "generation_tok_per_s": 87.21320739935354
     },
     {
-      "wall_s": 5.898315976000049,
-      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models, inference requires computing token representations at every forward pass. During autoregressive generation, each new token depends on all previously generated tokens. The Key-Value (KV) cache is an optimization that stores the computed keys and values from attention computations so they don't need to be recalculated for every new token.\n\nWhen processing a sequence, the model computes query (Q), key (K), and value (V) matrices for each token. For token generation beyond the first, only the current token produces a new query, while all prior tokens' keys and values remain unchanged. Without caching, the system would recompute K and V for the entire context length at each step\u2014a quadratic cost in sequence length. With KV caching, each step incurs only linear compute relative to the single new token's projections plus the attention operation itself.\n\n## Why It Matters for Long Context\n\nLong context inference exposes fundamental scaling challenges in transformers. Consider generating 1,000 tokens with a 128,000-token context window: without caching, each step processes all 128,000 tokens twice (once for K, once for V), resulting in approximately 256 million operations per token\u2014prohibitively expensive. KV caching reduces this to roughly 128,000 operations per token, a 2,000\u00d7 improvement.\n\nBeyond raw performance, KV caching enables practical applications that require extended context. Document summarization across lengthy inputs, multi-turn conversations spanning thousands of messages, code repositories analyzed as cohesive units, and retrieval-augmented generation over extensive knowledge bases all depend on efficient long-context handling. The cache transforms these use cases from theoretical possibilities into deployable systems.\n\nHowever, KV caching introduces memory tradeoffs. Storing keys and values for long contexts consumes significant GPU memory\u2014each layer in a typical",
+      "wall_s": 5.822678006999922,
+      "output_text": "\n\n# KV Cache: Enabling Efficient Long-Context Inference\n\n## What Is KV Cache?\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens during generation. For every output token, the model computes attention scores between the current position and all prior positions, retrieving the corresponding key (K) and value (V) vectors from each earlier token. Without caching, these K and V vectors would need to be recomputed from scratch at every decoding step\u2014an expensive operation that scales quadratically with sequence length.\n\nKV cache solves this by storing the computed key and value vectors for all previously processed tokens in memory after their initial forward pass. During autoregressive generation, new tokens only need to compute their own K/V projections once, then append them to the existing cache. Subsequent tokens retrieve pre-computed values rather than recalculating them, reducing per-token computation from O(n\u00b7d) to O(d), where n is context length and d is the hidden dimension.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward 128K tokens and beyond, the computational savings from KV caching become critical. Without caching, inference time grows prohibitively slow because each generated token must reprocess the entire prefix. KV caching transforms this relationship, making longer contexts computationally viable by ensuring that past tokens are processed exactly once while future tokens are generated efficiently.\n\nBeyond raw performance, KV caching enables several architectural innovations. Techniques like grouped-query attention (GQA) and multi-head latent attention reduce the number of unique K/V pairs stored without sacrificing quality, further improving efficiency. Sliding window attention and persistent cache strategies build on KV caching foundations to handle effectively infinite contexts within bounded memory budgets.\n\nFor applications requiring extended reasoning\u2014document summarization, multi-turn conversations, code analysis with large repositories\u2014KV caching is what makes real-time interaction with lengthy contexts achievable.",
       "prompt_tokens": 54,
-      "generated_tokens": 512,
-      "tok_per_s": 86.80443741625614,
-      "ttft_ms": 18.589496612548828,
-      "prefill_ms": 17.987835999974777,
-      "generation_ms": 5874.729187999947,
-      "generation_tok_per_s": 87.15295354309099
+      "generated_tokens": 506,
+      "tok_per_s": 86.90159397303022,
+      "ttft_ms": 18.62812042236328,
+      "prefill_ms": 17.996918999870104,
+      "generation_ms": 5798.9322829998855,
+      "generation_tok_per_s": 87.25744245770666
     },
     {
-      "wall_s": 5.902514313000211,
-      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models, inference requires computing token representations at every forward pass. During autoregressive generation, each new token depends on all previously generated tokens. The Key-Value (KV) cache is an optimization that stores the computed keys and values from attention computations so they don't need to be recalculated for every new token.\n\nWhen processing a sequence, the model computes query (Q), key (K), and value (V) matrices for each token. For token generation beyond the first, only the current token produces a new query, while all prior tokens' keys and values remain unchanged. Without caching, the system would recompute K and V for the entire context length at each step\u2014a quadratic cost in sequence length. With KV caching, each step incurs only linear compute relative to the single new token's projections plus the attention operation itself.\n\n## Why It Matters for Long Context\n\nLong context inference exposes fundamental scaling challenges in transformers. Consider generating 1,000 tokens with a 128,000-token context window: without caching, each step processes all 128,000 tokens twice (once for K, once for V), resulting in approximately 256 million operations per token\u2014prohibitively expensive. KV caching reduces this to roughly 128,000 operations per token, a 2,000\u00d7 improvement.\n\nBeyond raw performance, KV caching enables practical applications that require extended context. Document summarization across lengthy inputs, multi-turn conversations spanning thousands of messages, code repositories analyzed as cohesive units, and retrieval-augmented generation over extensive knowledge bases all depend on efficient long-context handling. The cache transforms these use cases from theoretical possibilities into deployable systems.\n\nHowever, KV caching introduces memory tradeoffs. Storing keys and values for long contexts consumes significant GPU memory\u2014each layer in a typical",
+      "wall_s": 5.795748135999929,
+      "output_text": "\n\n# KV Cache: Enabling Efficient Long-Context Inference\n\n## What Is KV Cache?\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens during generation. For every output token, the model computes attention scores between the current position and all prior positions, retrieving the corresponding key (K) and value (V) vectors from each earlier token. Without caching, these K and V vectors would need to be recomputed from scratch at every decoding step\u2014an expensive operation that scales quadratically with sequence length.\n\nKV cache solves this by storing the computed key and value vectors for all previously processed tokens in memory after their initial forward pass. During autoregressive generation, new tokens only need to compute their own K/V projections once, then append them to the existing cache. Subsequent tokens retrieve pre-computed values rather than recalculating them, reducing per-token computation from O(n\u00b7d) to O(d), where n is context length and d is the hidden dimension.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward 128K tokens and beyond, the computational savings from KV caching become critical. Without caching, inference time grows prohibitively slow because each generated token must reprocess the entire prefix. KV caching transforms this relationship, making longer contexts computationally viable by ensuring that past tokens are processed exactly once while future tokens are generated efficiently.\n\nBeyond raw performance, KV caching enables several architectural innovations. Techniques like grouped-query attention (GQA) and multi-head latent attention reduce the number of unique K/V pairs stored without sacrificing quality, further improving efficiency. Sliding window attention and persistent cache strategies build on KV caching foundations to handle effectively infinite contexts within bounded memory budgets.\n\nFor applications requiring extended reasoning\u2014document summarization, multi-turn conversations, code analysis with large repositories\u2014KV caching is what makes real-time interaction with lengthy contexts achievable.",
       "prompt_tokens": 54,
-      "generated_tokens": 512,
-      "tok_per_s": 86.74269520572389,
-      "ttft_ms": 18.507719039916992,
-      "prefill_ms": 17.98070299992105,
-      "generation_ms": 5879.289611000104,
-      "generation_tok_per_s": 87.08535110127116
+      "generated_tokens": 506,
+      "tok_per_s": 87.30538113915138,
+      "ttft_ms": 18.381357192993164,
+      "prefill_ms": 17.910347999986698,
+      "generation_ms": 5772.7756690001115,
+      "generation_tok_per_s": 87.65280846044777
     },
     {
-      "wall_s": 5.898981082999853,
-      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nIn transformer-based language models, inference requires computing token representations at every forward pass. During autoregressive generation, each new token depends on all previously generated tokens. The Key-Value (KV) cache is an optimization that stores the computed keys and values from attention computations so they don't need to be recalculated for every new token.\n\nWhen processing a sequence, the model computes query (Q), key (K), and value (V) matrices for each token. For token generation beyond the first, only the current token produces a new query, while all prior tokens' keys and values remain unchanged. Without caching, the system would recompute K and V for the entire context length at each step\u2014a quadratic cost in sequence length. With KV caching, each step incurs only linear compute relative to the single new token's projections plus the attention operation itself.\n\n## Why It Matters for Long Context\n\nLong context inference exposes fundamental scaling challenges in transformers. Consider generating 1,000 tokens with a 128,000-token context window: without caching, each step processes all 128,000 tokens twice (once for K, once for V), resulting in approximately 256 million operations per token\u2014prohibitively expensive. KV caching reduces this to roughly 128,000 operations per token, a 2,000\u00d7 improvement.\n\nBeyond raw performance, KV caching enables practical applications that require extended context. Document summarization across lengthy inputs, multi-turn conversations spanning thousands of messages, code repositories analyzed as cohesive units, and retrieval-augmented generation over extensive knowledge bases all depend on efficient long-context handling. The cache transforms these use cases from theoretical possibilities into deployable systems.\n\nHowever, KV caching introduces memory tradeoffs. Storing keys and values for long contexts consumes significant GPU memory\u2014each layer in a typical",
+      "wall_s": 5.805393401999936,
+      "output_text": "\n\n# KV Cache: Enabling Efficient Long-Context Inference\n\n## What Is KV Cache?\n\nIn transformer-based language models, self-attention requires each token to attend to all previous tokens during generation. For every output token, the model computes attention scores between the current position and all prior positions, retrieving the corresponding key (K) and value (V) vectors from each earlier token. Without caching, these K and V vectors would need to be recomputed from scratch at every decoding step\u2014an expensive operation that scales quadratically with sequence length.\n\nKV cache solves this by storing the computed key and value vectors for all previously processed tokens in memory after their initial forward pass. During autoregressive generation, new tokens only need to compute their own K/V projections once, then append them to the existing cache. Subsequent tokens retrieve pre-computed values rather than recalculating them, reducing per-token computation from O(n\u00b7d) to O(d), where n is context length and d is the hidden dimension.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward 128K tokens and beyond, the computational savings from KV caching become critical. Without caching, inference time grows prohibitively slow because each generated token must reprocess the entire prefix. KV caching transforms this relationship, making longer contexts computationally viable by ensuring that past tokens are processed exactly once while future tokens are generated efficiently.\n\nBeyond raw performance, KV caching enables several architectural innovations. Techniques like grouped-query attention (GQA) and multi-head latent attention reduce the number of unique K/V pairs stored without sacrificing quality, further improving efficiency. Sliding window attention and persistent cache strategies build on KV caching foundations to handle effectively infinite contexts within bounded memory budgets.\n\nFor applications requiring extended reasoning\u2014document summarization, multi-turn conversations, code analysis with large repositories\u2014KV caching is what makes real-time interaction with lengthy contexts achievable.",
       "prompt_tokens": 54,
-      "generated_tokens": 512,
-      "tok_per_s": 86.79465026180908,
-      "ttft_ms": 18.552064895629883,
-      "prefill_ms": 18.03646800021852,
-      "generation_ms": 5875.392861999899,
-      "generation_tok_per_s": 87.14310889939752
+      "generated_tokens": 506,
+      "tok_per_s": 87.1603291907289,
+      "ttft_ms": 18.37897300720215,
+      "prefill_ms": 17.92323200015744,
+      "generation_ms": 5781.9299859997955,
+      "generation_tok_per_s": 87.51403099401313
     }
   ],
   "summary": {
-    "median_wall_s": 5.902514313000211,
-    "median_tok_per_s": 86.74269520572389,
-    "median_ttft_ms": 18.589496612548828,
-    "median_generation_tok_per_s": 87.08535110127116
+    "median_wall_s": 5.822678006999922,
+    "median_tok_per_s": 87.09675045101613,
+    "median_ttft_ms": 18.518686294555664,
+    "median_generation_tok_per_s": 87.47088502335039
   }
 }
