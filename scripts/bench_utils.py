@@ -663,9 +663,16 @@ def get_backend_config(engine: str) -> dict:
             "image_type": backend_cfg.get("image_type", "build"),
             "args": backend_cfg.get("args", {}),
             "model_patterns": backend_cfg.get("model_patterns", []),
+            "env_vars": backend_cfg.get("env_vars", {}),
         }
 
-    return {"version": None, "image_type": "build", "args": {}, "model_patterns": []}
+    return {
+        "version": None,
+        "image_type": "build",
+        "args": {},
+        "model_patterns": [],
+        "env_vars": {},
+    }
 
 
 def get_model_backend_config(model_arg: str, engine: str) -> dict:
@@ -793,17 +800,19 @@ def resolve_run_config(args):
 
     # Apply config defaults for args not specified on CLI
     if getattr(args, "max_model_len", None) is None:
-        config_default = backend_args.get("max_model_len", 65536)
+        config_default = backend_args.get("max_model_len")  # None if not in config
         if backend in ("vllm", "trtllm", "sglang"):
             detected = detect_max_position_embeddings(model_path)
-            if detected:
+            if config_default is not None and detected:
+                # Cap at config default if specified
                 args.max_model_len = min(config_default, detected)
                 if args.max_model_len < config_default:
                     log(
                         f"Capping max_model_len to {args.max_model_len} (model's max_position_embeddings)"
                     )
-            else:
+            elif config_default is not None:
                 args.max_model_len = config_default
+            # else: Leave as None - let vLLM auto-detect from model config
         else:
             args.max_model_len = config_default
     if getattr(args, "gpu_memory_utilization", None) is None:

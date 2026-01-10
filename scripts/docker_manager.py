@@ -248,6 +248,32 @@ def _get_model_specific_args(model_path: str, backend: str = "vllm") -> list[str
     return extra_args
 
 
+def _get_model_specific_env_vars(model_path: str, backend: str = "vllm") -> dict[str, str]:
+    """Get environment variables from config (global + model-specific patterns).
+
+    Args:
+        model_path: Path to model (checked against patterns)
+        backend: Backend name (vllm, sglang, etc.)
+
+    Returns:
+        Dict of environment variable name -> value
+    """
+    from bench_utils import get_backend_config
+
+    cfg = get_backend_config(backend)
+
+    # Start with global env vars for the backend
+    env_vars: dict[str, str] = dict(cfg.get("env_vars", {}))
+
+    # Add model-specific env vars from patterns (overrides global)
+    patterns = cfg.get("model_patterns", [])
+    lower = model_path.lower()
+    for p in patterns:
+        if re.search(p["pattern"], lower, re.IGNORECASE):
+            env_vars.update(p.get("env_vars", {}))
+    return env_vars
+
+
 def build_vllm_docker_cmd(
     image_name: str,
     model_path: str,
@@ -265,12 +291,16 @@ def build_vllm_docker_cmd(
     """Build Docker run command for vLLM server."""
     model_path_resolved = str(Path(model_path).expanduser().resolve())
 
+    # Merge env vars: pattern-based + explicit (explicit takes priority)
+    pattern_env_vars = _get_model_specific_env_vars(model_path)
+    merged_env_vars = {**pattern_env_vars, **(env_vars or {})}
+
     cmd = _docker_run_base(
         "vllm",
         image_name,
         port,
         [(model_path_resolved, model_path_resolved, "ro")],
-        env_vars=env_vars,
+        env_vars=merged_env_vars if merged_env_vars else None,
     )
     cmd += [
         "--model",
@@ -281,10 +311,12 @@ def build_vllm_docker_cmd(
         str(port),
         "--tensor-parallel-size",
         str(tensor_parallel),
-        "--max-model-len",
-        str(max_model_len if max_model_len is not None else 10000),
         "--trust-remote-code",
     ]
+
+    # Only set max-model-len if explicitly specified (let vLLM auto-detect otherwise)
+    if max_model_len is not None:
+        cmd += ["--max-model-len", str(max_model_len)]
 
     if gpu_memory_utilization is not None:
         cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]

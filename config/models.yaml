@@ -13,7 +13,10 @@ defaults:
       image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
       args:
         gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
-        max_model_len: 65536
+        # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
+      env_vars:
+        # Prevent vLLM from spinning at 100% CPU when idle (blocks scheduling)
+        VLLM_SLEEP_WHEN_IDLE: "1"
       # Model-specific CLI args (pattern is regex matched against model path)
       model_patterns:
         - pattern: "glm.*v"  # GLM vision models
@@ -33,6 +36,41 @@ defaults:
             - "mistral"
             - "--load_format"
             - "mistral"
+        - pattern: "minimax.*m2\\.1"  # MiniMax M2.1 models (FP8, AWQ, etc.)
+          args:
+            # FlashInfer is better optimized for MoE and mixed-precision models
+            - "--attention-backend"
+            - "flashinfer"
+            # Cudagraph tuning: vLLM default compiles cudagraphs for batch sizes 1-512,
+            # consuming GPU memory for sizes you'll likely never use. Setting both to 64:
+            # - Benefit: Saves GPU memory, faster startup (less cudagraph compilation)
+            # - Benefit: All scheduled requests get cudagraph acceleration (no CUDA kernel overhead)
+            # - Tradeoff: Limits max concurrent requests to 64 (excess requests queue)
+            # Both values MUST match: if max-num-seqs > max-cudagraph-capture-size, requests
+            # beyond the cudagraph limit fall back to slower CUDA kernel calls.
+            # Lower values (e.g., 16) save more memory; 64 is a reasonable default for mixed workloads
+            - "--max-num-seqs"
+            - "64"
+            - "--max-cudagraph-capture-size"
+            - "64"
+            - "--enable-auto-tool-choice"
+            - "--tool-call-parser"
+            - "minimax_m2"
+            # Reasoning parser options:
+            #   minimax_m2: Puts reasoning in a special field (like DeepSeek) for
+            #               frontends that render it separately
+            #   minimax_m2_append_think: Wraps reasoning in <think>...</think> tags
+            #               as normal text. Enables interleaved thinking where the
+            #               model builds on previous reasoning (most frontends discard
+            #               the thinking trace, few properly render this format).
+            - "--reasoning-parser"
+            - "minimax_m2"
+            # Sampler overrides to prevent repetition loops (per model card)
+            - "--override-generation-config"
+            - '{"temperature": 1, "top_p": 0.95, "top_k": 40, "repetition_penalty": 1.1, "frequency_penalty": 0.40}'
+          env_vars:
+            # Prevent PyTorch memory fragmentation with mixed-precision quantization
+            PYTORCH_ALLOC_CONF: "expandable_segments:True,max_split_size_mb:512"
     # https://github.com/ggerganov/llama.cpp/releases
     # Note: b7538 introduced Blackwell changes that break CUDA graphs on SM120
     # Staying on b7531 (last version before that change) for stable performance
@@ -92,6 +130,14 @@ models:
           kt_method: FP8        # M2.1 uses native FP8 weights
 
   - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
+
+  - repo_id: mratsim/MiniMax-M2.1-FP8-INT4-AWQ
+    backends:
+      vllm:
+        docker_image: vllm/vllm-openai:nightly  # nightly gives 96 tok/s vs 87 on v0.13.0
+        args:
+          # 0.90 leaves ~10GB per GPU for running small models alongside (VL, Whisper, etc.)
+          gpu_memory_utilization: 0.90
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
