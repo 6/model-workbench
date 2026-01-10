@@ -413,11 +413,22 @@ def build_trtllm_docker_cmd(
     model_path_resolved = str(Path(model_path).expanduser().resolve())
     cache_dir = os.path.expanduser("~/.cache")
 
+    # Build volume list
+    volumes = [
+        (model_path_resolved, model_path_resolved, "ro"),
+        (cache_dir, "/root/.cache", "rw"),
+    ]
+
+    # Mount trtllm config directory if it exists (for YAML config files)
+    config_dir = Path(__file__).parent.parent / "config" / "trtllm"
+    if config_dir.exists():
+        volumes.append((str(config_dir.resolve()), "/config", "ro"))
+
     cmd = _docker_run_base(
         "trtllm",
         image_name,
         port,
-        [(model_path_resolved, model_path_resolved, "ro"), (cache_dir, "/root/.cache", "rw")],
+        volumes,
     )
     cmd += [
         "trtllm-serve",

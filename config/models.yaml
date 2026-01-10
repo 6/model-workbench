@@ -83,7 +83,7 @@ defaults:
         flash_attn: "on"    # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: 1.2.0rc5
+      version: 1.2.0rc7
       image_type: prebuilt    # Uses NGC images
     # https://hub.docker.com/r/lmsysorg/sglang/tags
     sglang:
@@ -228,7 +228,28 @@ models:
       - "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
 
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
+    backends:
+      trtllm:
+        extra_args:
+          - "--backend"
+          - "_autodeploy"
+          - "--trust_remote_code"
+          - "--reasoning_parser"
+          - "nano-v3"
+          - "--tool_parser"
+          - "qwen3_coder"
+          - "--extra_llm_api_options"
+          - "/config/nano_v3.yaml"
+
   - repo_id: nvidia/Nemotron-Flash-3B-Instruct
+    backends:
+      trtllm:
+        extra_args:
+          - "--backend"
+          - "_autodeploy"
+          - "--trust_remote_code"
+          - "--extra_llm_api_options"
+          - "/config/nemotron_flash.yaml"
 
   # Small model to trial evals
   - repo_id: Qwen/Qwen3-VL-2B-Instruct

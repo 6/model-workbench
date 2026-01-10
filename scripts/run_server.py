@@ -337,11 +337,13 @@ def main():
             pr_overlay=pr_overlay,
         )
     elif backend == "trtllm":
+        extra_args = backend_cfg.get("extra_args", [])
         server.start_trtllm(
             model_path=model_path,
             tensor_parallel=args.tensor_parallel,
             version=backend_version,
             rebuild=args.rebuild,
+            extra_args=extra_args,
         )
     elif backend == "llama":
         mmproj_path = None
