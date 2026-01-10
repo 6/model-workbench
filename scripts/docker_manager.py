@@ -347,11 +347,11 @@ def build_vllm_docker_cmd(
     if max_num_seqs is not None:
         cmd += ["--max-num-seqs", str(max_num_seqs)]
 
-    # Model-specific flags from config
-    cmd += _get_model_specific_args(model_path)
-
     if extra_vllm_args:
         cmd += extra_vllm_args
+
+    # Model-specific flags from config (applied last, takes precedence over global extra_args)
+    cmd += _get_model_specific_args(model_path)
     return cmd
 
 

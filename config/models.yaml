@@ -17,6 +17,11 @@ defaults:
       env_vars:
         # Prevent vLLM from spinning at 100% CPU when idle (blocks scheduling)
         VLLM_SLEEP_WHEN_IDLE: "1"
+      extra_args:
+        # GPU Direct Storage for faster model loading (requires NVMe + GDS support)
+        # See: https://docs.vllm.ai/en/latest/models/extensions/fastsafetensor.html
+        - "--load-format"
+        - "fastsafetensors"
       # Model-specific CLI args (pattern is regex matched against model path)
       model_patterns:
         - pattern: "glm.*v"  # GLM vision models

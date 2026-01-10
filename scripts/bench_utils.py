@@ -664,6 +664,7 @@ def get_backend_config(engine: str) -> dict:
             "args": backend_cfg.get("args", {}),
             "model_patterns": backend_cfg.get("model_patterns", []),
             "env_vars": backend_cfg.get("env_vars", {}),
+            "extra_args": backend_cfg.get("extra_args", []),
         }
 
     return {
@@ -672,6 +673,7 @@ def get_backend_config(engine: str) -> dict:
         "args": {},
         "model_patterns": [],
         "env_vars": {},
+        "extra_args": [],
     }
 
 
