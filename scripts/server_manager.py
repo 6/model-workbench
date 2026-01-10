@@ -117,8 +117,10 @@ class ServerManager:
     def _get_container_id(self) -> str | None:
         """Extract Docker container ID for the port we're using.
 
+        Checks both port-mapped containers and host-network containers.
         Returns container ID if found, None otherwise.
         """
+        # First try port-based filter (works for -p mapped containers)
         try:
             result = subprocess.run(
                 ["docker", "ps", "--filter", f"publish={self.port}", "-q", "--no-trunc"],
@@ -130,9 +132,34 @@ class ServerManager:
                 cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()
             ]
             if container_ids:
-                return container_ids[0]  # Return first match
+                return container_ids[0]
         except Exception:
             pass
+
+        # Check for host-network containers by known images
+        # These images use --network host and won't match publish= filter
+        host_network_images = [
+            "ghcr.io/open-webui/open-webui",
+            "vllm/vllm-openai",
+            "model-workbench",  # Our custom images
+        ]
+
+        for image in host_network_images:
+            try:
+                result = subprocess.run(
+                    ["docker", "ps", "--filter", f"ancestor={image}", "-q", "--no-trunc"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                container_ids = [
+                    cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()
+                ]
+                if container_ids:
+                    return container_ids[0]
+            except Exception:
+                pass
+
         return None
 
     def start(
