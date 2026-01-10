@@ -41,8 +41,12 @@ defaults:
             # FlashInfer is better optimized for MoE and mixed-precision models
             - "--attention-backend"
             - "flashinfer"
-            # Limit cudagraph compilation to 64 batch sizes (default 512 wastes memory)
-            # max-num-seqs should match to ensure all requests get cudagraph acceleration
+            # Cudagraph tuning: vLLM default compiles cudagraphs for batch sizes 1-512,
+            # consuming GPU memory for sizes you'll likely never use. Setting both to 64:
+            # - Benefit: Saves ~5-10GB GPU memory, faster startup (less compilation)
+            # - Benefit: All scheduled requests get cudagraph acceleration (no CUDA kernel overhead)
+            # - Tradeoff: Limits max concurrent requests to 64 (excess requests queue)
+            # - Note: 2x RTX Pro 6000 saturates at ~10-11 concurrent long-generation requests
             - "--max-num-seqs"
             - "64"
             - "--max-cudagraph-capture-size"
