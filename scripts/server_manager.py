@@ -257,6 +257,7 @@ class ServerManager:
         image_override: str | None = None,
         pr_number: int | None = None,
         pr_overlay: bool = False,
+        backend: str = "vllm",
     ) -> None:
         """Start vLLM server via Docker with version pinning.
 
@@ -286,7 +287,7 @@ class ServerManager:
 
         # Ensure image exists (builds or pulls as needed)
         image_name = ensure_image(
-            "vllm",
+            backend,
             version,
             rebuild=rebuild,
             image_type=image_type,

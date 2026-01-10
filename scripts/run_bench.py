@@ -187,7 +187,7 @@ def bench_once_openai(
 
     # Scrape prometheus metrics before request (vllm/trtllm only)
     metrics_before = None
-    if backend in ("vllm", "trtllm"):
+    if backend in ("vllm", "vllm-cu130", "trtllm"):
         metrics_before = scrape_prometheus_metrics(host, port, backend)
 
     t0 = time.perf_counter()
@@ -204,7 +204,7 @@ def bench_once_openai(
 
     # Scrape metrics after request
     metrics_after = None
-    if backend in ("vllm", "trtllm"):
+    if backend in ("vllm", "vllm-cu130", "trtllm"):
         metrics_after = scrape_prometheus_metrics(host, port, backend)
 
     # Extract output text (handle reasoning_content for thinking models)
@@ -241,7 +241,7 @@ def bench_once_openai(
 
         # Calculate generation_tok_per_s from timing metrics
         generation_tok_per_s = None
-        if backend == "vllm" and generated_tokens and timing.get("generation_ms"):
+        if backend in ("vllm", "vllm-cu130") and generated_tokens and timing.get("generation_ms"):
             gen_s = timing["generation_ms"] / 1000
             if gen_s > 0:
                 generation_tok_per_s = generated_tokens / gen_s
@@ -366,13 +366,14 @@ def run_benchmark_vllm(
     image_label: str,
     image_type: str = "build",
     docker_image: str | None = None,
+    backend: str = "vllm",
 ):
     """Run benchmarks using vLLM backend (Docker-only)."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
     # Resolve backend version, PR number, and PR overlay from config or CLI
-    backend_cfg = get_model_backend_config(args.model, "vllm")
+    backend_cfg = get_model_backend_config(args.model, backend)
     backend_version = args.backend_version or backend_cfg.get("version")
     pr_number = backend_cfg.get("pr_number")
     pr_overlay = backend_cfg.get("pr_overlay", False)
@@ -380,7 +381,7 @@ def run_benchmark_vllm(
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.vllm.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
             "  2. Pass --backend-version v0.8.0"
         )
 
@@ -433,6 +434,7 @@ def run_benchmark_vllm(
                 image_override=docker_image,
                 pr_number=pr_number,
                 pr_overlay=pr_overlay,
+                backend=backend,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -1383,8 +1385,8 @@ def main():
     else:
         log(f"Auto-detected model format -> {backend_label} backend")
 
-    if backend == "vllm":
-        run_benchmark_vllm(args, model_path, image_path, image_label, image_type, docker_image)
+    if backend in ("vllm", "vllm-cu130"):
+        run_benchmark_vllm(args, model_path, image_path, image_label, image_type, docker_image, backend)
     elif backend == "trtllm":
         run_benchmark_trtllm(args, model_path, image_path, image_label)
     elif backend == "sglang":

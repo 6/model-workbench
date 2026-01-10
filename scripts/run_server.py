@@ -320,7 +320,7 @@ def main():
         log(f"  Image override: {docker_image}")
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
-    if backend == "vllm":
+    if backend in ("vllm", "vllm-cu130"):
         server.start_vllm(
             model_path=model_path,
             tensor_parallel=args.tensor_parallel,
@@ -335,6 +335,7 @@ def main():
             image_override=docker_image,
             pr_number=pr_number,
             pr_overlay=pr_overlay,
+            backend=backend,
         )
     elif backend == "trtllm":
         extra_args = backend_cfg.get("extra_args", [])

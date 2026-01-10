@@ -71,6 +71,15 @@ BACKEND_REGISTRY = {
         "dockerfile": ROOT / "docker" / "Dockerfile.vllm",
         "docker_base": ["--gpus", "all", "--ipc", "host"],
     },
+    "vllm-cu130": {
+        "display_name": "vLLM (CUDA 13/Blackwell)",
+        "formats": ["safetensors"],
+        "default_port": 8000,
+        "image_prefix": "model-bench-vllm-cu130",
+        "prebuilt_image": None,  # Always build from Dockerfile (fast pip install)
+        "dockerfile": ROOT / "docker" / "Dockerfile.vllm-cu130",
+        "docker_base": ["--gpus", "all", "--ipc", "host"],
+    },
     "llama": {
         "display_name": "llama.cpp",
         "formats": ["gguf"],
