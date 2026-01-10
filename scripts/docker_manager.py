@@ -689,13 +689,39 @@ def ensure_image(
     use_prebuilt = image_type == "prebuilt" or (cfg and not cfg["dockerfile"])
 
     if use_prebuilt:
-        image_name = get_image_name(engine, version, image_type="prebuilt")
-        if not _image_exists_local(image_name) or rebuild:
-            if not _pull_image(image_name):
-                raise SystemExit(f"Failed to pull prebuilt image: {image_name}")
+        base_image = get_image_name(engine, version, image_type="prebuilt")
+
+        # vLLM prebuilt: build thin wrapper to add fastsafetensors
+        if engine == "vllm":
+            wrapper_image = f"{cfg['image_prefix']}-prebuilt:{version}"
+            if not _image_exists_local(wrapper_image) or rebuild:
+                dockerfile = ROOT / "docker" / "Dockerfile.vllm-prebuilt"
+                log(f"Building vLLM prebuilt wrapper: {wrapper_image}")
+                cmd = [
+                    "docker",
+                    "build",
+                    "-f",
+                    str(dockerfile),
+                    "--build-arg",
+                    f"BASE_IMAGE={base_image}",
+                    "-t",
+                    wrapper_image,
+                    str(ROOT),
+                ]
+                result = subprocess.run(cmd, capture_output=False)
+                if result.returncode != 0:
+                    raise SystemExit(f"Failed to build prebuilt wrapper: {wrapper_image}")
+            else:
+                log(f"Using existing prebuilt wrapper: {wrapper_image}")
+            return wrapper_image
+
+        # Other engines: use prebuilt image directly
+        if not _image_exists_local(base_image) or rebuild:
+            if not _pull_image(base_image):
+                raise SystemExit(f"Failed to pull prebuilt image: {base_image}")
         else:
-            log(f"Using existing prebuilt image: {image_name}")
-        return image_name
+            log(f"Using existing prebuilt image: {base_image}")
+        return base_image
 
     # Build from source (default for llama, optional for vllm, or variants like cu130)
     return _build_image(

@@ -116,7 +116,8 @@ RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
         transformers \
         tokenizers \
         accelerate \
-        safetensors; \
+        safetensors \
+        fastsafetensors; \
     fi
 
 # =============================================================================

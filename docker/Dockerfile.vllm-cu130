@@ -30,6 +30,7 @@ ARG VERSION
 # Use --index-url (not --extra-index-url) to prioritize the cu130 wheels over PyPI
 RUN pip3 install --no-cache-dir --pre \
     vllm \
+    fastsafetensors \
     --index-url https://wheels.vllm.ai/${VERSION}/cu130 \
     --extra-index-url https://pypi.org/simple
 
