@@ -229,6 +229,24 @@ models:
 
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
     backends:
+      vllm:
+        # Uses default v0.13.0 (nightly broken: https://github.com/vllm-project/vllm/issues/31957)
+        args:
+          max_num_seqs: 8
+          max_model_len: 262144
+        env_vars:
+          VLLM_USE_FLASHINFER_MOE_FP8: "1"
+        extra_args:
+          - "--trust-remote-code"
+          - "--enable-auto-tool-choice"
+          - "--tool-call-parser"
+          - "qwen3_coder"
+          - "--reasoning-parser-plugin"
+          - "/config/nano_v3_reasoning_parser.py"
+          - "--reasoning-parser"
+          - "nano_v3"
+          - "--kv-cache-dtype"
+          - "fp8"
       trtllm:
         extra_args:
           - "--backend"
@@ -240,16 +258,6 @@ models:
           - "qwen3_coder"
           - "--extra_llm_api_options"
           - "/config/nano_v3.yaml"
-
-  - repo_id: nvidia/Nemotron-Flash-3B-Instruct
-    backends:
-      trtllm:
-        extra_args:
-          - "--backend"
-          - "_autodeploy"
-          - "--trust_remote_code"
-          - "--extra_llm_api_options"
-          - "/config/nemotron_flash.yaml"
 
   # Small model to trial evals
   - repo_id: Qwen/Qwen3-VL-2B-Instruct

@@ -295,11 +295,19 @@ def build_vllm_docker_cmd(
     pattern_env_vars = _get_model_specific_env_vars(model_path)
     merged_env_vars = {**pattern_env_vars, **(env_vars or {})}
 
+    # Build volume list
+    volumes = [(model_path_resolved, model_path_resolved, "ro")]
+
+    # Mount vllm config directory if it exists (for reasoning parser plugins, etc.)
+    config_dir = Path(__file__).parent.parent / "config" / "vllm"
+    if config_dir.exists():
+        volumes.append((str(config_dir.resolve()), "/config", "ro"))
+
     cmd = _docker_run_base(
         "vllm",
         image_name,
         port,
-        [(model_path_resolved, model_path_resolved, "ro")],
+        volumes,
         env_vars=merged_env_vars if merged_env_vars else None,
     )
     cmd += [
