@@ -200,8 +200,8 @@ def main():
     webui_group.add_argument(
         "--webui-port",
         type=int,
-        default=8080,
-        help="Port for Open WebUI (default: 8080)",
+        default=3080,
+        help="Port for Open WebUI (default: 3080)",
     )
     webui_group.add_argument(
         "--webui-image",
