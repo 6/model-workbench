@@ -178,39 +178,7 @@ def main():
         help="Timeout in seconds waiting for server to start (default: 180)",
     )
 
-    # vLLM/trtllm server options (defaults from config, CLI overrides)
-    parser.add_argument(
-        "--tensor-parallel",
-        type=int,
-        default=None,
-        help="Tensor parallel size (default: auto-detect GPU count)",
-    )
-    parser.add_argument(
-        "--max-model-len",
-        type=int,
-        default=None,
-        help="Max context length (default: from config or 65536)",
-    )
-    parser.add_argument(
-        "--gpu-memory-utilization",
-        type=float,
-        default=None,
-        help="GPU memory fraction (default: from config or 0.95)",
-    )
-    parser.add_argument(
-        "--cpu-offload-gb",
-        type=float,
-        default=None,
-        help="CPU offload in GB per GPU for vLLM (default: none)",
-    )
-    parser.add_argument(
-        "--max-num-seqs",
-        type=int,
-        default=None,
-        help="Max concurrent sequences for vLLM (default: from config or vLLM default)",
-    )
-
-    # llama.cpp server options (defaults from config, CLI overrides)
+    # llama.cpp server options
     parser.add_argument(
         "--n-gpu-layers",
         type=int,
@@ -243,7 +211,8 @@ def main():
         help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+    args.extra_backend_args = unknown  # Pass unknown args to backend
 
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)
@@ -308,12 +277,9 @@ def main():
                 # vLLM backend for safetensors models
                 server.start_vllm(
                     model_path=model_path,
-                    tensor_parallel=args.tensor_parallel,
                     version=backend_version,
-                    max_model_len=args.max_model_len,
-                    gpu_memory_utilization=args.gpu_memory_utilization,
-                    cpu_offload_gb=args.cpu_offload_gb,
-                    max_num_seqs=args.max_num_seqs,
+                    env_vars=args.env_vars,
+                    extra_vllm_args=args.extra_vllm_args,
                     image_override=docker_image,
                 )
 

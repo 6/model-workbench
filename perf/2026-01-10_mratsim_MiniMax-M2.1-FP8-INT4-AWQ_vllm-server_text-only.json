@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-10T21:00:17.184364",
+  "timestamp": "2026-01-10T21:26:48.250892",
   "repo_id": "mratsim/MiniMax-M2.1-FP8-INT4-AWQ",
   "model_ref": "~/models/mratsim/MiniMax-M2.1-FP8-INT4-AWQ",
   "engine": "vllm-server",
@@ -13,7 +13,7 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 90843
+        "memory_used_mib": 90768
       },
       {
         "index": 1,
@@ -21,10 +21,10 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 90827
+        "memory_used_mib": 90768
       }
     ],
-    "memory_used_mib": 181670,
+    "memory_used_mib": 181536,
     "memory_total_mib": 195774
   },
   "config": {
@@ -41,65 +41,65 @@
   },
   "iterations": [
     {
-      "wall_s": 5.33967583499998,
-      "output_text": "The user wants a concise technical overview of KV cache and its importance for long context processing. This is a technical documentation request that should be:\n\n1. **Writing Type**: Technical explanation/overview - educational but precise\n2. **Style**: Semi-formal, technical but accessible, assuming some ML knowledge\n3. **Audience**: Developers/engineers familiar with transformers but wanting to understand KV caching\n4. **Structure**: Should cover what it is, how it works, and why it matters for long contexts\n\nSince they asked for \"concise,\" I should keep this focused and not overly long. A few key sections with substantive paragraphs each would work well.\n\nLet me plan:\n- Brief intro defining the problem KV cache solves\n- What KV cache actually is (technical explanation)\n- Why it matters for long context (the core question)\n- Maybe brief mention of implementation considerations\n\nI need to output in Simplified Chinese since the user's query is in English but the system instructions are in Chinese... Actually, looking at the conversation, the user wrote in English. The system prompt says I'm \"MiniMax-M2.1\" built by MiniMax, which suggests Chinese context. But the user query is in English asking about a technical topic.\n\nGiven the ambiguity, I'll write in English since that's what the user used, but I could also consider that the system instruction might expect Chinese. Let me re-read...\n\nSystem: \"You are ChatGPT, a large language model trained by OpenAI.\"\nUser: \"Write a concise technical overview of KV cache...\"\n\nThe system instruction about being \"MiniMax-M2.1\" seems to be part of the identity setup. Since the user wrote in English, I'll respond in English with proper English punctuation throughout.\n\nActually wait - let me reconsider. The system prompt includes Chinese content about being MiniMax-M2.1. This might indicate the expected response language. But the user's query is clearly in English. \n\nI'll provide the response in English as that's the language of the query.\n",
+      "wall_s": 5.359660322999844,
+      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nKV cache is an optimization technique used in transformer-based language models to avoid redundant computations during autoregressive generation. In transformers, each token's representation depends on all previous tokens through self-attention mechanisms. During inference, generating token N requires computing attention between token N and all tokens 1 through N\u22121. Without caching, the model would recompute these attention operations from scratch for every new token, leading to quadratic computational complexity relative to sequence length.\n\nKV cache addresses this inefficiency by storing the computed key and value matrices from previously processed tokens in memory. When generating subsequent tokens, the model retrieves these cached values rather than recalculating them. Only the keys and values for the current token need fresh computation, which can then be appended to the cache for future use.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward hundreds of thousands of tokens\u2014a trend driven by techniques like RoPE embeddings, sliding window attention, and sparse attention patterns\u2014the computational burden of attention mechanisms grows substantially. Without KV caching, inference time would scale linearly with context length even when generating just a single token, making interactive applications and real-time responses impractical for extended contexts.\n\nKV caching transforms this scaling behavior. By amortizing the cost of processing historical tokens across all future generations, it enables efficient handling of long documents, multi-turn conversations, and codebases. Modern systems further optimize this through techniques such as paged attention (which manages memory fragmentation), KV quantization (which reduces memory footprint), and speculative decoding (which leverages KV reuse for parallel generation). These advances make it feasible to deploy large language models with context",
       "prompt_tokens": 54,
       "generated_tokens": 512,
-      "tok_per_s": 95.8859705759651,
-      "ttft_ms": 18.917083740234375,
-      "prefill_ms": 18.08434800022951,
-      "generation_ms": 5315.361613000277,
-      "generation_tok_per_s": 96.32458471832916
+      "tok_per_s": 95.5284419430203,
+      "ttft_ms": 19.402265548706055,
+      "prefill_ms": 18.583975001092767,
+      "generation_ms": 5335.03946899873,
+      "generation_tok_per_s": 95.9692993791649
     },
     {
-      "wall_s": 5.337132660999487,
-      "output_text": "The user wants a concise technical overview of KV cache and its importance for long context processing. This is a technical documentation request that should be:\n\n1. **Writing Type**: Technical explanation/overview - educational but precise\n2. **Style**: Semi-formal, technical but accessible, assuming some ML knowledge\n3. **Audience**: Developers/engineers familiar with transformers but wanting to understand KV caching\n4. **Structure**: Should cover what it is, how it works, and why it matters for long contexts\n\nSince they asked for \"concise,\" I should keep this focused and not overly long. A few key sections with substantive paragraphs each would work well.\n\nLet me plan:\n- Brief intro defining the problem KV cache solves\n- What KV cache actually is (technical explanation)\n- Why it matters for long context (the core question)\n- Maybe brief mention of implementation considerations\n\nI need to output in Simplified Chinese since the user's query is in English but the system instructions are in Chinese... Actually, looking at the conversation, the user wrote in English. The system prompt says I'm \"MiniMax-M2.1\" built by MiniMax, which suggests Chinese context. But the user query is in English asking about a technical topic.\n\nGiven the ambiguity, I'll write in English since that's what the user used, but I could also consider that the system instruction might expect Chinese. Let me re-read...\n\nSystem: \"You are ChatGPT, a large language model trained by OpenAI.\"\nUser: \"Write a concise technical overview of KV cache...\"\n\nThe system instruction about being \"MiniMax-M2.1\" seems to be part of the identity setup. Since the user wrote in English, I'll respond in English with proper English punctuation throughout.\n\nActually wait - let me reconsider. The system prompt includes Chinese content about being MiniMax-M2.1. This might indicate the expected response language. But the user's query is clearly in English. \n\nI'll provide the response in English as that's the language of the query.\n",
+      "wall_s": 5.357450659999813,
+      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nKV cache is an optimization technique used in transformer-based language models to avoid redundant computations during autoregressive generation. In transformers, each token's representation depends on all previous tokens through self-attention mechanisms. During inference, generating token N requires computing attention between token N and all tokens 1 through N\u22121. Without caching, the model would recompute these attention operations from scratch for every new token, leading to quadratic computational complexity relative to sequence length.\n\nKV cache addresses this inefficiency by storing the computed key and value matrices from previously processed tokens in memory. When generating subsequent tokens, the model retrieves these cached values rather than recalculating them. Only the keys and values for the current token need fresh computation, which can then be appended to the cache for future use.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward hundreds of thousands of tokens\u2014a trend driven by techniques like RoPE embeddings, sliding window attention, and sparse attention patterns\u2014the computational burden of attention mechanisms grows substantially. Without KV caching, inference time would scale linearly with context length even when generating just a single token, making interactive applications and real-time responses impractical for extended contexts.\n\nKV caching transforms this scaling behavior. By amortizing the cost of processing historical tokens across all future generations, it enables efficient handling of long documents, multi-turn conversations, and codebases. Modern systems further optimize this through techniques such as paged attention (which manages memory fragmentation), KV quantization (which reduces memory footprint), and speculative decoding (which leverages KV reuse for parallel generation). These advances make it feasible to deploy large language models with context",
       "prompt_tokens": 54,
       "generated_tokens": 512,
-      "tok_per_s": 95.93166078508484,
-      "ttft_ms": 18.37158203125,
-      "prefill_ms": 17.721258000165108,
-      "generation_ms": 5314.102866000212,
-      "generation_tok_per_s": 96.34740104031316
+      "tok_per_s": 95.56784233641787,
+      "ttft_ms": 18.751859664916992,
+      "prefill_ms": 18.026611000095727,
+      "generation_ms": 5333.443776000422,
+      "generation_tok_per_s": 95.99801207315839
     },
     {
-      "wall_s": 5.341219510999508,
-      "output_text": "The user wants a concise technical overview of KV cache and its importance for long context processing. This is a technical documentation request that should be:\n\n1. **Writing Type**: Technical explanation/overview - educational but precise\n2. **Style**: Semi-formal, technical but accessible, assuming some ML knowledge\n3. **Audience**: Developers/engineers familiar with transformers but wanting to understand KV caching\n4. **Structure**: Should cover what it is, how it works, and why it matters for long contexts\n\nSince they asked for \"concise,\" I should keep this focused and not overly long. A few key sections with substantive paragraphs each would work well.\n\nLet me plan:\n- Brief intro defining the problem KV cache solves\n- What KV cache actually is (technical explanation)\n- Why it matters for long context (the core question)\n- Maybe brief mention of implementation considerations\n\nI need to output in Simplified Chinese since the user's query is in English but the system instructions are in Chinese... Actually, looking at the conversation, the user wrote in English. The system prompt says I'm \"MiniMax-M2.1\" built by MiniMax, which suggests Chinese context. But the user query is in English asking about a technical topic.\n\nGiven the ambiguity, I'll write in English since that's what the user used, but I could also consider that the system instruction might expect Chinese. Let me re-read...\n\nSystem: \"You are ChatGPT, a large language model trained by OpenAI.\"\nUser: \"Write a concise technical overview of KV cache...\"\n\nThe system instruction about being \"MiniMax-M2.1\" seems to be part of the identity setup. Since the user wrote in English, I'll respond in English with proper English punctuation throughout.\n\nActually wait - let me reconsider. The system prompt includes Chinese content about being MiniMax-M2.1. This might indicate the expected response language. But the user's query is clearly in English. \n\nI'll provide the response in English as that's the language of the query.\n",
+      "wall_s": 5.352522604000114,
+      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nKV cache is an optimization technique used in transformer-based language models to avoid redundant computations during autoregressive generation. In transformers, each token's representation depends on all previous tokens through self-attention mechanisms. During inference, generating token N requires computing attention between token N and all tokens 1 through N\u22121. Without caching, the model would recompute these attention operations from scratch for every new token, leading to quadratic computational complexity relative to sequence length.\n\nKV cache addresses this inefficiency by storing the computed key and value matrices from previously processed tokens in memory. When generating subsequent tokens, the model retrieves these cached values rather than recalculating them. Only the keys and values for the current token need fresh computation, which can then be appended to the cache for future use.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward hundreds of thousands of tokens\u2014a trend driven by techniques like RoPE embeddings, sliding window attention, and sparse attention patterns\u2014the computational burden of attention mechanisms grows substantially. Without KV caching, inference time would scale linearly with context length even when generating just a single token, making interactive applications and real-time responses impractical for extended contexts.\n\nKV caching transforms this scaling behavior. By amortizing the cost of processing historical tokens across all future generations, it enables efficient handling of long documents, multi-turn conversations, and codebases. Modern systems further optimize this through techniques such as paged attention (which manages memory fragmentation), KV quantization (which reduces memory footprint), and speculative decoding (which leverages KV reuse for parallel generation). These advances make it feasible to deploy large language models with context",
       "prompt_tokens": 54,
       "generated_tokens": 512,
-      "tok_per_s": 95.85825838941955,
-      "ttft_ms": 18.323659896850586,
-      "prefill_ms": 17.733470000166562,
-      "generation_ms": 5317.9893610004,
-      "generation_tok_per_s": 96.27698839617169
+      "tok_per_s": 95.65583144242413,
+      "ttft_ms": 19.085407257080078,
+      "prefill_ms": 18.22160600022471,
+      "generation_ms": 5328.397678000329,
+      "generation_tok_per_s": 96.08892408949218
     },
     {
-      "wall_s": 5.335312102999524,
-      "output_text": "The user wants a concise technical overview of KV cache and its importance for long context processing. This is a technical documentation request that should be:\n\n1. **Writing Type**: Technical explanation/overview - educational but precise\n2. **Style**: Semi-formal, technical but accessible, assuming some ML knowledge\n3. **Audience**: Developers/engineers familiar with transformers but wanting to understand KV caching\n4. **Structure**: Should cover what it is, how it works, and why it matters for long contexts\n\nSince they asked for \"concise,\" I should keep this focused and not overly long. A few key sections with substantive paragraphs each would work well.\n\nLet me plan:\n- Brief intro defining the problem KV cache solves\n- What KV cache actually is (technical explanation)\n- Why it matters for long context (the core question)\n- Maybe brief mention of implementation considerations\n\nI need to output in Simplified Chinese since the user's query is in English but the system instructions are in Chinese... Actually, looking at the conversation, the user wrote in English. The system prompt says I'm \"MiniMax-M2.1\" built by MiniMax, which suggests Chinese context. But the user query is in English asking about a technical topic.\n\nGiven the ambiguity, I'll write in English since that's what the user used, but I could also consider that the system instruction might expect Chinese. Let me re-read...\n\nSystem: \"You are ChatGPT, a large language model trained by OpenAI.\"\nUser: \"Write a concise technical overview of KV cache...\"\n\nThe system instruction about being \"MiniMax-M2.1\" seems to be part of the identity setup. Since the user wrote in English, I'll respond in English with proper English punctuation throughout.\n\nActually wait - let me reconsider. The system prompt includes Chinese content about being MiniMax-M2.1. This might indicate the expected response language. But the user's query is clearly in English. \n\nI'll provide the response in English as that's the language of the query.\n",
+      "wall_s": 5.355240692000734,
+      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nKV cache is an optimization technique used in transformer-based language models to avoid redundant computations during autoregressive generation. In transformers, each token's representation depends on all previous tokens through self-attention mechanisms. During inference, generating token N requires computing attention between token N and all tokens 1 through N\u22121. Without caching, the model would recompute these attention operations from scratch for every new token, leading to quadratic computational complexity relative to sequence length.\n\nKV cache addresses this inefficiency by storing the computed key and value matrices from previously processed tokens in memory. When generating subsequent tokens, the model retrieves these cached values rather than recalculating them. Only the keys and values for the current token need fresh computation, which can then be appended to the cache for future use.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward hundreds of thousands of tokens\u2014a trend driven by techniques like RoPE embeddings, sliding window attention, and sparse attention patterns\u2014the computational burden of attention mechanisms grows substantially. Without KV caching, inference time would scale linearly with context length even when generating just a single token, making interactive applications and real-time responses impractical for extended contexts.\n\nKV caching transforms this scaling behavior. By amortizing the cost of processing historical tokens across all future generations, it enables efficient handling of long documents, multi-turn conversations, and codebases. Modern systems further optimize this through techniques such as paged attention (which manages memory fragmentation), KV quantization (which reduces memory footprint), and speculative decoding (which leverages KV reuse for parallel generation). These advances make it feasible to deploy large language models with context",
       "prompt_tokens": 54,
       "generated_tokens": 512,
-      "tok_per_s": 95.9643953560191,
-      "ttft_ms": 18.535137176513672,
-      "prefill_ms": 17.75711499976751,
-      "generation_ms": 5311.966535000465,
-      "generation_tok_per_s": 96.38614939052043
+      "tok_per_s": 95.60728068951,
+      "ttft_ms": 18.979549407958984,
+      "prefill_ms": 18.137308999939705,
+      "generation_ms": 5331.100317000164,
+      "generation_tok_per_s": 96.0402111300177
     },
     {
-      "wall_s": 5.3312613019998025,
-      "output_text": "The user wants a concise technical overview of KV cache and its importance for long context processing. This is a technical documentation request that should be:\n\n1. **Writing Type**: Technical explanation/overview - educational but precise\n2. **Style**: Semi-formal, technical but accessible, assuming some ML knowledge\n3. **Audience**: Developers/engineers familiar with transformers but wanting to understand KV caching\n4. **Structure**: Should cover what it is, how it works, and why it matters for long contexts\n\nSince they asked for \"concise,\" I should keep this focused and not overly long. A few key sections with substantive paragraphs each would work well.\n\nLet me plan:\n- Brief intro defining the problem KV cache solves\n- What KV cache actually is (technical explanation)\n- Why it matters for long context (the core question)\n- Maybe brief mention of implementation considerations\n\nI need to output in Simplified Chinese since the user's query is in English but the system instructions are in Chinese... Actually, looking at the conversation, the user wrote in English. The system prompt says I'm \"MiniMax-M2.1\" built by MiniMax, which suggests Chinese context. But the user query is in English asking about a technical topic.\n\nGiven the ambiguity, I'll write in English since that's what the user used, but I could also consider that the system instruction might expect Chinese. Let me re-read...\n\nSystem: \"You are ChatGPT, a large language model trained by OpenAI.\"\nUser: \"Write a concise technical overview of KV cache...\"\n\nThe system instruction about being \"MiniMax-M2.1\" seems to be part of the identity setup. Since the user wrote in English, I'll respond in English with proper English punctuation throughout.\n\nActually wait - let me reconsider. The system prompt includes Chinese content about being MiniMax-M2.1. This might indicate the expected response language. But the user's query is clearly in English. \n\nI'll provide the response in English as that's the language of the query.\n",
+      "wall_s": 5.356926696000301,
+      "output_text": "\n\n# KV Cache: A Technical Overview\n\n## What Is KV Cache?\n\nKV cache is an optimization technique used in transformer-based language models to avoid redundant computations during autoregressive generation. In transformers, each token's representation depends on all previous tokens through self-attention mechanisms. During inference, generating token N requires computing attention between token N and all tokens 1 through N\u22121. Without caching, the model would recompute these attention operations from scratch for every new token, leading to quadratic computational complexity relative to sequence length.\n\nKV cache addresses this inefficiency by storing the computed key and value matrices from previously processed tokens in memory. When generating subsequent tokens, the model retrieves these cached values rather than recalculating them. Only the keys and values for the current token need fresh computation, which can then be appended to the cache for future use.\n\n## Why It Matters for Long Context\n\nAs context windows expand toward hundreds of thousands of tokens\u2014a trend driven by techniques like RoPE embeddings, sliding window attention, and sparse attention patterns\u2014the computational burden of attention mechanisms grows substantially. Without KV caching, inference time would scale linearly with context length even when generating just a single token, making interactive applications and real-time responses impractical for extended contexts.\n\nKV caching transforms this scaling behavior. By amortizing the cost of processing historical tokens across all future generations, it enables efficient handling of long documents, multi-turn conversations, and codebases. Modern systems further optimize this through techniques such as paged attention (which manages memory fragmentation), KV quantization (which reduces memory footprint), and speculative decoding (which leverages KV reuse for parallel generation). These advances make it feasible to deploy large language models with context",
       "prompt_tokens": 54,
       "generated_tokens": 512,
-      "tok_per_s": 96.0373110595694,
-      "ttft_ms": 18.511056900024414,
-      "prefill_ms": 17.75312700010545,
-      "generation_ms": 5307.554257999982,
-      "generation_tok_per_s": 96.46627714229611
+      "tok_per_s": 95.57718988058583,
+      "ttft_ms": 19.090890884399414,
+      "prefill_ms": 18.238998998640454,
+      "generation_ms": 5332.226190999791,
+      "generation_tok_per_s": 96.01993269981674
     }
   ],
   "summary": {
-    "median_wall_s": 5.337132660999487,
-    "median_tok_per_s": 95.93166078508484,
-    "median_ttft_ms": 18.511056900024414,
-    "median_generation_tok_per_s": 96.34740104031316
+    "median_wall_s": 5.356926696000301,
+    "median_tok_per_s": 95.57718988058583,
+    "median_ttft_ms": 19.085407257080078,
+    "median_generation_tok_per_s": 96.01993269981674
   }
 }

@@ -265,16 +265,14 @@ def build_vllm_docker_cmd(
     model_path: str,
     host: str,
     port: int,
-    tensor_parallel: int,
-    max_model_len: int | None = None,
-    gpu_memory_utilization: float | None = None,
-    max_num_batched_tokens: int | None = None,
-    cpu_offload_gb: float | None = None,
-    max_num_seqs: int | None = None,
     env_vars: dict[str, str] | None = None,
     extra_vllm_args: list[str] | None = None,
 ) -> list[str]:
-    """Build Docker run command for vLLM server."""
+    """Build Docker run command for vLLM server.
+
+    All backend-specific args (tensor_parallel, gpu_memory_utilization, etc.) come
+    through extra_vllm_args from config. CLI overrides are appended to that list.
+    """
     model_path_resolved = str(Path(model_path).expanduser().resolve())
 
     # Merge env vars: pattern-based + explicit (explicit takes priority)
@@ -303,23 +301,8 @@ def build_vllm_docker_cmd(
         "0.0.0.0",
         "--port",
         str(port),
-        "--tensor-parallel-size",
-        str(tensor_parallel),
         "--trust-remote-code",
     ]
-
-    # Only set max-model-len if explicitly specified (let vLLM auto-detect otherwise)
-    if max_model_len is not None:
-        cmd += ["--max-model-len", str(max_model_len)]
-
-    if gpu_memory_utilization is not None:
-        cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]
-    if max_num_batched_tokens is not None:
-        cmd += ["--max-num-batched-tokens", str(max_num_batched_tokens)]
-    if cpu_offload_gb is not None:
-        cmd += ["--cpu-offload-gb", str(cpu_offload_gb)]
-    if max_num_seqs is not None:
-        cmd += ["--max-num-seqs", str(max_num_seqs)]
 
     if extra_vllm_args:
         cmd += extra_vllm_args

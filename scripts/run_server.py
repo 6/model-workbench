@@ -126,43 +126,7 @@ def main():
         help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
-    # vLLM-specific options (defaults from config, CLI overrides)
-    vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
-    vllm_group.add_argument(
-        "--tensor-parallel",
-        type=int,
-        default=None,
-        help="Tensor parallel size (default: auto-detect GPU count)",
-    )
-    vllm_group.add_argument(
-        "--max-model-len",
-        type=int,
-        default=None,
-        help="Max context length (default: from config or 65536)",
-    )
-    vllm_group.add_argument(
-        "--gpu-memory-utilization",
-        type=float,
-        default=None,
-        help="GPU memory fraction (default: from config or 0.95)",
-    )
-    vllm_group.add_argument(
-        "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
-    )
-    vllm_group.add_argument(
-        "--cpu-offload-gb",
-        type=float,
-        default=None,
-        help="CPU offload in GB per GPU (default: none)",
-    )
-    vllm_group.add_argument(
-        "--max-num-seqs",
-        type=int,
-        default=None,
-        help="Max concurrent sequences (default: from config or vLLM default)",
-    )
-
-    # llama.cpp-specific options (defaults from config, CLI overrides)
+    # llama.cpp-specific options
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
     llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
     llama_group.add_argument(
@@ -244,7 +208,8 @@ def main():
         help="Open WebUI Docker image (default: ghcr.io/open-webui/open-webui:main)",
     )
 
-    args = ap.parse_args()
+    args, unknown = ap.parse_known_args()
+    args.extra_backend_args = unknown  # Pass unknown args to backend
 
     # Resolve --jinja / --no-jinja into single value (CLI overrides config)
     if getattr(args, "no_jinja", False):
@@ -319,13 +284,7 @@ def main():
     if backend == "vllm":
         server.start_vllm(
             model_path=model_path,
-            tensor_parallel=args.tensor_parallel,
             version=backend_version,
-            max_model_len=args.max_model_len,
-            gpu_memory_utilization=args.gpu_memory_utilization,
-            max_num_batched_tokens=args.max_num_batched_tokens,
-            cpu_offload_gb=args.cpu_offload_gb,
-            max_num_seqs=args.max_num_seqs,
             env_vars=args.env_vars,
             extra_vllm_args=args.extra_vllm_args,
             rebuild=args.rebuild,

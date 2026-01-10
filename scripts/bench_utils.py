@@ -642,75 +642,6 @@ def get_model_config(model_arg: str) -> dict | None:
     return None
 
 
-# Mapping of extra_args CLI flags to their parsed dict keys and value types
-# Format: flag -> (dict_key, value_type, takes_value)
-# value_type: "float", "int", "str", "bool" (bool = flag only, no value)
-_EXTRA_ARGS_SPEC = {
-    # vllm/sglang
-    "--gpu-memory-utilization": ("gpu_memory_utilization", "float", True),
-    "--max-model-len": ("max_model_len", "int", True),
-    "--cpu-offload-gb": ("cpu_offload_gb", "float", True),
-    "--max-num-seqs": ("max_num_seqs", "int", True),
-    "--mem-fraction-static": ("mem_fraction_static", "float", True),
-    "--frequency-penalty": ("frequency_penalty", "float", True),
-    # llama.cpp
-    "-ngl": ("n_gpu_layers", "int", True),
-    "--repeat-penalty": ("repeat_penalty", "float", True),
-    "--repeat-last-n": ("repeat_last_n", "int", True),
-    "--jinja": ("jinja", "bool", False),
-    "--flash-attn": ("flash_attn", "str", True),
-    "--cache-type-k": ("cache_type_k", "str", True),
-    "--cache-type-v": ("cache_type_v", "str", True),
-    "--fit": ("fit", "bool", False),
-    # exl
-    "--cache-size": ("cache_size", "int", True),
-    "--gpu-split-auto": ("gpu_split_auto", "bool", False),
-}
-
-
-def _parse_extra_args(extra_args: list[str]) -> tuple[dict, list[str]]:
-    """Parse known args from extra_args list.
-
-    Args:
-        extra_args: List of CLI arguments (e.g., ["--gpu-memory-utilization", "0.95", "--load-format", "fastsafetensors"])
-
-    Returns:
-        Tuple of (known_args_dict, remaining_extra_args) where:
-        - known_args_dict: Dict of parsed known args (e.g., {"gpu_memory_utilization": 0.95})
-        - remaining_extra_args: List of args not in _EXTRA_ARGS_SPEC (e.g., ["--load-format", "fastsafetensors"])
-    """
-    if not extra_args:
-        return {}, []
-
-    known = {}
-    remaining = []
-    i = 0
-    while i < len(extra_args):
-        arg = extra_args[i]
-        if arg in _EXTRA_ARGS_SPEC:
-            key, vtype, takes_value = _EXTRA_ARGS_SPEC[arg]
-            if takes_value:
-                if i + 1 < len(extra_args):
-                    value_str = extra_args[i + 1]
-                    if vtype == "float":
-                        known[key] = float(value_str)
-                    elif vtype == "int":
-                        known[key] = int(value_str)
-                    else:
-                        known[key] = value_str
-                    i += 2
-                    continue
-            else:
-                # Boolean flag (no value)
-                known[key] = True
-                i += 1
-                continue
-        remaining.append(arg)
-        i += 1
-
-    return known, remaining
-
-
 def get_backend_config(engine: str) -> dict:
     """
     Get full config dict for a backend from defaults.backends.{engine}.
@@ -806,6 +737,15 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
     return get_model_backend_config(model_arg, engine).get("backend_version")
 
 
+def _set_arg(args_list: list[str], name: str, value: str) -> None:
+    """Set arg value in list, replacing existing or appending if not found."""
+    try:
+        idx = args_list.index(name)
+        args_list[idx + 1] = value
+    except ValueError:
+        args_list.extend([name, value])
+
+
 def resolve_run_config(args):
     """Resolve backend config and apply defaults to args.
 
@@ -817,10 +757,6 @@ def resolve_run_config(args):
             - backend (optional)
             - port (optional)
             - tensor_parallel (optional, for vLLM/trtllm)
-            - max_model_len (optional)
-            - gpu_memory_utilization (optional)
-            - cpu_offload_gb (optional, for vLLM)
-            - n_gpu_layers (optional, for llama.cpp)
             - image_type (optional)
             - backend_version (optional)
 
@@ -834,10 +770,8 @@ def resolve_run_config(args):
         Modifies args in place to fill in defaults for:
             - port
             - tensor_parallel (for vLLM/trtllm)
-            - max_model_len
-            - gpu_memory_utilization
-            - cpu_offload_gb
-            - n_gpu_layers
+            - extra_vllm_args (config extra_args + CLI overrides)
+            - env_vars
     """
     from common import BACKEND_REGISTRY
 
@@ -848,17 +782,12 @@ def resolve_run_config(args):
     # Get merged config for this model + backend
     backend_cfg = get_model_backend_config(args.model, backend)
 
-    # Parse extra_args to extract known args (for CLI override logic)
-    # Remaining args (unknown to us) are passed through to the backend
-    extra_args = backend_cfg.get("extra_args", [])
-    backend_args, remaining_extra_args = _parse_extra_args(extra_args)
-
     # Set default port based on backend
     if getattr(args, "port", None) is None:
         args.port = backend_info["default_port"]
 
-    # Auto-detect tensor parallel for vLLM, trtllm, and sglang
-    if backend in ("vllm", "trtllm", "sglang") and getattr(args, "tensor_parallel", None) is None:
+    # Auto-detect tensor parallel for trtllm (uses named param, not extra_args)
+    if backend == "trtllm" and getattr(args, "tensor_parallel", None) is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
@@ -867,54 +796,31 @@ def resolve_run_config(args):
     else:
         model_path = args.model
 
-    # Apply config defaults for args not specified on CLI
-    if getattr(args, "max_model_len", None) is None:
-        config_default = backend_args.get("max_model_len")  # None if not in config
-        if backend in ("vllm", "trtllm", "sglang"):
-            detected = detect_max_position_embeddings(model_path)
-            if config_default is not None and detected:
-                # Cap at config default if specified
-                args.max_model_len = min(config_default, detected)
-                if args.max_model_len < config_default:
-                    log(
-                        f"Capping max_model_len to {args.max_model_len} (model's max_position_embeddings)"
-                    )
-            elif config_default is not None:
-                args.max_model_len = config_default
-            # else: Leave as None - let vLLM auto-detect from model config
+    # Build extra_args from config
+    extra_args = list(backend_cfg.get("extra_args", []))  # Copy to avoid mutating config
+
+    # Auto-detect tensor_parallel if not in config
+    if backend in ("vllm", "sglang") and "--tensor-parallel-size" not in extra_args:
+        _set_arg(extra_args, "--tensor-parallel-size", str(get_gpu_count()))
+
+    # Merge CLI passthrough args (unknown args from parse_known_args)
+    # CLI args override config values using _set_arg replacement
+    passthrough = getattr(args, "extra_backend_args", None) or []
+    i = 0
+    while i < len(passthrough):
+        arg = passthrough[i]
+        if arg.startswith("--") and i + 1 < len(passthrough) and not passthrough[i + 1].startswith("--"):
+            _set_arg(extra_args, arg, passthrough[i + 1])
+            i += 2
         else:
-            args.max_model_len = config_default
-    if getattr(args, "gpu_memory_utilization", None) is None:
-        args.gpu_memory_utilization = backend_args.get("gpu_memory_utilization", 0.95)
-    if getattr(args, "cpu_offload_gb", None) is None:
-        args.cpu_offload_gb = backend_args.get("cpu_offload_gb")
-    if getattr(args, "max_num_seqs", None) is None:
-        args.max_num_seqs = backend_args.get("max_num_seqs")
-    # Resolve env vars and extra args from config (no CLI override)
+            extra_args.append(arg)
+            i += 1
+
+    args.extra_vllm_args = extra_args if extra_args else None
+
+    # Resolve env vars from config
     if not hasattr(args, "env_vars") or args.env_vars is None:
         args.env_vars = backend_cfg.get("env_vars")
-    if not hasattr(args, "extra_vllm_args") or args.extra_vllm_args is None:
-        # Use remaining_extra_args (known args already extracted to backend_args)
-        args.extra_vllm_args = remaining_extra_args if remaining_extra_args else None
-    if getattr(args, "n_gpu_layers", None) is None:
-        args.n_gpu_layers = backend_args.get("n_gpu_layers", 999)
-    if getattr(args, "frequency_penalty", None) is None:
-        args.frequency_penalty = backend_args.get("frequency_penalty", 0.0)
-
-    # llama.cpp CPU offloading args
-    if backend == "llama":
-        if getattr(args, "jinja", None) is None:
-            args.jinja = backend_args.get("jinja", True)  # Enabled by default
-        if getattr(args, "flash_attn", None) is None:
-            args.flash_attn = backend_args.get("flash_attn", "on")  # Enabled by default
-        if getattr(args, "cache_type_k", None) is None:
-            args.cache_type_k = backend_args.get("cache_type_k")
-        if getattr(args, "cache_type_v", None) is None:
-            args.cache_type_v = backend_args.get("cache_type_v")
-        if getattr(args, "tensor_offload", None) is None:
-            args.tensor_offload = backend_args.get("tensor_offload", [])
-        if getattr(args, "fit", None) is None:
-            args.fit = backend_args.get("fit", False)
 
     return backend, model_path, backend_cfg
 
