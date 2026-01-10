@@ -164,11 +164,9 @@ models:
     backends:
       vllm-cu130:
         args:
-          # 0.90 leaves ~10GB per GPU for running small models alongside (VL, Whisper, etc.)
-          gpu_memory_utilization: 0.90
-          # Model default (196608) needs 23.25 GiB KV cache but only 23.13 GiB available
-          # Max that fits: ~195600. Using 65536 for comfortable headroom.
-          max_model_len: 65536
+          # cu130 devel image has slightly higher memory overhead than cu129
+          # 0.91 fits full 196k context (~7GB free per GPU, ~14GB total); 0.90 falls 0.12 GiB short for full context
+          gpu_memory_utilization: 0.91
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
