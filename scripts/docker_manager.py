@@ -295,11 +295,19 @@ def build_vllm_docker_cmd(
     pattern_env_vars = _get_model_specific_env_vars(model_path)
     merged_env_vars = {**pattern_env_vars, **(env_vars or {})}
 
+    # Build volume list
+    volumes = [(model_path_resolved, model_path_resolved, "ro")]
+
+    # Mount vllm config directory if it exists (for reasoning parser plugins, etc.)
+    config_dir = Path(__file__).parent.parent / "config" / "vllm"
+    if config_dir.exists():
+        volumes.append((str(config_dir.resolve()), "/config", "ro"))
+
     cmd = _docker_run_base(
         "vllm",
         image_name,
         port,
-        [(model_path_resolved, model_path_resolved, "ro")],
+        volumes,
         env_vars=merged_env_vars if merged_env_vars else None,
     )
     cmd += [
@@ -413,11 +421,22 @@ def build_trtllm_docker_cmd(
     model_path_resolved = str(Path(model_path).expanduser().resolve())
     cache_dir = os.path.expanduser("~/.cache")
 
+    # Build volume list
+    volumes = [
+        (model_path_resolved, model_path_resolved, "ro"),
+        (cache_dir, "/root/.cache", "rw"),
+    ]
+
+    # Mount trtllm config directory if it exists (for YAML config files)
+    config_dir = Path(__file__).parent.parent / "config" / "trtllm"
+    if config_dir.exists():
+        volumes.append((str(config_dir.resolve()), "/config", "ro"))
+
     cmd = _docker_run_base(
         "trtllm",
         image_name,
         port,
-        [(model_path_resolved, model_path_resolved, "ro"), (cache_dir, "/root/.cache", "rw")],
+        volumes,
     )
     cmd += [
         "trtllm-serve",
@@ -426,9 +445,12 @@ def build_trtllm_docker_cmd(
         "0.0.0.0",
         "--port",
         str(port),
-        "--tp_size",
-        str(tensor_parallel),
     ]
+
+    # Auto-deploy handles parallelism automatically, skip --tp_size
+    uses_autodeploy = extra_args and any(arg == "_autodeploy" for arg in extra_args)
+    if not uses_autodeploy:
+        cmd += ["--tp_size", str(tensor_parallel)]
 
     if max_batch_size is not None:
         cmd += ["--max_batch_size", str(max_batch_size)]

@@ -531,8 +531,10 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, "trtllm")
+    # Get backend config for version and extra_args
+    backend_cfg = get_model_backend_config(args.model, "trtllm")
+    backend_version = args.backend_version or backend_cfg.get("version")
+    extra_args = backend_cfg.get("extra_args", [])
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
@@ -577,6 +579,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 tensor_parallel=args.tensor_parallel,
                 version=backend_version,
                 rebuild=args.rebuild,
+                extra_args=extra_args,
             )
 
         gpu_info = get_gpu_info(include_memory=True)

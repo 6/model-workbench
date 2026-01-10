@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-01-10T15:40:24.765524",
+  "repo_id": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "model_ref": "~/models/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "engine": "trtllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 82069
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 4
+      }
+    ],
+    "memory_used_mib": 82073,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "tensor_parallel_size": 2,
+    "image": "none",
+    "backend_version": "1.2.0rc7"
+  },
+  "iterations": [
+    {
+      "wall_s": 2.291576977000659,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A pre\u2011computed cache of *key* and *value* vectors for every token that has already been processed in a transformer decoder (or encoder\u2011decoder) forward pass. During generation, the model only needs to compute the *query* for the new token and then performs a fast dot\u2011product attention with the cached keys/values. | \u2022 **O(1) per\u2011token cost** \u2013 instead of recomputing attention over the entire history, the model re\u2011uses the cached keys/values, turning the per\u2011step complexity from *O(L\u00b7d)* to *O(d)* (where *L* is the current length). <br>\u2022 **Memory\u2011efficient incremental inference** \u2013 the cache stores only the *projected* vectors (typically 2\u202f\u00d7\u202fhidden\u2011size per token), not the full hidden states, so a 10\u202fk\u2011token context can be processed with a few hundred MB of RAM. <br>\u2022 **Enables \u201clong\u2011context\u201d generation** \u2013 the model can attend to arbitrarily long histories without blowing up compute or latency, which is essential for tasks like summarization, code generation, or dialogue where the relevant information may be far back in the sequence. |\n| **How it works** | 1. **Forward pass** for token *t*: compute *K\u209c* and *V\u209c* (keys & values) from the hidden state *h\u209c*. <br>2. **Cache** *K\u209c* and *V\u209c* in a buffer indexed by position. <br>3. **Next step**: for token *t+1*, compute only *Q\u209c\u208a\u2081* (the query) and perform attention: <br>\ufffd",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 223.4269261467854
+    },
+    {
+      "wall_s": 2.1797335490009573,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A pre\u2011computed cache of *key* and *value* vectors for every token that has already been processed in a transformer decoder (or encoder\u2011decoder) forward pass. During generation, the model only needs to compute the *query* for the new token and then performs a fast dot\u2011product attention with the cached keys/values. | \u2022 **O(1) per\u2011token cost** \u2013 instead of recomputing attention over the entire history, the model re\u2011uses the cached keys/values, turning the per\u2011step complexity from *O(L\u00b7d)* to *O(d)* (where *L* is the current length). <br>\u2022 **Memory\u2011efficient incremental inference** \u2013 the cache stores only the *projected* vectors (typically 2\u202f\u00d7\u202fhidden\u2011size per token), not the full hidden states, so a 10\u202fk\u2011token context can be processed with a few hundred MB of RAM. <br>\u2022 **Enables \u201clong\u2011context\u201d generation** \u2013 the model can attend to arbitrarily long histories without blowing up compute or latency, which is essential for tasks like summarization, code generation, or dialogue where the relevant information may be far back in the sequence. |\n| **How it works** | 1. **Forward pass** for token *t*: compute *K\u209c* and *V\u209c* (keys & values) from the hidden state *h\u209c*. <br>2. **Cache** *K\u209c* and *V\u209c* in a buffer indexed by position. <br>3. **Next step**: for token *t+1*, compute only *Q\u209c\u208a\u2081* (the query) and perform attention: <br>\ufffd",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 234.8910949389508
+    },
+    {
+      "wall_s": 2.1783536370003276,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A pre\u2011computed cache of *key* and *value* vectors for every token that has already been processed in a transformer decoder (or encoder\u2011decoder) forward pass. During generation, the model only needs to compute the *query* for the new token and then performs a fast dot\u2011product attention with the cached keys/values. | \u2022 **O(1) per\u2011token cost** \u2013 instead of recomputing attention over the entire history, the model re\u2011uses the cached keys/values, turning the per\u2011step complexity from *O(L\u00b7d)* to *O(d)* (where *L* is the current length). <br>\u2022 **Memory\u2011efficient incremental inference** \u2013 the cache stores only the *projected* vectors (typically 2\u202f\u00d7\u202fhidden\u2011size per token), not the full hidden states, so a 10\u202fk\u2011token context can be processed with a few hundred MB of RAM. <br>\u2022 **Enables \u201clong\u2011context\u201d generation** \u2013 the model can attend to arbitrarily long histories without blowing up compute or latency, which is essential for tasks like summarization, code generation, or dialogue where the relevant information may be far back in the sequence. |\n| **How it works** | 1. **Forward pass** for token *t*: compute *K\u209c* and *V\u209c* (keys & values) from the hidden state *h\u209c*. <br>2. **Cache** *K\u209c* and *V\u209c* in a buffer indexed by position. <br>3. **Next step**: for token *t+1*, compute only *Q\u209c\u208a\u2081* (the query) and perform attention: <br>\ufffd",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 235.03989035730794
+    },
+    {
+      "wall_s": 2.178899773998637,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A pre\u2011computed cache of *key* and *value* vectors for every token that has already been processed in a transformer decoder (or encoder\u2011decoder) forward pass. During generation, the model only needs to compute the *query* for the new token and then performs a fast dot\u2011product attention with the cached keys/values. | \u2022 **O(1) per\u2011token cost** \u2013 instead of recomputing attention over the entire history, the model re\u2011uses the cached keys/values, turning the per\u2011step complexity from *O(L\u00b7d)* to *O(d)* (where *L* is the current length). <br>\u2022 **Memory\u2011efficient incremental inference** \u2013 the cache stores only the *projected* vectors (typically 2\u202f\u00d7\u202fhidden\u2011size per token), not the full hidden states, so a 10\u202fk\u2011token context can be processed with a few hundred MB of RAM. <br>\u2022 **Enables \u201clong\u2011context\u201d generation** \u2013 the model can attend to arbitrarily long histories without blowing up compute or latency, which is essential for tasks like summarization, code generation, or dialogue where the relevant information may be far back in the sequence. |\n| **How it works** | 1. **Forward pass** for token *t*: compute *K\u209c* and *V\u209c* (keys & values) from the hidden state *h\u209c*. <br>2. **Cache** *K\u209c* and *V\u209c* in a buffer indexed by position. <br>3. **Next step**: for token *t+1*, compute only *Q\u209c\u208a\u2081* (the query) and perform attention: <br>\ufffd",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 234.9809780650885
+    },
+    {
+      "wall_s": 2.1784209099987493,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | Why it matters for long\u2011context inference |\n|---------|------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A pre\u2011computed cache of *key* and *value* vectors for every token that has already been processed in a transformer decoder (or encoder\u2011decoder) forward pass. During generation, the model only needs to compute the *query* for the new token and then performs a fast dot\u2011product attention with the cached keys/values. | \u2022 **O(1) per\u2011token cost** \u2013 instead of recomputing attention over the entire history, the model re\u2011uses the cached keys/values, turning the per\u2011step complexity from *O(L\u00b7d)* to *O(d)* (where *L* is the current length). <br>\u2022 **Memory\u2011efficient incremental inference** \u2013 the cache stores only the *projected* vectors (typically 2\u202f\u00d7\u202fhidden\u2011size per token), not the full hidden states, so a 10\u202fk\u2011token context can be processed with a few hundred MB of RAM. <br>\u2022 **Enables \u201clong\u2011context\u201d generation** \u2013 the model can attend to arbitrarily long histories without blowing up compute or latency, which is essential for tasks like summarization, code generation, or dialogue where the relevant information may be far back in the sequence. |\n| **How it works** | 1. **Forward pass** for token *t*: compute *K\u209c* and *V\u209c* (keys & values) from the hidden state *h\u209c*. <br>2. **Cache** *K\u209c* and *V\u209c* in a buffer indexed by position. <br>3. **Next step**: for token *t+1*, compute only *Q\u209c\u208a\u2081* (the query) and perform attention: <br>\ufffd",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 235.03263196289
+    }
+  ],
+  "summary": {
+    "median_wall_s": 2.178899773998637,
+    "median_tok_per_s": 234.9809780650885,
+    "median_ttft_ms": null,
+    "median_generation_tok_per_s": null,
+    "median_tpot_ms": null
+  }
+}

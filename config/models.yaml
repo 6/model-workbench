@@ -83,7 +83,7 @@ defaults:
         flash_attn: "on"    # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: 1.2.0rc5
+      version: 1.2.0rc7
       image_type: prebuilt    # Uses NGC images
     # https://hub.docker.com/r/lmsysorg/sglang/tags
     sglang:
@@ -228,7 +228,40 @@ models:
       - "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
 
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
-  - repo_id: nvidia/Nemotron-Flash-3B-Instruct
+    backends:
+      vllm:
+        # Uses default v0.13.0 (nightly broken: https://github.com/vllm-project/vllm/issues/31957)
+        args:
+          max_num_seqs: 8           # Model card recommendation for stability
+          max_model_len: 262144     # 256K context window
+        env_vars:
+          # FlashInfer MoE kernel optimized for FP8 - improves throughput
+          VLLM_USE_FLASHINFER_MOE_FP8: "1"
+        extra_args:
+          # NOTE: --trust-remote-code already added automatically by docker_manager.py
+          # Tool calling support (adds overhead, needed for agentic use)
+          - "--enable-auto-tool-choice"
+          - "--tool-call-parser"
+          - "qwen3_coder"
+          # Reasoning trace parsing (adds overhead, extracts thinking from output)
+          - "--reasoning-parser-plugin"
+          - "/config/nano_v3_reasoning_parser.py"
+          - "--reasoning-parser"
+          - "nano_v3"
+          # FP8 KV cache - reduces memory, slightly improves throughput
+          - "--kv-cache-dtype"
+          - "fp8"
+      trtllm:
+        extra_args:
+          - "--backend"
+          - "_autodeploy"
+          - "--trust_remote_code"
+          - "--reasoning_parser"
+          - "nano-v3"
+          - "--tool_parser"
+          - "qwen3_coder"
+          - "--extra_llm_api_options"
+          - "/config/nano_v3.yaml"
 
   # Small model to trial evals
   - repo_id: Qwen/Qwen3-VL-2B-Instruct
