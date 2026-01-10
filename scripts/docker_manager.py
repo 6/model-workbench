@@ -14,8 +14,7 @@ def get_image_name(engine: str, version: str, image_type: str = "build") -> str:
     Args:
         engine: Backend name ('vllm', 'llama', 'trtllm', 'sglang', etc.)
         version: Version tag or commit SHA
-        image_type: 'prebuilt' for registry images, 'build' for local builds,
-                    or a variant name like 'cu130' for Dockerfile.{engine}-{variant}
+        image_type: 'prebuilt' for registry images, 'build' for local builds
 
     Returns:
         Full image name with tag
@@ -35,10 +34,6 @@ def get_image_name(engine: str, version: str, image_type: str = "build") -> str:
 
     if not cfg["image_prefix"]:
         raise SystemExit(f"Engine '{engine}' only supports prebuilt images")
-
-    # Variants like "cu130" get a suffix: model-bench-vllm-cu130:nightly
-    if image_type not in ("prebuilt", "build"):
-        return f"{cfg['image_prefix']}-{image_type}:{version}"
 
     return f"{cfg['image_prefix']}:{version}"
 
@@ -93,9 +88,6 @@ def _build_image(
     engine: str,
     version: str,
     force: bool = False,
-    pr_number: int | None = None,
-    pr_overlay: bool = False,
-    image_type: str = "build",
 ) -> str:
     """Build Docker image for engine and version.
 
@@ -103,9 +95,6 @@ def _build_image(
         engine: 'vllm', 'llama', etc.
         version: Version tag or commit SHA
         force: If True, rebuild even if image exists
-        pr_number: Optional PR number for unmerged PRs (fetches PR ref)
-        pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
-        image_type: 'build' for standard Dockerfile, or variant like 'cu130'
 
     Returns:
         Image name that was built
@@ -117,17 +106,13 @@ def _build_image(
     if not cfg or not cfg["dockerfile"]:
         raise SystemExit(f"Engine '{engine}' does not support building from source")
 
-    image_name = get_image_name(engine, version, image_type=image_type)
+    image_name = get_image_name(engine, version)
 
     if not force and _image_exists_local(image_name):
         log(f"Image {image_name} already exists (use --rebuild to force)")
         return image_name
 
-    # Variants like "cu130" use Dockerfile.{engine}-{variant}
-    if image_type not in ("prebuilt", "build"):
-        dockerfile = ROOT / "docker" / f"Dockerfile.{engine}-{image_type}"
-    else:
-        dockerfile = cfg["dockerfile"]
+    dockerfile = cfg["dockerfile"]
 
     if not dockerfile.exists():
         raise SystemExit(f"Dockerfile not found: {dockerfile}")
@@ -147,17 +132,6 @@ def _build_image(
         [
             "--build-arg",
             f"VERSION={version}",
-        ]
-    )
-    # PR overlay mode: use prebuilt nightly image + overlay PR files (fast)
-    if pr_overlay and pr_number:
-        cmd.extend(["--build-arg", "BASE_IMAGE=vllm/vllm-openai:nightly"])
-        cmd.extend(["--build-arg", "PR_OVERLAY_ONLY=true"])
-        log("Using PR overlay mode (fast): nightly base + PR files")
-    if pr_number:
-        cmd.extend(["--build-arg", f"PR_NUMBER={pr_number}"])
-    cmd.extend(
-        [
             "-t",
             image_name,
             str(ROOT),
@@ -647,8 +621,6 @@ def ensure_image(
     rebuild: bool = False,
     image_type: str = "build",
     image_override: str | None = None,
-    pr_number: int | None = None,
-    pr_overlay: bool = False,
 ) -> str:
     """Ensure Docker image exists, building or pulling as needed.
 
@@ -656,11 +628,8 @@ def ensure_image(
         engine: 'vllm', 'llama', 'trtllm', 'sglang', 'exl', etc.
         version: Version tag or commit SHA
         rebuild: Force rebuild/repull even if exists
-        image_type: 'prebuilt' to use official images, 'build' to build from source,
-                    or a variant name like 'cu130' for Dockerfile.{engine}-{variant}
+        image_type: 'prebuilt' to use official images, 'build' to build from source
         image_override: Direct image name to use (highest priority, skips build/prebuilt logic)
-        pr_number: Optional PR number for unmerged PRs (fetches PR ref)
-        pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
 
     Returns:
         Image name
@@ -684,51 +653,22 @@ def ensure_image(
             log(f"Using existing image: {image_override}")
         return image_override
 
-    # Prebuilt images (vLLM or TensorRT-LLM)
+    # Prebuilt images (TensorRT-LLM, SGLang, or vLLM with --image-type prebuilt)
     cfg = BACKEND_REGISTRY.get(engine)
     use_prebuilt = image_type == "prebuilt" or (cfg and not cfg["dockerfile"])
 
     if use_prebuilt:
-        base_image = get_image_name(engine, version, image_type="prebuilt")
-
-        # vLLM prebuilt: build thin wrapper to add fastsafetensors
-        if engine == "vllm":
-            wrapper_image = f"{cfg['image_prefix']}-prebuilt:{version}"
-            if not _image_exists_local(wrapper_image) or rebuild:
-                dockerfile = ROOT / "docker" / "Dockerfile.vllm-prebuilt"
-                log(f"Building vLLM prebuilt wrapper: {wrapper_image}")
-                cmd = [
-                    "docker",
-                    "build",
-                    "-f",
-                    str(dockerfile),
-                    "--build-arg",
-                    f"BASE_IMAGE={base_image}",
-                    "-t",
-                    wrapper_image,
-                    str(ROOT),
-                ]
-                result = subprocess.run(cmd, capture_output=False)
-                if result.returncode != 0:
-                    raise SystemExit(f"Failed to build prebuilt wrapper: {wrapper_image}")
-            else:
-                log(f"Using existing prebuilt wrapper: {wrapper_image}")
-            return wrapper_image
-
-        # Other engines: use prebuilt image directly
-        if not _image_exists_local(base_image) or rebuild:
-            if not _pull_image(base_image):
-                raise SystemExit(f"Failed to pull prebuilt image: {base_image}")
+        image_name = get_image_name(engine, version, image_type="prebuilt")
+        if not _image_exists_local(image_name) or rebuild:
+            if not _pull_image(image_name):
+                raise SystemExit(f"Failed to pull prebuilt image: {image_name}")
         else:
-            log(f"Using existing prebuilt image: {base_image}")
-        return base_image
+            log(f"Using existing prebuilt image: {image_name}")
+        return image_name
 
-    # Build from source (default for llama, optional for vllm, or variants like cu130)
+    # Build from Dockerfile (vLLM, llama.cpp, ExLlamaV3)
     return _build_image(
         engine,
         version,
         force=rebuild,
-        pr_number=pr_number,
-        pr_overlay=pr_overlay,
-        image_type=image_type,
     )

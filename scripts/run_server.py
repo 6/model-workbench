@@ -257,6 +257,9 @@ def main():
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)
 
+    # Resolve image type (from CLI, model config, or backend defaults)
+    image_type = args.image_type or backend_cfg.get("image_type", "build")
+
     # Resolve backend version
     backend_version = args.backend_version or backend_cfg.get("version")
     if not backend_version and not args.test_only:
@@ -267,15 +270,8 @@ def main():
             f"  2. Pass --backend-version"
         )
 
-    # Resolve image type (from CLI, model config, or backend defaults)
-    image_type = args.image_type or backend_cfg.get("image_type", "build")
-
     # Resolve docker_image (CLI override takes precedence over config)
     docker_image = args.docker_image or backend_cfg.get("docker_image")
-
-    # Resolve PR number and PR overlay for unmerged PRs
-    pr_number = backend_cfg.get("pr_number")
-    pr_overlay = backend_cfg.get("pr_overlay", False)
 
     # Create server manager
     server = ServerManager(
@@ -333,8 +329,6 @@ def main():
             rebuild=args.rebuild,
             image_type=image_type,
             image_override=docker_image,
-            pr_number=pr_number,
-            pr_overlay=pr_overlay,
         )
     elif backend == "trtllm":
         extra_args = backend_cfg.get("extra_args", [])

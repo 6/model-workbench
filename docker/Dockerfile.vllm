@@ -1,128 +1,38 @@
-# vLLM Server Docker Image
+# vLLM Docker image using CUDA 13.0 wheels for Blackwell GPUs
 #
-# Two build modes:
+# Fast build (~2 min) using prebuilt wheels from wheels.vllm.ai
+# Includes fastsafetensors for GPU Direct Storage model loading.
 #
-# 1. FULL BUILD (default, ~20 min):
-#    docker build -f docker/Dockerfile.vllm --build-arg VERSION=v0.13.0 -t model-bench-vllm:v0.13.0 .
+# Build:
+#   docker build -f docker/Dockerfile.vllm --build-arg VERSION=nightly -t model-bench-vllm:nightly .
 #
-# 2. PR OVERLAY (fast, ~30 sec) - for Python-only PRs:
-#    docker build -f docker/Dockerfile.vllm \
-#      --build-arg BASE_IMAGE=vllm/vllm-openai:nightly \
-#      --build-arg PR_OVERLAY_ONLY=true \
-#      --build-arg PR_NUMBER=31575 \
-#      --build-arg VERSION=pr-31575 \
-#      -t model-bench-vllm:pr-31575 .
-#
-# VERSION can be: release tag (v0.13.0), commit SHA (abc123def), or PR ref (pr-31575)
+# VERSION can be: "nightly" or a specific commit hash (e.g., da6709c9...)
 
-# === Build args for mode selection ===
-ARG BASE_IMAGE=nvidia/cuda:12.8.0-devel-ubuntu24.04
-ARG PR_OVERLAY_ONLY=false
+ARG VERSION=nightly
+FROM nvidia/cuda:13.0.1-devel-ubuntu22.04
 
-FROM ${BASE_IMAGE}
-
-# Re-declare args after FROM
-ARG VERSION
-ARG PR_NUMBER
-ARG PR_OVERLAY_ONLY
-
-# Validate VERSION is provided
-RUN test -n "$VERSION" || (echo "ERROR: VERSION build-arg is required" && exit 1)
-
-# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# =============================================================================
-# PR OVERLAY MODE (fast path)
-# =============================================================================
-# When PR_OVERLAY_ONLY=true, BASE_IMAGE should be vllm/vllm-openai:nightly
-# which has vLLM pre-installed at /usr/local/lib/python3.12/dist-packages/vllm/
-# We fetch PR files and overlay them onto the installed package.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/bin/python
 
-RUN if [ "$PR_OVERLAY_ONLY" = "true" ] && [ -n "$PR_NUMBER" ]; then \
-      echo "=== PR OVERLAY MODE ===" && \
-      echo "Overlaying PR #${PR_NUMBER} onto prebuilt vLLM..." && \
-      apt-get update && apt-get install -y --no-install-recommends git && \
-      rm -rf /var/lib/apt/lists/* && \
-      cd /tmp && \
-      git init vllm-pr && cd vllm-pr && \
-      git remote add origin https://github.com/vllm-project/vllm.git && \
-      git fetch origin pull/${PR_NUMBER}/head:pr --depth=1 && \
-      git checkout pr -- vllm/model_executor/models/ && \
-      cp -rv vllm/model_executor/models/* \
-        /usr/local/lib/python3.12/dist-packages/vllm/model_executor/models/ && \
-      cd / && rm -rf /tmp/vllm-pr && \
-      echo "PR overlay complete."; \
-    fi
+# Re-declare after FROM
+ARG VERSION
 
-# =============================================================================
-# FULL BUILD MODE (slow path)
-# =============================================================================
-# When PR_OVERLAY_ONLY is false (default), do full compilation from source.
-
-# Install system dependencies (full build only)
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      apt-get update && apt-get install -y --no-install-recommends \
-        git \
-        python3 \
-        python3-pip \
-        python3-dev \
-        build-essential \
-      && rm -rf /var/lib/apt/lists/*; \
-    fi
-
-# Create symlink for python (full build only)
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      ln -sf /usr/bin/python3 /usr/bin/python; \
-    fi
-
-# Note: Don't upgrade pip/setuptools/wheel - they're installed by apt and can't be
-# uninstalled by pip (RECORD file not found). System versions are sufficient.
-
-# Install PyTorch (full build only)
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      pip3 install --no-cache-dir --break-system-packages \
-        torch==2.9.1 \
-        --index-url https://download.pytorch.org/whl/cu128; \
-    fi
-
-# Clone vLLM repository (full build only)
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      cd /opt && git clone https://github.com/vllm-project/vllm.git; \
-    fi
-
-# Checkout specific version or fetch PR ref (full build only)
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      cd /opt/vllm && \
-      if [ -n "$PR_NUMBER" ]; then \
-        echo "Fetching PR #${PR_NUMBER}..." && \
-        git fetch origin pull/${PR_NUMBER}/head:pr-${PR_NUMBER} && \
-        git checkout pr-${PR_NUMBER}; \
-      else \
-        git checkout ${VERSION}; \
-      fi; \
-    fi
-
-# Install vLLM from source (full build only)
-# Note: This takes a while due to CUDA kernel compilation
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      cd /opt/vllm && \
-      pip3 install --no-cache-dir --break-system-packages -e .; \
-    fi
-
-# Install additional dependencies for benchmarking (full build only)
-RUN if [ "$PR_OVERLAY_ONLY" != "true" ]; then \
-      pip3 install --no-cache-dir --break-system-packages \
-        transformers \
-        tokenizers \
-        accelerate \
-        safetensors \
-        fastsafetensors; \
-    fi
-
-# =============================================================================
-# Common configuration
-# =============================================================================
+# Install vLLM from cu130 wheels (precompiled for Blackwell with compute capability 10.0)
+# The cu130 wheels include torch compiled with CUDA 13.0 and torch_cuda_arch_list='9.0 10.0+PTX'
+# Use --pre to allow pre-release versions from the cu130 index
+# Use --index-url (not --extra-index-url) to prioritize the cu130 wheels over PyPI
+RUN pip3 install --no-cache-dir --pre \
+    vllm \
+    fastsafetensors \
+    --index-url https://wheels.vllm.ai/${VERSION}/cu130 \
+    --extra-index-url https://pypi.org/simple
 
 EXPOSE 8000
 WORKDIR /workspace

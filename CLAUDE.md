@@ -10,7 +10,7 @@ Model Workbench is a local LLM benchmarking suite for downloading, serving, and 
 - Vision and text-only benchmarks
 - Docker-based execution for reproducible benchmarks with version pinning
 - Multiple backends: `--backend vllm`, `--backend sglang`, `--backend llama`, etc. (see `config/models.yaml` for full list and version pinning)
-- Pre-built Docker images for vLLM and TensorRT-LLM; build-from-source for llama.cpp
+- Docker-based vLLM with prebuilt wheels for Blackwell GPUs (CUDA 13.0)
 
 ## Common Commands
 
@@ -41,8 +41,8 @@ uv run python scripts/run_bench.py --model ~/models/... --backend-version v0.8.0
 # Use specific Docker image (e.g., nightly vLLM)
 uv run python scripts/run_bench.py --model ~/models/... --docker-image vllm/vllm-openai:nightly
 
-# Force build from source instead of prebuilt
-uv run python scripts/run_bench.py --model ~/models/... --image-type build
+# Use stable prebuilt vLLM image (from Docker Hub, no fastsafetensors)
+uv run python scripts/run_bench.py --model ~/models/... --image-type prebuilt --backend-version v0.13.0
 
 # Force rebuild/repull Docker image
 uv run python scripts/run_bench.py --model ~/models/... --rebuild
@@ -67,55 +67,19 @@ uv run python scripts/run_server.py --model ~/models/GLM-FP8 --docker-image vllm
 ### Docker-Based Execution
 All benchmarks run via Docker for reproducibility with version pinning.
 
-- **Version pinning**: Specify commit SHA or release tag (e.g., `v0.8.0`, `b4521`, `0.18.0`)
-- **Pre-built images**: vLLM uses `vllm/vllm-openai`, TensorRT-LLM uses NGC images
-- **Build from source**: llama.cpp builds from Dockerfile
-- **Config-driven**: `config/models.yaml` specifies default versions and image types
+- **Version pinning**: Specify commit SHA or release tag (e.g., `da6709c9...`, `b4521`, `0.18.0`)
+- **vLLM**: Uses prebuilt CUDA 13.0 wheels from wheels.vllm.ai (includes fastsafetensors for GPU Direct Storage)
+- **Prebuilt fallback**: `--image-type prebuilt` uses stable `vllm/vllm-openai` from Docker Hub (no fastsafetensors)
+- **llama.cpp**: Builds from Dockerfile
+- **TensorRT-LLM**: Uses NGC images (`nvcr.io/nvidia/tensorrt-llm/release`)
+- **Config-driven**: `config/models.yaml` specifies default versions
 
-### Configuration Schema
+### Configuration
 
-Backend defaults are configured in `config/models.yaml`:
-
-```yaml
-defaults:
-  backends:
-    vllm:
-      version: v0.8.0
-      image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
-      args:
-        gpu_memory_utilization: 0.95
-        max_model_len: 65536
-    llama:
-      version: b4521
-      image_type: build
-      args:
-        n_gpu_layers: 999
-    trtllm:
-      version: "0.18.0"
-      image_type: prebuilt
-
-models:
-  - repo_id: org/model
-    backend: vllm              # Optional: explicit backend selection
-    backends:                  # Optional: per-backend overrides
-      vllm:
-        version: v0.8.1
-        args:
-          max_model_len: 32768
-```
-
-### Resolution Priority (highest to lowest)
-
-**Version/Image Type**:
-1. CLI override (`--backend-version`, `--image-type`, `--docker-image`)
-2. Model-specific config (`model.backends.{engine}.version`)
-3. Global defaults (`defaults.backends.{engine}.version`)
-
-**Backend Args** (gpu_memory_utilization, max_model_len, n_gpu_layers):
-1. CLI override (`--gpu-memory-utilization 0.9`)
-2. Model-specific config (`model.backends.{engine}.args.gpu_memory_utilization`)
-3. Global defaults (`defaults.backends.{engine}.args.gpu_memory_utilization`)
-4. Hardcoded fallback in script
+All backend versions, args, and model-specific overrides are in `config/models.yaml`. See comments in that file for:
+- Resolution priority (CLI > model-specific > global defaults)
+- How `extra_args` and `model_patterns` work
+- Backend-specific notes
 
 ### Key Directories
 - `scripts/` - Benchmark runners and utilities

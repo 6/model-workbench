@@ -6,11 +6,19 @@ defaults:
     primary: ~/models              # Default for safetensors/EXL3/MLX
     gguf: /data/storage2/models    # GGUF models (slower NVMe, more space)
 
+  # Backend defaults: version, args, extra_args, model_patterns, env_vars
+  # Resolution priority (highest to lowest):
+  #   1. CLI override (--backend-version, --gpu-memory-utilization, etc.)
+  #   2. Model-specific config (models[].backends.{engine}.*)
+  #   3. Global defaults below (defaults.backends.{engine}.*)
+  # For extra_args: global extra_args applied first, then model_patterns (allows overrides)
   backends:
     # https://github.com/vllm-project/vllm/releases
     vllm:
+      # Commit SHA from wheels.vllm.ai nightly builds (cu130 wheels for Blackwell GPUs)
+      # Use /update-vllm-nightly skill to list available builds and update this
+      # For stable Docker Hub image instead: --image-type prebuilt --backend-version v0.13.0
       version: da6709c9fe6965b7348692576ffadeee8439388e
-      image_type: cu130    # "prebuilt" (Docker Hub), "build" (from source), or "cu130" (Blackwell GPUs)
       args:
         gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
         # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
