@@ -373,12 +373,12 @@ def run_benchmark_vllm(
 
     # Resolve backend version from config or CLI
     backend_cfg = get_model_backend_config(args.model, "vllm")
-    backend_version = args.backend_version or backend_cfg.get("version")
+    backend_version = args.backend_version or backend_cfg.get("backend_version")
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.vllm.version in config/models.yaml\n"
+            "  1. Set defaults.backends.vllm.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version v0.8.0"
         )
 
@@ -529,13 +529,13 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
 
     # Get backend config for version and extra_args
     backend_cfg = get_model_backend_config(args.model, "trtllm")
-    backend_version = args.backend_version or backend_cfg.get("version")
+    backend_version = args.backend_version or backend_cfg.get("backend_version")
     extra_args = backend_cfg.get("extra_args", [])
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.trtllm.version in config/models.yaml\n"
+            "  1. Set defaults.backends.trtllm.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version 0.18.0"
         )
 
@@ -689,7 +689,7 @@ def run_benchmark_sglang(
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.sglang.version in config/models.yaml\n"
+            "  1. Set defaults.backends.sglang.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version 47cdb65"
         )
 
@@ -834,7 +834,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.exl.version in config/models.yaml\n"
+            "  1. Set defaults.backends.exl.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version v0.0.18"
         )
 
@@ -981,7 +981,7 @@ def run_benchmark_gguf(
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
             f"  2. Pass --backend-version b4521"
         )
 
@@ -1357,7 +1357,7 @@ def main():
         version = args.backend_version or get_model_backend_version(args.model, backend)
         if not version:
             raise SystemExit(
-                f"No backend version specified. Pass --backend-version or set defaults.backends.{backend}.version in config."
+                f"No backend version specified. Pass --backend-version or set defaults.backends.{backend}.backend_version in config."
             )
 
         log(f"Preparing {backend} image for version {version}...")

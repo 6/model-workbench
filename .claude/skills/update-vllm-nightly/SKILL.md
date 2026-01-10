@@ -50,7 +50,7 @@ Recent vLLM Nightly Builds
 3   abc12345  2025-01-08  N      refactor: cleanup unused imports
 ...
 
-Current config: defaults.backends.vllm.version = v0.13.0
+Current config: defaults.backends.vllm.backend_version = v0.13.0
 ```
 
 ## Step 5: Interactive Selection
@@ -67,30 +67,16 @@ If user selects "Browse only", stop here.
 - "Global default" - Updates `defaults.backends.vllm`
 - "Specific model" - Ask which model, then update that model's config
 
-**Question 3:** (Only if commit has cu130 available) "Which image type?"
-- "Prebuilt Docker (recommended)" - Uses `vllm/vllm-openai` images
-- "cu130 (Blackwell GPUs)" - Uses wheels from `wheels.vllm.ai/{commit}/cu130`
-
 ## Step 6: Update Config
 
-Read `config/models.yaml` and update the appropriate section.
+Read `config/models.yaml` and update the appropriate section. Use the commit hash directly (cu130 wheels are the default).
 
-### For Global Default (prebuilt):
+### For Global Default:
 ```yaml
 defaults:
   backends:
     vllm:
-      version: nightly-{full_commit_hash}  # Update this line
-      image_type: prebuilt                  # Ensure this is prebuilt
-```
-
-### For Global Default (cu130):
-```yaml
-defaults:
-  backends:
-    vllm:
-      version: {full_commit_hash}           # Just the hash, no nightly- prefix
-      image_type: cu130                      # Change to cu130
+      backend_version: {full_commit_hash}  # Update this line
 ```
 
 ### For Model-Specific:
@@ -100,8 +86,7 @@ models:
   - repo_id: org/model-name
     backends:
       vllm:
-        version: nightly-{full_commit_hash}  # or just hash for cu130
-        image_type: prebuilt                  # or cu130
+        backend_version: {full_commit_hash}
 ```
 
 ## Step 7: Confirm
@@ -110,7 +95,7 @@ After updating, show the user what was changed:
 
 ```
 Updated config/models.yaml:
-  defaults.backends.vllm.version: nightly-da6709c9fe6965b7348692576ffadeee8439388e
+  defaults.backends.vllm.backend_version: da6709c9fe6965b7348692576ffadeee8439388e
 
 To apply this change, rebuild images with:
   uv run python scripts/run_bench.py --model ~/models/... --rebuild

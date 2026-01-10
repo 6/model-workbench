@@ -261,12 +261,12 @@ def main():
     image_type = args.image_type or backend_cfg.get("image_type", "build")
 
     # Resolve backend version
-    backend_version = args.backend_version or backend_cfg.get("version")
+    backend_version = args.backend_version or backend_cfg.get("backend_version")
     if not backend_version and not args.test_only:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 

@@ -251,12 +251,12 @@ def main():
     revision = extract_revision_from_path(model_path)
 
     # Resolve backend version
-    backend_version = args.backend_version or backend_cfg.get("version")
+    backend_version = args.backend_version or backend_cfg.get("backend_version")
     if not backend_version:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 

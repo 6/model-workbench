@@ -659,7 +659,7 @@ def get_backend_config(engine: str) -> dict:
     if engine in backends:
         backend_cfg = backends[engine]
         return {
-            "version": backend_cfg.get("version"),
+            "backend_version": backend_cfg.get("backend_version"),
             "image_type": backend_cfg.get("image_type", "build"),
             "args": backend_cfg.get("args", {}),
             "model_patterns": backend_cfg.get("model_patterns", []),
@@ -668,7 +668,7 @@ def get_backend_config(engine: str) -> dict:
         }
 
     return {
-        "version": None,
+        "backend_version": None,
         "image_type": "build",
         "args": {},
         "model_patterns": [],
@@ -704,7 +704,7 @@ def get_model_backend_config(model_arg: str, engine: str) -> dict:
     model_backends = model_cfg.get("backends", {})
     if engine in model_backends:
         model_backend_cfg = model_backends[engine]
-        if model_backend_cfg.get("version"):
+        if model_backend_cfg.get("backend_version"):
             result["version"] = model_backend_cfg["version"]
         if model_backend_cfg.get("image_type"):
             result["image_type"] = model_backend_cfg["image_type"]
@@ -726,8 +726,8 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
     Get backend version for a specific model.
 
     Resolution order:
-    1. Model's backends.{engine}.version if specified
-    2. Global defaults.backends.{engine}.version
+    1. Model's backends.{engine}.backend_version if specified
+    2. Global defaults.backends.{engine}.backend_version
 
     Args:
         model_arg: Model path or repo_id
@@ -736,7 +736,7 @@ def get_model_backend_version(model_arg: str, engine: str) -> str | None:
     Returns:
         Version string or None if not configured
     """
-    return get_model_backend_config(model_arg, engine).get("version")
+    return get_model_backend_config(model_arg, engine).get("backend_version")
 
 
 def resolve_run_config(args):

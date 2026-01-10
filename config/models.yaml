@@ -18,7 +18,7 @@ defaults:
       # Commit SHA from wheels.vllm.ai nightly builds (cu130 wheels for Blackwell GPUs)
       # Use /update-vllm-nightly skill to list available builds and update this
       # For stable Docker Hub image instead: --image-type prebuilt --backend-version v0.13.0
-      version: da6709c9fe6965b7348692576ffadeee8439388e
+      backend_version: da6709c9fe6965b7348692576ffadeee8439388e
       args:
         gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
         # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
@@ -88,7 +88,7 @@ defaults:
     # Note: b7538 introduced Blackwell changes that break CUDA graphs on SM120
     # Staying on b7531 (last version before that change) for stable performance
     llama:
-      version: b7531
+      backend_version: b7531
       image_type: build
       args:
         n_gpu_layers: 999
@@ -96,11 +96,11 @@ defaults:
         flash_attn: "on"    # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: 1.2.0rc7
+      backend_version: 1.2.0rc7
       image_type: prebuilt    # Uses NGC images
     # https://hub.docker.com/r/lmsysorg/sglang/tags
     sglang:
-      version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
+      backend_version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
       image_type: prebuilt
       args:
         mem_fraction_static: 0.98  # Dedicated inference GPUs, no display
@@ -117,7 +117,7 @@ defaults:
     # https://github.com/turboderp-org/exllamav3/releases
     # https://github.com/theroyallab/tabbyAPI (commit SHA, no releases)
     exl:
-      version: v0.0.18
+      backend_version: v0.0.18
       tabby_version: 84bb1ce   # TabbyAPI commit (pinned in Dockerfile default)
       image_type: build
       args:
