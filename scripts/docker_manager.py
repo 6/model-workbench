@@ -8,13 +8,14 @@ from pathlib import Path
 from common import BACKEND_REGISTRY, ROOT, log
 
 
-def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
+def get_image_name(engine: str, version: str, image_type: str = "build") -> str:
     """Get Docker image name for an engine.
 
     Args:
         engine: Backend name ('vllm', 'llama', 'trtllm', 'sglang', etc.)
         version: Version tag or commit SHA
-        prebuilt: True for prebuilt registry images, False for local builds
+        image_type: 'prebuilt' for registry images, 'build' for local builds,
+                    or a variant name like 'cu130' for Dockerfile.{engine}-{variant}
 
     Returns:
         Full image name with tag
@@ -23,7 +24,7 @@ def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
     if not cfg:
         raise SystemExit(f"Unknown engine: {engine}")
 
-    if prebuilt:
+    if image_type == "prebuilt":
         if not cfg["prebuilt_image"]:
             available = [k for k, v in BACKEND_REGISTRY.items() if v["prebuilt_image"]]
             raise SystemExit(
@@ -34,6 +35,11 @@ def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
 
     if not cfg["image_prefix"]:
         raise SystemExit(f"Engine '{engine}' only supports prebuilt images")
+
+    # Variants like "cu130" get a suffix: model-bench-vllm-cu130:nightly
+    if image_type not in ("prebuilt", "build"):
+        return f"{cfg['image_prefix']}-{image_type}:{version}"
+
     return f"{cfg['image_prefix']}:{version}"
 
 
@@ -89,6 +95,7 @@ def _build_image(
     force: bool = False,
     pr_number: int | None = None,
     pr_overlay: bool = False,
+    image_type: str = "build",
 ) -> str:
     """Build Docker image for engine and version.
 
@@ -98,6 +105,7 @@ def _build_image(
         force: If True, rebuild even if image exists
         pr_number: Optional PR number for unmerged PRs (fetches PR ref)
         pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
+        image_type: 'build' for standard Dockerfile, or variant like 'cu130'
 
     Returns:
         Image name that was built
@@ -109,13 +117,17 @@ def _build_image(
     if not cfg or not cfg["dockerfile"]:
         raise SystemExit(f"Engine '{engine}' does not support building from source")
 
-    image_name = get_image_name(engine, version)
+    image_name = get_image_name(engine, version, image_type=image_type)
 
     if not force and _image_exists_local(image_name):
         log(f"Image {image_name} already exists (use --rebuild to force)")
         return image_name
 
-    dockerfile = cfg["dockerfile"]
+    # Variants like "cu130" use Dockerfile.{engine}-{variant}
+    if image_type not in ("prebuilt", "build"):
+        dockerfile = ROOT / "docker" / f"Dockerfile.{engine}-{image_type}"
+    else:
+        dockerfile = cfg["dockerfile"]
 
     if not dockerfile.exists():
         raise SystemExit(f"Dockerfile not found: {dockerfile}")
@@ -644,7 +656,8 @@ def ensure_image(
         engine: 'vllm', 'llama', 'trtllm', 'sglang', 'exl', etc.
         version: Version tag or commit SHA
         rebuild: Force rebuild/repull even if exists
-        image_type: 'prebuilt' to use official images, 'build' to build from source
+        image_type: 'prebuilt' to use official images, 'build' to build from source,
+                    or a variant name like 'cu130' for Dockerfile.{engine}-{variant}
         image_override: Direct image name to use (highest priority, skips build/prebuilt logic)
         pr_number: Optional PR number for unmerged PRs (fetches PR ref)
         pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
@@ -676,7 +689,7 @@ def ensure_image(
     use_prebuilt = image_type == "prebuilt" or (cfg and not cfg["dockerfile"])
 
     if use_prebuilt:
-        image_name = get_image_name(engine, version, prebuilt=True)
+        image_name = get_image_name(engine, version, image_type="prebuilt")
         if not _image_exists_local(image_name) or rebuild:
             if not _pull_image(image_name):
                 raise SystemExit(f"Failed to pull prebuilt image: {image_name}")
@@ -684,5 +697,12 @@ def ensure_image(
             log(f"Using existing prebuilt image: {image_name}")
         return image_name
 
-    # Build from source (default for llama, optional for vllm)
-    return _build_image(engine, version, force=rebuild, pr_number=pr_number, pr_overlay=pr_overlay)
+    # Build from source (default for llama, optional for vllm, or variants like cu130)
+    return _build_image(
+        engine,
+        version,
+        force=rebuild,
+        pr_number=pr_number,
+        pr_overlay=pr_overlay,
+        image_type=image_type,
+    )

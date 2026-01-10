@@ -309,7 +309,7 @@ def main():
                     version=backend_version,
                 )
             else:
-                # vLLM backend for safetensors models (includes vllm-cu130)
+                # vLLM backend for safetensors models
                 server.start_vllm(
                     model_path=model_path,
                     tensor_parallel=args.tensor_parallel,
@@ -321,7 +321,6 @@ def main():
                     image_override=docker_image,
                     pr_number=pr_number,
                     pr_overlay=pr_overlay,
-                    backend=backend,
                 )
 
         # Model name differs by backend:

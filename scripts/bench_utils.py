@@ -789,11 +789,11 @@ def resolve_run_config(args):
         args.port = backend_info["default_port"]
 
     # Auto-detect tensor parallel for vLLM, trtllm, and sglang
-    if backend in ("vllm", "vllm-cu130", "trtllm", "sglang") and getattr(args, "tensor_parallel", None) is None:
+    if backend in ("vllm", "trtllm", "sglang") and getattr(args, "tensor_parallel", None) is None:
         args.tensor_parallel = get_gpu_count()
 
     # Resolve model path (safetensors get expanded, GGUF stays as-is for internal resolution)
-    if backend in ("vllm", "vllm-cu130", "trtllm"):
+    if backend in ("vllm", "trtllm"):
         model_path = resolve_model_path(args.model)
     else:
         model_path = args.model
@@ -801,7 +801,7 @@ def resolve_run_config(args):
     # Apply config defaults for args not specified on CLI
     if getattr(args, "max_model_len", None) is None:
         config_default = backend_args.get("max_model_len")  # None if not in config
-        if backend in ("vllm", "vllm-cu130", "trtllm", "sglang"):
+        if backend in ("vllm", "trtllm", "sglang"):
             detected = detect_max_position_embeddings(model_path)
             if config_default is not None and detected:
                 # Cap at config default if specified
@@ -1069,7 +1069,7 @@ def warmup_model(
         True if warmup succeeded, False if it failed
     """
     try:
-        if backend in ("vllm", "vllm-cu130", "trtllm", "sglang", "exl"):
+        if backend in ("vllm", "trtllm", "sglang", "exl"):
             # Use OpenAI-compatible API
             client = OpenAI(base_url=f"http://{host}:{port}/v1", api_key="dummy")
             messages = build_chat_messages(prompt, image_path=None)

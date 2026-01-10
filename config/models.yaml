@@ -71,49 +71,6 @@ defaults:
           env_vars:
             # Prevent PyTorch memory fragmentation with mixed-precision quantization
             PYTORCH_ALLOC_CONF: "expandable_segments:True,max_split_size_mb:512"
-    # vLLM with CUDA 13.0 for Blackwell GPUs (uses wheels.vllm.ai/nightly/cu130)
-    vllm-cu130:
-      version: nightly
-      image_type: build  # Always build from Dockerfile (fast pip install ~2min)
-      args:
-        gpu_memory_utilization: 0.95
-      env_vars:
-        VLLM_SLEEP_WHEN_IDLE: "1"
-      model_patterns:
-        - pattern: "glm.*v"  # GLM vision models
-          args:
-            - "--enable-expert-parallel"
-            - "--allowed-local-media-path"
-            - "/"
-            - "--mm-encoder-tp-mode"
-            - "data"
-            - "--mm_processor_cache_type"
-            - "shm"
-        - pattern: "mistral|devstral|ministral"
-          args:
-            - "--tokenizer_mode"
-            - "mistral"
-            - "--config_format"
-            - "mistral"
-            - "--load_format"
-            - "mistral"
-        - pattern: "minimax.*m2\\.1"  # MiniMax M2.1 models (FP8, AWQ, etc.)
-          args:
-            - "--attention-backend"
-            - "flashinfer"
-            - "--max-num-seqs"
-            - "64"
-            - "--max-cudagraph-capture-size"
-            - "64"
-            - "--enable-auto-tool-choice"
-            - "--tool-call-parser"
-            - "minimax_m2"
-            - "--reasoning-parser"
-            - "minimax_m2"
-            - "--override-generation-config"
-            - '{"temperature": 1, "top_p": 0.95, "top_k": 40, "repetition_penalty": 1.1, "frequency_penalty": 0.40}'
-          env_vars:
-            PYTORCH_ALLOC_CONF: "expandable_segments:True,max_split_size_mb:512"
     # https://github.com/ggerganov/llama.cpp/releases
     # Note: b7538 introduced Blackwell changes that break CUDA graphs on SM120
     # Staying on b7531 (last version before that change) for stable performance
@@ -160,9 +117,12 @@ models:
   - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
 
   - repo_id: mratsim/MiniMax-M2.1-FP8-INT4-AWQ
-    backend: vllm-cu130
+    backend: vllm
     backends:
-      vllm-cu130:
+      vllm:
+        # cu130 variant for Blackwell GPUs (uses Dockerfile.vllm-cu130)
+        image_type: cu130
+        version: nightly
         args:
           # cu130 devel image has slightly higher memory overhead than cu129
           # 0.91 fits full 196k context (~7GB free per GPU, ~14GB total); 0.90 falls 0.12 GiB short for full context

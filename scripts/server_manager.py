@@ -257,7 +257,6 @@ class ServerManager:
         image_override: str | None = None,
         pr_number: int | None = None,
         pr_overlay: bool = False,
-        backend: str = "vllm",
     ) -> None:
         """Start vLLM server via Docker with version pinning.
 
@@ -273,7 +272,8 @@ class ServerManager:
             env_vars: Environment variables for Docker container (optional)
             extra_vllm_args: Extra vLLM CLI arguments (optional)
             rebuild: Force rebuild image even if cached
-            image_type: 'prebuilt' to use official images, 'build' to build from source
+            image_type: 'prebuilt' to use official images, 'build' to build from source,
+                        or a variant like 'cu130' for Dockerfile.vllm-cu130
             image_override: Direct image name to use (highest priority)
             pr_number: PR number for unmerged PRs (optional)
             pr_overlay: If True, use nightly + overlay PR files (fast mode)
@@ -287,7 +287,7 @@ class ServerManager:
 
         # Ensure image exists (builds or pulls as needed)
         image_name = ensure_image(
-            backend,
+            "vllm",
             version,
             rebuild=rebuild,
             image_type=image_type,
