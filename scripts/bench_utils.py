@@ -1050,21 +1050,17 @@ def cleanup_existing_containers(port: int):
                 log(f"Warning: Failed to stop container {cid[:12]}: {e}")
 
 
-def handle_container_cleanup(port: int, no_autostart: bool, force_cleanup: bool) -> None:
+def handle_container_cleanup(port: int, force_cleanup: bool) -> None:
     """Handle container cleanup based on runtime flags.
 
     Args:
         port: Port number to check
-        no_autostart: If True, skip cleanup (server already running)
         force_cleanup: If True, clean up without prompting
 
     Exits:
         If containers exist and user declines to clean them up
     """
     import sys
-
-    if no_autostart:
-        return
 
     if force_cleanup:
         cleanup_existing_containers(port)
@@ -1082,7 +1078,7 @@ def handle_container_cleanup(port: int, no_autostart: bool, force_cleanup: bool)
 
     # Interactive prompt
     if not prompt_cleanup_confirmation(port, existing):
-        log("Use --no-autostart to benchmark against existing server")
+        log("Existing container will continue running")
         sys.exit(0)
 
     cleanup_existing_containers(port)

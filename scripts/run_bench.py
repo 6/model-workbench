@@ -54,7 +54,6 @@ from bench_utils import (
     find_mmproj,
     get_gpu_info,
     get_model_backend_config,
-    get_model_backend_version,
     handle_container_cleanup,
     med,
     resolve_image_source,
@@ -366,30 +365,13 @@ def run_benchmark_vllm(
     model_path: str,
     image_path: str | None,
     image_label: str,
+    prompt_text: str,
     image_type: str = "build",
-    docker_image: str | None = None,
 ):
     """Run benchmarks using vLLM backend (Docker-only)."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
-
-    # Use args.backend_version set by resolve_run_config from profile
     backend_version = args.backend_version
-    if not backend_version:
-        raise SystemExit(
-            "No backend version specified and none found in config.\n"
-            "Either:\n"
-            "  1. Set defaults.backends.vllm.backend_version in config/models.yaml\n"
-            "  2. Pass --backend-version v0.8.0"
-        )
-
-    # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
     print("\n== vLLM Benchmark ==")
     print(f"model:           {model_path}")
@@ -405,13 +387,8 @@ def run_benchmark_vllm(
         timeout=args.server_timeout,
     )
 
-    if not server.is_backend_running("vllm") and args.no_autostart:
-        raise SystemExit(
-            f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
-        )
-
     with server:
-        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
+        handle_container_cleanup(args.port, args.force_cleanup)
 
         if not server.is_backend_running("vllm"):
             server.start_vllm(
@@ -421,7 +398,6 @@ def run_benchmark_vllm(
                 extra_args=args.extra_args,
                 rebuild=args.rebuild,
                 image_type=image_type,
-                image_override=docker_image,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -511,29 +487,14 @@ def run_benchmark_vllm(
         )
 
 
-def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_label: str):
+def run_benchmark_trtllm(
+    args, model_path: str, image_path: str | None, image_label: str, prompt_text: str
+):
     """Run benchmarks using TensorRT-LLM backend (NGC prebuilt images)."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
-
-    # Use args.backend_version and args.extra_args set by resolve_run_config from profile
     backend_version = args.backend_version
     extra_args = args.extra_args or []
-    if not backend_version:
-        raise SystemExit(
-            "No backend version specified and none found in config.\n"
-            "Either:\n"
-            "  1. Set defaults.backends.trtllm.backend_version in config/models.yaml\n"
-            "  2. Pass --backend-version 0.18.0"
-        )
-
-    # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
     print("\n== TensorRT-LLM Benchmark ==")
     print(f"model:           {model_path}")
@@ -548,13 +509,8 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         timeout=args.server_timeout,
     )
 
-    if not server.is_backend_running("trtllm") and args.no_autostart:
-        raise SystemExit(
-            f"TensorRT-LLM server not detected on {args.host}:{args.port} and --no-autostart was set."
-        )
-
     with server:
-        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
+        handle_container_cleanup(args.port, args.force_cleanup)
 
         if not server.is_backend_running("trtllm"):
             server.start_trtllm(
@@ -660,31 +616,14 @@ def run_benchmark_sglang(
     model_path: str,
     image_path: str | None,
     image_label: str,
+    prompt_text: str,
     image_type: str = "build",
-    docker_image: str | None = None,
 ):
     """Run benchmarks using SGLang backend (Docker)."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
-
-    # Use args.backend_version and args.extra_args set by resolve_run_config from profile
     backend_version = args.backend_version
     extra_args = args.extra_args or []
-    if not backend_version:
-        raise SystemExit(
-            "No backend version specified and none found in config.\n"
-            "Either:\n"
-            "  1. Set defaults.backends.sglang.backend_version in config/models.yaml\n"
-            "  2. Pass --backend-version 47cdb65"
-        )
-
-    # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
     print("\n== SGLang Benchmark ==")
     print(f"model:           {model_path}")
@@ -700,13 +639,8 @@ def run_benchmark_sglang(
         timeout=args.server_timeout,
     )
 
-    if not server.is_backend_running("sglang") and args.no_autostart:
-        raise SystemExit(
-            f"SGLang server not detected on {args.host}:{args.port} and --no-autostart was set."
-        )
-
     with server:
-        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
+        handle_container_cleanup(args.port, args.force_cleanup)
 
         if not server.is_backend_running("sglang"):
             server.start_sglang(
@@ -714,7 +648,6 @@ def run_benchmark_sglang(
                 tensor_parallel=args.tensor_parallel,
                 version=backend_version,
                 rebuild=args.rebuild,
-                image_override=docker_image,
                 extra_args=extra_args,
             )
 
@@ -795,21 +728,13 @@ def run_benchmark_sglang(
         )
 
 
-def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label: str):
+def run_benchmark_exl(
+    args, model_path: str, image_path: str | None, image_label: str, prompt_text: str
+):
     """Run benchmarks using ExLlamaV3/TabbyAPI backend (Docker)."""
-
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
-
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, "exl")
-    if not backend_version:
-        raise SystemExit(
-            "No backend version specified and none found in config.\n"
-            "Either:\n"
-            "  1. Set defaults.backends.exl.backend_version in config/models.yaml\n"
-            "  2. Pass --backend-version v0.0.18"
-        )
+    backend_version = args.backend_version
 
     # Get ExLlamaV3-specific args from config
     backend_cfg = get_model_backend_config(args.model, "exl")
@@ -818,14 +743,6 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
     max_seq_len = backend_args.get("max_seq_len")
     gpu_split_auto = backend_args.get("gpu_split_auto", True)
     gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
-
-    # Select prompt
-    if args.prompt:
-        prompt_text = args.prompt
-    elif is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
-    else:
-        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
     print("\n== ExLlamaV3 Benchmark ==")
     print(f"model:           {model_path}")
@@ -842,13 +759,8 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         timeout=args.server_timeout,
     )
 
-    if not server.is_backend_running("exl") and args.no_autostart:
-        raise SystemExit(
-            f"ExLlamaV3 server not detected on {args.host}:{args.port} and --no-autostart was set."
-        )
-
     with server:
-        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
+        handle_container_cleanup(args.port, args.force_cleanup)
 
         if not server.is_backend_running("exl"):
             server.start_exl(
@@ -942,21 +854,12 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
 
 
 def run_benchmark_gguf(
-    args, model_path: str, image_path: str | None, image_label: str, backend: str
+    args, model_path: str, image_path: str | None, image_label: str, backend: str, prompt_text: str
 ):
     """Run benchmarks using GGUF backend (llama.cpp) via Docker."""
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
-
-    # Use args.backend_version set by resolve_run_config from profile
     backend_version = args.backend_version
-    if not backend_version:
-        raise SystemExit(
-            f"No backend version specified and none found in config.\n"
-            f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
-            f"  2. Pass --backend-version b4521"
-        )
 
     # Resolve GGUF path
     gguf_path = resolve_local_gguf(model_path)
@@ -986,12 +889,6 @@ def run_benchmark_gguf(
                     "  2. Pass --mmproj /path/to/mmproj-*.gguf explicitly"
                 )
 
-    # Select prompt
-    if is_vision:
-        prompt_text = VISION_PROMPTS.get(args.prompt_set) or VISION_PROMPTS["describe"]
-    else:
-        prompt_text = TEXT_PROMPTS[args.prompt_set]
-
     backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
     print(f"\n== {backend_label} Benchmark ==")
@@ -1010,13 +907,8 @@ def run_benchmark_gguf(
         timeout=args.server_timeout,
     )
 
-    if not server.is_backend_running(backend) and args.no_autostart:
-        raise SystemExit(
-            f"{backend_label} server not detected on {args.host}:{args.port} and --no-autostart was set."
-        )
-
     with server:
-        handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
+        handle_container_cleanup(args.port, args.force_cleanup)
 
         if not server.is_backend_running(backend):
             gguf_path = server.start_gguf_backend(
@@ -1167,9 +1059,6 @@ def main():
         help="Server port (default: 8000 for vLLM, 8080 for llama.cpp)",
     )
     ap.add_argument(
-        "--no-autostart", action="store_true", help="Don't start server; require it already running"
-    )
-    ap.add_argument(
         "--force-cleanup",
         action="store_true",
         help="Automatically stop existing containers without prompting (for automation)",
@@ -1201,13 +1090,6 @@ def main():
         default=None,
         help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
     )
-    ap.add_argument(
-        "--docker-image",
-        default=None,
-        dest="docker_image",
-        help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
-    )
-
     # llama.cpp-specific options
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
     llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
@@ -1281,14 +1163,29 @@ def main():
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)
 
+    # Validate backend version
+    if not args.backend_version:
+        raise SystemExit(
+            f"No backend version specified and none found in config.\n"
+            f"Either:\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
+            f"  2. Pass --backend-version <version>"
+        )
+
     # Resolve image type (from CLI, model config, or backend defaults)
     image_type = args.image_type or backend_cfg.get("image_type", "build")
 
-    # Resolve Docker image (CLI overrides config)
-    docker_image = args.docker_image or backend_cfg.get("docker_image")
-
     # Resolve image (for vision benchmark, not Docker image)
     image_path, image_label = resolve_image_source(args.image)
+
+    # Resolve prompt text
+    is_vision = image_path is not None
+    if args.prompt:
+        prompt_text = args.prompt
+    elif is_vision:
+        prompt_text = VISION_PROMPTS.get(args.prompt_set, VISION_PROMPTS["describe"])
+    else:
+        prompt_text = TEXT_PROMPTS.get(args.prompt_set, TEXT_PROMPTS["short"])
 
     # Handle --build-only flag
     if args.build_only:
@@ -1307,7 +1204,6 @@ def main():
             version,
             rebuild=args.rebuild,
             image_type=image_type,
-            image_override=docker_image,
         )
         log(f"Image ready: {image_name}")
         return
@@ -1321,15 +1217,15 @@ def main():
         log(f"Auto-detected model format -> {backend_label} backend")
 
     if backend == "vllm":
-        run_benchmark_vllm(args, model_path, image_path, image_label, image_type, docker_image)
+        run_benchmark_vllm(args, model_path, image_path, image_label, prompt_text, image_type)
     elif backend == "trtllm":
-        run_benchmark_trtllm(args, model_path, image_path, image_label)
+        run_benchmark_trtllm(args, model_path, image_path, image_label, prompt_text)
     elif backend == "sglang":
-        run_benchmark_sglang(args, model_path, image_path, image_label, image_type, docker_image)
+        run_benchmark_sglang(args, model_path, image_path, image_label, prompt_text, image_type)
     elif backend == "exl":
-        run_benchmark_exl(args, model_path, image_path, image_label)
+        run_benchmark_exl(args, model_path, image_path, image_label, prompt_text)
     else:
-        run_benchmark_gguf(args, model_path, image_path, image_label, backend)
+        run_benchmark_gguf(args, model_path, image_path, image_label, backend, prompt_text)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-11T03:20:09.601103",
+  "timestamp": "2026-01-11T03:55:47.430377",
   "repo_id": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
   "model_ref": "~/models/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
   "engine": "vllm-server",
@@ -21,10 +21,10 @@
         "memory_total_mib": 97887,
         "pcie_gen": 5,
         "pcie_width": 8,
-        "memory_used_mib": 88658
+        "memory_used_mib": 88650
       }
     ],
-    "memory_used_mib": 177296,
+    "memory_used_mib": 177288,
     "memory_total_mib": 195774
   },
   "config": {
@@ -37,65 +37,65 @@
   },
   "iterations": [
     {
-      "wall_s": 1.869762479000201,
-      "output_text": "\n**KV\u2011Cache Overview**\n\n| Component | What it stores | How it\u2019s used |\n|-----------|----------------|---------------|\n| **Key (K)** | The *query\u2011independent* part of each token\u2019s representation (the result of the first linear projection in the attention layer). | Provides the \u201cmemory\u201d of past tokens that the model can attend to when generating new tokens. |\n| **Value (V)** | The *query\u2011independent* part of each token\u2019s representation (the second linear projection). | Supplies the actual content that is weighted and summed to produce the output hidden state. |\n| **Cache** | A persistent buffer that holds the **K** and **V** vectors for every token already generated (or processed) in the current sequence. | During autoregressive decoding, the model re\u2011uses these cached K/V pairs instead of recomputing them, enabling *O(1)* attention lookup per new token. |\n\n### Why KV\u2011Cache Matters for Long Contexts\n\n1. **Linear\u2011time inference**  \n   - Standard self\u2011attention recomputes **K** and **V** for the entire sequence on every step \u2192\u202f\\(O(N^2)\\) cost.  \n   - With KV\u2011cache, only the **new query** (the token being generated) needs a fresh **K** and **V**; all previous **K/V** pairs are fetched from memory \u2192\u202f\\(O(N)\\) per step, independent of sequence length.\n\n2. **Memory\u2011efficient attention**  \n   - The cache stores only the *projected* K/V vectors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq\u2011len\u202f\u00d7\u202fbytes).  \n   - This is far smaller than recomputing full attention matrices, allowing models to handle sequences of tens of thousands of tokens on a single GPU/TPU.\n\n3. **Preserves context fidelity**  \n   - Because the exact same K/V vectors are reused, the attention scores for earlier tokens remain unchanged, guaranteeing that the model\u2019s \u201cunderstanding\u201d of the full context does not degrade as the sequence grows.\n\n4.",
+      "wall_s": 1.8699549859993567,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it\u2019s used |\n|---------|------------|---------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. |\n| **Why it exists** | Self\u2011attention for token *t* requires a dot\u2011product between *t*\u2019s query and **all** previous keys/values. Computing this from scratch each step is O(N\u00b2) in sequence length. | By persisting the keys and values, the attention computation reduces to O(N) per new token (only the new query needs to attend to the cache). |\n| **Structure** | For each layer *l*: <br>\u2022 `K_l = [k_1, k_2, \u2026, k_T]` <br>\u2022 `V_l = [v_1, v_2, \u2026, v_T]` <br>where *T* is the current length of the generated sequence. | The cache is typically stored as a contiguous tensor (shape `[layers, heads, seq_len, head_dim]`). When a new token is generated, its query is computed, multiplied with the cached keys, and the resulting attention weights are used to produce the output. |\n| **Update rule** | After generating token *t+1*, the new key/value pair `(k_{t+1}, v_{t+1})` is appended to the existing caches. | No recomputation of earlier tokens; only the new token\u2019s KV pair is added. |\n| **Memory scaling** | Linear in total tokens generated: `O(L\u00b7d_model\u00b7num_heads)`. | For a 7B\u2011parameter model with 32\u2011head attention, a 4\u202fk token context consumes ~1\u202fGB of KV cache (float16). |\n\n---\n\n### Why KV Cache Matters for **Long Context** Generation\n\n1. **Constant\u2011time per\u2011token inference",
       "prompt_tokens": 32,
       "generated_tokens": 512,
-      "tok_per_s": 273.831572592994,
-      "ttft_ms": 40.31872749328613,
-      "prefill_ms": 39.408870001352625,
-      "generation_ms": 1823.8768419978442,
-      "generation_tok_per_s": 280.72070888249436
+      "tok_per_s": 273.8033823452562,
+      "ttft_ms": 38.39683532714844,
+      "prefill_ms": 37.477944999409374,
+      "generation_ms": 1826.4818349998677,
+      "generation_tok_per_s": 280.3203350774288
     },
     {
-      "wall_s": 1.8711597679975966,
-      "output_text": "\n**KV\u2011Cache Overview**\n\n| Component | What it stores | How it\u2019s used |\n|-----------|----------------|---------------|\n| **Key (K)** | The *query\u2011independent* part of each token\u2019s representation (the result of the first linear projection in the attention layer). | Provides the \u201cmemory\u201d of past tokens that the model can attend to when generating new tokens. |\n| **Value (V)** | The *query\u2011independent* part of each token\u2019s representation (the second linear projection). | Supplies the actual content that is weighted and summed to produce the output hidden state. |\n| **Cache** | A persistent buffer that holds the **K** and **V** vectors for every token already generated (or processed) in the current sequence. | During autoregressive decoding, the model re\u2011uses these cached K/V pairs instead of recomputing them, enabling *O(1)* attention lookup per new token. |\n\n### Why KV\u2011Cache Matters for Long Contexts\n\n1. **Linear\u2011time inference**  \n   - Standard self\u2011attention recomputes **K** and **V** for the entire sequence on every step \u2192\u202f\\(O(N^2)\\) cost.  \n   - With KV\u2011cache, only the **new query** (the token being generated) needs a fresh **K** and **V**; all previous **K/V** pairs are fetched from memory \u2192\u202f\\(O(N)\\) per step, independent of sequence length.\n\n2. **Memory\u2011efficient attention**  \n   - The cache stores only the *projected* K/V vectors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq\u2011len\u202f\u00d7\u202fbytes).  \n   - This is far smaller than recomputing full attention matrices, allowing models to handle sequences of tens of thousands of tokens on a single GPU/TPU.\n\n3. **Preserves context fidelity**  \n   - Because the exact same K/V vectors are reused, the attention scores for earlier tokens remain unchanged, guaranteeing that the model\u2019s \u201cunderstanding\u201d of the full context does not degrade as the sequence grows.\n\n4.",
+      "wall_s": 1.8721401510010764,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it\u2019s used |\n|---------|------------|---------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. |\n| **Why it exists** | Self\u2011attention for token *t* requires a dot\u2011product between *t*\u2019s query and **all** previous keys/values. Computing this from scratch each step is O(N\u00b2) in sequence length. | By persisting the keys and values, the attention computation reduces to O(N) per new token (only the new query needs to attend to the cache). |\n| **Structure** | For each layer *l*: <br>\u2022 `K_l = [k_1, k_2, \u2026, k_T]` <br>\u2022 `V_l = [v_1, v_2, \u2026, v_T]` <br>where *T* is the current length of the generated sequence. | The cache is typically stored as a contiguous tensor (shape `[layers, heads, seq_len, head_dim]`). When a new token is generated, its query is computed, multiplied with the cached keys, and the resulting attention weights are used to produce the output. |\n| **Update rule** | After generating token *t+1*, the new key/value pair `(k_{t+1}, v_{t+1})` is appended to the existing caches. | No recomputation of earlier tokens; only the new token\u2019s KV pair is added. |\n| **Memory scaling** | Linear in total tokens generated: `O(L\u00b7d_model\u00b7num_heads)`. | For a 7B\u2011parameter model with 32\u2011head attention, a 4\u202fk token context consumes ~1\u202fGB of KV cache (float16). |\n\n---\n\n### Why KV Cache Matters for **Long Context** Generation\n\n1. **Constant\u2011time per\u2011token inference",
       "prompt_tokens": 32,
       "generated_tokens": 512,
-      "tok_per_s": 273.62708880167503,
-      "ttft_ms": 39.20602798461914,
-      "prefill_ms": 38.65069899984519,
-      "generation_ms": 1827.6191349978035,
-      "generation_tok_per_s": 280.1458959339553
+      "tok_per_s": 273.483798596073,
+      "ttft_ms": 38.61570358276367,
+      "prefill_ms": 37.98106799877132,
+      "generation_ms": 1828.7388940007077,
+      "generation_tok_per_s": 279.9743592043938
     },
     {
-      "wall_s": 1.8696825099978014,
-      "output_text": "\n**KV\u2011Cache Overview**\n\n| Component | What it stores | How it\u2019s used |\n|-----------|----------------|---------------|\n| **Key (K)** | The *query\u2011independent* part of each token\u2019s representation (the result of the first linear projection in the attention layer). | Provides the \u201cmemory\u201d of past tokens that the model can attend to when generating new tokens. |\n| **Value (V)** | The *query\u2011independent* part of each token\u2019s representation (the second linear projection). | Supplies the actual content that is weighted and summed to produce the output hidden state. |\n| **Cache** | A persistent buffer that holds the **K** and **V** vectors for every token already generated (or processed) in the current sequence. | During autoregressive decoding, the model re\u2011uses these cached K/V pairs instead of recomputing them, enabling *O(1)* attention lookup per new token. |\n\n### Why KV\u2011Cache Matters for Long Contexts\n\n1. **Linear\u2011time inference**  \n   - Standard self\u2011attention recomputes **K** and **V** for the entire sequence on every step \u2192\u202f\\(O(N^2)\\) cost.  \n   - With KV\u2011cache, only the **new query** (the token being generated) needs a fresh **K** and **V**; all previous **K/V** pairs are fetched from memory \u2192\u202f\\(O(N)\\) per step, independent of sequence length.\n\n2. **Memory\u2011efficient attention**  \n   - The cache stores only the *projected* K/V vectors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq\u2011len\u202f\u00d7\u202fbytes).  \n   - This is far smaller than recomputing full attention matrices, allowing models to handle sequences of tens of thousands of tokens on a single GPU/TPU.\n\n3. **Preserves context fidelity**  \n   - Because the exact same K/V vectors are reused, the attention scores for earlier tokens remain unchanged, guaranteeing that the model\u2019s \u201cunderstanding\u201d of the full context does not degrade as the sequence grows.\n\n4.",
+      "wall_s": 1.869197374999203,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it\u2019s used |\n|---------|------------|---------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. |\n| **Why it exists** | Self\u2011attention for token *t* requires a dot\u2011product between *t*\u2019s query and **all** previous keys/values. Computing this from scratch each step is O(N\u00b2) in sequence length. | By persisting the keys and values, the attention computation reduces to O(N) per new token (only the new query needs to attend to the cache). |\n| **Structure** | For each layer *l*: <br>\u2022 `K_l = [k_1, k_2, \u2026, k_T]` <br>\u2022 `V_l = [v_1, v_2, \u2026, v_T]` <br>where *T* is the current length of the generated sequence. | The cache is typically stored as a contiguous tensor (shape `[layers, heads, seq_len, head_dim]`). When a new token is generated, its query is computed, multiplied with the cached keys, and the resulting attention weights are used to produce the output. |\n| **Update rule** | After generating token *t+1*, the new key/value pair `(k_{t+1}, v_{t+1})` is appended to the existing caches. | No recomputation of earlier tokens; only the new token\u2019s KV pair is added. |\n| **Memory scaling** | Linear in total tokens generated: `O(L\u00b7d_model\u00b7num_heads)`. | For a 7B\u2011parameter model with 32\u2011head attention, a 4\u202fk token context consumes ~1\u202fGB of KV cache (float16). |\n\n---\n\n### Why KV Cache Matters for **Long Context** Generation\n\n1. **Constant\u2011time per\u2011token inference",
       "prompt_tokens": 32,
       "generated_tokens": 512,
-      "tok_per_s": 273.8432847620755,
-      "ttft_ms": 39.19720649719238,
-      "prefill_ms": 38.609662999078864,
-      "generation_ms": 1826.0652520002623,
-      "generation_tok_per_s": 280.38428497511677
+      "tok_per_s": 273.91435856270573,
+      "ttft_ms": 38.2537841796875,
+      "prefill_ms": 37.619910999637796,
+      "generation_ms": 1826.1864019987115,
+      "generation_tok_per_s": 280.3656841599685
     },
     {
-      "wall_s": 1.871642342000996,
-      "output_text": "\n**KV\u2011Cache Overview**\n\n| Component | What it stores | How it\u2019s used |\n|-----------|----------------|---------------|\n| **Key (K)** | The *query\u2011independent* part of each token\u2019s representation (the result of the first linear projection in the attention layer). | Provides the \u201cmemory\u201d of past tokens that the model can attend to when generating new tokens. |\n| **Value (V)** | The *query\u2011independent* part of each token\u2019s representation (the second linear projection). | Supplies the actual content that is weighted and summed to produce the output hidden state. |\n| **Cache** | A persistent buffer that holds the **K** and **V** vectors for every token already generated (or processed) in the current sequence. | During autoregressive decoding, the model re\u2011uses these cached K/V pairs instead of recomputing them, enabling *O(1)* attention lookup per new token. |\n\n### Why KV\u2011Cache Matters for Long Contexts\n\n1. **Linear\u2011time inference**  \n   - Standard self\u2011attention recomputes **K** and **V** for the entire sequence on every step \u2192\u202f\\(O(N^2)\\) cost.  \n   - With KV\u2011cache, only the **new query** (the token being generated) needs a fresh **K** and **V**; all previous **K/V** pairs are fetched from memory \u2192\u202f\\(O(N)\\) per step, independent of sequence length.\n\n2. **Memory\u2011efficient attention**  \n   - The cache stores only the *projected* K/V vectors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq\u2011len\u202f\u00d7\u202fbytes).  \n   - This is far smaller than recomputing full attention matrices, allowing models to handle sequences of tens of thousands of tokens on a single GPU/TPU.\n\n3. **Preserves context fidelity**  \n   - Because the exact same K/V vectors are reused, the attention scores for earlier tokens remain unchanged, guaranteeing that the model\u2019s \u201cunderstanding\u201d of the full context does not degrade as the sequence grows.\n\n4.",
+      "wall_s": 1.8675020580012642,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it\u2019s used |\n|---------|------------|---------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. |\n| **Why it exists** | Self\u2011attention for token *t* requires a dot\u2011product between *t*\u2019s query and **all** previous keys/values. Computing this from scratch each step is O(N\u00b2) in sequence length. | By persisting the keys and values, the attention computation reduces to O(N) per new token (only the new query needs to attend to the cache). |\n| **Structure** | For each layer *l*: <br>\u2022 `K_l = [k_1, k_2, \u2026, k_T]` <br>\u2022 `V_l = [v_1, v_2, \u2026, v_T]` <br>where *T* is the current length of the generated sequence. | The cache is typically stored as a contiguous tensor (shape `[layers, heads, seq_len, head_dim]`). When a new token is generated, its query is computed, multiplied with the cached keys, and the resulting attention weights are used to produce the output. |\n| **Update rule** | After generating token *t+1*, the new key/value pair `(k_{t+1}, v_{t+1})` is appended to the existing caches. | No recomputation of earlier tokens; only the new token\u2019s KV pair is added. |\n| **Memory scaling** | Linear in total tokens generated: `O(L\u00b7d_model\u00b7num_heads)`. | For a 7B\u2011parameter model with 32\u2011head attention, a 4\u202fk token context consumes ~1\u202fGB of KV cache (float16). |\n\n---\n\n### Why KV Cache Matters for **Long Context** Generation\n\n1. **Constant\u2011time per\u2011token inference",
       "prompt_tokens": 32,
       "generated_tokens": 512,
-      "tok_per_s": 273.5565382927886,
-      "ttft_ms": 39.412498474121094,
-      "prefill_ms": 38.77719600131968,
-      "generation_ms": 1827.7028310003516,
-      "generation_tok_per_s": 280.13306721189923
+      "tok_per_s": 274.16301781641914,
+      "ttft_ms": 37.334442138671875,
+      "prefill_ms": 36.77874400091241,
+      "generation_ms": 1825.7114209991414,
+      "generation_tok_per_s": 280.4386246977642
     },
     {
-      "wall_s": 1.8668770410004072,
-      "output_text": "\n**KV\u2011Cache Overview**\n\n| Component | What it stores | How it\u2019s used |\n|-----------|----------------|---------------|\n| **Key (K)** | The *query\u2011independent* part of each token\u2019s representation (the result of the first linear projection in the attention layer). | Provides the \u201cmemory\u201d of past tokens that the model can attend to when generating new tokens. |\n| **Value (V)** | The *query\u2011independent* part of each token\u2019s representation (the second linear projection). | Supplies the actual content that is weighted and summed to produce the output hidden state. |\n| **Cache** | A persistent buffer that holds the **K** and **V** vectors for every token already generated (or processed) in the current sequence. | During autoregressive decoding, the model re\u2011uses these cached K/V pairs instead of recomputing them, enabling *O(1)* attention lookup per new token. |\n\n### Why KV\u2011Cache Matters for Long Contexts\n\n1. **Linear\u2011time inference**  \n   - Standard self\u2011attention recomputes **K** and **V** for the entire sequence on every step \u2192\u202f\\(O(N^2)\\) cost.  \n   - With KV\u2011cache, only the **new query** (the token being generated) needs a fresh **K** and **V**; all previous **K/V** pairs are fetched from memory \u2192\u202f\\(O(N)\\) per step, independent of sequence length.\n\n2. **Memory\u2011efficient attention**  \n   - The cache stores only the *projected* K/V vectors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq\u2011len\u202f\u00d7\u202fbytes).  \n   - This is far smaller than recomputing full attention matrices, allowing models to handle sequences of tens of thousands of tokens on a single GPU/TPU.\n\n3. **Preserves context fidelity**  \n   - Because the exact same K/V vectors are reused, the attention scores for earlier tokens remain unchanged, guaranteeing that the model\u2019s \u201cunderstanding\u201d of the full context does not degrade as the sequence grows.\n\n4.",
+      "wall_s": 1.8665718640004343,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it\u2019s used |\n|---------|------------|---------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. |\n| **Why it exists** | Self\u2011attention for token *t* requires a dot\u2011product between *t*\u2019s query and **all** previous keys/values. Computing this from scratch each step is O(N\u00b2) in sequence length. | By persisting the keys and values, the attention computation reduces to O(N) per new token (only the new query needs to attend to the cache). |\n| **Structure** | For each layer *l*: <br>\u2022 `K_l = [k_1, k_2, \u2026, k_T]` <br>\u2022 `V_l = [v_1, v_2, \u2026, v_T]` <br>where *T* is the current length of the generated sequence. | The cache is typically stored as a contiguous tensor (shape `[layers, heads, seq_len, head_dim]`). When a new token is generated, its query is computed, multiplied with the cached keys, and the resulting attention weights are used to produce the output. |\n| **Update rule** | After generating token *t+1*, the new key/value pair `(k_{t+1}, v_{t+1})` is appended to the existing caches. | No recomputation of earlier tokens; only the new token\u2019s KV pair is added. |\n| **Memory scaling** | Linear in total tokens generated: `O(L\u00b7d_model\u00b7num_heads)`. | For a 7B\u2011parameter model with 32\u2011head attention, a 4\u202fk token context consumes ~1\u202fGB of KV cache (float16). |\n\n---\n\n### Why KV Cache Matters for **Long Context** Generation\n\n1. **Constant\u2011time per\u2011token inference",
       "prompt_tokens": 32,
       "generated_tokens": 512,
-      "tok_per_s": 274.25480562213863,
-      "ttft_ms": 39.48497772216797,
-      "prefill_ms": 38.84054499940248,
-      "generation_ms": 1822.7817990009498,
-      "generation_tok_per_s": 280.8893529003979
+      "tok_per_s": 274.29964518091595,
+      "ttft_ms": 38.10691833496094,
+      "prefill_ms": 37.580055999569595,
+      "generation_ms": 1824.0507679984148,
+      "generation_tok_per_s": 280.6939417381638
     }
   ],
   "summary": {
-    "median_wall_s": 1.869762479000201,
-    "median_tok_per_s": 273.831572592994,
-    "median_ttft_ms": 39.412498474121094,
-    "median_generation_tok_per_s": 280.38428497511677
+    "median_wall_s": 1.869197374999203,
+    "median_tok_per_s": 273.91435856270573,
+    "median_ttft_ms": 38.2537841796875,
+    "median_generation_tok_per_s": 280.3656841599685
   }
 }

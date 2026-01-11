@@ -21,9 +21,6 @@ Examples:
 
   # Run GSM8K only (1319 math reasoning problems)
   uv run python scripts/run_eval.py --model ~/models/org/model --benchmark gsm8k
-
-  # Use an already running server
-  uv run python scripts/run_eval.py --model ~/models/org/model --no-autostart
 """
 
 import argparse
@@ -172,11 +169,6 @@ def main():
         help="Server port (default: 8000 for vLLM/trtllm, 8080 for llama.cpp)",
     )
     parser.add_argument(
-        "--no-autostart",
-        action="store_true",
-        help="Don't start server; require it already running",
-    )
-    parser.add_argument(
         "--server-timeout",
         type=int,
         default=180,
@@ -209,12 +201,6 @@ def main():
         default=None,
         help="Backend version (e.g., v0.8.0 for vLLM, b4521 for llama.cpp, 0.18.0 for trtllm)",
     )
-    parser.add_argument(
-        "--docker-image",
-        default=None,
-        dest="docker_image",
-        help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
-    )
 
     args = parser.parse_args()
 
@@ -233,9 +219,6 @@ def main():
             f"  2. Pass --backend-version"
         )
 
-    # Resolve docker_image (CLI override takes precedence over config)
-    docker_image = args.docker_image or backend_cfg.get("docker_image")
-
     backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
     log(f"Model: {repo_id}")
@@ -248,14 +231,6 @@ def main():
         port=args.port,
         timeout=args.server_timeout,
     )
-
-    # Check if we need to start the server
-    if not server.is_backend_running(backend):
-        if args.no_autostart:
-            raise SystemExit(
-                f"Server not running on {args.host}:{args.port} and --no-autostart was set.\n"
-                f"Start the server first or remove --no-autostart to auto-start."
-            )
 
     with server:
         # Start server if not already running
@@ -284,7 +259,6 @@ def main():
                     version=backend_version,
                     env_vars=args.env_vars,
                     extra_args=args.extra_args,
-                    image_override=docker_image,
                 )
 
         # Model name differs by backend:

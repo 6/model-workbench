@@ -13,9 +13,6 @@ Examples:
   # Start vLLM with prebuilt official image
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --image-type prebuilt
 
-  # Start vLLM with specific image (e.g., nightly)
-  uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --docker-image vllm/vllm-openai:nightly
-
   # Start TensorRT-LLM server
   uv run python scripts/run_server.py --model ~/models/zai-org/GLM-4.6V-FP8 --backend trtllm
 
@@ -121,12 +118,6 @@ def main():
         choices=["prebuilt", "build"],
         default=None,
         help="Image type: 'prebuilt' uses official images, 'build' compiles from source",
-    )
-    ap.add_argument(
-        "--docker-image",
-        default=None,
-        dest="docker_image",
-        help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
     # llama.cpp-specific options
@@ -237,9 +228,6 @@ def main():
             f"  2. Pass --backend-version"
         )
 
-    # Resolve docker_image (CLI override takes precedence over config)
-    docker_image = args.docker_image or backend_cfg.get("docker_image")
-
     # Create server manager
     server = ServerManager(
         host=args.host,
@@ -279,8 +267,6 @@ def main():
     log(f"  Backend: {backend}")
     log(f"  Backend version: {backend_version}")
     log(f"  Image type: {image_type}")
-    if docker_image:
-        log(f"  Image override: {docker_image}")
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
     if backend == "vllm":
@@ -291,7 +277,6 @@ def main():
             extra_args=args.extra_args,
             rebuild=args.rebuild,
             image_type=image_type,
-            image_override=docker_image,
         )
     elif backend == "trtllm":
         server.start_trtllm(
@@ -342,7 +327,6 @@ def main():
             mem_fraction_static=mem_fraction,
             max_model_len=max_model_len,
             rebuild=args.rebuild,
-            image_override=docker_image,
         )
     elif backend == "exl":
         # Get ExLlamaV3-specific args from config
