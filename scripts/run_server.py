@@ -60,11 +60,24 @@ def test_chat_completion(host: str, port: int, model_name: str) -> bool:
         return False
 
 
+def _require_config_keys(cfg: dict, keys: list[str], name: str) -> None:
+    """Error if required keys are missing from config section."""
+    missing = [k for k in keys if k not in cfg]
+    if missing:
+        raise SystemExit(
+            f"Missing required keys in config/server.yaml [{name}]: {', '.join(missing)}"
+        )
+
+
 def main():
     # Load server config for sidecar defaults
     server_cfg = load_server_config()
     webui_cfg = server_cfg.get("open_webui", {})
     litellm_cfg = server_cfg.get("litellm", {})
+
+    # Validate required config keys (no hardcoded defaults)
+    _require_config_keys(webui_cfg, ["image", "version", "port"], "open_webui")
+    _require_config_keys(litellm_cfg, ["image", "version", "port"], "litellm")
 
     ap = argparse.ArgumentParser(
         description="Start a standalone vLLM, llama.cpp, TensorRT-LLM, SGLang, or ExLlamaV3 server",
@@ -199,14 +212,11 @@ def main():
     webui_group.add_argument(
         "--webui-port",
         type=int,
-        default=webui_cfg.get("port", 3080),
-        help=f"Port for Open WebUI (default: {webui_cfg.get('port', 3080)})",
+        default=webui_cfg["port"],
+        help=f"Port for Open WebUI (default: {webui_cfg['port']})",
     )
     # Construct full image name from image:version
-    webui_image_default = (
-        f"{webui_cfg.get('image', 'ghcr.io/open-webui/open-webui')}:"
-        f"{webui_cfg.get('version', 'main')}"
-    )
+    webui_image_default = f"{webui_cfg['image']}:{webui_cfg['version']}"
     webui_group.add_argument(
         "--webui-image",
         default=webui_image_default,
@@ -224,8 +234,8 @@ def main():
     litellm_group.add_argument(
         "--litellm-port",
         type=int,
-        default=litellm_cfg.get("port", 4000),
-        help=f"Port for LiteLLM proxy (default: {litellm_cfg.get('port', 4000)})",
+        default=litellm_cfg["port"],
+        help=f"Port for LiteLLM proxy (default: {litellm_cfg['port']})",
     )
 
     args = ap.parse_args()
@@ -429,8 +439,8 @@ def main():
             model_name=api_model,
             litellm_port=args.litellm_port,
             model_alias=short_model_name,
-            version=litellm_cfg.get("version", "v1.80.11-stable"),
-            image=litellm_cfg.get("image", "ghcr.io/berriai/litellm"),
+            version=litellm_cfg["version"],
+            image=litellm_cfg["image"],
             backend=backend,
         )
         if litellm_container_id:

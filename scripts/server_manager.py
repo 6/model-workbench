@@ -669,8 +669,8 @@ def wait_for_llama_ready(host: str, port: int) -> bool:
 
 def start_open_webui(
     backend_port: int,
-    webui_port: int = 3000,
-    image: str = "ghcr.io/open-webui/open-webui:main",
+    webui_port: int,
+    image: str,
     timeout: int = 60,
 ) -> str | None:
     """Start Open WebUI container connected to backend.
@@ -770,9 +770,9 @@ def start_litellm_proxy(
     backend_port: int,
     model_name: str,
     model_alias: str,
-    litellm_port: int = 4000,
-    version: str = "v1.80.11-stable",
-    image: str = "ghcr.io/berriai/litellm",
+    litellm_port: int,
+    version: str,
+    image: str,
     timeout: int = 60,
     backend: str = "vllm",
 ) -> str | None:
