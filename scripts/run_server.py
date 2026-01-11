@@ -35,9 +35,9 @@ import sys
 import time
 from pathlib import Path
 
-from bench_utils import resolve_run_config, warmup_model
+from bench_utils import load_server_config, resolve_run_config, warmup_model
 from common import BACKEND_REGISTRY, log
-from server_manager import ServerManager, start_open_webui, stop_container
+from server_manager import ServerManager, start_litellm_proxy, start_open_webui, stop_container
 
 
 def test_chat_completion(host: str, port: int, model_name: str) -> bool:
@@ -60,7 +60,25 @@ def test_chat_completion(host: str, port: int, model_name: str) -> bool:
         return False
 
 
+def _require_config_keys(cfg: dict, keys: list[str], name: str) -> None:
+    """Error if required keys are missing from config section."""
+    missing = [k for k in keys if k not in cfg]
+    if missing:
+        raise SystemExit(
+            f"Missing required keys in config/server.yaml [{name}]: {', '.join(missing)}"
+        )
+
+
 def main():
+    # Load server config for sidecar defaults
+    server_cfg = load_server_config()
+    webui_cfg = server_cfg.get("open_webui", {})
+    litellm_cfg = server_cfg.get("litellm", {})
+
+    # Validate required config keys (no hardcoded defaults)
+    _require_config_keys(webui_cfg, ["image", "version", "port"], "open_webui")
+    _require_config_keys(litellm_cfg, ["image", "version", "port"], "litellm")
+
     ap = argparse.ArgumentParser(
         description="Start a standalone vLLM, llama.cpp, TensorRT-LLM, SGLang, or ExLlamaV3 server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -183,23 +201,41 @@ def main():
         help="Skip model preloading (warmup request). By default, models are preloaded into GPU memory on startup.",
     )
 
-    # Open WebUI options (enabled by default for OpenAI-compatible backends)
+    # Open WebUI options (defaults from config/server.yaml)
     webui_group = ap.add_argument_group("Open WebUI options")
     webui_group.add_argument(
         "--no-webui",
         action="store_true",
-        help="Don't launch Open WebUI (default: WebUI is launched for OpenAI-compatible backends)",
+        default=not webui_cfg.get("enabled", True),
+        help="Don't launch Open WebUI (default: from config/server.yaml)",
     )
     webui_group.add_argument(
         "--webui-port",
         type=int,
-        default=3080,
-        help="Port for Open WebUI (default: 3080)",
+        default=webui_cfg["port"],
+        help=f"Port for Open WebUI (default: {webui_cfg['port']})",
     )
+    # Construct full image name from image:version
+    webui_image_default = f"{webui_cfg['image']}:{webui_cfg['version']}"
     webui_group.add_argument(
         "--webui-image",
-        default="ghcr.io/open-webui/open-webui:main",
-        help="Open WebUI Docker image (default: ghcr.io/open-webui/open-webui:main)",
+        default=webui_image_default,
+        help=f"Open WebUI Docker image (default: {webui_image_default})",
+    )
+
+    # LiteLLM proxy options (defaults from config/server.yaml)
+    litellm_group = ap.add_argument_group("LiteLLM proxy options")
+    litellm_group.add_argument(
+        "--no-litellm",
+        action="store_true",
+        default=not litellm_cfg.get("enabled", True),
+        help="Don't launch LiteLLM proxy (default: from config/server.yaml)",
+    )
+    litellm_group.add_argument(
+        "--litellm-port",
+        type=int,
+        default=litellm_cfg["port"],
+        help=f"Port for LiteLLM proxy (default: {litellm_cfg['port']})",
     )
 
     args = ap.parse_args()
@@ -235,13 +271,14 @@ def main():
         timeout=args.server_timeout,
     )
 
-    # Model name for API (llama.cpp uses gpt-3.5-turbo, exl uses model dir name, others use full path)
+    # Short model name for API responses (directory name, e.g., "MiniMax-M2.1-FP8-INT4-AWQ")
+    short_model_name = Path(model_path).name
+
+    # Model name for API (llama.cpp uses gpt-3.5-turbo, others use short name)
     if backend == "llama":
         api_model = "gpt-3.5-turbo"
-    elif backend == "exl":
-        api_model = Path(model_path).name  # TabbyAPI uses model_name (directory name)
     else:
-        api_model = model_path
+        api_model = short_model_name
 
     # Test-only mode
     if args.test_only:
@@ -270,11 +307,14 @@ def main():
     log(f"  Endpoint: http://{args.host}:{args.port}/v1")
 
     if backend == "vllm":
+        # Add --served-model-name to use short name in API responses
+        vllm_extra_args = list(args.extra_args) if args.extra_args else []
+        vllm_extra_args.extend(["--served-model-name", short_model_name])
         server.start_vllm(
             model_path=model_path,
             version=backend_version,
             env_vars=args.env_vars,
-            extra_args=args.extra_args,
+            extra_args=vllm_extra_args,
             rebuild=args.rebuild,
             image_type=image_type,
         )
@@ -320,6 +360,10 @@ def main():
         mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
         max_model_len = backend_cfg.get("args", {}).get("max_model_len")
 
+        # Add --served-model-name to use short name in API responses
+        sglang_extra_args = list(args.extra_args) if args.extra_args else []
+        sglang_extra_args.extend(["--served-model-name", short_model_name])
+
         server.start_sglang(
             model_path=model_path,
             tensor_parallel=args.tensor_parallel,
@@ -327,6 +371,7 @@ def main():
             mem_fraction_static=mem_fraction,
             max_model_len=max_model_len,
             rebuild=args.rebuild,
+            extra_args=sglang_extra_args,
         )
     elif backend == "exl":
         # Get ExLlamaV3-specific args from config
@@ -386,14 +431,36 @@ def main():
         else:
             log("WARNING: Failed to start Open WebUI")
 
+    # Start LiteLLM proxy by default for OpenAI + Anthropic SDK compatibility
+    litellm_container_id = None
+    if not args.no_litellm:
+        litellm_container_id = start_litellm_proxy(
+            backend_port=args.port,
+            model_name=api_model,
+            litellm_port=args.litellm_port,
+            model_alias=short_model_name,
+            version=litellm_cfg["version"],
+            image=litellm_cfg["image"],
+            backend=backend,
+        )
+        if litellm_container_id:
+            log(f"LiteLLM proxy at http://localhost:{args.litellm_port}")
+            log(f"  Model: {short_model_name}")
+        else:
+            log("WARNING: Failed to start LiteLLM proxy")
+
     # Keep server running until Ctrl+C
     log(f"\nServer running at http://{args.host}:{args.port}/v1")
     if webui_container_id:
         log(f"Open WebUI running at http://localhost:{args.webui_port}")
+    if litellm_container_id:
+        log(f"LiteLLM proxy at http://localhost:{args.litellm_port} (model: {short_model_name})")
     log("Press Ctrl+C to stop...")
 
     def signal_handler(sig, frame):
         log("\nShutting down...")
+        if litellm_container_id:
+            stop_container(litellm_container_id, label="LiteLLM")
         if webui_container_id:
             stop_container(webui_container_id, label="Open WebUI")
         server.stop()
@@ -408,6 +475,8 @@ def main():
         # Check if server process died
         if server.proc and server.proc.poll() is not None:
             log("Server process exited unexpectedly")
+            if litellm_container_id:
+                stop_container(litellm_container_id, label="LiteLLM")
             if webui_container_id:
                 stop_container(webui_container_id, label="Open WebUI")
             sys.exit(1)

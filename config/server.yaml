@@ -1,0 +1,14 @@
+# Server runtime configuration for sidecars (OpenWebUI, LiteLLM)
+# These run alongside the main backend server via run_server.py
+
+open_webui:
+  enabled: true           # Set false to disable by default (--no-webui)
+  image: "ghcr.io/open-webui/open-webui"
+  version: "v0.7.2"       # See: https://github.com/open-webui/open-webui/releases
+  port: 3080
+
+litellm:
+  enabled: true           # Set false to disable by default (--no-litellm)
+  image: "ghcr.io/berriai/litellm"
+  version: "v1.80.11-stable"  # See: https://github.com/BerriAI/litellm/pkgs/container/litellm
+  port: 4000
