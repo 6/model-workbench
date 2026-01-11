@@ -102,13 +102,14 @@ defaults:
       image_type: prebuilt    # Uses NGC images
     # https://hub.docker.com/r/lmsysorg/sglang/tags
     sglang:
-      backend_version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
-      image_type: prebuilt
+      # Use /update-sglang-nightly skill to list available builds and update this
+      backend_version: v0.5.7-cu130-runtime   # Try stable cu13 release
       extra_args:
         - "--mem-fraction-static"
         - "0.98"                # Dedicated inference GPUs, no display
         - "--max-model-len"
         - "65536"
+        - "--disable-custom-all-reduce"  # Blackwell cu13 custom all-reduce bug workaround
       model_patterns:
         - pattern: "mimo"
           args:

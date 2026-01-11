@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-01-11T00:06:49.566904",
+  "repo_id": "cyankiwi/MiniMax-M2.1-AWQ-4bit",
+  "model_ref": "~/models/cyankiwi/MiniMax-M2.1-AWQ-4bit",
+  "engine": "sglang-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 87212
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 87212
+      }
+    ],
+    "memory_used_mib": 174424,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "image": "none",
+    "backend_version": "v0.5.7-cu130-runtime"
+  },
+  "iterations": [
+    {
+      "wall_s": 4.300677981998888,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context processing. This is a technical explanation piece that should be:\n\n1. **Writing Type**: Technical explanation/overview\n2. **Style**: Semi-formal, technical but accessible\n3. **Audience**: People with some technical background who want to understand this concept\n4. **Structure**: Should cover what KV cache is, how it works, and why it matters for long context\n5. **Length**: Concise - so probably 400-800 words\n\nLet me plan the structure:\n1. Introduction - what is KV cache and why it matters\n2. The problem it solves (standard autoregressive generation)\n3. How KV cache works technically\n4. Why it matters for long context specifically\n5. Brief mention of challenges/considerations\n\nI need to use primarily prose, minimal lists, and maintain consistency throughout. Let me write this in a clear, technical but accessible manner.\n</think>\n\n# KV Cache: Enabling Efficient Long-Context Generation\n\n## The Computational Bottleneck in Autoregressive Models\n\nModern large language models generate text token by token, with each new token depending on all previously generated tokens. This autoregressive paradigm requires the model to process the entire input sequence at every single generation step\u2014a computationally expensive operation that scales quadratically with sequence length. For a sequence of length *n*, computing attention across all tokens requires *O(n\u00b2)* operations, making naive inference increasingly impractical as context grows.\n\nThe key insight that enables practical long-context generation is that the attention computation can be decomposed into two distinct phases: a **key projection** and a **value projection** that remain constant once computed, and a **query projection** that changes with each new token. Since keys and values don't change for historical tokens, they can be computed once and reused rather than recalculated at every step.\n\n## How KV Cache Works\n\nThe KV cache is a straightforward optimization that stores the key and value matrices for all tokens processed so far. When the model processes an input sequence, it computes and caches the key matrix **K** and value matrix **V** for each token. At each subsequent generation step, the model only needs to compute the key and value for the newly generated token, then concatenate them with the cached matrices before computing attention.\n\nConsider a model processing a 1000-token context. Without KV caching, each of the next 100 generation steps would recompute keys and values for all 1000 tokens, performing 100,000 redundant",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 119.05099664356419
+    },
+    {
+      "wall_s": 4.280429118000029,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context processing. This is a technical/educational content request that should be:\n\n1. **Writing Type**: Technical overview/explanation\n2. **Style**: Semi-formal, informative, technical but accessible\n3. **Audience**: People interested in understanding LLM internals - likely developers, researchers, or tech-savvy readers\n4. **Structure**: Should cover what KV cache is, how it works, and why it matters for long context\n5. **Length**: Concise - so probably 400-800 words\n\nLet me plan the structure:\n1. Introduction - what is KV cache and why it matters\n2. The problem it solves (self-attention computation)\n3. How KV cache works technically\n4. Why it matters for long context\n5. Brief mention of challenges/considerations\n\nI need to use proper prose, avoid excessive lists, and maintain consistency throughout. The content should be technical but not overly dense.\n</think>\n\n# KV Cache: Enabling Efficient Long-Context Language Models\n\n## The Computational Bottleneck in Self-Attention\n\nModern large language models rely on the transformer architecture's self-attention mechanism to process sequences of tokens. During each forward pass, every token must attend to every other token in the context, computing attention scores that determine how much each token should \"look at\" others. For a sequence of length *n*, this requires computing an *n* \u00d7 *n* attention matrix\u2014a quadratic operation that becomes increasingly expensive as context length grows.\n\nWhen generating text autoregressively, models process tokens one at a time. At each step, they attend to all previously generated tokens plus the new one. Without optimization, this means recomputing attention for the entire accumulated sequence at every generation step, redundantly processing the same key and value vectors that were calculated in previous steps.\n\n## How KV Cache Solves This\n\nThe key-value cache, or KV cache, is an optimization that stores the key and value vectors from previous tokens so they don't need to be recomputed. During the first pass, when processing the initial prompt, the model computes and caches the key and value matrices for all tokens in that prompt. When generating new tokens, the model only needs to compute the key and value vectors for the newly generated token, then concatenate them with the cached values from before.\n\nThis transforms the computational complexity of autoregressive generation from O(*n*\u00b2) per token to O(*n*) per token after the initial prompt",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 119.6141755617308
+    },
+    {
+      "wall_s": 4.282242725999822,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context processing. This is a technical/educational content piece that should be:\n\n1. **Writing Type**: Technical explanation/overview\n2. **Style**: Semi-formal, technical but accessible\n3. **Audience**: People with some technical background who want to understand KV cache concepts\n4. **Structure**: Should cover what KV cache is, how it works, and why it matters for long context\n5. **Length**: Concise but complete - probably 400-800 words\n\nLet me plan the structure:\n1. Introduction - what is KV cache and why it matters\n2. The problem it solves (compute and memory challenges)\n3. How KV cache works technically\n4. Why it specifically helps with long context\n5. Brief mention of challenges/considerations\n\nI need to use primarily prose, minimal lists, and ensure it's comprehensive yet concise.\n</think>\n\n# KV Cache: Enabling Efficient Long-Context Processing\n\n## The Core Challenge in Transformer Inference\n\nWhen large language models generate text, they process tokens sequentially\u2014one at a time, each token depending on all previous tokens in the sequence. This autoregressive nature creates a fundamental efficiency problem: for every new token generated, the model must recompute the key and value vectors for all preceding tokens. Without optimization, this means the computational cost grows quadratically with sequence length, making long-context inference prohibitively expensive.\n\n## What Is KV Cache?\n\nKV cache is an optimization technique that stores the key and value matrices from previous tokens so they don't need to be recalculated. During each forward pass through the model, transformers compute three components for every token: query vectors (what information the current token seeks), key vectors (what information each token offers), and value vectors (the actual content encoded at each position). The attention mechanism uses queries to retrieve relevant information from keys and values across all positions.\n\nThe critical insight is that keys and values for tokens that have already been processed will never change\u2014they represent fixed information about the input sequence. By caching these computed matrices in GPU memory after their initial computation, subsequent generation steps need only compute the query, key, and value for the new token, then combine the new key-value pair with the cached historical data. This reduces the per-token computational cost from quadratic to linear relative to context length.\n\n## Why KV Cache Matters for Long Context\n\nLong-context scenarios\u2014processing documents spanning tens of thousands of tokens or more\u2014expose the full impact of this optimization. Without KV caching,",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 119.56351677390211
+    },
+    {
+      "wall_s": 4.280925045000913,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context processing. This is a technical/educational content piece that should be:\n\n1. **Writing Type**: Technical explanation/overview\n2. **Style**: Semi-formal, technical but accessible\n3. **Audience**: People with some technical background who want to understand KV cache concepts\n4. **Structure**: Should cover what KV cache is, how it works, and why it matters for long context\n5. **Length**: Concise but complete - probably 400-800 words\n\nLet me plan the structure:\n1. Introduction - what is KV cache and why it matters\n2. The problem it solves (vanilla attention mechanism)\n3. How KV cache works technically\n4. Why it enables long context\n5. Key benefits/summary\n\nI need to use proper technical terminology but explain concepts clearly. The tone should be informative and direct.\n</think>\n\n# KV Cache: Enabling Efficient Long-Context Inference\n\n## The Core Challenge in Transformer Inference\n\nWhen processing sequences with transformer-based language models, the self-attention mechanism computes relationships between all token pairs. During training, gradients flow through this complete computation graph. During inference, however, we generate tokens sequentially\u2014one at a time\u2014and recomputing attention for all previous tokens at each step would be catastrophically inefficient. The key-value (KV) cache exists to solve this problem.\n\n## How KV Cache Works\n\nIn the attention mechanism, each input token projects into three vectors: query (Q), key (K), and value (V). Attention scores are computed as softmax(QK^T)V, where the keys and values determine what information each token contributes to the output.\n\nDuring autoregressive generation, the model processes a prompt and generates the first new token. Rather than discarding the computed keys and values for the prompt tokens, the model stores them in the KV cache. When generating subsequent tokens, the model only needs to compute the Q, K, and V for the newly generated token, then perform attention between this single query and the cached keys and values from all previous positions.\n\nThis transforms the attention computation from O(n\u00b2) per token\u2014where n grows with each generated token\u2014to O(n) per token after the initial prompt processing. For generating a 1000-token response after a 4000-token prompt, this reduces total compute by approximately 99.7%.\n\n## Why KV Cache Matters for Long Context\n\nLong-context inference presents three fundamental challenges that KV cache directly addresses.\n\n**Computational Efficiency**",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 119.60031876706003
+    },
+    {
+      "wall_s": 4.267888577996928,
+      "output_text": "The user is asking for a concise technical overview of KV cache and its importance for long context processing. This is a technical/educational content piece that should be:\n\n1. **Writing Type**: Technical overview/explanation\n2. **Style**: Semi-formal, technical but accessible\n3. **Audience**: People with some technical background (developers, engineers, students learning about LLMs)\n4. **Structure**: Should cover what KV cache is, how it works, and why it matters for long context\n5. **Length**: Concise - so probably 400-800 words\n\nLet me plan the structure:\n1. Introduction - what is KV cache and why it matters\n2. The problem it solves (self-attention computation)\n3. How KV cache works technically\n4. Why it matters for long context\n5. Brief mention of challenges/considerations\n\nI need to use proper prose, avoid excessive lists, and maintain consistency throughout. The tone should be technical but not overly academic.\n</think>\n\n# KV Cache: Enabling Efficient Long-Context Inference in Large Language Models\n\n## The Computational Bottleneck in Self-Attention\n\nTransformer-based large language models generate text through an autoregressive process\u2014predicting one token at a time, with each prediction conditioned on all previously generated tokens. At the heart of this mechanism lies the self-attention operation, where each token's representation is computed by attending to every other token in the sequence. For a sequence of length *n*, this requires computing attention scores between all pairs of tokens, resulting in quadratic computational complexity O(*n*\u00b2).\n\nDuring inference, this quadratic cost becomes prohibitively expensive. When generating the first token, the model processes a short context. By the time it reaches token 100, it must recompute attention for all 100 tokens. By token 1000, it recomputes attention for all 1000 tokens\u2014and so on, with each new token triggering a full recomputation of the entire attention matrix. This redundancy represents a fundamental inefficiency: the key and value vectors computed for earlier tokens never change, yet they are recalculated from scratch at every generation step.\n\n## How KV Cache Eliminates Redundant Computation\n\nThe key-value (KV) cache addresses this inefficiency by storing the computed key and value vectors for all processed tokens and reusing them in subsequent forward passes. When the model processes a token, it projects its embedding into three vectors: the query (Q), key (K), and value (V). The query vector is unique to the current token and must be freshly",
+      "prompt_tokens": 54,
+      "generated_tokens": 512,
+      "tok_per_s": 119.96564358301497
+    }
+  ],
+  "summary": {
+    "median_wall_s": 4.280925045000913,
+    "median_tok_per_s": 119.60031876706003
+  }
+}
