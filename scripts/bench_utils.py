@@ -578,6 +578,24 @@ def find_mmproj(gguf_path: Path) -> Path | None:
 
 # Config cache to avoid repeated file reads
 _CONFIG_CACHE: dict | None = None
+_SERVER_CONFIG_CACHE: dict | None = None
+
+SERVER_CONFIG_PATH = ROOT / "config" / "server.yaml"
+
+
+def load_server_config() -> dict:
+    """Load config/server.yaml (required for server sidecars).
+
+    Returns:
+        Server config dict with 'open_webui' and 'litellm' keys
+    """
+    global _SERVER_CONFIG_CACHE
+    if _SERVER_CONFIG_CACHE is None:
+        if not SERVER_CONFIG_PATH.exists():
+            raise SystemExit(f"Missing {SERVER_CONFIG_PATH} - required for server sidecars")
+        with open(SERVER_CONFIG_PATH) as f:
+            _SERVER_CONFIG_CACHE = yaml.safe_load(f) or {}
+    return _SERVER_CONFIG_CACHE
 
 
 def _load_config() -> dict:

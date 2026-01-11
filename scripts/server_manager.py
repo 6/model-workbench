@@ -759,3 +759,144 @@ def stop_container(container_id: str, label: str = "container") -> None:
         )
     except Exception as e:
         log(f"Warning: Failed to stop {label}: {e}")
+
+
+# ----------------------------
+# LiteLLM proxy helpers
+# ----------------------------
+
+
+def start_litellm_proxy(
+    backend_port: int,
+    model_name: str,
+    litellm_port: int = 4000,
+    model_alias: str = "local-model",
+    version: str = "v1.80.11-stable",
+    image: str = "ghcr.io/berriai/litellm",
+    timeout: int = 60,
+    backend: str = "vllm",
+) -> str | None:
+    """Start LiteLLM proxy container for OpenAI + Anthropic API compatibility.
+
+    LiteLLM provides a unified API layer that translates requests between
+    OpenAI and Anthropic SDK formats and the backend's native API.
+
+    Args:
+        backend_port: Backend server port (OpenAI-compatible API)
+        model_name: Actual model name from backend's /v1/models
+        litellm_port: Port for LiteLLM proxy (default: 4000)
+        model_alias: Model alias to expose (default: local-model)
+        version: LiteLLM image version tag
+        image: Docker image for LiteLLM
+        timeout: Startup timeout in seconds
+
+    Returns:
+        Container ID if started successfully, None otherwise
+    """
+    import tempfile
+
+    import yaml
+
+    image_name = f"{image}:{version}"
+
+    # Stop any existing LiteLLM containers first
+    stale = subprocess.run(
+        ["docker", "ps", "-q", "--filter", f"ancestor={image_name}"],
+        capture_output=True,
+        text=True,
+    )
+    for container_id in stale.stdout.strip().split("\n"):
+        if container_id:
+            log(f"Stopping stale LiteLLM container: {container_id[:12]}")
+            subprocess.run(["docker", "stop", container_id], capture_output=True)
+
+    # Generate LiteLLM config
+    config = {
+        "model_list": [
+            {
+                "model_name": model_alias,
+                "litellm_params": {
+                    "model": f"openai/{model_name}",
+                    "api_base": f"http://localhost:{backend_port}/v1",
+                    "api_key": "dummy",
+                },
+                "model_info": {
+                    "id": model_alias,
+                    "description": f"Local model via {backend}",
+                },
+            }
+        ],
+        "litellm_settings": {
+            "drop_params": True,  # Drop unsupported params instead of erroring
+            "set_verbose": False,
+        },
+    }
+
+    # Write config to temp file
+    config_file = Path(tempfile.gettempdir()) / "litellm_config.yaml"
+    with open(config_file, "w") as f:
+        yaml.dump(config, f, default_flow_style=False)
+
+    cmd = [
+        "docker",
+        "run",
+        "-d",  # Detached mode
+        "--rm",
+        "--network",
+        "host",  # Share host network to reach backend on localhost
+        "-v",
+        f"{config_file}:/app/config.yaml:ro",
+    ]
+
+    cmd.extend(
+        [
+            image_name,
+            "--config",
+            "/app/config.yaml",
+            "--port",
+            str(litellm_port),
+            "--host",
+            "0.0.0.0",
+        ]
+    )
+
+    log("Starting LiteLLM proxy...")
+    log(f"+ {' '.join(cmd)}")
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            log(f"Failed to start LiteLLM: {result.stderr}")
+            return None
+
+        container_id = result.stdout.strip()
+
+        # Wait for LiteLLM to be ready via /health/liveliness endpoint
+        # Note: /health requires auth when LITELLM_MASTER_KEY is set, /health/liveliness does not
+        log(f"Waiting for LiteLLM to be ready (timeout: {timeout}s)...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                resp = requests.get(
+                    f"http://localhost:{litellm_port}/health/liveliness",
+                    timeout=2,
+                )
+                if resp.status_code == 200:
+                    return container_id
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(1)
+
+        # Timeout - cleanup
+        log("LiteLLM timed out during startup")
+        stop_container(container_id, label="LiteLLM")
+        return None
+
+    except Exception as e:
+        log(f"Error starting LiteLLM: {e}")
+        return None
