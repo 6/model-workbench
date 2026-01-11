@@ -278,10 +278,11 @@ models:
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
     backends:
       vllm:
-        # Uses default v0.13.0 (nightly broken: https://github.com/vllm-project/vllm/issues/31957)
-        env_vars:
-          # FlashInfer MoE kernel optimized for FP8 - improves throughput
-          VLLM_USE_FLASHINFER_MOE_FP8: "1"
+        # Nightly has relu2_no_mul bug (#31957), use prebuilt v0.13.0
+        backend_version: v0.13.0
+        image_type: prebuilt      # Docker Hub image (CUDA 12.9)
+        # NOTE: VLLM_USE_FLASHINFER_MOE_FP8 removed - triggers JIT compilation
+        # which fails on prebuilt image (missing CUDA dev headers for Blackwell)
         extra_args:
           - "--max-num-seqs"
           - "8"                     # Model card recommendation for stability

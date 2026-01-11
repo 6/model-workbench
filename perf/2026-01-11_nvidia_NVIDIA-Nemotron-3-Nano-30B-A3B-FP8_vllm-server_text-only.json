@@ -1,0 +1,101 @@
+{
+  "timestamp": "2026-01-11T00:59:33.635123",
+  "repo_id": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "model_ref": "~/models/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88616
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 88658
+      }
+    ],
+    "memory_used_mib": 177274,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "image": "none",
+    "backend_version": "v0.13.0"
+  },
+  "iterations": [
+    {
+      "wall_s": 1.9038782880015788,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. For token *t*, attention is computed as `softmax(Q_t K_{<t}^T / \u221ad)` where `K_{<t}` and `V_{<t}` are taken from the cache. |\n| **Why it matters for long context** | 1. **Linear\u2011time inference** \u2013 Attention cost drops from *O(N\u00b2)* (full recompute) to *O(N)* per new token, where *N* is the current length. <br>2. **Constant\u2011time per token** \u2013 Adding a new token only requires a single forward pass to produce its *Q* and to append its *K*/*V* to the cache. <br>3. **Memory\u2011efficient** \u2013 The cache stores only *2\u00b7d\u00b7N* floats (\u2248 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fsequence\u2011length), far less than recomputing attention matrices for the whole context. <br>4. **Enables \u201cinfinite\u201d context windows** \u2013 The model can attend to arbitrarily long histories as long as the cache fits in RAM/VRAM; the only bottleneck is storage, not compute. |\n| **Typical implementation** | - **Cache structure**: `K_cache[t]`, `V_cache[t]` for each position *t*. <br>- **Forward pass**: `output_t = \u03a3_i \u03b1_i V_cache[i]` where `\u03b1_i` are attention weights derived from `Q_t` and `K_cache`. <br>- **Cache reuse across layers**: Many libraries (e.g., HuggingFace \ud83e\udd17 Transformers, DeepSpeed, vLLM) keep a per\u2011layer KV cache that is passed forward through all transformer blocks.",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 268.92475387038786,
+      "ttft_ms": 39.58773612976074,
+      "prefill_ms": 38.808249999419786,
+      "generation_ms": 1859.130216002086,
+      "generation_tok_per_s": 275.3976002288941
+    },
+    {
+      "wall_s": 1.905693828000949,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. For token *t*, attention is computed as `softmax(Q_t K_{<t}^T / \u221ad)` where `K_{<t}` and `V_{<t}` are taken from the cache. |\n| **Why it matters for long context** | 1. **Linear\u2011time inference** \u2013 Attention cost drops from *O(N\u00b2)* (full recompute) to *O(N)* per new token, where *N* is the current length. <br>2. **Constant\u2011time per token** \u2013 Adding a new token only requires a single forward pass to produce its *Q* and to append its *K*/*V* to the cache. <br>3. **Memory\u2011efficient** \u2013 The cache stores only *2\u00b7d\u00b7N* floats (\u2248 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fsequence\u2011length), far less than recomputing attention matrices for the whole context. <br>4. **Enables \u201cinfinite\u201d context windows** \u2013 The model can attend to arbitrarily long histories as long as the cache fits in RAM/VRAM; the only bottleneck is storage, not compute. |\n| **Typical implementation** | - **Cache structure**: `K_cache[t]`, `V_cache[t]` for each position *t*. <br>- **Forward pass**: `output_t = \u03a3_i \u03b1_i V_cache[i]` where `\u03b1_i` are attention weights derived from `Q_t` and `K_cache`. <br>- **Cache reuse across layers**: Many libraries (e.g., HuggingFace \ud83e\udd17 Transformers, DeepSpeed, vLLM) keep a per\u2011layer KV cache that is passed forward through all transformer blocks.",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 268.6685513050552,
+      "ttft_ms": 39.14070129394531,
+      "prefill_ms": 38.468132999696536,
+      "generation_ms": 1861.9878190002055,
+      "generation_tok_per_s": 274.9749460095386
+    },
+    {
+      "wall_s": 1.9077973190032935,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. For token *t*, attention is computed as `softmax(Q_t K_{<t}^T / \u221ad)` where `K_{<t}` and `V_{<t}` are taken from the cache. |\n| **Why it matters for long context** | 1. **Linear\u2011time inference** \u2013 Attention cost drops from *O(N\u00b2)* (full recompute) to *O(N)* per new token, where *N* is the current length. <br>2. **Constant\u2011time per token** \u2013 Adding a new token only requires a single forward pass to produce its *Q* and to append its *K*/*V* to the cache. <br>3. **Memory\u2011efficient** \u2013 The cache stores only *2\u00b7d\u00b7N* floats (\u2248 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fsequence\u2011length), far less than recomputing attention matrices for the whole context. <br>4. **Enables \u201cinfinite\u201d context windows** \u2013 The model can attend to arbitrarily long histories as long as the cache fits in RAM/VRAM; the only bottleneck is storage, not compute. |\n| **Typical implementation** | - **Cache structure**: `K_cache[t]`, `V_cache[t]` for each position *t*. <br>- **Forward pass**: `output_t = \u03a3_i \u03b1_i V_cache[i]` where `\u03b1_i` are attention weights derived from `Q_t` and `K_cache`. <br>- **Cache reuse across layers**: Many libraries (e.g., HuggingFace \ud83e\udd17 Transformers, DeepSpeed, vLLM) keep a per\u2011layer KV cache that is passed forward through all transformer blocks.",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 268.37232388369665,
+      "ttft_ms": 40.27533531188965,
+      "prefill_ms": 39.51682799743139,
+      "generation_ms": 1862.8338330017868,
+      "generation_tok_per_s": 274.85006495451
+    },
+    {
+      "wall_s": 1.9118376389997138,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. For token *t*, attention is computed as `softmax(Q_t K_{<t}^T / \u221ad)` where `K_{<t}` and `V_{<t}` are taken from the cache. |\n| **Why it matters for long context** | 1. **Linear\u2011time inference** \u2013 Attention cost drops from *O(N\u00b2)* (full recompute) to *O(N)* per new token, where *N* is the current length. <br>2. **Constant\u2011time per token** \u2013 Adding a new token only requires a single forward pass to produce its *Q* and to append its *K*/*V* to the cache. <br>3. **Memory\u2011efficient** \u2013 The cache stores only *2\u00b7d\u00b7N* floats (\u2248 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fsequence\u2011length), far less than recomputing attention matrices for the whole context. <br>4. **Enables \u201cinfinite\u201d context windows** \u2013 The model can attend to arbitrarily long histories as long as the cache fits in RAM/VRAM; the only bottleneck is storage, not compute. |\n| **Typical implementation** | - **Cache structure**: `K_cache[t]`, `V_cache[t]` for each position *t*. <br>- **Forward pass**: `output_t = \u03a3_i \u03b1_i V_cache[i]` where `\u03b1_i` are attention weights derived from `Q_t` and `K_cache`. <br>- **Cache reuse across layers**: Many libraries (e.g., HuggingFace \ud83e\udd17 Transformers, DeepSpeed, vLLM) keep a per\u2011layer KV cache that is passed forward through all transformer blocks.",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 267.8051679471494,
+      "ttft_ms": 40.45605659484863,
+      "prefill_ms": 39.71337600160041,
+      "generation_ms": 1866.5473709988873,
+      "generation_tok_per_s": 274.30324456539347
+    },
+    {
+      "wall_s": 1.9327678929985268,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer for every token that has already been processed. | During autoregressive generation, the model re\u2011uses these cached vectors instead of recomputing attention over the full sequence. For token *t*, attention is computed as `softmax(Q_t K_{<t}^T / \u221ad)` where `K_{<t}` and `V_{<t}` are taken from the cache. |\n| **Why it matters for long context** | 1. **Linear\u2011time inference** \u2013 Attention cost drops from *O(N\u00b2)* (full recompute) to *O(N)* per new token, where *N* is the current length. <br>2. **Constant\u2011time per token** \u2013 Adding a new token only requires a single forward pass to produce its *Q* and to append its *K*/*V* to the cache. <br>3. **Memory\u2011efficient** \u2013 The cache stores only *2\u00b7d\u00b7N* floats (\u2248 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fsequence\u2011length), far less than recomputing attention matrices for the whole context. <br>4. **Enables \u201cinfinite\u201d context windows** \u2013 The model can attend to arbitrarily long histories as long as the cache fits in RAM/VRAM; the only bottleneck is storage, not compute. |\n| **Typical implementation** | - **Cache structure**: `K_cache[t]`, `V_cache[t]` for each position *t*. <br>- **Forward pass**: `output_t = \u03a3_i \u03b1_i V_cache[i]` where `\u03b1_i` are attention weights derived from `Q_t` and `K_cache`. <br>- **Cache reuse across layers**: Many libraries (e.g., HuggingFace \ud83e\udd17 Transformers, DeepSpeed, vLLM) keep a per\u2011layer KV cache that is passed forward through all transformer blocks.",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 264.9050627624381,
+      "ttft_ms": 40.25745391845703,
+      "prefill_ms": 39.35308200016152,
+      "generation_ms": 1887.606976000825,
+      "generation_tok_per_s": 271.24290517549787
+    }
+  ],
+  "summary": {
+    "median_wall_s": 1.9077973190032935,
+    "median_tok_per_s": 268.37232388369665,
+    "median_ttft_ms": 40.25745391845703,
+    "median_generation_tok_per_s": 274.85006495451
+  }
+}
