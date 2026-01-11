@@ -133,6 +133,11 @@ def main():
         help="Path to model",
     )
     parser.add_argument(
+        "--profile",
+        default=None,
+        help="Model profile from config (default: auto-select)",
+    )
+    parser.add_argument(
         "--benchmark",
         nargs="+",
         choices=["ifeval", "gsm8k"],
@@ -178,39 +183,7 @@ def main():
         help="Timeout in seconds waiting for server to start (default: 180)",
     )
 
-    # vLLM/trtllm server options (defaults from config, CLI overrides)
-    parser.add_argument(
-        "--tensor-parallel",
-        type=int,
-        default=None,
-        help="Tensor parallel size (default: auto-detect GPU count)",
-    )
-    parser.add_argument(
-        "--max-model-len",
-        type=int,
-        default=None,
-        help="Max context length (default: from config or 65536)",
-    )
-    parser.add_argument(
-        "--gpu-memory-utilization",
-        type=float,
-        default=None,
-        help="GPU memory fraction (default: from config or 0.95)",
-    )
-    parser.add_argument(
-        "--cpu-offload-gb",
-        type=float,
-        default=None,
-        help="CPU offload in GB per GPU for vLLM (default: none)",
-    )
-    parser.add_argument(
-        "--max-num-seqs",
-        type=int,
-        default=None,
-        help="Max concurrent sequences for vLLM (default: from config or vLLM default)",
-    )
-
-    # llama.cpp server options (defaults from config, CLI overrides)
+    # llama.cpp server options
     parser.add_argument(
         "--n-gpu-layers",
         type=int,
@@ -250,22 +223,18 @@ def main():
     repo_id = extract_repo_id(model_path)
     revision = extract_revision_from_path(model_path)
 
-    # Resolve backend version
-    backend_version = args.backend_version or backend_cfg.get("version")
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 
     # Resolve docker_image (CLI override takes precedence over config)
     docker_image = args.docker_image or backend_cfg.get("docker_image")
-
-    # Resolve PR number and PR overlay for unmerged PRs
-    pr_number = backend_cfg.get("pr_number")
-    pr_overlay = backend_cfg.get("pr_overlay", False)
 
     backend_label = BACKEND_REGISTRY[backend]["display_name"]
 
@@ -281,7 +250,7 @@ def main():
     )
 
     # Check if we need to start the server
-    if not server.is_running():
+    if not server.is_backend_running(backend):
         if args.no_autostart:
             raise SystemExit(
                 f"Server not running on {args.host}:{args.port} and --no-autostart was set.\n"
@@ -290,7 +259,7 @@ def main():
 
     with server:
         # Start server if not already running
-        if not server.is_running():
+        if not server.is_backend_running(backend):
             if backend == "llama":
                 # llama.cpp backend for GGUF models
                 server.start_gguf_backend(
@@ -312,15 +281,10 @@ def main():
                 # vLLM backend for safetensors models
                 server.start_vllm(
                     model_path=model_path,
-                    tensor_parallel=args.tensor_parallel,
                     version=backend_version,
-                    max_model_len=args.max_model_len,
-                    gpu_memory_utilization=args.gpu_memory_utilization,
-                    cpu_offload_gb=args.cpu_offload_gb,
-                    max_num_seqs=args.max_num_seqs,
+                    env_vars=args.env_vars,
+                    extra_args=args.extra_args,
                     image_override=docker_image,
-                    pr_number=pr_number,
-                    pr_overlay=pr_overlay,
                 )
 
         # Model name differs by backend:

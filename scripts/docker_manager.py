@@ -8,13 +8,13 @@ from pathlib import Path
 from common import BACKEND_REGISTRY, ROOT, log
 
 
-def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
+def get_image_name(engine: str, version: str, image_type: str = "build") -> str:
     """Get Docker image name for an engine.
 
     Args:
         engine: Backend name ('vllm', 'llama', 'trtllm', 'sglang', etc.)
         version: Version tag or commit SHA
-        prebuilt: True for prebuilt registry images, False for local builds
+        image_type: 'prebuilt' for registry images, 'build' for local builds
 
     Returns:
         Full image name with tag
@@ -23,7 +23,7 @@ def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
     if not cfg:
         raise SystemExit(f"Unknown engine: {engine}")
 
-    if prebuilt:
+    if image_type == "prebuilt":
         if not cfg["prebuilt_image"]:
             available = [k for k, v in BACKEND_REGISTRY.items() if v["prebuilt_image"]]
             raise SystemExit(
@@ -34,6 +34,7 @@ def get_image_name(engine: str, version: str, prebuilt: bool = False) -> str:
 
     if not cfg["image_prefix"]:
         raise SystemExit(f"Engine '{engine}' only supports prebuilt images")
+
     return f"{cfg['image_prefix']}:{version}"
 
 
@@ -87,8 +88,6 @@ def _build_image(
     engine: str,
     version: str,
     force: bool = False,
-    pr_number: int | None = None,
-    pr_overlay: bool = False,
 ) -> str:
     """Build Docker image for engine and version.
 
@@ -96,8 +95,6 @@ def _build_image(
         engine: 'vllm', 'llama', etc.
         version: Version tag or commit SHA
         force: If True, rebuild even if image exists
-        pr_number: Optional PR number for unmerged PRs (fetches PR ref)
-        pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
 
     Returns:
         Image name that was built
@@ -135,17 +132,6 @@ def _build_image(
         [
             "--build-arg",
             f"VERSION={version}",
-        ]
-    )
-    # PR overlay mode: use prebuilt nightly image + overlay PR files (fast)
-    if pr_overlay and pr_number:
-        cmd.extend(["--build-arg", "BASE_IMAGE=vllm/vllm-openai:nightly"])
-        cmd.extend(["--build-arg", "PR_OVERLAY_ONLY=true"])
-        log("Using PR overlay mode (fast): nightly base + PR files")
-    if pr_number:
-        cmd.extend(["--build-arg", f"PR_NUMBER={pr_number}"])
-    cmd.extend(
-        [
             "-t",
             image_name,
             str(ROOT),
@@ -279,16 +265,14 @@ def build_vllm_docker_cmd(
     model_path: str,
     host: str,
     port: int,
-    tensor_parallel: int,
-    max_model_len: int | None = None,
-    gpu_memory_utilization: float | None = None,
-    max_num_batched_tokens: int | None = None,
-    cpu_offload_gb: float | None = None,
-    max_num_seqs: int | None = None,
     env_vars: dict[str, str] | None = None,
-    extra_vllm_args: list[str] | None = None,
+    extra_args: list[str] | None = None,
 ) -> list[str]:
-    """Build Docker run command for vLLM server."""
+    """Build Docker run command for vLLM server.
+
+    All backend-specific args (tensor_parallel, gpu_memory_utilization, etc.) come
+    through extra_args from config. CLI overrides are appended to that list.
+    """
     model_path_resolved = str(Path(model_path).expanduser().resolve())
 
     # Merge env vars: pattern-based + explicit (explicit takes priority)
@@ -317,29 +301,14 @@ def build_vllm_docker_cmd(
         "0.0.0.0",
         "--port",
         str(port),
-        "--tensor-parallel-size",
-        str(tensor_parallel),
         "--trust-remote-code",
     ]
 
-    # Only set max-model-len if explicitly specified (let vLLM auto-detect otherwise)
-    if max_model_len is not None:
-        cmd += ["--max-model-len", str(max_model_len)]
+    if extra_args:
+        cmd += extra_args
 
-    if gpu_memory_utilization is not None:
-        cmd += ["--gpu-memory-utilization", str(gpu_memory_utilization)]
-    if max_num_batched_tokens is not None:
-        cmd += ["--max-num-batched-tokens", str(max_num_batched_tokens)]
-    if cpu_offload_gb is not None:
-        cmd += ["--cpu-offload-gb", str(cpu_offload_gb)]
-    if max_num_seqs is not None:
-        cmd += ["--max-num-seqs", str(max_num_seqs)]
-
-    # Model-specific flags from config
+    # Model-specific flags from config (applied last, takes precedence over global extra_args)
     cmd += _get_model_specific_args(model_path)
-
-    if extra_vllm_args:
-        cmd += extra_vllm_args
     return cmd
 
 
@@ -635,8 +604,6 @@ def ensure_image(
     rebuild: bool = False,
     image_type: str = "build",
     image_override: str | None = None,
-    pr_number: int | None = None,
-    pr_overlay: bool = False,
 ) -> str:
     """Ensure Docker image exists, building or pulling as needed.
 
@@ -646,8 +613,6 @@ def ensure_image(
         rebuild: Force rebuild/repull even if exists
         image_type: 'prebuilt' to use official images, 'build' to build from source
         image_override: Direct image name to use (highest priority, skips build/prebuilt logic)
-        pr_number: Optional PR number for unmerged PRs (fetches PR ref)
-        pr_overlay: If True, use prebuilt nightly + overlay PR files (fast mode)
 
     Returns:
         Image name
@@ -671,12 +636,12 @@ def ensure_image(
             log(f"Using existing image: {image_override}")
         return image_override
 
-    # Prebuilt images (vLLM or TensorRT-LLM)
+    # Prebuilt images (TensorRT-LLM, SGLang, or vLLM with --image-type prebuilt)
     cfg = BACKEND_REGISTRY.get(engine)
     use_prebuilt = image_type == "prebuilt" or (cfg and not cfg["dockerfile"])
 
     if use_prebuilt:
-        image_name = get_image_name(engine, version, prebuilt=True)
+        image_name = get_image_name(engine, version, image_type="prebuilt")
         if not _image_exists_local(image_name) or rebuild:
             if not _pull_image(image_name):
                 raise SystemExit(f"Failed to pull prebuilt image: {image_name}")
@@ -684,5 +649,9 @@ def ensure_image(
             log(f"Using existing prebuilt image: {image_name}")
         return image_name
 
-    # Build from source (default for llama, optional for vllm)
-    return _build_image(engine, version, force=rebuild, pr_number=pr_number, pr_overlay=pr_overlay)
+    # Build from Dockerfile (vLLM, llama.cpp, ExLlamaV3)
+    return _build_image(
+        engine,
+        version,
+        force=rebuild,
+    )

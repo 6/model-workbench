@@ -7,6 +7,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+import requests
 from bench_utils import port_open, resolve_local_gguf
 from common import log
 
@@ -65,11 +66,61 @@ class ServerManager:
         """Check if server is already running on port."""
         return port_open(self.host, self.port)
 
+    def is_backend_running(self, backend: str) -> bool:
+        """Check if the correct backend service is running on port.
+
+        Unlike is_running() which only checks if port is open, this verifies
+        the actual service type by probing backend-specific endpoints.
+
+        Args:
+            backend: Backend type ('vllm', 'llama', 'trtllm', 'sglang', 'exl')
+
+        Returns:
+            True if the correct backend is running, False otherwise.
+        """
+        if not port_open(self.host, self.port):
+            return False
+
+        try:
+            if backend == "llama":
+                # llama.cpp /health returns {"status":"ok"} when healthy
+                # Other services (like Open WebUI) may return different formats
+                resp = requests.get(
+                    f"http://{self.host}:{self.port}/health",
+                    timeout=2,
+                )
+                if resp.status_code != 200:
+                    return False
+                try:
+                    data = resp.json()
+                    # llama.cpp returns {"status":"ok"} or {"status":"no slot available"}
+                    return data.get("status") in ("ok", "no slot available", "error")
+                except ValueError:
+                    return False
+            else:
+                # OpenAI-compatible backends (vllm, trtllm, sglang, exl) have /v1/models
+                # Must return JSON with "data" array
+                resp = requests.get(
+                    f"http://{self.host}:{self.port}/v1/models",
+                    timeout=2,
+                )
+                if resp.status_code != 200:
+                    return False
+                try:
+                    data = resp.json()
+                    return "data" in data  # OpenAI format has "data" array
+                except ValueError:
+                    return False
+        except requests.exceptions.RequestException:
+            return False
+
     def _get_container_id(self) -> str | None:
         """Extract Docker container ID for the port we're using.
 
+        Checks both port-mapped containers and host-network containers.
         Returns container ID if found, None otherwise.
         """
+        # First try port-based filter (works for -p mapped containers)
         try:
             result = subprocess.run(
                 ["docker", "ps", "--filter", f"publish={self.port}", "-q", "--no-trunc"],
@@ -81,9 +132,34 @@ class ServerManager:
                 cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()
             ]
             if container_ids:
-                return container_ids[0]  # Return first match
+                return container_ids[0]
         except Exception:
             pass
+
+        # Check for host-network containers by known images
+        # These images use --network host and won't match publish= filter
+        host_network_images = [
+            "ghcr.io/open-webui/open-webui",
+            "vllm/vllm-openai",
+            "model-workbench",  # Our custom images
+        ]
+
+        for image in host_network_images:
+            try:
+                result = subprocess.run(
+                    ["docker", "ps", "--filter", f"ancestor={image}", "-q", "--no-trunc"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                container_ids = [
+                    cid.strip() for cid in result.stdout.strip().split("\n") if cid.strip()
+                ]
+                if container_ids:
+                    return container_ids[0]
+            except Exception:
+                pass
+
         return None
 
     def start(
@@ -106,14 +182,23 @@ class ServerManager:
             term_wait: Seconds to wait after terminate before kill
 
         Returns:
-            True if we started the server, False if already running
+            True if we started the server, False if port is already in use
 
         Raises:
             SystemExit if server fails to start or times out
         """
         if self.is_running():
-            log(f"{label} already running on {self.host}:{self.port}")
-            return False
+            # Port is in use - caller should have checked is_backend_running() first
+            # to determine if the correct backend is running
+            log(f"ERROR: Port {self.port} is already in use by another service")
+            # Check if it's a Docker container
+            container_id = self._get_container_id()
+            if container_id:
+                log(f"Stop it with: docker stop {container_id[:12]}")
+            else:
+                log(f"Find what's using the port: lsof -i :{self.port}")
+            log("Or use a different port with --port")
+            raise SystemExit(1)
 
         log(f"Starting {label}")
         log(f"+ {' '.join(cmd)}")
@@ -243,39 +328,23 @@ class ServerManager:
     def start_vllm(
         self,
         model_path: str,
-        tensor_parallel: int,
         version: str,
-        max_model_len: int | None = None,
-        gpu_memory_utilization: float | None = None,
-        max_num_batched_tokens: int | None = None,
-        cpu_offload_gb: float | None = None,
-        max_num_seqs: int | None = None,
         env_vars: dict[str, str] | None = None,
-        extra_vllm_args: list[str] | None = None,
+        extra_args: list[str] | None = None,
         rebuild: bool = False,
         image_type: str = "build",
         image_override: str | None = None,
-        pr_number: int | None = None,
-        pr_overlay: bool = False,
     ) -> None:
         """Start vLLM server via Docker with version pinning.
 
         Args:
             model_path: Path to model directory
-            tensor_parallel: Tensor parallel size
             version: vLLM version (release tag like 'v0.8.0' or commit SHA)
-            max_model_len: Max context length (optional)
-            gpu_memory_utilization: GPU memory fraction (optional)
-            max_num_batched_tokens: Max batched tokens (optional)
-            cpu_offload_gb: CPU offload in GB per GPU (optional)
-            max_num_seqs: Max concurrent sequences (optional)
             env_vars: Environment variables for Docker container (optional)
-            extra_vllm_args: Extra vLLM CLI arguments (optional)
+            extra_args: All vLLM CLI arguments (including tensor_parallel) from config + CLI overrides
             rebuild: Force rebuild image even if cached
             image_type: 'prebuilt' to use official images, 'build' to build from source
             image_override: Direct image name to use (highest priority)
-            pr_number: PR number for unmerged PRs (optional)
-            pr_overlay: If True, use nightly + overlay PR files (fast mode)
         """
         from docker_manager import (
             build_vllm_docker_cmd as build_versioned_vllm_cmd,
@@ -291,8 +360,6 @@ class ServerManager:
             rebuild=rebuild,
             image_type=image_type,
             image_override=image_override,
-            pr_number=pr_number,
-            pr_overlay=pr_overlay,
         )
 
         cmd = build_versioned_vllm_cmd(
@@ -300,14 +367,8 @@ class ServerManager:
             model_path=model_path,
             host=self.host,
             port=self.port,
-            tensor_parallel=tensor_parallel,
-            max_model_len=max_model_len,
-            gpu_memory_utilization=gpu_memory_utilization,
-            max_num_batched_tokens=max_num_batched_tokens,
-            cpu_offload_gb=cpu_offload_gb,
-            max_num_seqs=max_num_seqs,
             env_vars=env_vars,
-            extra_vllm_args=extra_vllm_args,
+            extra_args=extra_args,
         )
 
         # Label based on image source

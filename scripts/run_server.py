@@ -72,6 +72,9 @@ def main():
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
+    ap.add_argument(
+        "--profile", default=None, help="Model profile from config (default: auto-select)"
+    )
 
     # Backend selection
     ap.add_argument(
@@ -126,43 +129,7 @@ def main():
         help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
-    # vLLM-specific options (defaults from config, CLI overrides)
-    vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
-    vllm_group.add_argument(
-        "--tensor-parallel",
-        type=int,
-        default=None,
-        help="Tensor parallel size (default: auto-detect GPU count)",
-    )
-    vllm_group.add_argument(
-        "--max-model-len",
-        type=int,
-        default=None,
-        help="Max context length (default: from config or 65536)",
-    )
-    vllm_group.add_argument(
-        "--gpu-memory-utilization",
-        type=float,
-        default=None,
-        help="GPU memory fraction (default: from config or 0.95)",
-    )
-    vllm_group.add_argument(
-        "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
-    )
-    vllm_group.add_argument(
-        "--cpu-offload-gb",
-        type=float,
-        default=None,
-        help="CPU offload in GB per GPU (default: none)",
-    )
-    vllm_group.add_argument(
-        "--max-num-seqs",
-        type=int,
-        default=None,
-        help="Max concurrent sequences (default: from config or vLLM default)",
-    )
-
-    # llama.cpp-specific options (defaults from config, CLI overrides)
+    # llama.cpp-specific options
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
     llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
     llama_group.add_argument(
@@ -235,8 +202,8 @@ def main():
     webui_group.add_argument(
         "--webui-port",
         type=int,
-        default=8080,
-        help="Port for Open WebUI (default: 8080)",
+        default=3080,
+        help="Port for Open WebUI (default: 3080)",
     )
     webui_group.add_argument(
         "--webui-image",
@@ -257,25 +224,21 @@ def main():
     # Resolve backend config and apply defaults
     backend, model_path, backend_cfg = resolve_run_config(args)
 
-    # Resolve backend version
-    backend_version = args.backend_version or backend_cfg.get("version")
+    # Resolve image type (from CLI, model config, or backend defaults)
+    image_type = args.image_type or backend_cfg.get("image_type", "build")
+
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version and not args.test_only:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
             f"  2. Pass --backend-version"
         )
 
-    # Resolve image type (from CLI, model config, or backend defaults)
-    image_type = args.image_type or backend_cfg.get("image_type", "build")
-
     # Resolve docker_image (CLI override takes precedence over config)
     docker_image = args.docker_image or backend_cfg.get("docker_image")
-
-    # Resolve PR number and PR overlay for unmerged PRs
-    pr_number = backend_cfg.get("pr_number")
-    pr_overlay = backend_cfg.get("pr_overlay", False)
 
     # Create server manager
     server = ServerManager(
@@ -294,8 +257,8 @@ def main():
 
     # Test-only mode
     if args.test_only:
-        if not server.is_running():
-            raise SystemExit(f"No server running on {args.host}:{args.port}")
+        if not server.is_backend_running(backend):
+            raise SystemExit(f"No {backend} server running on {args.host}:{args.port}")
         if test_chat_completion(args.host, args.port, api_model):
             log("Server is working!")
         else:
@@ -303,7 +266,7 @@ def main():
         return
 
     # Check if server already running
-    if server.is_running():
+    if server.is_backend_running(backend):
         log(f"Server already running on {args.host}:{args.port}")
         if args.test:
             test_chat_completion(args.host, args.port, api_model)
@@ -323,27 +286,20 @@ def main():
     if backend == "vllm":
         server.start_vllm(
             model_path=model_path,
-            tensor_parallel=args.tensor_parallel,
             version=backend_version,
-            max_model_len=args.max_model_len,
-            gpu_memory_utilization=args.gpu_memory_utilization,
-            max_num_batched_tokens=args.max_num_batched_tokens,
-            cpu_offload_gb=args.cpu_offload_gb,
-            max_num_seqs=args.max_num_seqs,
+            env_vars=args.env_vars,
+            extra_args=args.extra_args,
             rebuild=args.rebuild,
             image_type=image_type,
             image_override=docker_image,
-            pr_number=pr_number,
-            pr_overlay=pr_overlay,
         )
     elif backend == "trtllm":
-        extra_args = backend_cfg.get("extra_args", [])
         server.start_trtllm(
             model_path=model_path,
             tensor_parallel=args.tensor_parallel,
             version=backend_version,
             rebuild=args.rebuild,
-            extra_args=extra_args,
+            extra_args=args.extra_args or [],
         )
     elif backend == "llama":
         mmproj_path = None
@@ -377,7 +333,7 @@ def main():
     elif backend == "sglang":
         # Get SGLang-specific args from config
         mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
-        max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
+        max_model_len = backend_cfg.get("args", {}).get("max_model_len")
 
         server.start_sglang(
             model_path=model_path,
@@ -392,7 +348,7 @@ def main():
         # Get ExLlamaV3-specific args from config
         backend_args = backend_cfg.get("args", {})
         cache_size = backend_args.get("cache_size")
-        max_seq_len = args.max_model_len or backend_args.get("max_seq_len")
+        max_seq_len = backend_args.get("max_seq_len")
         gpu_split_auto = backend_args.get("gpu_split_auto", True)
         gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
@@ -411,7 +367,7 @@ def main():
 
     if should_warmup:
         # Extra verification: ensure server is truly ready
-        if not server.is_running():
+        if not server.is_backend_running(backend):
             log("ERROR: Server not running, skipping warmup")
         else:
             log("Preloading model into GPU memory...")

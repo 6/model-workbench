@@ -159,7 +159,7 @@ def bench_once_openai(
     image_path: str | None,
     max_tokens: int,
     temperature: float,
-    frequency_penalty: float,
+    frequency_penalty: float | None,
     backend: str,
     host: str = "127.0.0.1",
     port: int = 8000,
@@ -191,14 +191,16 @@ def bench_once_openai(
         metrics_before = scrape_prometheus_metrics(host, port, backend)
 
     t0 = time.perf_counter()
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature if temperature > 0 else 0.0,
-        frequency_penalty=frequency_penalty,
-        seed=0,
-    )
+    request_kwargs = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature if temperature > 0 else 0.0,
+        "seed": 0,
+    }
+    if frequency_penalty is not None:
+        request_kwargs["frequency_penalty"] = frequency_penalty
+    response = client.chat.completions.create(**request_kwargs)
     t1 = time.perf_counter()
     wall = t1 - t0
 
@@ -371,16 +373,13 @@ def run_benchmark_vllm(
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version, PR number, and PR overlay from config or CLI
-    backend_cfg = get_model_backend_config(args.model, "vllm")
-    backend_version = args.backend_version or backend_cfg.get("version")
-    pr_number = backend_cfg.get("pr_number")
-    pr_overlay = backend_cfg.get("pr_overlay", False)
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.vllm.version in config/models.yaml\n"
+            "  1. Set defaults.backends.vllm.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version v0.8.0"
         )
 
@@ -397,10 +396,8 @@ def run_benchmark_vllm(
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
     print(f"image_type:      {image_type}")
-    print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
-    print(f"max_model_len:   {args.max_model_len}")
 
     server = ServerManager(
         host=args.host,
@@ -408,7 +405,7 @@ def run_benchmark_vllm(
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("vllm") and args.no_autostart:
         raise SystemExit(
             f"vLLM server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -416,23 +413,15 @@ def run_benchmark_vllm(
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("vllm"):
             server.start_vllm(
                 model_path=model_path,
-                tensor_parallel=args.tensor_parallel,
                 version=backend_version,
-                max_model_len=args.max_model_len,
-                gpu_memory_utilization=args.gpu_memory_utilization,
-                max_num_batched_tokens=args.max_num_batched_tokens,
-                cpu_offload_gb=args.cpu_offload_gb,
-                max_num_seqs=args.max_num_seqs,
                 env_vars=args.env_vars,
-                extra_vllm_args=args.extra_vllm_args,
+                extra_args=args.extra_args,
                 rebuild=args.rebuild,
                 image_type=image_type,
                 image_override=docker_image,
-                pr_number=pr_number,
-                pr_overlay=pr_overlay,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -513,10 +502,6 @@ def run_benchmark_vllm(
                 "prompt": prompt_text,
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
-                "tensor_parallel_size": args.tensor_parallel,
-                "max_model_len": args.max_model_len,
-                "gpu_memory_utilization": args.gpu_memory_utilization,
-                "max_num_batched_tokens": args.max_num_batched_tokens,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -531,15 +516,14 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Get backend config for version and extra_args
-    backend_cfg = get_model_backend_config(args.model, "trtllm")
-    backend_version = args.backend_version or backend_cfg.get("version")
-    extra_args = backend_cfg.get("extra_args", [])
+    # Use args.backend_version and args.extra_args set by resolve_run_config from profile
+    backend_version = args.backend_version
+    extra_args = args.extra_args or []
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.trtllm.version in config/models.yaml\n"
+            "  1. Set defaults.backends.trtllm.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version 0.18.0"
         )
 
@@ -555,7 +539,6 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     print(f"model:           {model_path}")
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
-    print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
 
@@ -565,7 +548,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("trtllm") and args.no_autostart:
         raise SystemExit(
             f"TensorRT-LLM server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -573,7 +556,7 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("trtllm"):
             server.start_trtllm(
                 model_path=model_path,
                 tensor_parallel=args.tensor_parallel,
@@ -663,7 +646,6 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
                 "prompt": prompt_text,
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
-                "tensor_parallel_size": args.tensor_parallel,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -682,25 +664,19 @@ def run_benchmark_sglang(
     docker_image: str | None = None,
 ):
     """Run benchmarks using SGLang backend (Docker)."""
-    from bench_utils import get_model_backend_config
-
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, "sglang")
+    # Use args.backend_version and args.extra_args set by resolve_run_config from profile
+    backend_version = args.backend_version
+    extra_args = args.extra_args or []
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.sglang.version in config/models.yaml\n"
+            "  1. Set defaults.backends.sglang.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version 47cdb65"
         )
-
-    # Get SGLang-specific args from config
-    backend_cfg = get_model_backend_config(args.model, "sglang")
-    mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
-    max_model_len = args.max_model_len or backend_cfg.get("args", {}).get("max_model_len")
 
     # Select prompt
     if args.prompt:
@@ -715,10 +691,8 @@ def run_benchmark_sglang(
     print(f"mode:            {mode}")
     print(f"backend_version: {backend_version}")
     print(f"image_type:      {image_type}")
-    print(f"tensor_parallel: {args.tensor_parallel}")
     print(f"image:           {image_label}")
     print(f"prompt:          {prompt_text[:50]}...")
-    print(f"max_model_len:   {max_model_len}")
 
     server = ServerManager(
         host=args.host,
@@ -726,7 +700,7 @@ def run_benchmark_sglang(
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("sglang") and args.no_autostart:
         raise SystemExit(
             f"SGLang server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -734,15 +708,14 @@ def run_benchmark_sglang(
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("sglang"):
             server.start_sglang(
                 model_path=model_path,
                 tensor_parallel=args.tensor_parallel,
                 version=backend_version,
-                mem_fraction_static=mem_fraction,
-                max_model_len=max_model_len,
                 rebuild=args.rebuild,
                 image_override=docker_image,
+                extra_args=extra_args,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -813,9 +786,6 @@ def run_benchmark_sglang(
                 "prompt": prompt_text,
                 "max_tokens": args.max_tokens,
                 "temperature": args.temperature,
-                "tensor_parallel_size": args.tensor_parallel,
-                "max_model_len": max_model_len,
-                "mem_fraction_static": mem_fraction,
                 "image": image_label,
                 "backend_version": backend_version,
             },
@@ -827,7 +797,6 @@ def run_benchmark_sglang(
 
 def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label: str):
     """Run benchmarks using ExLlamaV3/TabbyAPI backend (Docker)."""
-    from bench_utils import get_model_backend_config
 
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
@@ -838,7 +807,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         raise SystemExit(
             "No backend version specified and none found in config.\n"
             "Either:\n"
-            "  1. Set defaults.backends.exl.version in config/models.yaml\n"
+            "  1. Set defaults.backends.exl.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version v0.0.18"
         )
 
@@ -846,7 +815,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
     backend_cfg = get_model_backend_config(args.model, "exl")
     backend_args = backend_cfg.get("args", {})
     cache_size = backend_args.get("cache_size")
-    max_seq_len = args.max_model_len or backend_args.get("max_seq_len")
+    max_seq_len = backend_args.get("max_seq_len")
     gpu_split_auto = backend_args.get("gpu_split_auto", True)
     gpu_split = backend_args.get("gpu_split")  # e.g., [24, 24] for explicit split
 
@@ -873,7 +842,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running("exl") and args.no_autostart:
         raise SystemExit(
             f"ExLlamaV3 server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -881,7 +850,7 @@ def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running("exl"):
             server.start_exl(
                 model_path=model_path,
                 version=backend_version,
@@ -979,13 +948,13 @@ def run_benchmark_gguf(
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, backend)
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
             f"Either:\n"
-            f"  1. Set defaults.backends.{backend}.version in config/models.yaml\n"
+            f"  1. Set defaults.backends.{backend}.backend_version in config/models.yaml\n"
             f"  2. Pass --backend-version b4521"
         )
 
@@ -1041,7 +1010,7 @@ def run_benchmark_gguf(
         timeout=args.server_timeout,
     )
 
-    if not server.is_running() and args.no_autostart:
+    if not server.is_backend_running(backend) and args.no_autostart:
         raise SystemExit(
             f"{backend_label} server not detected on {args.host}:{args.port} and --no-autostart was set."
         )
@@ -1049,7 +1018,7 @@ def run_benchmark_gguf(
     with server:
         handle_container_cleanup(args.port, args.no_autostart, args.force_cleanup)
 
-        if not server.is_running():
+        if not server.is_backend_running(backend):
             gguf_path = server.start_gguf_backend(
                 engine=backend,
                 model_path=model_path,
@@ -1156,6 +1125,9 @@ def main():
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
+    ap.add_argument(
+        "--profile", default=None, help="Model profile from config (default: auto-select)"
+    )
 
     # Backend selection
     ap.add_argument(
@@ -1236,43 +1208,7 @@ def main():
         help="Direct Docker image to use (e.g., vllm/vllm-openai:nightly)",
     )
 
-    # vLLM-specific options (defaults from config, CLI overrides)
-    vllm_group = ap.add_argument_group("vLLM options (safetensors models)")
-    vllm_group.add_argument(
-        "--tensor-parallel",
-        type=int,
-        default=None,
-        help="Tensor parallel size (default: auto-detect GPU count)",
-    )
-    vllm_group.add_argument(
-        "--max-model-len",
-        type=int,
-        default=None,
-        help="Max context length (default: from config or 65536)",
-    )
-    vllm_group.add_argument(
-        "--gpu-memory-utilization",
-        type=float,
-        default=None,
-        help="GPU memory fraction (default: from config or 0.95)",
-    )
-    vllm_group.add_argument(
-        "--max-num-batched-tokens", type=int, default=None, help="Max batched tokens"
-    )
-    vllm_group.add_argument(
-        "--cpu-offload-gb",
-        type=float,
-        default=None,
-        help="CPU offload in GB per GPU (default: none)",
-    )
-    vllm_group.add_argument(
-        "--max-num-seqs",
-        type=int,
-        default=None,
-        help="Max concurrent sequences (default: from config or vLLM default)",
-    )
-
-    # llama.cpp-specific options (defaults from config, CLI overrides)
+    # llama.cpp-specific options
     llama_group = ap.add_argument_group("llama.cpp options (GGUF models)")
     llama_group.add_argument("--ctx", type=int, default=None, help="Context length (-c)")
     llama_group.add_argument(
@@ -1358,10 +1294,11 @@ def main():
     if args.build_only:
         from docker_manager import ensure_image
 
-        version = args.backend_version or get_model_backend_version(args.model, backend)
+        # Use args.backend_version set by resolve_run_config from profile
+        version = args.backend_version
         if not version:
             raise SystemExit(
-                f"No backend version specified. Pass --backend-version or set defaults.backends.{backend}.version in config."
+                f"No backend version specified. Pass --backend-version or set defaults.backends.{backend}.backend_version in config."
             )
 
         log(f"Preparing {backend} image for version {version}...")

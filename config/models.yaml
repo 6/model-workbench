@@ -1,22 +1,37 @@
 # Backend configuration
 # Models without explicit overrides use these defaults
+# IMPORTANT: When adding workarounds or non-obvious extra_args, include a comment
+# explaining why and link to the relevant issue (e.g., GitHub issue URL)
 defaults:
   # Storage paths by model format
   storage:
     primary: ~/models              # Default for safetensors/EXL3/MLX
     gguf: /data/storage2/models    # GGUF models (slower NVMe, more space)
 
+  # Backend defaults: version, extra_args, model_patterns, env_vars
+  # Resolution priority (highest to lowest):
+  #   1. CLI override (--backend-version, --gpu-memory-utilization, etc.)
+  #   2. Model-specific config (models[].backends.{engine}.*)
+  #   3. Global defaults below (defaults.backends.{engine}.*)
+  # Model-specific extra_args fully replaces global (no merge)
   backends:
     # https://github.com/vllm-project/vllm/releases
     vllm:
-      version: v0.13.0
-      image_type: prebuilt    # "prebuilt" (Docker Hub) or "build" (from source)
-      args:
-        gpu_memory_utilization: 0.95  # 0.98 causes OOM during vLLM sampler warmup
-        # max_model_len: Let vLLM auto-detect from model config (override per-model if needed)
+      # Commit SHA from wheels.vllm.ai nightly builds (cu130 wheels for Blackwell GPUs)
+      # Use /update-vllm-nightly skill to list available builds and update this
+      # For stable Docker Hub image instead: --image-type prebuilt --backend-version v0.13.0
+      backend_version: da6709c9fe6965b7348692576ffadeee8439388e
       env_vars:
         # Prevent vLLM from spinning at 100% CPU when idle (blocks scheduling)
         VLLM_SLEEP_WHEN_IDLE: "1"
+      extra_args:
+        # 0.98 causes OOM during vLLM sampler warmup
+        - "--gpu-memory-utilization"
+        - "0.95"
+        # GPU Direct Storage for faster model loading (requires NVMe + GDS support)
+        # See: https://docs.vllm.ai/en/latest/models/extensions/fastsafetensor.html
+        - "--load-format"
+        - "fastsafetensors"
       # Model-specific CLI args (pattern is regex matched against model path)
       model_patterns:
         - pattern: "glm.*v"  # GLM vision models
@@ -75,23 +90,26 @@ defaults:
     # Note: b7538 introduced Blackwell changes that break CUDA graphs on SM120
     # Staying on b7531 (last version before that change) for stable performance
     llama:
-      version: b7531
+      backend_version: b7531
       image_type: build
-      args:
-        n_gpu_layers: 999
-        jinja: true         # Enable Jinja template engine (required for most models)
-        flash_attn: "on"    # Enable flash attention for Blackwell GPUs
+      extra_args:
+        - "-ngl"
+        - "999"
+        - "--jinja"           # Enable Jinja template engine (required for most models)
+        - "--flash-attn"
+        - "on"                # Enable flash attention for Blackwell GPUs
     # https://catalog.ngc.nvidia.com/orgs/nvidia/teams/tensorrt-llm/containers/release
     trtllm:
-      version: 1.2.0rc7
+      backend_version: 1.2.0rc7
       image_type: prebuilt    # Uses NGC images
     # https://hub.docker.com/r/lmsysorg/sglang/tags
+    # NOTE: cu13 nightlies have all-reduce bug on Blackwell TP>1, use stable release
     sglang:
-      version: nightly-dev-20251221-1d90b194   # Dec 21 nightly with MiMo support
-      image_type: prebuilt
-      args:
-        mem_fraction_static: 0.98  # Dedicated inference GPUs, no display
-        max_model_len: 65536
+      # Use /update-sglang-nightly skill to list available builds and update this
+      backend_version: v0.5.7-cu130-runtime   # Stable cu13 (Jan 2026)
+      extra_args:
+        - "--mem-fraction-static"
+        - "0.95"                # Match vLLM (0.98 can cause OOM)
       model_patterns:
         - pattern: "mimo"
           args:
@@ -101,52 +119,81 @@ defaults:
             - "qwen3"
             - "--tool-call-parser"
             - "mimo"
+        - pattern: "minimax.*m2\\.1"
+          args:
+            - "--attention-backend"
+            - "flashinfer"
+            - "--max-running-requests"
+            - "64"
+            - "--cuda-graph-max-bs"
+            - "64"
+          env_vars:
+            PYTORCH_ALLOC_CONF: "expandable_segments:True,max_split_size_mb:512"
     # https://github.com/turboderp-org/exllamav3/releases
     # https://github.com/theroyallab/tabbyAPI (commit SHA, no releases)
     exl:
-      version: v0.0.18
+      backend_version: v0.0.18
       tabby_version: 84bb1ce   # TabbyAPI commit (pinned in Dockerfile default)
       image_type: build
-      args:
-        cache_size: 32768
-        gpu_split_auto: true   # Automatically split model across GPUs
-        # gpu_split: [24, 24]  # Explicit split in GB per GPU (overrides gpu_split_auto)
+      extra_args:
+        - "--cache-size"
+        - "32768"
+        - "--gpu-split-auto"     # Automatically split model across GPUs
+        # --gpu-split 24,24      # Explicit split in GB per GPU (overrides gpu_split_auto)
 models:
   - repo_id: MiniMaxAI/MiniMax-M2.1
 
   - repo_id: cyankiwi/MiniMax-M2.1-AWQ-4bit
+    profiles:
+      default:
+        backend: vllm              # Keep vLLM as default
+      sglang:
+        backend: sglang
+        backend_version: nightly-dev-cu13-20260111-78c41758
+        sampling:
+          frequency_penalty: 0.2   # Prevent repetition (flashinfer etc from global pattern)
 
   - repo_id: mratsim/MiniMax-M2.1-FP8-INT4-AWQ
-    backends:
-      vllm:
-        docker_image: vllm/vllm-openai:nightly  # nightly gives 96 tok/s vs 87 on v0.13.0
-        args:
-          # 0.90 leaves ~10GB per GPU for running small models alongside (VL, Whisper, etc.)
-          gpu_memory_utilization: 0.90
+    profiles:
+      default:
+        backend: vllm
+        extra_args:
+          # cu130 devel image has slightly higher memory overhead than cu129
+          # 0.91 fits full 196k context (~7GB free per GPU, ~14GB total); 0.90 falls 0.12 GiB short for full context
+          - "--gpu-memory-utilization"
+          - "0.91"
 
   - repo_id: unsloth/MiniMax-M2.1-GGUF
     include:
       - "UD-Q4_K_XL/*.gguf"
       - "UD-Q5_K_XL/*.gguf"
       - "Q6_K/*.gguf"
-    backends:
-      llama:
-        args:
-          repeat_penalty: 1.15      # Prevent repetition loops in thinking
-          repeat_last_n: 128        # Consider last 128 tokens for penalty
+    profiles:
+      default:
+        backend: llama
+        extra_args:
+          - "--repeat-penalty"
+          - "1.15"                  # Prevent repetition loops in thinking
+          - "--repeat-last-n"
+          - "128"                   # Consider last 128 tokens for penalty
 
   - repo_id: QuantTrio/GLM-4.7-AWQ
-    backends:
-      vllm:
-        args:
-          cpu_offload_gb: 15
-          max_model_len: 8192
+    profiles:
+      default:
+        backend: vllm
+        extra_args:
+          - "--cpu-offload-gb"
+          - "15"
+          - "--max-model-len"
+          - "8192"
 
   - repo_id: mratsim/GLM-4.7-EXL3
     revisions:
       - 3.84bpw-tuned
       - 4bpw_H6
-    backend: exl
+    profiles:
+      default:
+        backend: exl
 
   - repo_id: AesSedai/GLM-4.7-GGUF
     include:
@@ -166,11 +213,11 @@ models:
       - "big-IQ3_KS/*.gguf"
 
   - repo_id: cyankiwi/MiMo-V2-Flash-AWQ-4bit
-    backend: sglang           # Only SGLang supports this model
-    backends:
-      sglang:
-        args:
-          frequency_penalty: 0.2   # Prevent repetition loops with AWQ quant
+    profiles:
+      default:
+        backend: sglang           # Only SGLang supports this model
+        sampling:
+          frequency_penalty: 0.2  # Prevent repetition loops with AWQ quant
 
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 
@@ -228,30 +275,39 @@ models:
       - "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
 
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
-    backends:
-      vllm:
-        # Uses default v0.13.0 (nightly broken: https://github.com/vllm-project/vllm/issues/31957)
-        args:
-          max_num_seqs: 8           # Model card recommendation for stability
-          max_model_len: 262144     # 256K context window
-        env_vars:
-          # FlashInfer MoE kernel optimized for FP8 - improves throughput
-          VLLM_USE_FLASHINFER_MOE_FP8: "1"
+    profiles:
+      default:
+        # Note: VLLM_USE_FLASHINFER_MOE_FP8=1 causes cuBLAS FP8 errors on Blackwell:
+        # "bmm_fp8_internal_cublaslt failed: the requested functionality is not supported"
+        # Nightly also has relu2_no_mul bug (#31957). Using prebuilt v0.13.0.
+        backend: vllm
+        backend_version: v0.13.0
+        image_type: prebuilt
         extra_args:
-          # NOTE: --trust-remote-code already added automatically by docker_manager.py
-          # Tool calling support (adds overhead, needed for agentic use)
+          - "--max-num-seqs"
+          - "8"                     # Model card recommendation for stability
+          - "--max-model-len"
+          - "262144"                # 256K context window
           - "--enable-auto-tool-choice"
           - "--tool-call-parser"
           - "qwen3_coder"
-          # Reasoning trace parsing (adds overhead, extracts thinking from output)
           - "--reasoning-parser-plugin"
           - "/config/nano_v3_reasoning_parser.py"
           - "--reasoning-parser"
           - "nano_v3"
-          # FP8 KV cache - reduces memory, slightly improves throughput
           - "--kv-cache-dtype"
           - "fp8"
+      sglang:
+        backend: sglang
+        extra_args:
+          - "--attention-backend"
+          - "flashinfer"
+          - "--tool-call-parser"
+          - "qwen3_coder"
+          - "--reasoning-parser"
+          - "nano_v3"
       trtllm:
+        backend: trtllm
         extra_args:
           - "--backend"
           - "_autodeploy"
