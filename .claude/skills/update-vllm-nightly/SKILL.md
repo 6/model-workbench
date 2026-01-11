@@ -80,12 +80,13 @@ defaults:
 ```
 
 ### For Model-Specific:
-Add or update the model's backends section:
+Add or update the model's profiles section:
 ```yaml
 models:
   - repo_id: org/model-name
-    backends:
-      vllm:
+    profiles:
+      default:
+        backend: vllm
         backend_version: {full_commit_hash}
 ```
 

@@ -878,6 +878,13 @@ def resolve_run_config(args):
     if not hasattr(args, "env_vars") or args.env_vars is None:
         args.env_vars = env_vars
 
+    # Set backend_version and image_type from config if not specified on CLI
+    # This ensures profile values are available to all downstream code
+    if getattr(args, "backend_version", None) is None:
+        args.backend_version = backend_cfg.get("backend_version")
+    if getattr(args, "image_type", None) is None:
+        args.image_type = backend_cfg.get("image_type")
+
     return backend, model_path, backend_cfg
 
 

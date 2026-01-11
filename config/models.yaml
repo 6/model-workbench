@@ -276,32 +276,28 @@ models:
       - "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
 
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
-    backends:
-      vllm:
+    profiles:
+      default:
         # Nightly has relu2_no_mul bug (#31957), use prebuilt v0.13.0
+        backend: vllm
         backend_version: v0.13.0
         image_type: prebuilt      # Docker Hub image (CUDA 12.9)
-        # NOTE: VLLM_USE_FLASHINFER_MOE_FP8 removed - triggers JIT compilation
-        # which fails on prebuilt image (missing CUDA dev headers for Blackwell)
         extra_args:
           - "--max-num-seqs"
           - "8"                     # Model card recommendation for stability
           - "--max-model-len"
           - "262144"                # 256K context window
-          # NOTE: --trust-remote-code already added automatically by docker_manager.py
-          # Tool calling support (adds overhead, needed for agentic use)
           - "--enable-auto-tool-choice"
           - "--tool-call-parser"
           - "qwen3_coder"
-          # Reasoning trace parsing (adds overhead, extracts thinking from output)
           - "--reasoning-parser-plugin"
           - "/config/nano_v3_reasoning_parser.py"
           - "--reasoning-parser"
           - "nano_v3"
-          # FP8 KV cache - reduces memory, slightly improves throughput
           - "--kv-cache-dtype"
           - "fp8"
       trtllm:
+        backend: trtllm
         extra_args:
           - "--backend"
           - "_autodeploy"
