@@ -223,8 +223,8 @@ def main():
     repo_id = extract_repo_id(model_path)
     revision = extract_revision_from_path(model_path)
 
-    # Resolve backend version
-    backend_version = args.backend_version or backend_cfg.get("backend_version")
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"

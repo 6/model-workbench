@@ -373,9 +373,8 @@ def run_benchmark_vllm(
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_cfg = get_model_backend_config(args.model, "vllm")
-    backend_version = args.backend_version or backend_cfg.get("backend_version")
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
@@ -665,13 +664,12 @@ def run_benchmark_sglang(
     docker_image: str | None = None,
 ):
     """Run benchmarks using SGLang backend (Docker)."""
-    from bench_utils import get_model_backend_config
-
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, "sglang")
+    # Use args.backend_version and args.extra_args set by resolve_run_config from profile
+    backend_version = args.backend_version
+    extra_args = args.extra_args or []
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"
@@ -679,11 +677,6 @@ def run_benchmark_sglang(
             "  1. Set defaults.backends.sglang.backend_version in config/models.yaml\n"
             "  2. Pass --backend-version 47cdb65"
         )
-
-    # Get SGLang-specific args from config
-    backend_cfg = get_model_backend_config(args.model, "sglang")
-    mem_fraction = backend_cfg.get("args", {}).get("mem_fraction_static")
-    max_model_len = backend_cfg.get("args", {}).get("max_model_len")
 
     # Select prompt
     if args.prompt:
@@ -720,10 +713,9 @@ def run_benchmark_sglang(
                 model_path=model_path,
                 tensor_parallel=args.tensor_parallel,
                 version=backend_version,
-                mem_fraction_static=mem_fraction,
-                max_model_len=max_model_len,
                 rebuild=args.rebuild,
                 image_override=docker_image,
+                extra_args=extra_args,
             )
 
         gpu_info = get_gpu_info(include_memory=True)
@@ -805,7 +797,6 @@ def run_benchmark_sglang(
 
 def run_benchmark_exl(args, model_path: str, image_path: str | None, image_label: str):
     """Run benchmarks using ExLlamaV3/TabbyAPI backend (Docker)."""
-    from bench_utils import get_model_backend_config
 
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
@@ -957,8 +948,8 @@ def run_benchmark_gguf(
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Resolve backend version from config or CLI
-    backend_version = args.backend_version or get_model_backend_version(args.model, backend)
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
@@ -1303,7 +1294,8 @@ def main():
     if args.build_only:
         from docker_manager import ensure_image
 
-        version = args.backend_version or get_model_backend_version(args.model, backend)
+        # Use args.backend_version set by resolve_run_config from profile
+        version = args.backend_version
         if not version:
             raise SystemExit(
                 f"No backend version specified. Pass --backend-version or set defaults.backends.{backend}.backend_version in config."

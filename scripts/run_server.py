@@ -72,7 +72,9 @@ def main():
 
     # Required
     ap.add_argument("--model", required=True, help="Model path (auto-detects GGUF vs safetensors)")
-    ap.add_argument("--profile", default=None, help="Model profile from config (default: auto-select)")
+    ap.add_argument(
+        "--profile", default=None, help="Model profile from config (default: auto-select)"
+    )
 
     # Backend selection
     ap.add_argument(
@@ -225,8 +227,8 @@ def main():
     # Resolve image type (from CLI, model config, or backend defaults)
     image_type = args.image_type or backend_cfg.get("image_type", "build")
 
-    # Resolve backend version
-    backend_version = args.backend_version or backend_cfg.get("backend_version")
+    # Use args.backend_version set by resolve_run_config from profile
+    backend_version = args.backend_version
     if not backend_version and not args.test_only:
         raise SystemExit(
             f"No backend version specified and none found in config.\n"
@@ -292,13 +294,12 @@ def main():
             image_override=docker_image,
         )
     elif backend == "trtllm":
-        extra_args = backend_cfg.get("extra_args", [])
         server.start_trtllm(
             model_path=model_path,
             tensor_parallel=args.tensor_parallel,
             version=backend_version,
             rebuild=args.rebuild,
-            extra_args=extra_args,
+            extra_args=args.extra_args or [],
         )
     elif backend == "llama":
         mmproj_path = None

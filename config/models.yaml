@@ -108,7 +108,7 @@ defaults:
       extra_args:
         - "--mem-fraction-static"
         - "0.98"                # Dedicated inference GPUs, no display
-        - "--max-model-len"
+        - "--context-length"
         - "65536"
       model_patterns:
         - pattern: "mimo"
@@ -149,9 +149,8 @@ models:
         backend: vllm              # Keep vLLM as default
       sglang:
         backend: sglang
-        extra_args:
-          - "--frequency-penalty"
-          - "0.2"                  # Prevent repetition (flashinfer etc from global pattern)
+        sampling:
+          frequency_penalty: 0.2   # Prevent repetition (flashinfer etc from global pattern)
 
   - repo_id: mratsim/MiniMax-M2.1-FP8-INT4-AWQ
     profiles:
@@ -216,9 +215,8 @@ models:
     profiles:
       default:
         backend: sglang           # Only SGLang supports this model
-        extra_args:
-          - "--frequency-penalty"
-          - "0.2"               # Prevent repetition loops with AWQ quant
+        sampling:
+          frequency_penalty: 0.2  # Prevent repetition loops with AWQ quant
 
   - repo_id: cyankiwi/Devstral-2-123B-Instruct-2512-AWQ-4bit
 

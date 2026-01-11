@@ -794,6 +794,7 @@ def get_model_profile_config(model_arg: str, profile: str | None) -> dict | None
         "env_vars": profile_cfg.get("env_vars") or global_cfg.get("env_vars", {}),
         "image_type": profile_cfg.get("image_type") or global_cfg.get("image_type", "build"),
         "docker_image": profile_cfg.get("docker_image") or global_cfg.get("docker_image"),
+        "sampling": profile_cfg.get("sampling", {}),
     }
 
 
@@ -884,6 +885,14 @@ def resolve_run_config(args):
         args.backend_version = backend_cfg.get("backend_version")
     if getattr(args, "image_type", None) is None:
         args.image_type = backend_cfg.get("image_type")
+
+    # Apply sampling params from profile config
+    # These are passed to API requests (not server startup)
+    # Note: vLLM can also use --override-generation-config for server-side defaults
+    sampling = backend_cfg.get("sampling", {})
+    if sampling:
+        if getattr(args, "frequency_penalty", None) is None and "frequency_penalty" in sampling:
+            args.frequency_penalty = sampling["frequency_penalty"]
 
     return backend, model_path, backend_cfg
 
