@@ -769,8 +769,8 @@ def stop_container(container_id: str, label: str = "container") -> None:
 def start_litellm_proxy(
     backend_port: int,
     model_name: str,
+    model_alias: str,
     litellm_port: int = 4000,
-    model_alias: str = "local-model",
     version: str = "v1.80.11-stable",
     image: str = "ghcr.io/berriai/litellm",
     timeout: int = 60,
@@ -784,8 +784,8 @@ def start_litellm_proxy(
     Args:
         backend_port: Backend server port (OpenAI-compatible API)
         model_name: Actual model name from backend's /v1/models
+        model_alias: Model alias to expose to clients (e.g., short model name)
         litellm_port: Port for LiteLLM proxy (default: 4000)
-        model_alias: Model alias to expose (default: local-model)
         version: LiteLLM image version tag
         image: Docker image for LiteLLM
         timeout: Startup timeout in seconds

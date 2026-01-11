@@ -227,12 +227,6 @@ def main():
         default=litellm_cfg.get("port", 4000),
         help=f"Port for LiteLLM proxy (default: {litellm_cfg.get('port', 4000)})",
     )
-    litellm_group.add_argument(
-        "--litellm-alias",
-        type=str,
-        default=litellm_cfg.get("alias", "local-model"),
-        help=f"Model alias exposed by LiteLLM (default: {litellm_cfg.get('alias', 'local-model')})",
-    )
 
     args = ap.parse_args()
 
@@ -429,21 +423,19 @@ def main():
 
     # Start LiteLLM proxy by default for OpenAI + Anthropic SDK compatibility
     litellm_container_id = None
-    # Use short model name as alias (matches --served-model-name passed to backend)
-    litellm_model_alias = short_model_name if backend != "llama" else args.litellm_alias
     if not args.no_litellm:
         litellm_container_id = start_litellm_proxy(
             backend_port=args.port,
             model_name=api_model,
             litellm_port=args.litellm_port,
-            model_alias=litellm_model_alias,
+            model_alias=short_model_name,
             version=litellm_cfg.get("version", "v1.80.11-stable"),
             image=litellm_cfg.get("image", "ghcr.io/berriai/litellm"),
             backend=backend,
         )
         if litellm_container_id:
             log(f"LiteLLM proxy at http://localhost:{args.litellm_port}")
-            log(f"  Model: {litellm_model_alias}")
+            log(f"  Model: {short_model_name}")
         else:
             log("WARNING: Failed to start LiteLLM proxy")
 
@@ -452,7 +444,7 @@ def main():
     if webui_container_id:
         log(f"Open WebUI running at http://localhost:{args.webui_port}")
     if litellm_container_id:
-        log(f"LiteLLM proxy at http://localhost:{args.litellm_port} (model: {litellm_model_alias})")
+        log(f"LiteLLM proxy at http://localhost:{args.litellm_port} (model: {short_model_name})")
     log("Press Ctrl+C to stop...")
 
     def signal_handler(sig, frame):
