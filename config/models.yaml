@@ -149,6 +149,7 @@ models:
         backend: vllm              # Keep vLLM as default
       sglang:
         backend: sglang
+        backend_version: nightly-dev-cu13-20260111-78c41758
         sampling:
           frequency_penalty: 0.2   # Prevent repetition (flashinfer etc from global pattern)
 

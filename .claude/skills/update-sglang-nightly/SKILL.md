@@ -12,7 +12,7 @@ This skill lists available SGLang CUDA 13 nightly builds and helps pin a specifi
 
 ```bash
 curl -s 'https://hub.docker.com/v2/repositories/lmsysorg/sglang/tags?page_size=20&name=nightly-dev-cu13' | \
-  jq -r '.results[] | select(.name | test("^nightly-dev-cu13-[0-9]{8}-[a-f0-9]+$")) | [.name, (.last_updated | split("T")[0])] | @tsv' | head -10
+  jq -r '.results[] | select(.name | startswith("nightly-dev-cu13-")) | [.name, (.last_updated | split("T")[0])] | @tsv' | head -10
 ```
 
 This outputs: `{tag}\t{push_date}` for the 10 most recent CUDA 13 nightly builds.
