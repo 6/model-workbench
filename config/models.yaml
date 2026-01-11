@@ -267,19 +267,6 @@ models:
   - repo_id: openai/gpt-oss-safeguard-20b
 
   - repo_id: openai/gpt-oss-120b
-    profiles:
-      default:
-        backend: vllm
-      sglang:
-        backend: sglang
-        backend_version: nightly-dev-cu13-20260111-78c41758
-        extra_args:
-          # FlashInfer MXFP4 MOE has alignment issues, triton has PTX errors on Blackwell.
-          # CUTLASS has explicit Blackwell FP4 support: https://github.com/sgl-project/sglang/issues/7227
-          - "--moe-runner-backend"
-          - "cutlass"
-          - "--reasoning-parser"
-          - "gpt-oss"
 
   - repo_id: Qwen/Qwen3-Next-80B-A3B-Thinking-FP8
 
@@ -290,10 +277,12 @@ models:
   - repo_id: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8
     profiles:
       default:
-        # Nightly has relu2_no_mul bug (#31957), use prebuilt v0.13.0
+        # Note: VLLM_USE_FLASHINFER_MOE_FP8=1 causes cuBLAS FP8 errors on Blackwell:
+        # "bmm_fp8_internal_cublaslt failed: the requested functionality is not supported"
+        # Nightly also has relu2_no_mul bug (#31957). Using prebuilt v0.13.0.
         backend: vllm
         backend_version: v0.13.0
-        image_type: prebuilt      # Docker Hub image (CUDA 12.9)
+        image_type: prebuilt
         extra_args:
           - "--max-num-seqs"
           - "8"                     # Model card recommendation for stability
@@ -308,6 +297,15 @@ models:
           - "nano_v3"
           - "--kv-cache-dtype"
           - "fp8"
+      sglang:
+        backend: sglang
+        extra_args:
+          - "--attention-backend"
+          - "flashinfer"
+          - "--tool-call-parser"
+          - "qwen3_coder"
+          - "--reasoning-parser"
+          - "nano_v3"
       trtllm:
         backend: trtllm
         extra_args:

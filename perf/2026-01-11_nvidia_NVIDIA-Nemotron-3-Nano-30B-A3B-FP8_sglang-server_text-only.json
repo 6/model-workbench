@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-01-11T02:49:55.669255",
+  "repo_id": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "model_ref": "~/models/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "engine": "sglang-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 85976
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 85976
+      }
+    ],
+    "memory_used_mib": 171952,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "image": "none",
+    "backend_version": "v0.5.7-cu130-runtime"
+  },
+  "iterations": [
+    {
+      "wall_s": 2.638899224999477,
+      "output_text": "**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer during the forward pass of **autoregressive decoding**. | When a token *t* is processed, the model computes its hidden state **h\u209c** \u2192 attention keys **K\u209c** and values **V\u209c**. Instead of recomputing **K\u209c** and **V\u209c** for every new token, the system appends them to a growing cache: <br> `K_cache = [K\u2081, K\u2082, \u2026, K_t]`<br>`V_cache = [V\u2081, V\u2082, \u2026, V_t]` |\n| **Why it matters for long context** | Enables **O(1) per\u2011token inference** for the attention mechanism, turning the quadratic cost of recomputing attention over the full history into a linear cost. | During decoding, the attention scores for token *t+1* are computed as: <br> `Attention(t+1) = softmax( (Q_{t+1} K_cache^T) / \u221ad ) V_cache` <br>Only the new query **Q_{t+1}** needs to attend to the cached **K** and **V**; the rest of the history is reused. |\n| **Memory footprint** | Stores one *key* and one *value* vector per token per layer. For a model with *L* layers and hidden size *d*, the cache size \u2248 `2\u00b7L\u00b7d\u00b7(tokens_generated)`. | Typical sizes: <br>\u2022 GPT\u20113 (175\u202fB) with 12\u2011layer, 4\u202fk hidden \u2192 ~ 2\u202f\u00d7\u202f12\u202f\u00d7\u202f4\u202fk\u202f\u00d7\u202f4\u202fbytes \u2248 384\u202fKB per 1\u202fk tokens. <br>\u2022 Scaling linearly with context length, so a 16\u202fk context",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 194.02029268476574
+    },
+    {
+      "wall_s": 2.6381725940009346,
+      "output_text": "**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer during the forward pass of **autoregressive decoding**. | When a token *t* is processed, the model computes its hidden state **h\u209c** \u2192 attention keys **K\u209c** and values **V\u209c**. Instead of recomputing **K\u209c** and **V\u209c** for every new token, the system appends them to a growing cache: <br> `K_cache = [K\u2081, K\u2082, \u2026, K_t]`<br>`V_cache = [V\u2081, V\u2082, \u2026, V_t]` |\n| **Why it matters for long context** | Enables **O(1) per\u2011token inference** for the attention mechanism, turning the quadratic cost of recomputing attention over the full history into a linear cost. | During decoding, the attention scores for token *t+1* are computed as: <br> `Attention(t+1) = softmax( (Q_{t+1} K_cache^T) / \u221ad ) V_cache` <br>Only the new query **Q_{t+1}** needs to attend to the cached **K** and **V**; the rest of the history is reused. |\n| **Memory footprint** | Stores one *key* and one *value* vector per token per layer. For a model with *L* layers and hidden size *d*, the cache size \u2248 `2\u00b7L\u00b7d\u00b7(tokens_generated)`. | Typical sizes: <br>\u2022 GPT\u20113 (175\u202fB) with 12\u2011layer, 4\u202fk hidden \u2192 ~ 2\u202f\u00d7\u202f12\u202f\u00d7\u202f4\u202fk\u202f\u00d7\u202f4\u202fbytes \u2248 384\u202fKB per 1\u202fk tokens. <br>\u2022 Scaling linearly with context length, so a 16\u202fk context",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 194.0737316293335
+    },
+    {
+      "wall_s": 2.6323588710001786,
+      "output_text": "**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer during the forward pass of **autoregressive decoding**. | When a token *t* is processed, the model computes its hidden state **h\u209c** \u2192 attention keys **K\u209c** and values **V\u209c**. Instead of recomputing **K\u209c** and **V\u209c** for every new token, the system appends them to a growing cache: <br> `K_cache = [K\u2081, K\u2082, \u2026, K_t]`<br>`V_cache = [V\u2081, V\u2082, \u2026, V_t]` |\n| **Why it matters for long context** | Enables **O(1) per\u2011token inference** for the attention mechanism, turning the quadratic cost of recomputing attention over the full history into a linear cost. | During decoding, the attention scores for token *t+1* are computed as: <br> `Attention(t+1) = softmax( (Q_{t+1} K_cache^T) / \u221ad ) V_cache` <br>Only the new query **Q_{t+1}** needs to attend to the cached **K** and **V**; the rest of the history is reused. |\n| **Memory footprint** | Stores one *key* and one *value* vector per token per layer. For a model with *L* layers and hidden size *d*, the cache size \u2248 `2\u00b7L\u00b7d\u00b7(tokens_generated)`. | Typical sizes: <br>\u2022 GPT\u20113 (175\u202fB) with 12\u2011layer, 4\u202fk hidden \u2192 ~ 2\u202f\u00d7\u202f12\u202f\u00d7\u202f4\u202fk\u202f\u00d7\u202f4\u202fbytes \u2248 384\u202fKB per 1\u202fk tokens. <br>\u2022 Scaling linearly with context length, so a 16\u202fk context",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 194.50235514637976
+    },
+    {
+      "wall_s": 2.6280777890024183,
+      "output_text": "**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer during the forward pass of **autoregressive decoding**. | When a token *t* is processed, the model computes its hidden state **h\u209c** \u2192 attention keys **K\u209c** and values **V\u209c**. Instead of recomputing **K\u209c** and **V\u209c** for every new token, the system appends them to a growing cache: <br> `K_cache = [K\u2081, K\u2082, \u2026, K_t]`<br>`V_cache = [V\u2081, V\u2082, \u2026, V_t]` |\n| **Why it matters for long context** | Enables **O(1) per\u2011token inference** for the attention mechanism, turning the quadratic cost of recomputing attention over the full history into a linear cost. | During decoding, the attention scores for token *t+1* are computed as: <br> `Attention(t+1) = softmax( (Q_{t+1} K_cache^T) / \u221ad ) V_cache` <br>Only the new query **Q_{t+1}** needs to attend to the cached **K** and **V**; the rest of the history is reused. |\n| **Memory footprint** | Stores one *key* and one *value* vector per token per layer. For a model with *L* layers and hidden size *d*, the cache size \u2248 `2\u00b7L\u00b7d\u00b7(tokens_generated)`. | Typical sizes: <br>\u2022 GPT\u20113 (175\u202fB) with 12\u2011layer, 4\u202fk hidden \u2192 ~ 2\u202f\u00d7\u202f12\u202f\u00d7\u202f4\u202fk\u202f\u00d7\u202f4\u202fbytes \u2248 384\u202fKB per 1\u202fk tokens. <br>\u2022 Scaling linearly with context length, so a 16\u202fk context",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 194.81919528506347
+    },
+    {
+      "wall_s": 2.6281779070013727,
+      "output_text": "**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works |\n|---------|------------|--------------|\n| **Key\u2011Value (KV) cache** | A memory buffer that stores the *key* and *value* vectors produced by each layer of a transformer during the forward pass of **autoregressive decoding**. | When a token *t* is processed, the model computes its hidden state **h\u209c** \u2192 attention keys **K\u209c** and values **V\u209c**. Instead of recomputing **K\u209c** and **V\u209c** for every new token, the system appends them to a growing cache: <br> `K_cache = [K\u2081, K\u2082, \u2026, K_t]`<br>`V_cache = [V\u2081, V\u2082, \u2026, V_t]` |\n| **Why it matters for long context** | Enables **O(1) per\u2011token inference** for the attention mechanism, turning the quadratic cost of recomputing attention over the full history into a linear cost. | During decoding, the attention scores for token *t+1* are computed as: <br> `Attention(t+1) = softmax( (Q_{t+1} K_cache^T) / \u221ad ) V_cache` <br>Only the new query **Q_{t+1}** needs to attend to the cached **K** and **V**; the rest of the history is reused. |\n| **Memory footprint** | Stores one *key* and one *value* vector per token per layer. For a model with *L* layers and hidden size *d*, the cache size \u2248 `2\u00b7L\u00b7d\u00b7(tokens_generated)`. | Typical sizes: <br>\u2022 GPT\u20113 (175\u202fB) with 12\u2011layer, 4\u202fk hidden \u2192 ~ 2\u202f\u00d7\u202f12\u202f\u00d7\u202f4\u202fk\u202f\u00d7\u202f4\u202fbytes \u2248 384\u202fKB per 1\u202fk tokens. <br>\u2022 Scaling linearly with context length, so a 16\u202fk context",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 194.81177382857157
+    }
+  ],
+  "summary": {
+    "median_wall_s": 2.6323588710001786,
+    "median_tok_per_s": 194.50235514637976
+  }
+}
