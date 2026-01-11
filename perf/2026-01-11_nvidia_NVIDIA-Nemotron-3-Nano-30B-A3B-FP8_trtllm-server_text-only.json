@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-01-11T01:24:13.686025",
+  "repo_id": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "model_ref": "~/models/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8",
+  "engine": "trtllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 82069
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 4
+      }
+    ],
+    "memory_used_mib": 82073,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "image": "none",
+    "backend_version": "1.2.0rc7"
+  },
+  "iterations": [
+    {
+      "wall_s": 2.297407018002559,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A per\u2011layer cache that stores the *key* and *value* vectors produced by each token\u2019s self\u2011attention computation during the forward pass. | When decoding token *t*, the model re\u2011uses the cached *K*<sub>1\u2026t\u20111</sub> and *V*<sub>1\u2026t\u20111</sub> instead of recomputing them. Only the new token\u2019s *K*<sub>t</sub> and *V*<sub>t</sub> are computed and appended. | 1. **O(1) attention cost per token** \u2013 the attention matrix for token *t* is formed by a dot\u2011product of the new query with all cached keys, avoiding the O(N\u00b2) recomputation of full\u2011sequence attention. <br>2. **Constant\u2011time incremental inference** \u2013 latency grows linearly with output length, not quadratically with context length. <br>3. **Memory\u2011efficient** \u2013 only the *K* and *V* tensors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq_len\u202f\u00d7\u202fdtype) need to be retained; the original token embeddings can be discarded. <br>4. **Enables very long contexts** \u2013 because the cache can be kept in GPU/CPU memory for thousands of tokens, models can attend over contexts far longer than the original positional\u2011encoding limit. |\n| **Implementation details** | - Stored as two tensors per layer: `K_cache` shape *(B, H, T, D_k)*, `V_cache` shape *(B, H, T, D_v)*. <br>- Updated each step: `K_cache[:, :, t] = K_t`, `V_cache[:, :, t] = V_t`. <br>- During attention: `attn_output = softmax(Q_t @ K_cache.transpose(-2,-1) / sqrt(d_k)) @",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 222.85994427106328
+    },
+    {
+      "wall_s": 2.1825494519980566,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A per\u2011layer cache that stores the *key* and *value* vectors produced by each token\u2019s self\u2011attention computation during the forward pass. | When decoding token *t*, the model re\u2011uses the cached *K*<sub>1\u2026t\u20111</sub> and *V*<sub>1\u2026t\u20111</sub> instead of recomputing them. Only the new token\u2019s *K*<sub>t</sub> and *V*<sub>t</sub> are computed and appended. | 1. **O(1) attention cost per token** \u2013 the attention matrix for token *t* is formed by a dot\u2011product of the new query with all cached keys, avoiding the O(N\u00b2) recomputation of full\u2011sequence attention. <br>2. **Constant\u2011time incremental inference** \u2013 latency grows linearly with output length, not quadratically with context length. <br>3. **Memory\u2011efficient** \u2013 only the *K* and *V* tensors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq_len\u202f\u00d7\u202fdtype) need to be retained; the original token embeddings can be discarded. <br>4. **Enables very long contexts** \u2013 because the cache can be kept in GPU/CPU memory for thousands of tokens, models can attend over contexts far longer than the original positional\u2011encoding limit. |\n| **Implementation details** | - Stored as two tensors per layer: `K_cache` shape *(B, H, T, D_k)*, `V_cache` shape *(B, H, T, D_v)*. <br>- Updated each step: `K_cache[:, :, t] = K_t`, `V_cache[:, :, t] = V_t`. <br>- During attention: `attn_output = softmax(Q_t @ K_cache.transpose(-2,-1) / sqrt(d_k)) @",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 234.5880408488705
+    },
+    {
+      "wall_s": 2.1812384229997406,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A per\u2011layer cache that stores the *key* and *value* vectors produced by each token\u2019s self\u2011attention computation during the forward pass. | When decoding token *t*, the model re\u2011uses the cached *K*<sub>1\u2026t\u20111</sub> and *V*<sub>1\u2026t\u20111</sub> instead of recomputing them. Only the new token\u2019s *K*<sub>t</sub> and *V*<sub>t</sub> are computed and appended. | 1. **O(1) attention cost per token** \u2013 the attention matrix for token *t* is formed by a dot\u2011product of the new query with all cached keys, avoiding the O(N\u00b2) recomputation of full\u2011sequence attention. <br>2. **Constant\u2011time incremental inference** \u2013 latency grows linearly with output length, not quadratically with context length. <br>3. **Memory\u2011efficient** \u2013 only the *K* and *V* tensors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq_len\u202f\u00d7\u202fdtype) need to be retained; the original token embeddings can be discarded. <br>4. **Enables very long contexts** \u2013 because the cache can be kept in GPU/CPU memory for thousands of tokens, models can attend over contexts far longer than the original positional\u2011encoding limit. |\n| **Implementation details** | - Stored as two tensors per layer: `K_cache` shape *(B, H, T, D_k)*, `V_cache` shape *(B, H, T, D_v)*. <br>- Updated each step: `K_cache[:, :, t] = K_t`, `V_cache[:, :, t] = V_t`. <br>- During attention: `attn_output = softmax(Q_t @ K_cache.transpose(-2,-1) / sqrt(d_k)) @",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 234.7290395223617
+    },
+    {
+      "wall_s": 2.180633547002799,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A per\u2011layer cache that stores the *key* and *value* vectors produced by each token\u2019s self\u2011attention computation during the forward pass. | When decoding token *t*, the model re\u2011uses the cached *K*<sub>1\u2026t\u20111</sub> and *V*<sub>1\u2026t\u20111</sub> instead of recomputing them. Only the new token\u2019s *K*<sub>t</sub> and *V*<sub>t</sub> are computed and appended. | 1. **O(1) attention cost per token** \u2013 the attention matrix for token *t* is formed by a dot\u2011product of the new query with all cached keys, avoiding the O(N\u00b2) recomputation of full\u2011sequence attention. <br>2. **Constant\u2011time incremental inference** \u2013 latency grows linearly with output length, not quadratically with context length. <br>3. **Memory\u2011efficient** \u2013 only the *K* and *V* tensors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq_len\u202f\u00d7\u202fdtype) need to be retained; the original token embeddings can be discarded. <br>4. **Enables very long contexts** \u2013 because the cache can be kept in GPU/CPU memory for thousands of tokens, models can attend over contexts far longer than the original positional\u2011encoding limit. |\n| **Implementation details** | - Stored as two tensors per layer: `K_cache` shape *(B, H, T, D_k)*, `V_cache` shape *(B, H, T, D_v)*. <br>- Updated each step: `K_cache[:, :, t] = K_t`, `V_cache[:, :, t] = V_t`. <br>- During attention: `attn_output = softmax(Q_t @ K_cache.transpose(-2,-1) / sqrt(d_k)) @",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 234.794149940381
+    },
+    {
+      "wall_s": 2.181149080999603,
+      "output_text": "\n**KV\u2011Cache Overview**\n\n| Concept | What it is | How it works | Why it matters for long\u2011context inference |\n|---------|------------|--------------|-------------------------------------------|\n| **Key\u2011Value (KV) cache** | A per\u2011layer cache that stores the *key* and *value* vectors produced by each token\u2019s self\u2011attention computation during the forward pass. | When decoding token *t*, the model re\u2011uses the cached *K*<sub>1\u2026t\u20111</sub> and *V*<sub>1\u2026t\u20111</sub> instead of recomputing them. Only the new token\u2019s *K*<sub>t</sub> and *V*<sub>t</sub> are computed and appended. | 1. **O(1) attention cost per token** \u2013 the attention matrix for token *t* is formed by a dot\u2011product of the new query with all cached keys, avoiding the O(N\u00b2) recomputation of full\u2011sequence attention. <br>2. **Constant\u2011time incremental inference** \u2013 latency grows linearly with output length, not quadratically with context length. <br>3. **Memory\u2011efficient** \u2013 only the *K* and *V* tensors (typically 2\u202f\u00d7\u202fhidden\u2011size\u202f\u00d7\u202fseq_len\u202f\u00d7\u202fdtype) need to be retained; the original token embeddings can be discarded. <br>4. **Enables very long contexts** \u2013 because the cache can be kept in GPU/CPU memory for thousands of tokens, models can attend over contexts far longer than the original positional\u2011encoding limit. |\n| **Implementation details** | - Stored as two tensors per layer: `K_cache` shape *(B, H, T, D_k)*, `V_cache` shape *(B, H, T, D_v)*. <br>- Updated each step: `K_cache[:, :, t] = K_t`, `V_cache[:, :, t] = V_t`. <br>- During attention: `attn_output = softmax(Q_t @ K_cache.transpose(-2,-1) / sqrt(d_k)) @",
+      "prompt_tokens": 32,
+      "generated_tokens": 512,
+      "tok_per_s": 234.7386542534518
+    }
+  ],
+  "summary": {
+    "median_wall_s": 2.1812384229997406,
+    "median_tok_per_s": 234.7290395223617,
+    "median_ttft_ms": null,
+    "median_generation_tok_per_s": null,
+    "median_tpot_ms": null
+  }
+}

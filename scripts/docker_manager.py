@@ -266,12 +266,12 @@ def build_vllm_docker_cmd(
     host: str,
     port: int,
     env_vars: dict[str, str] | None = None,
-    extra_vllm_args: list[str] | None = None,
+    extra_args: list[str] | None = None,
 ) -> list[str]:
     """Build Docker run command for vLLM server.
 
     All backend-specific args (tensor_parallel, gpu_memory_utilization, etc.) come
-    through extra_vllm_args from config. CLI overrides are appended to that list.
+    through extra_args from config. CLI overrides are appended to that list.
     """
     model_path_resolved = str(Path(model_path).expanduser().resolve())
 
@@ -304,8 +304,8 @@ def build_vllm_docker_cmd(
         "--trust-remote-code",
     ]
 
-    if extra_vllm_args:
-        cmd += extra_vllm_args
+    if extra_args:
+        cmd += extra_args
 
     # Model-specific flags from config (applied last, takes precedence over global extra_args)
     cmd += _get_model_specific_args(model_path)

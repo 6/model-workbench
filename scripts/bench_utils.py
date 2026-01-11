@@ -831,7 +831,7 @@ def resolve_run_config(args):
         Modifies args in place to fill in defaults for:
             - port
             - tensor_parallel (for trtllm only - uses named param)
-            - extra_vllm_args (from config extra_args)
+            - extra_args (from config extra_args)
             - env_vars
     """
     from common import BACKEND_REGISTRY
@@ -872,7 +872,7 @@ def resolve_run_config(args):
     if backend in ("vllm", "sglang") and "--tensor-parallel-size" not in extra_args:
         _set_arg(extra_args, "--tensor-parallel-size", str(get_gpu_count()))
 
-    args.extra_vllm_args = extra_args if extra_args else None
+    args.extra_args = extra_args if extra_args else None
 
     # Resolve env vars from config
     if not hasattr(args, "env_vars") or args.env_vars is None:

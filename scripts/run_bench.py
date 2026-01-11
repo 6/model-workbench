@@ -419,7 +419,7 @@ def run_benchmark_vllm(
                 model_path=model_path,
                 version=backend_version,
                 env_vars=args.env_vars,
-                extra_vllm_args=args.extra_vllm_args,
+                extra_args=args.extra_args,
                 rebuild=args.rebuild,
                 image_type=image_type,
                 image_override=docker_image,
@@ -517,10 +517,9 @@ def run_benchmark_trtllm(args, model_path: str, image_path: str | None, image_la
     is_vision = image_path is not None
     mode = "vision" if is_vision else "text-only"
 
-    # Get backend config for version and extra_args
-    backend_cfg = get_model_backend_config(args.model, "trtllm")
-    backend_version = args.backend_version or backend_cfg.get("backend_version")
-    extra_args = backend_cfg.get("extra_args", [])
+    # Use args.backend_version and args.extra_args set by resolve_run_config from profile
+    backend_version = args.backend_version
+    extra_args = args.extra_args or []
     if not backend_version:
         raise SystemExit(
             "No backend version specified and none found in config.\n"

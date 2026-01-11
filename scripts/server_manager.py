@@ -330,7 +330,7 @@ class ServerManager:
         model_path: str,
         version: str,
         env_vars: dict[str, str] | None = None,
-        extra_vllm_args: list[str] | None = None,
+        extra_args: list[str] | None = None,
         rebuild: bool = False,
         image_type: str = "build",
         image_override: str | None = None,
@@ -341,7 +341,7 @@ class ServerManager:
             model_path: Path to model directory
             version: vLLM version (release tag like 'v0.8.0' or commit SHA)
             env_vars: Environment variables for Docker container (optional)
-            extra_vllm_args: All vLLM CLI arguments (including tensor_parallel) from config + CLI overrides
+            extra_args: All vLLM CLI arguments (including tensor_parallel) from config + CLI overrides
             rebuild: Force rebuild image even if cached
             image_type: 'prebuilt' to use official images, 'build' to build from source
             image_override: Direct image name to use (highest priority)
@@ -368,7 +368,7 @@ class ServerManager:
             host=self.host,
             port=self.port,
             env_vars=env_vars,
-            extra_vllm_args=extra_vllm_args,
+            extra_args=extra_args,
         )
 
         # Label based on image source
