@@ -1,0 +1,101 @@
+{
+  "timestamp": "2026-01-11T02:24:57.980068",
+  "repo_id": "openai/gpt-oss-120b",
+  "model_ref": "~/models/openai/gpt-oss-120b",
+  "engine": "vllm-server",
+  "mode": "text-only",
+  "gpu_info": {
+    "driver_version": "580.95.05",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95259
+      },
+      {
+        "index": 1,
+        "name": "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+        "memory_total_mib": 97887,
+        "pcie_gen": 5,
+        "pcie_width": 8,
+        "memory_used_mib": 95261
+      }
+    ],
+    "memory_used_mib": 190520,
+    "memory_total_mib": 195774
+  },
+  "config": {
+    "prompt_set": "long",
+    "prompt": "Write a concise technical overview of KV cache and why it matters for long context.",
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "image": "none",
+    "backend_version": "da6709c9fe6965b7348692576ffadeee8439388e"
+  },
+  "iterations": [
+    {
+      "wall_s": 2.1079274659969087,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, typically as a contiguous GPU/CPU buffer indexed by layer, head, and token position. |\n| **Shape** | For a model with *L* layers, *H* heads, hidden size *d* and a maximum context *T*: <br> `cache_K[L][H][T][d/H]`  <br> `cache_V[L][H][T][d/H]` |\n| **Update rule** | When a new token *t* is generated: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current layer. <br>2. Append K\u209c, V\u209c to the existing cache (or overwrite the oldest entry in a sliding\u2011window regime). <br>3. Attention for token *t* uses Q\u209c\u202f\u00b7\u202fK\u2081\u2026\u209c and the corresponding V\u2081\u2026\u209c. |\n| **Computation saved** | Without a cache, each generation step recomputes K and V for **all** previous tokens, costing O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per step. With a KV cache the cost drops to O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the *new* token only; the quadratic term disappears. |\n| **Memory\u2011vs\u2011Speed trade\u2011off** | \u2022 **Memory**: O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the cache (dominates inference memory for",
+      "prompt_tokens": 81,
+      "generated_tokens": 512,
+      "tok_per_s": 242.89260814667466,
+      "ttft_ms": 5.429506301879883,
+      "prefill_ms": 4.744379999465309,
+      "generation_ms": 2098.403419000533,
+      "generation_tok_per_s": 243.99502753567992
+    },
+    {
+      "wall_s": 2.103844735000166,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, typically as a contiguous GPU/CPU buffer indexed by layer, head, and token position. |\n| **Shape** | For a model with *L* layers, *H* heads, hidden size *d* and a maximum context *T*: <br> `cache_K[L][H][T][d/H]`  <br> `cache_V[L][H][T][d/H]` |\n| **Update rule** | When a new token *t* is generated: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current layer. <br>2. Append K\u209c, V\u209c to the existing cache (or overwrite the oldest entry in a sliding\u2011window regime). <br>3. Attention for token *t* uses Q\u209c\u202f\u00b7\u202fK\u2081\u2026\u209c and the corresponding V\u2081\u2026\u209c. |\n| **Computation saved** | Without a cache, each generation step recomputes K and V for **all** previous tokens, costing O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per step. With a KV cache the cost drops to O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the *new* token only; the quadratic term disappears. |\n| **Memory\u2011vs\u2011Speed trade\u2011off** | \u2022 **Memory**: O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the cache (dominates inference memory for",
+      "prompt_tokens": 81,
+      "generated_tokens": 512,
+      "tok_per_s": 243.3639666854786,
+      "ttft_ms": 5.071401596069336,
+      "prefill_ms": 4.563301998132374,
+      "generation_ms": 2095.1762100012274,
+      "generation_tok_per_s": 244.3708541343642
+    },
+    {
+      "wall_s": 2.106160084000294,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, typically as a contiguous GPU/CPU buffer indexed by layer, head, and token position. |\n| **Shape** | For a model with *L* layers, *H* heads, hidden size *d* and a maximum context *T*: <br> `cache_K[L][H][T][d/H]`  <br> `cache_V[L][H][T][d/H]` |\n| **Update rule** | When a new token *t* is generated: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current layer. <br>2. Append K\u209c, V\u209c to the existing cache (or overwrite the oldest entry in a sliding\u2011window regime). <br>3. Attention for token *t* uses Q\u209c\u202f\u00b7\u202fK\u2081\u2026\u209c and the corresponding V\u2081\u2026\u209c. |\n| **Computation saved** | Without a cache, each generation step recomputes K and V for **all** previous tokens, costing O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per step. With a KV cache the cost drops to O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the *new* token only; the quadratic term disappears. |\n| **Memory\u2011vs\u2011Speed trade\u2011off** | \u2022 **Memory**: O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the cache (dominates inference memory for",
+      "prompt_tokens": 81,
+      "generated_tokens": 512,
+      "tok_per_s": 243.09643122071844,
+      "ttft_ms": 5.11479377746582,
+      "prefill_ms": 4.608155999449082,
+      "generation_ms": 2097.1293700022215,
+      "generation_tok_per_s": 244.1432595069028
+    },
+    {
+      "wall_s": 2.118844144002651,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, typically as a contiguous GPU/CPU buffer indexed by layer, head, and token position. |\n| **Shape** | For a model with *L* layers, *H* heads, hidden size *d* and a maximum context *T*: <br> `cache_K[L][H][T][d/H]`  <br> `cache_V[L][H][T][d/H]` |\n| **Update rule** | When a new token *t* is generated: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current layer. <br>2. Append K\u209c, V\u209c to the existing cache (or overwrite the oldest entry in a sliding\u2011window regime). <br>3. Attention for token *t* uses Q\u209c\u202f\u00b7\u202fK\u2081\u2026\u209c and the corresponding V\u2081\u2026\u209c. |\n| **Computation saved** | Without a cache, each generation step recomputes K and V for **all** previous tokens, costing O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per step. With a KV cache the cost drops to O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the *new* token only; the quadratic term disappears. |\n| **Memory\u2011vs\u2011Speed trade\u2011off** | \u2022 **Memory**: O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the cache (dominates inference memory for",
+      "prompt_tokens": 81,
+      "generated_tokens": 512,
+      "tok_per_s": 241.64118038091974,
+      "ttft_ms": 5.533695220947266,
+      "prefill_ms": 4.870807999395765,
+      "generation_ms": 2109.8350810025295,
+      "generation_tok_per_s": 242.67299591810425
+    },
+    {
+      "wall_s": 2.105193412000517,
+      "output_text": "**KV Cache \u2013 Technical Overview**\n\n| Aspect | Details |\n|--------|---------|\n| **What it is** | A per\u2011layer memory structure that stores the *key* (K) and *value* (V) projection matrices produced by the self\u2011attention module for every token that has already been processed. |\n| **Where it lives** | In the inference engine, typically as a contiguous GPU/CPU buffer indexed by layer, head, and token position. |\n| **Shape** | For a model with *L* layers, *H* heads, hidden size *d* and a maximum context *T*: <br> `cache_K[L][H][T][d/H]`  <br> `cache_V[L][H][T][d/H]` |\n| **Update rule** | When a new token *t* is generated: <br>1. Compute Q\u209c, K\u209c, V\u209c for the current layer. <br>2. Append K\u209c, V\u209c to the existing cache (or overwrite the oldest entry in a sliding\u2011window regime). <br>3. Attention for token *t* uses Q\u209c\u202f\u00b7\u202fK\u2081\u2026\u209c and the corresponding V\u2081\u2026\u209c. |\n| **Computation saved** | Without a cache, each generation step recomputes K and V for **all** previous tokens, costing O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u00b2\u202f\u00b7\u202fd) per step. With a KV cache the cost drops to O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the *new* token only; the quadratic term disappears. |\n| **Memory\u2011vs\u2011Speed trade\u2011off** | \u2022 **Memory**: O(L\u202f\u00b7\u202fH\u202f\u00b7\u202fT\u202f\u00b7\u202fd) for the cache (dominates inference memory for",
+      "prompt_tokens": 81,
+      "generated_tokens": 512,
+      "tok_per_s": 243.2080573126334,
+      "ttft_ms": 5.184650421142578,
+      "prefill_ms": 4.630077000911115,
+      "generation_ms": 2096.5844499987725,
+      "generation_tok_per_s": 244.20671440174985
+    }
+  ],
+  "summary": {
+    "median_wall_s": 2.106160084000294,
+    "median_tok_per_s": 243.09643122071844,
+    "median_ttft_ms": 5.184650421142578,
+    "median_generation_tok_per_s": 244.1432595069028
+  }
+}

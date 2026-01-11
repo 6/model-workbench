@@ -1,5 +1,7 @@
 # Backend configuration
 # Models without explicit overrides use these defaults
+# IMPORTANT: When adding workarounds or non-obvious extra_args, include a comment
+# explaining why and link to the relevant issue (e.g., GitHub issue URL)
 defaults:
   # Storage paths by model format
   storage:
@@ -107,9 +109,7 @@ defaults:
       backend_version: v0.5.7-cu130-runtime   # Stable cu13 (Jan 2026)
       extra_args:
         - "--mem-fraction-static"
-        - "0.98"                # Dedicated inference GPUs, no display
-        - "--context-length"
-        - "65536"
+        - "0.95"                # Match vLLM (0.98 can cause OOM)
       model_patterns:
         - pattern: "mimo"
           args:
@@ -267,6 +267,19 @@ models:
   - repo_id: openai/gpt-oss-safeguard-20b
 
   - repo_id: openai/gpt-oss-120b
+    profiles:
+      default:
+        backend: vllm
+      sglang:
+        backend: sglang
+        backend_version: nightly-dev-cu13-20260111-78c41758
+        extra_args:
+          # FlashInfer MXFP4 MOE has alignment issues, triton has PTX errors on Blackwell.
+          # CUTLASS has explicit Blackwell FP4 support: https://github.com/sgl-project/sglang/issues/7227
+          - "--moe-runner-backend"
+          - "cutlass"
+          - "--reasoning-parser"
+          - "gpt-oss"
 
   - repo_id: Qwen/Qwen3-Next-80B-A3B-Thinking-FP8
 
